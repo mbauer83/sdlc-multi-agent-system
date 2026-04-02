@@ -88,7 +88,7 @@ tests/
 | Stage | Scope | Status |
 |---|---|---|
 | 1 | Foundation artifacts (framework + schemas + EventStore skeleton + directory structure) | Complete |
-| 2 | Project Manager master skill | Pending |
+| 2 | Project Manager master skill | Complete |
 | 3 | Primary implementation chain (SA → SwA → DevOps → Dev → QA) | Pending |
 | 4 | Framing layer (PO, Sales, CSCO) | Pending |
 | 5 | Cross-cutting skills + PydanticAI wrappers + EventStore full implementation | Pending |

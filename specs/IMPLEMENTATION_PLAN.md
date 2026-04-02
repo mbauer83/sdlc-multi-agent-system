@@ -198,22 +198,35 @@ Every inter-agent handoff supports a bounded feedback cycle:
 
 ---
 
-### Stage 2 — Project Manager Master Skill
+### Stage 2 — Project Manager Master Skill (Complete)
 > The orchestration layer. Must exist before any other agent can be run end-to-end.
 
 Every AGENT.md must include: role mandate, phase coverage, repository ownership, entry point behaviour (per EP-0 through EP-H), and cross-references to all skill files.  
 Every skill file must include: `## Inputs Required`, `## Knowledge Adequacy Check`, `## Algedonic Triggers`, `## Feedback Loop`, and `## Outputs`.
 
-- [ ] Author `agents/project-manager/AGENT.md`
-- [ ] Author `agents/project-manager/skills/master-agile-adm.md`
-  - Full Agile ADM cadence operationalisation
-  - Sprint kickoff and closeout procedures
-  - Artifact handoff coordination
-  - **Entry point assessment procedure** (Engagement Profile, Entry Assessment Report, warm-start validation)
-  - **CQ lifecycle management** (batching, routing, tracking, resumption)
-  - Knowledge repository update protocol
-- [ ] Author remaining PM skills: `phase-a.md`, `phase-e-f.md`, `phase-g.md`, `phase-h.md`, `retrospective-knowledge-capture.md`
-- [ ] Commit as `stage-2-pm-master`
+- [x] Author `agents/project-manager/AGENT.md`
+  - Role mandate (System 3 / VSM), phase coverage, repository ownership
+  - Entry-point behaviour for all 7 EPs (EP-0 through EP-H)
+  - Authority constraints (cannot override CSCO, cannot make architecture decisions)
+  - Communication topology (user ↔ PM ↔ all agents)
+  - EventStore contract (events emitted and consumed)
+  - Downstream agent governance constraints
+- [x] Author `agents/project-manager/skills/master-agile-adm.md`
+  - Full Agile ADM cadence operationalisation (7-phase engagement procedure)
+  - Engagement bootstrap procedure (directory structure, EventStore init, git commit)
+  - Sprint planning, in-sprint coordination, sprint closeout with EventStore commit
+  - Phase gate evaluation procedure (checklist, G-holder vote collection, gate records)
+  - CQ lifecycle management (batching, routing, tracking, resumption, ALG-016 trigger)
+  - Algedonic signal handling (routing, halts, resolution)
+  - Phase revisit detection and scope constraint
+  - Engagement close and enterprise promotion initiation
+- [x] Author remaining PM skills:
+  - `phase-a.md` — Scoping Interview (EP-0), Entry Assessment Report, Phase A gate coordination, SoAW
+  - `phase-e-f.md` — Work Package Catalog, Risk Register, Architecture Roadmap, Implementation Plan, Solution Sprint Plan
+  - `phase-g.md` — Solution Sprint governance, Architecture Contract oversight, Governance Checkpoint Records, Phase G exit
+  - `phase-h.md` — Change Record intake, change classification, phase return coordination, emergency change procedure
+  - `retrospective-knowledge-capture.md` — Sprint retros, Engagement Retrospective, Enterprise Promotion Review, Knowledge Base stewardship
+- [x] Commit as `stage-2-pm-master`
 
 ---
 
