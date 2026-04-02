@@ -16,6 +16,7 @@ trigger-conditions:
   - handoff.created (from SA with architecture feasibility feedback on RR draft)
 entry-points: [EP-0, EP-A, EP-B]
 primary-outputs: [Requirements Register v0.1.0→1.0.0, Business Scenarios v0.1.0, RTM skeleton v0.1.0]
+complexity-class: standard
 version: 1.0.0
 ---
 

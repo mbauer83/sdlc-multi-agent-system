@@ -13,6 +13,7 @@ trigger-conditions:
   - artifact.baselined (artifact-type=implementation-plan, version=1.0.0)
 entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-E, EP-F]
 primary-outputs: [Initial Test Strategy draft, Final Test Strategy, Test Environment Requirements]
+complexity-class: complex
 version: 1.0.0
 ---
 

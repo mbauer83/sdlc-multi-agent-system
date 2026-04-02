@@ -24,7 +24,7 @@ agents/<role>/                   # One directory per agent role
   AGENT.md                       # Mandate, constraints, input/output contracts, entry-point behaviour
   skills/                        # One .md skill file per phase or major capability
 
-enterprise-repository/           # Organisation-wide architecture data (long-lived)
+enterprise-repository/           # Organisation-wide architecture data (long-lived; Architecture Board governed)
   metamodel/                     # Framework decisions, governance procedures
   capability/                    # EA team structure, roles, tooling
   landscape/strategic/           # Enterprise-wide architecture
@@ -36,6 +36,11 @@ enterprise-repository/           # Organisation-wide architecture data (long-liv
   requirements/                  # Enterprise-level requirements
   solutions-landscape/           # Deployed/planned SBBs across the enterprise
   knowledge-base/                # Lessons learned, retrospectives
+  diagram-catalog/               # Enterprise-scope element catalog (ontologically packaged; see diagram-conventions.md)
+    elements/{motivation,business,application,technology,data}/
+    connections/                 # ArchiMate, ER, sequence, BPMN relationships
+    diagrams/                    # Enterprise-level .puml diagrams
+    rendered/                    # SVG outputs; committed at sprint boundary
 
 engagements/<id>/                # Per-engagement working directory
   engagement-profile.md          # Entry point, scope, warm-start status
@@ -46,6 +51,15 @@ engagements/<id>/                # Per-engagement working directory
   algedonic-log/                 # Algedonic signal records
   work-repositories/
     architecture-repository/     # Owner: Solution Architect
+      diagram-catalog/           # Engagement-scope element catalog; enterprise elements imported at bootstrap
+        elements/{motivation,business,application,technology,data,sequences,processes}/
+        connections/
+        diagrams/                # Engagement .puml files; imported enterprise elements + project-specific
+        rendered/                # SVG outputs; committed at sprint boundary
+      business-architecture/_common/, <domain>/   # Phase B artifacts; domain-sliced if >1 bounded context
+      application-architecture/_common/, <domain>/
+      data-architecture/_common/, <domain>/
+      architecture-vision/, technology-architecture/, principles/, decisions/, requirements/
     technology-repository/       # Owner: Software Architect / PE
     project-repository/          # Owner: Project Manager
     safety-repository/           # Owner: CSCO
@@ -85,8 +99,11 @@ tests/
 11. **Framework files never enter the target project repository.** The target project repo is a separate git repository configured per engagement in `engagements-config.yaml`. Source code lives only there. The engagement's `delivery-repository/` holds delivery metadata, not code.
 12. **Discovery before CQs.** Every skill that begins phase work must execute the Discovery Scan (`framework/discovery-protocol.md §2`) as its first step. CQs are raised only for information that cannot be obtained from available sources (engagement state, enterprise repository, configured external sources, target-repo). Every inferred or sourced field must be annotated in the artifact. Governed by `framework/discovery-protocol.md`.
 13. **Every AGENT.md must have a `## 11. Personality & Behavioral Stance` section.** Specifies the agent's role type (Integrator/Specialist/Framing/Coordinator), behavioral directives derived from the personality profile, conflict engagement posture, primary inter-role tensions, and a reference to `framework/agent-personalities.md`. Governed by `framework/agent-personalities.md`. Every skill file that involves significant cross-role interaction must include a `### Personality-Aware Conflict Engagement` subsection in its `## Feedback Loop` section (see `framework/agent-personalities.md §6`).
-14. **Every AGENT.md and every skill file must have YAML frontmatter.** Frontmatter provides machine-readable routing metadata for the Python orchestration layer. AGENT.md required fields: `agent-id`, `name`, `display-name`, `role-type`, `vsm-position`, `primary-phases`, `invoke-when`, `owns-repository`, `personality-ref`, `skill-index`, `runtime-ref`, `system-prompt-identity`. The `system-prompt-identity` field is the compact static Layer 1 system prompt used by `build_agent()` in `src/agents/base.py` — 3–5 sentences covering: role name/abbreviation, authority domain, owned repository, one non-negotiable constraint. Skill file required fields: `skill-id`, `agent`, `name`, `invoke-when`, `trigger-phases`, `trigger-conditions` (LLM-hint prose; not machine-parsed), `entry-points`, `primary-outputs`. The `trigger-phases` list is the machine-readable routing key; `trigger-conditions` is documentation only. Use `framework/agent-index.md` as the compact routing reference (~500 tokens). Governed by `framework/agent-runtime-spec.md`.
+14. **Every AGENT.md and every skill file must have YAML frontmatter.** Frontmatter provides machine-readable routing metadata for the Python orchestration layer. AGENT.md required fields: `agent-id`, `name`, `display-name`, `role-type`, `vsm-position`, `primary-phases`, `invoke-when`, `owns-repository`, `personality-ref`, `skill-index`, `runtime-ref`, `system-prompt-identity`. The `system-prompt-identity` field is the compact static Layer 1 system prompt used by `build_agent()` in `src/agents/base.py` — 3–5 sentences covering: role name/abbreviation, authority domain, owned repository, one non-negotiable constraint. Skill file required fields: `skill-id`, `agent`, `name`, `invoke-when`, `trigger-phases`, `trigger-conditions` (LLM-hint prose; not machine-parsed), `entry-points`, `primary-outputs`, `complexity-class` (`simple | standard | complex` — governs SkillLoader token budget: ≤600/1200/2000). The `trigger-phases` list is the machine-readable routing key; `trigger-conditions` is documentation only. **Runtime extraction contract:** only two AGENT.md extractions reach the live agent — `system-prompt-identity` (Layer 1, always) and `### Runtime Behavioral Stance` from §11 (Layer 2, always). All other AGENT.md content is authoring documentation that governs skill file authoring — it does not reach the agent directly. Skill files (Inputs Required + Steps + Algedonic Triggers + Feedback Loop + Outputs, up to `complexity-class` budget) are the primary runtime delivery vehicle, injected as Layer 3 when the skill is invoked. Use `framework/agent-index.md` as the compact routing reference (~500 tokens). Governed by `framework/agent-runtime-spec.md`.
 15. **Agent runtime and orchestration are governed by two framework specs.** `framework/agent-runtime-spec.md` — PydanticAI agent construction, 4-layer system prompt assembly, skill loading protocol, tool sets, agent-as-tool pattern. `framework/orchestration-topology.md` — LangGraph graph topology, `SDLCGraphState`, PM supervisor node, routing functions, EventStore integration. Every `src/agents/` and `src/orchestration/` file must implement these specs. Do not introduce coordination patterns that contradict them without updating the framework first.
+16. **Diagram production follows `framework/diagram-conventions.md`.** Every skill that produces or updates an architecture artifact must follow the diagram conventions spec. The engagement catalog (`architecture-repository/diagram-catalog/`) uses an ontological package structure (motivation/, business/, application/, technology/, data/, sequences/, processes/). Enterprise elements are imported into the engagement catalog at bootstrap — they are not referenced in-place from the enterprise catalog. Element scope is structural (catalog location), not a naming convention. Before creating any new element, agents must scan the engagement catalog; SA must run the enterprise catalog import check at engagement bootstrap. The `extends:` field on an element provides explicit cross-catalog traceability. Governed by `framework/diagram-conventions.md` and `framework/artifact-schemas/diagram-catalog.schema.md`.
+17. **Every AGENT.md must have an `## Artifact Discovery Priority` section.** Specifies the ordered list of repositories and document types the agent must scan during Discovery Scan Step 0, role-specific. Feeds the `read_artifact` tool's default search scope. Architects prioritize `architecture-repository/` then `technology-repository/`; DE and DO must list `technology-repository/coding-standards/` first. Required for all roles; critical for integrators and implementation agents. Governed by `framework/discovery-protocol.md §9` (Standards and Coding Guidelines Discovery).
+18. **Artifact references use the canonical format from `framework/repository-conventions.md §13`.** Every handoff, work-spec, or skill output that cites another artifact must use `[@<artifact-id> v<N.N>](<relative-path>)` in-text and list cited artifact-ids in frontmatter `references:`. This enables cross-artifact dependency resolution by the orchestration layer and dashboard. Agents must never reference artifacts by filename alone.
 
 ## Implementation Stages (see `specs/IMPLEMENTATION_PLAN.md`)
 
@@ -95,8 +112,10 @@ tests/
 | 1 | Foundation artifacts (framework + schemas + EventStore skeleton + directory structure) | Complete |
 | 2 | Project Manager master skill | Complete |
 | 3 | Primary implementation chain (SA → SwA → DevOps → Dev → QA) + discovery-protocol.md | Complete |
-| 4 | Framing layer (PO, Sales, CSCO) | Pending |
+| 4 | Framing layer (PO, Sales, CSCO) | Partial |
+| 4.5 | Cross-cutting framework extensions (diagram conventions, artifact references, standards discovery, agent profile condensation) | Pending |
 | 5 | Python implementation layer (EventStore completion + PydanticAI agents + LangGraph orchestration + source adapters) | Pending |
+| 5.5 | Engagement dashboard (local web server + PUML rendering + filesystem monitoring) | Pending |
 | 6 | Integration testing on synthetic project | Pending |
 
 ## Technology Stack

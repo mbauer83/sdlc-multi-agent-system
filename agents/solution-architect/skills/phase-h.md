@@ -13,6 +13,7 @@ trigger-conditions:
   - sprint.started (phase=H)
 entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-E, EP-F, EP-G, EP-H]
 primary-outputs: [Change Record, Updated Architecture Artifacts]
+complexity-class: complex
 version: 1.0.0
 ---
 

@@ -15,6 +15,7 @@ trigger-conditions:
   - cq.answered (blocking Phase H requirements CQs resolved)
 entry-points: [EP-H]
 primary-outputs: [Updated RR (change-driven), Updated RTM (under-review links), Stakeholder change notification]
+complexity-class: standard
 version: 1.0.0
 ---
 

@@ -15,6 +15,7 @@ trigger-conditions:
   - cq.answered resolving a blocking Phase A CSCO safety CQ
 entry-points: [EP-0, EP-A, EP-B]
 primary-outputs:
+complexity-class: simple
   - SCO Phase A Baseline (sco-A-1.0.0.md)
   - Gate Record Phase A (gr-A-B-1.0.0.md)
   - gate.vote_cast for Prelim→A gate

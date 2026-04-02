@@ -13,6 +13,7 @@ trigger-conditions:
   - sprint.started (phase=H)
 entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-E, EP-F, EP-G, EP-H]
 primary-outputs: [Warm-Start Change Intake Record, Phase Return Scope Statement, Revision Sprint Records]
+complexity-class: standard
 version: 1.0.0
 ---
 

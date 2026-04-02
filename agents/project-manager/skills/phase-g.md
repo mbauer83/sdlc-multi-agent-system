@@ -13,6 +13,7 @@ trigger-conditions:
   - artifact.baselined (artifact-type=architecture-contract)
 entry-points: [EP-0, EP-G]
 primary-outputs: [Governance Checkpoint Records, Phase G Exit Gate Record, Sprint log records]
+complexity-class: standard
 version: 1.0.0
 ---
 

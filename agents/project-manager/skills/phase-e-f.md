@@ -13,6 +13,7 @@ trigger-conditions:
   - sprint.started (phase=F)
 entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-E, EP-F]
 primary-outputs: [Work Package Catalog, Risk Register, Architecture Roadmap, Implementation Plan, Solution Sprint Plan]
+complexity-class: standard
 version: 1.0.0
 ---
 

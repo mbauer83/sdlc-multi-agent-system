@@ -13,6 +13,7 @@ trigger-conditions:
   - artifact.baselined (artifact-type=deployment-record)
 entry-points: [EP-0, EP-G]
 primary-outputs: [Test Execution Report, Defect Register, Compliance Assessment contribution]
+complexity-class: complex
 version: 1.0.0
 ---
 

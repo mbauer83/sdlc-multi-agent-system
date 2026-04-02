@@ -13,6 +13,7 @@ trigger-conditions:
   - handoff.created (handoff-type=gap-analysis-matrix, to=devops-platform)
 entry-points: [EP-0, EP-D, EP-E, EP-G]
 primary-outputs: [Phase E Delivery Complexity Assessment, Delivery Complexity Estimate summary, EPC draft v0.2.0]
+complexity-class: standard
 version: 1.0.0
 ---
 

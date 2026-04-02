@@ -16,6 +16,7 @@ trigger-conditions:
   - sprint.started (phase=H, change affects market-facing functionality)
 entry-points: [EP-0, EP-A, EP-H]
 primary-outputs: [Requirements Market Coverage Feedback Record]
+complexity-class: simple
 version: 1.0.0
 ---
 

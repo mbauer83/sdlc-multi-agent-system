@@ -13,6 +13,7 @@ trigger-conditions:
   - engagement.closed
 entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-E, EP-F, EP-G, EP-H]
 primary-outputs: [Sprint Retrospective Note, Engagement Retrospective, Lessons Learned, Promotion Request Records]
+complexity-class: standard
 version: 1.0.0
 ---
 

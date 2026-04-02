@@ -15,6 +15,7 @@ trigger-conditions:
   - trigger=revisit and phase_visit_count > 1 (market landscape change or SA architecture constraint update)
 entry-points: [EP-0, EP-A, EP-B]
 primary-outputs: [SWOT Analysis]
+complexity-class: simple
 version: 1.0.0
 ---
 

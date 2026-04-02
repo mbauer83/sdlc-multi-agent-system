@@ -18,6 +18,7 @@ trigger-conditions:
   - dependency of CSCO-INCIDENT
 entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-G, EP-H]
 primary-outputs: [Safety Constraint Overlay, STAMP Control Structure Analysis, STPA Hazard List, UCA Record Set]
+complexity-class: complex
 version: 1.0.0
 ---
 

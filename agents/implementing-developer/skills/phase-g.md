@@ -13,6 +13,7 @@ trigger-conditions:
   - artifact.baselined (artifact-type=architecture-contract, version=1.0.0)
 entry-points: [EP-0, EP-G]
 primary-outputs: [Application source code, Pull Request, PR record, Unit test report reference, Implementation notes]
+complexity-class: complex
 version: 1.0.0
 ---
 
@@ -91,6 +92,18 @@ If any prerequisite is not met, DE raises a CQ to PM before proceeding.
 ## Procedure
 
 The following procedure governs one complete Work Package implementation cycle within a Solution Sprint. Repeat for each Work Package assigned to DE in the current sprint.
+
+### Step 0.S — Standards and Coding Guidelines Discovery
+
+This step is mandatory before any implementation begins. Do not open the target-repo for writing until this step is complete.
+
+1. `technology-repository/coding-standards/` — read the full active coding standards document. Identify: naming conventions, formatting rules, error handling patterns, logging standards, and prohibited constructs. These are binding constraints on all code written in this Work Package.
+2. `technology-repository/architecture-decisions/` — retrieve ADRs tagged to the Work Package's component or domain. Record any implementation constraints they impose.
+3. `enterprise-repository/standards/` — check SIB entries for all third-party libraries or infrastructure components referenced in the AC §3.
+
+If the coding standards document is absent or has no applicable entry for the target language/framework, raise an algedonic signal to PM before proceeding — do not proceed on undocumented assumptions.
+
+---
 
 ### Step 1 — Read the Architecture Contract for this Work Package
 

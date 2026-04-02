@@ -16,6 +16,7 @@ trigger-conditions:
   - artifact.baselined (SA — AV at version 1.0.0, confirming Phase A gate passed)
 entry-points: [EP-0, EP-A, EP-B]
 primary-outputs: [RTM v0.2.0 (Phase B traceability entries), BA feedback record, updated RR (if gaps found)]
+complexity-class: standard
 version: 1.0.0
 ---
 

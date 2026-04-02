@@ -13,6 +13,7 @@ trigger-conditions:
   - artifact.baselined (artifact-type=business-architecture, version=1.0.0)
 entry-points: [EP-0, EP-A, EP-B, EP-C]
 primary-outputs: [Data Architecture, Data Entity Catalog, Logical Data Model, Data Classification Register]
+complexity-class: complex
 version: 1.0.0
 ---
 

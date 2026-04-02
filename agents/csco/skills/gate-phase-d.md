@@ -16,6 +16,7 @@ trigger-conditions:
   - cq.answered resolving a blocking Phase D CSCO safety CQ
 entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D]
 primary-outputs:
+complexity-class: simple
   - SCO Phase D Update (sco-D-1.0.0.md)
   - Gate Record Phase D (gr-D-E-1.0.0.md)
   - gate.vote_cast for D→E gate

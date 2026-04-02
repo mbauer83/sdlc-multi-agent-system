@@ -13,6 +13,7 @@ trigger-conditions:
   - cq.answered (RR-related clarifications resolved)
 entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-E, EP-F, EP-G, EP-H]
 primary-outputs: [RTM Architecture Column Contribution]
+complexity-class: standard
 version: 1.0.0
 ---
 

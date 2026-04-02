@@ -13,6 +13,7 @@ trigger-conditions:
   - handoff.created (from PM with scoping interview answers)
 entry-points: [EP-0, EP-A, EP-B]
 primary-outputs: [Architecture Vision, Architecture Principles Register, Stakeholder Map]
+complexity-class: complex
 version: 1.0.0
 ---
 

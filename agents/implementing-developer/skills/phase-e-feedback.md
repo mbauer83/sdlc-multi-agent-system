@@ -11,6 +11,7 @@ trigger-conditions:
   - handoff.created (handoff-type=consulting-activation, to=implementing-developer, phase=E)
 entry-points: []
 primary-outputs: [Implementation Complexity Report]
+complexity-class: simple
 version: 1.0.0
 ---
 

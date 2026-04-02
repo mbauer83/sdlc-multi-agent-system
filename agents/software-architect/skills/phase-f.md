@@ -13,6 +13,7 @@ trigger-conditions:
   - artifact.baselined (artifact-type=implementation-candidate-catalog, version=1.0.0)
 entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-E, EP-F]
 primary-outputs: [Transition Architecture Diagrams, Technical Sequencing Analysis, Environment Provisioning Requirements]
+complexity-class: standard
 version: 1.0.0
 ---
 

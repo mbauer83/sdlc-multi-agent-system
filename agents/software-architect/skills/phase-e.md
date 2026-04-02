@@ -13,6 +13,7 @@ trigger-conditions:
   - artifact.baselined (artifact-type=technology-architecture, version=1.0.0)
 entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-E]
 primary-outputs: [Gap Analysis Matrix, Implementation Candidate Catalog, Transition Architecture plateau outline]
+complexity-class: complex
 version: 1.0.0
 ---
 

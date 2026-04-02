@@ -17,6 +17,7 @@ trigger-conditions:
   - artifact.baselined (any)
 entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-E, EP-F, EP-G, EP-H]
 primary-outputs: [Engagement Profile, Sprint kickoff records, Sprint closeout records, Gate records, CQ records, Algedonic records]
+complexity-class: complex
 version: 1.0.0
 ---
 

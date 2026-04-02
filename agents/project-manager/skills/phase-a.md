@@ -13,6 +13,7 @@ trigger-conditions:
   - gate.vote_cast (phase_from=A, from=solution-architect)
 entry-points: [EP-0, EP-A, EP-B]
 primary-outputs: [Scoping Interview/Entry Assessment Report, Statement of Architecture Work, Phase A Gate Record]
+complexity-class: standard
 version: 1.0.0
 ---
 

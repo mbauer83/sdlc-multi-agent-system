@@ -13,6 +13,7 @@ trigger-conditions:
   - artifact.baselined (artifact-type=technology-architecture, version=1.0.0)
 entry-points: [EP-0, EP-D, EP-E, EP-F, EP-G]
 primary-outputs: [Environment Provisioning Catalog, Pipeline Design Document, Deployment Runbooks]
+complexity-class: standard
 version: 1.0.0
 ---
 

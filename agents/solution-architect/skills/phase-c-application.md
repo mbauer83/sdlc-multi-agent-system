@@ -13,6 +13,7 @@ trigger-conditions:
   - artifact.baselined (artifact-type=business-architecture, version=1.0.0)
 entry-points: [EP-0, EP-A, EP-B, EP-C]
 primary-outputs: [Application Architecture, Interface Catalog, Application Interaction Diagrams]
+complexity-class: complex
 version: 1.0.0
 ---
 

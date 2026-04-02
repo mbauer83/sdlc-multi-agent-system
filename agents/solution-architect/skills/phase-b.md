@@ -12,6 +12,7 @@ trigger-conditions:
   - sprint.started (phase=B)
 entry-points: [EP-0, EP-A, EP-B]
 primary-outputs: [Business Architecture, Business Process Catalog, Value Stream Map, Organisational Model]
+complexity-class: complex
 version: 1.0.0
 ---
 

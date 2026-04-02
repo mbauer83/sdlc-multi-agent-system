@@ -17,6 +17,7 @@ trigger-conditions:
   - sprint.closed (any sprint boundary — triggers stakeholder communication)
 entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-G, EP-H]
 primary-outputs: [RR (currency-checked, incremented), RTM (new traceability entries), gap report to PM]
+complexity-class: standard
 version: 1.0.0
 ---
 

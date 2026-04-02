@@ -16,6 +16,7 @@ trigger-conditions:
   - trigger=revisit and phase_visit_count > 1 (market landscape change identified)
 entry-points: [EP-0, EP-A, EP-B, EP-H]
 primary-outputs: [Market Analysis]
+complexity-class: simple
 version: 1.0.0
 ---
 

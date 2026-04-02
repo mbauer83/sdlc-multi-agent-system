@@ -18,6 +18,7 @@ trigger-conditions:
   - invoke from phase-h.md Step 5 (requirements impact notification)
 entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-G, EP-H]
 primary-outputs: [Stakeholder communication record (project-repository/requirements/stakeholder-communication/)]
+complexity-class: standard
 version: 1.0.0
 ---
 

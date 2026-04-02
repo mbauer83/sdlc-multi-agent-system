@@ -14,6 +14,7 @@ trigger-conditions:
   - handoff.created (handoff-type=architecture-contract, to=devops-platform)
 entry-points: [EP-0, EP-D, EP-E, EP-F, EP-G]
 primary-outputs: [Deployment Records, CI/CD pipeline configuration, IaC code, Infrastructure compliance contribution]
+complexity-class: standard
 version: 1.0.0
 ---
 
@@ -72,6 +73,18 @@ DO raises a CQ when:
 ---
 
 ## Procedure
+
+### Step 0.S — Standards and Coding Guidelines Discovery
+
+Before provisioning any environment or writing infrastructure-as-code, scan in this order:
+
+1. `technology-repository/coding-standards/` — retrieve infrastructure-as-code (IaC) and scripting standards relevant to the platform stack. Naming conventions, tagging policies, secret management patterns, and prohibited constructs are binding on all DO outputs.
+2. `enterprise-repository/standards/` — retrieve SIB entries for all infrastructure platform components (container runtime, orchestration, CI/CD toolchain, monitoring). Any component not in the SIB requires an ADR before deployment.
+3. `technology-repository/architecture-decisions/` — retrieve ADRs covering deployment topology, environment parity requirements, and pipeline constraints for the current engagement.
+
+This step is non-skippable. If no IaC standards exist in `technology-repository/coding-standards/`, raise CQ to PM; do not invent infrastructure conventions without a documented basis.
+
+---
 
 ### Step 1 — Pre-Sprint: Provision environments
 

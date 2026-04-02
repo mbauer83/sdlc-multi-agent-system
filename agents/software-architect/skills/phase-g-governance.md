@@ -13,6 +13,7 @@ trigger-conditions:
   - handoff.created (handoff-type=pr-ready-for-review, to=software-architect)
 entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-E, EP-F, EP-G]
 primary-outputs: [Architecture Contract, Architecture Compliance Notices, Compliance Assessment contribution]
+complexity-class: complex
 version: 1.0.0
 ---
 
@@ -77,6 +78,18 @@ Route to PM if:
 ---
 
 ## Procedure
+
+### Step 0.S — Standards and Coding Guidelines Discovery
+
+Before producing or updating any Architecture Contract, scan the following in order:
+
+1. `technology-repository/coding-standards/` — read the full active coding standards document for the target language/platform stack. The AC §3 (Implementation Constraints) must reference coding standards by name and version.
+2. `enterprise-repository/standards/` — retrieve current SIB (Standards Information Base) entries for all technologies appearing in the sprint's IC catalog. Any technology not in the SIB requires an ADR before inclusion in the AC.
+3. `technology-repository/architecture-decisions/` — retrieve ADRs relevant to the work packages in scope. AC §2 (ABBs in Force) must be consistent with relevant ADRs.
+
+This step is non-skippable. If `technology-repository/coding-standards/` does not exist, raise CQ to PM before producing the AC.
+
+---
 
 ### Architecture Contract Production (per Solution Sprint)
 

@@ -12,6 +12,7 @@ trigger-conditions:
   - phase.return-triggered (any affected-artifacts)
 entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-E, EP-F, EP-G, EP-H]
 primary-outputs: [Regression Impact Assessment, Updated Test Strategy]
+complexity-class: standard
 version: 1.0.0
 ---
 

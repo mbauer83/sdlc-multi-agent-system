@@ -12,6 +12,7 @@ trigger-conditions:
   - sprint.started (phase=D)
 entry-points: [EP-0, EP-D, EP-G]
 primary-outputs: [Phase D Feedback Record, Initial Environment Provisioning Catalog draft]
+complexity-class: standard
 version: 1.0.0
 ---
 
