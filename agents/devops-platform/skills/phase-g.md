@@ -1,3 +1,22 @@
+---
+skill-id: DO-PHASE-G
+agent: DO
+name: phase-g
+display-name: Phase G — Implementation Governance (Delivery and Deployment)
+invoke-when: >
+  Phase F gate has passed and each Solution Sprint starts; DO provisions environments,
+  configures and runs CI/CD pipelines, and produces Deployment Records for every
+  deployment event throughout Phase G.
+trigger-phases: [G]
+trigger-conditions:
+  - gate.evaluated (from_phase=F, result=passed)
+  - sprint.started (phase=G, sprint-type=solution)
+  - handoff.created (handoff-type=architecture-contract, to=devops-platform)
+entry-points: [EP-0, EP-D, EP-E, EP-F, EP-G]
+primary-outputs: [Deployment Records, CI/CD pipeline configuration, IaC code, Infrastructure compliance contribution]
+version: 1.0.0
+---
+
 # Skill: Phase G — Implementation Governance (Delivery and Deployment)
 
 **Agent:** DevOps / Platform Engineer  

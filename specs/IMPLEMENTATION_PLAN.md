@@ -268,6 +268,13 @@ Every skill file must include: `## Inputs Required`, `## Knowledge Adequacy Chec
 - Fixed ALG-014 misuse: SwA phase-h.md Step 3b.3 and DE phase-g.md now use ALG-006 for general mid-sprint change conflicts; ALG-014 reserved for Safety-Critical change + CSCO unavailable
 - All Stage 3 skill files require retroactive addition of discovery scan Step 0 (per discovery-protocol.md §6) — tracked as first item of Stage 5 clean-up
 
+**Personality layer added (pre-Stage 4, 2026-04-02):**
+- `framework/agent-personalities.md` — master framework: L&L + VSM theoretical basis, role taxonomy, 9 personality profiles (7 from specs + PM and QA derived), productive tension protocol, inter-role tension map, skill file requirements
+- Added Authoring Rule #13 to `CLAUDE.md` — §11 personality section required in every AGENT.md
+- Added `## 11. Personality & Behavioral Stance` to all 6 Stage-3 AGENT.md files (SA, SwA, DevOps, Dev, QA, PM)
+- Added `### Personality-Aware Conflict Engagement` subsections to 3 high-tension skill feedback loops: `implementing-developer/skills/phase-g.md`, `software-architect/skills/phase-g-governance.md`, `devops-platform/skills/phase-d.md`
+- Stage 4 agents (PO, Sales, CSCO) must also receive §11 sections when authored (personality specs already exist in `specs/agent-personalities/` for all three)
+
 ---
 
 ### Stage 4 — Framing Layer Agents
@@ -290,25 +297,117 @@ Every skill file must include: `## Inputs Required`, `## Knowledge Adequacy Chec
 
 ---
 
-### Stage 5 — Cross-Cutting Skills & Integration
+### Stage 5 — Python Implementation Layer
+
+> Implements the specs defined in `framework/agent-runtime-spec.md` and `framework/orchestration-topology.md`. **Read those documents before authoring any src/ file.** Architecture: LangGraph outer loop (ADM phase workflow) + PydanticAI inner loop (per-agent invocations) + EventStore (canonical state persistence).
+
+#### 5a — EventStore completion
+
+- [ ] **`src/events/replay.py`**: implement full state machine — process each event type → update `WorkflowState`; handle all 10+ event types (phase, cycle, gate, sprint, artifact, handoff, cq, algedonic, source)
+- [ ] **`src/events/export.py`**: implement `write_event_yaml()` with full PyYAML serialisation; implement `import_from_yaml()` for disaster recovery round-trip
+- [ ] **`src/events/migrations/`**: Alembic migration baseline — `alembic.ini` and initial migration script for the events + snapshots tables
+- [ ] **`EventStore.check_integrity()`**: validate JSON payloads, sequence gaps, YAML vs SQLite consistency check
+
+#### 5b — Agent implementation layer
+
+> Governed by `framework/agent-runtime-spec.md`. Each agent is a PydanticAI `Agent[AgentDeps, str | PMDecision]` built via `build_agent()`.
+
+- [ ] **`src/agents/deps.py`**: `AgentDeps` dataclass (engagement_id, event_store, active_skill_id, workflow_state, engagement_base_path, framework_path)
+- [ ] **`src/agents/base.py`**: `build_agent(agent_id)` factory — layered system prompt assembly (Layer 1: `system-prompt-identity` from frontmatter; Layer 2: §11 personality from AGENT.md; Layer 3: active skill via `@agent.instructions`); `AgentSpec.load(agent_id)` YAML frontmatter parser
+- [ ] **`src/agents/skill_loader.py`**: `SkillLoader.load_instructions(skill_id)` — parses skill Markdown file, extracts included sections (Inputs Required, Steps, Algedonic Triggers, Feedback Loop, Outputs); excludes Knowledge Adequacy Check; returns single concatenated string ≤700 tokens
+- [ ] **`src/agents/tools/`**: tool implementations (all tools described in `framework/agent-runtime-spec.md §6`):
+  - `universal_tools.py` — read_artifact, query_event_store, emit_event, raise_cq, raise_algedonic, read_framework_doc
+  - `write_tools.py` — per-agent path-constrained write tools (RepositoryBoundaryError on violation → ALG-007)
+  - `target_repo_tools.py` — read_target_repo (DE, DO, SwA EP-G), write_target_repo (DE), execute_pipeline (DO)
+  - `pm_tools.py` — invoke_specialist (agent-as-tool pattern), batch_cqs, evaluate_gate, record_decision
+- [ ] **`src/agents/project_manager.py`**: PM agent with `result_type=PMDecision`; all PM skills loaded via SkillLoader
+- [ ] **`src/agents/solution_architect.py`**: SA agent; Discovery Scan tool registered; all SA skills loadable
+- [ ] **`src/agents/software_architect.py`**: SwA agent; Reverse Architecture Reconstruction support for EP-G
+- [ ] **`src/agents/devops_platform.py`**: DO agent; pipeline execution tools
+- [ ] **`src/agents/implementing_developer.py`**: DE agent; target-repo write tools
+- [ ] **`src/agents/qa_engineer.py`**: QA agent; Compliance Assessment co-production tools
+- [ ] **`src/agents/__init__.py`**: `AGENT_REGISTRY: dict[str, Agent]` — pre-built agent instances for all roles
+
+#### 5c — Orchestration layer
+
+> Governed by `framework/orchestration-topology.md`. LangGraph graph with PM supervisor + specialist nodes.
+
+- [ ] **`src/orchestration/graph_state.py`**: `SDLCGraphState` TypedDict — exactly as specified in orchestration-topology.md §3
+- [ ] **`src/orchestration/pm_decision.py`**: `PMDecision` Pydantic model — PM's structured output (next_action, specialist_id, skill_id, task_description, reasoning, gate_id)
+- [ ] **`src/orchestration/routing.py`**: all routing functions — `route_from_pm`, `route_after_specialist`, `route_after_gate`, `route_after_cq`, `route_after_algedonic`, `route_after_sprint_close`; algedonic bypass check in every routing function
+- [ ] **`src/orchestration/nodes.py`**: all node implementations — `pm_node` (PM deliberative reasoning); `sa_node`, `swa_node`, `do_node`, `de_node`, `qa_node` (each calls `invoke_specialist` via PM tools); `gate_check_node`, `cq_user_node`, `algedonic_handler_node`, `sprint_close_node`, `engagement_complete_node`
+- [ ] **`src/orchestration/graph.py`**: `build_sdlc_graph()` — exactly as specified in orchestration-topology.md §4.3
+- [ ] **`src/orchestration/session.py`**: `EngagementSession` — top-level entry point; loads engagements-config.yaml; reconstructs `SDLCGraphState` from EventStore on startup; resumes graph execution; handles CQ user interaction loop
+- [ ] **`src/orchestration/promotion.py`**: Enterprise Promotion workflow — implements `repository-conventions.md §12`
+- [ ] **`src/orchestration/user_interaction.py`**: CQ surface and answer ingestion — batches CQs, presents to user, routes answers back to raising agents via EventStore `cq.answered` events
+
+#### 5d — Source adapters
+
+- [ ] **`src/sources/base.py`**: adapter base class — `SourceAdapter.query(query: str) → str`; all queries emit `source.queried` EventStore event; adapter is read-only
+- [ ] **`src/sources/confluence.py`**, **`src/sources/jira.py`**, **`src/sources/git_source.py`**: external source implementations; wired to `external-sources/<id>.config.yaml`
+- [ ] **`src/sources/target_repo.py`**: local clone manager for target project repository; read path for all agents; write path for DE only; never commits framework files into target repo
+
+#### 5e — Cross-cutting skill docs
 
 - [ ] Stakeholder communication sub-skills for PM, PO, SA
 - [ ] Feedback loop protocol documents (per role-pair)
-- [ ] Retrospective / knowledge capture skill (PM)
-- [ ] Phase H change management skills (SA, SwA/PE, CSCO)
-- [ ] **Complete `src/events/` EventStore implementation:**
-  - All payload models already stubbed; implement full field sets and validation (all 10 model files)
-  - `src/events/replay.py`: implement full state machine (process each event type → update WorkflowState)
-  - `src/events/export.py`: implement `write_event_yaml()` with full PyYAML serialisation and `import_from_yaml()` for disaster recovery
-  - Alembic migration baseline (`src/events/migrations/`): create `alembic.ini` and initial migration script
-  - `EventStore.check_integrity()`: full validation of JSON payloads, sequence gaps, and YAML vs SQLite consistency check
-- [ ] External source adapter framework: `src/sources/` — adapter base class + implementations for Confluence, Jira, Git (read-only external sources); all queries emit `source.queried` events; wired to `external-sources/` configs
-- [ ] Target project repository adapter: `src/sources/target_repo.py` — manages local clone of target project; provides read (all agents) and read-write (implementing developer, devops) access; reads access config from engagement profile; never commits framework files into target repo
-- [ ] PydanticAI agent wrappers: one Python module per agent in `src/agents/`
-- [ ] Orchestration layer: `src/orchestration/` — sprint runner, handoff event bus, algedonic signal handler, **CQ event bus** (routes CQs to user interface and routes answers back to raising agents)
-- [ ] Enterprise Promotion workflow: `src/orchestration/promotion.py` — implements §12 of `repository-conventions.md`
-- [ ] User interaction layer: `src/orchestration/user-interaction.md` — specifies how CQs are surfaced to the user (batched, structured, prioritised) and how answers are ingested and routed
-- [ ] Commit as `stage-5-cross-cutting`
+- [ ] Phase H change management sub-skills retroactive update (SA, SwA/PE, CSCO)
+- [ ] Retroactive: add discovery scan Step 0 to all Stage 3 skill files (tracked since Stage 3 review)
+
+- [ ] Commit as `stage-5-python-implementation`
+
+---
+
+### Stage 5.5 — Engagement Dashboard (Local Web Server)
+
+> Lightweight local web server providing users with a readable, explorable view of engagement state, SDLC progress, produced artifacts, and agent activity. Runs alongside the Python multi-agent system; reads EventStore and work-repositories; no write access.
+
+**Requirement:** Users need to efficiently and intelligibly view and explore: what has been produced, where the project is in the SDLC, what is available to review, and the current state of all artifacts and agent activity.
+
+**Architecture:**
+
+- **Server:** Python `FastAPI` (already in the Python ecosystem; zero additional dependencies beyond what Stage 5 introduces). Single file: `src/dashboard/server.py`. Started with `python -m src.dashboard.server --engagement <id>`.
+- **Data sources (read-only):**
+  - `engagements/<id>/workflow.db` — EventStore (via `EventStore.replay()` to get `WorkflowState`)
+  - `engagements/<id>/work-repositories/*/` — markdown artifact files
+  - `engagements/<id>/clarification-log/`, `handoff-log/`, `algedonic-log/`
+  - `framework/agent-index.md` — for agent/skill display metadata
+- **Rendering:** Server-side HTML with Jinja2 templates; no JavaScript framework required. Markdown rendered to HTML via `markdown-it-py` (lightweight, no build step).
+- **No auth:** Local-only server (`127.0.0.1`); not exposed to network. No authentication needed.
+
+**Views:**
+
+| View | URL | Content |
+|---|---|---|
+| Engagement Overview | `/` | Engagement ID, entry point, current phase, sprint number, gate status summary |
+| SDLC Progress | `/progress` | ADM phase timeline; completed/active/pending phases with gate outcomes; current sprint plan |
+| Artifact Browser | `/artifacts` | Tree view by work-repository; each artifact shows: status (draft/baselined), version, agent owner, last updated; click to view rendered markdown |
+| Artifact Detail | `/artifacts/<path>` | Full rendered markdown content of any artifact; shows frontmatter metadata, version history links |
+| Event Log | `/events` | Chronological event stream from EventStore (paginated); filter by event type, agent, phase |
+| CQ Log | `/cqs` | Open and resolved Clarification Requests; shows routing target, blocking status, answer |
+| Algedonic Log | `/algedonic` | Algedonic signals: trigger ID, severity, status (active/resolved), escalation target |
+| Handoff Log | `/handoffs` | Inter-agent handoffs: from, to, artifact, version, acknowledged status |
+| Agent Status | `/agents` | Per-agent status: active phase, last event, open CQs, pending handoffs |
+
+**Implementation tasks:**
+
+- [ ] `src/dashboard/__init__.py`
+- [ ] `src/dashboard/server.py` — FastAPI app, route definitions, startup (reads engagement ID from CLI arg or `engagements-config.yaml` default)
+- [ ] `src/dashboard/state.py` — `EngagementSnapshot` dataclass: hydrated from `EventStore.replay()` + filesystem scan of work-repositories; refreshed on each request (no background polling)
+- [ ] `src/dashboard/templates/` — Jinja2 HTML templates: `base.html`, `overview.html`, `progress.html`, `artifacts.html`, `artifact_detail.html`, `events.html`, `cqs.html`, `algedonic.html`, `handoffs.html`, `agents.html`
+- [ ] `src/dashboard/markdown_renderer.py` — renders `.md` files to safe HTML using `markdown-it-py`; strips any embedded HTML; respects YAML frontmatter (displays as metadata table, not in body)
+- [ ] `src/dashboard/static/` — minimal CSS only (no JavaScript). Single `style.css` — readable, print-friendly, no build step.
+- [ ] `docs/dashboard.md` — one-page usage guide: how to start the server, what each view shows, how to configure the engagement ID
+
+**Constraints:**
+
+- Dashboard is strictly read-only. It never writes to EventStore, work-repositories, or any engagement file.
+- It does not invoke agents, emit events, or trigger any workflow action.
+- It must work with a partially-complete engagement (some phases not yet run, some artifacts missing) — absent artifacts display as "not yet produced."
+- Startup must complete in under 5 seconds for engagements with up to 500 events and 100 artifacts.
+- No external network calls. All data comes from the local filesystem and SQLite.
+
+**Commit as `stage-5.5-dashboard`**
 
 ---
 
@@ -325,7 +424,7 @@ Every skill file must include: `## Inputs Required`, `## Knowledge Adequacy Chec
 
 ## Current State & Immediate Next Actions
 
-**Stages 1, 2, and 3 are complete** (Stage 3 pending final commit). Do not re-scaffold directories or re-author any existing file without first reading it.
+**Stages 1, 2, and 3 are complete.** Pre-Stage-4 additions are complete (personality layer + discoverability layer). Do not re-scaffold directories or re-author any existing file without first reading it.
 
 **Stage 3 completion state:**
 - `framework/discovery-protocol.md` — authored (discovery-first protocol for all agents)
@@ -344,17 +443,20 @@ Three agents remain before Stage 4 is complete. Author in this order:
 - Owns Requirements Register, Business Scenarios, Requirements Traceability Matrix
 - Collaborates with SA (requirements → architecture traceability); SM (market input); PM (sprint planning input)
 - Skills: `phase-a.md`, `phase-b.md`, `phase-h.md`, `requirements-management.md`, `stakeholder-communication.md`
+- **Personality:** Framing (Value) — spec at `specs/agent-personalities/product-owner.md`; key tensions with SA (value-now vs coherence), CSCO (market opportunity vs risk control); §11 required
 
 **2. Sales & Marketing Manager (`agents/sales-marketing/`)**
 - Primary phases: A (market research input)
 - Owns Market Analysis, Business Scenarios
 - Collaborates with PO (requirements validation); SA (business drivers)
 - Skills: `phase-a-market-research.md`, `phase-a-swot.md`, `requirements-management-feedback.md`
+- **Personality:** Framing (Market) — spec at `specs/agent-personalities/sales-marketing-manager.md`; key tensions with SA/SwA (market ambition vs feasibility constraints); §11 required
 
 **3. Chief Safety & Compliance Officer (`agents/csco/`)**
 - Most complex Stage 4 agent — gate authority on every phase
 - Owns Safety Constraint Overlay (all phase updates), Safety Retrospective Assessment, CSCO Spot-check Record
 - Skills: `stamp-stpa-methodology.md`, `gate-phase-a.md`, `gate-phase-b.md`, `gate-phase-c.md`, `gate-phase-d.md`, `gate-phase-g.md`, `gate-phase-h.md`, `incident-response.md`
+- **Personality:** Integrator (Safety) — spec at `specs/agent-personalities/safety-engineer--chief-compliance-officer.md`; key tensions with PO/Sales (risk control vs velocity), Dev/SwA (safety requirements vs implementation expedience); §11 required; gate skills must include `### Personality-Aware Conflict Engagement` subsections
 
 ### Key decisions already made (do not re-litigate)
 - `workflow.db` is **git-tracked** (canonical EventStore). YAML in `workflow-events/` is a projection. See `framework/architecture-repository-design.md §4.2`.

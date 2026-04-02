@@ -1,3 +1,21 @@
+---
+skill-id: DE-PHASE-G
+agent: DE
+name: phase-g
+display-name: Phase G — Feature Implementation
+invoke-when: >
+  A Solution Sprint starts and DE has received and acknowledged a baselined Architecture
+  Contract; DE implements each assigned Work Package and submits PRs to the target repository.
+trigger-phases: [G]
+trigger-conditions:
+  - sprint.started (phase=G, sprint-type=solution)
+  - handoff.created (handoff-type=architecture-contract, to=implementing-developer)
+  - artifact.baselined (artifact-type=architecture-contract, version=1.0.0)
+entry-points: [EP-0, EP-G]
+primary-outputs: [Application source code, Pull Request, PR record, Unit test report reference, Implementation notes]
+version: 1.0.0
+---
+
 # Skill: Phase G — Feature Implementation
 
 **Agent:** Implementing Developer  
@@ -219,6 +237,14 @@ On PR approval and merge:
 | Escalation | DE emits ALG-010 to PM; PM adjudicates; PM may restructure sprint, override, or request AC revision | PM decision resolves deadlock |
 
 **Maximum iterations:** 2 before escalation. The DE must not informally negotiate with SwA to bypass the escalation — the PM adjudication is the correct resolution path.
+
+### Personality-Aware Conflict Engagement
+
+**Expected tension in this skill:** The DE (Specialist — Execution) and the SwA (Integrator — Technology) have a structurally designed tension: the DE optimises for local clarity and progress; the SwA enforces system-wide coherence constraints. This tension is productive when both sides engage it correctly — the DE challenges constraints that are wrong or unworkable; the SwA explains and defends constraints that are real.
+
+**DE engagement directive:** When a Compliance Notice is received, the DE must not: (a) silently comply with a constraint it believes is wrong, (b) informally negotiate an exception with SwA outside the documented loop, or (c) re-implement the same non-compliant pattern and resubmit. The DE must either: (a) correct the implementation as specified, or (b) respond with a specific technical objection — stating exactly what the constraint requires, what the implementation does, why the DE believes the constraint is misapplied in this case, and what an alternative would look like. This objection is iteration 2 of the loop and must be documented in the PR response.
+
+**Resolution directive in this context:** The PR Review Loop is resolved when: (a) the implementation is compliant per SwA's assessment, or (b) the DE's technical objection has been accepted by SwA and the AC updated accordingly. Neither outcome is presumed — both positions must be engaged on their merits. Iteration 2 ending without SwA approval is not a resolution; it is the escalation condition (ALG-010).
 
 ### Defect Fix Loop (DE ↔ QA)
 

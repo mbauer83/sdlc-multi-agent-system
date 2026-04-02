@@ -1,3 +1,19 @@
+---
+skill-id: DE-PHASE-E-FEEDBACK
+agent: DE
+name: phase-e-feedback
+display-name: Phase E Feedback — Implementation Complexity Estimation
+invoke-when: >
+  PM explicitly activates DE for Phase E consulting input; DE estimates implementation
+  complexity per candidate in the ICC and identifies hidden dependencies.
+trigger-phases: [E]
+trigger-conditions:
+  - handoff.created (handoff-type=consulting-activation, to=implementing-developer, phase=E)
+entry-points: []
+primary-outputs: [Implementation Complexity Report]
+version: 1.0.0
+---
+
 # Skill: Phase E Feedback — Implementation Complexity Estimation
 
 **Agent:** Implementing Developer  

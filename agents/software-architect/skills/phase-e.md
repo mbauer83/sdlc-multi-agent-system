@@ -1,3 +1,21 @@
+---
+skill-id: SwA-PHASE-E
+agent: SwA
+name: phase-e
+display-name: Phase E — Opportunities and Solutions
+invoke-when: >
+  Phase D gate has passed and the Technology Architecture is baselined at 1.0.0; Phase E
+  Architecture Sprint starts and SwA begins consolidated gap analysis and candidate enumeration.
+trigger-phases: [E]
+trigger-conditions:
+  - gate.evaluated (from_phase=D, result=passed)
+  - sprint.started (phase=E)
+  - artifact.baselined (artifact-type=technology-architecture, version=1.0.0)
+entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-E]
+primary-outputs: [Gap Analysis Matrix, Implementation Candidate Catalog, Transition Architecture plateau outline]
+version: 1.0.0
+---
+
 # Skill: Phase E — Opportunities and Solutions
 
 **Agent:** Software Architect / Principal Engineer  

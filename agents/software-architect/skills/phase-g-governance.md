@@ -1,3 +1,21 @@
+---
+skill-id: SwA-PHASE-G
+agent: SwA
+name: phase-g-governance
+display-name: Phase G — Implementation Governance
+invoke-when: >
+  Phase F gate has passed and each Solution Sprint starts; SwA authors the Architecture
+  Contract, reviews PRs for compliance, and issues Compliance Notices throughout Phase G.
+trigger-phases: [G]
+trigger-conditions:
+  - gate.evaluated (from_phase=F, result=passed)
+  - sprint.started (phase=G, sprint-type=solution)
+  - handoff.created (handoff-type=pr-ready-for-review, to=software-architect)
+entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-E, EP-F, EP-G]
+primary-outputs: [Architecture Contract, Architecture Compliance Notices, Compliance Assessment contribution]
+version: 1.0.0
+---
+
 # Skill: Phase G — Implementation Governance
 
 **Agent:** Software Architect / Principal Engineer  
@@ -239,6 +257,14 @@ G-5.3 Cast gate vote: emit `gate.vote_cast` with `gate: G-exit`, `vote: approved
 - **Termination**: Non-compliance resolved; CN-nnn status set to `resolved`.
 - **Maximum iterations**: 2. If the iteration-2 resubmission is still non-compliant, escalate to PM as ALG-008 (S2) with specific statement of what remains non-compliant. PM adjudicates within the current sprint.
 - **Escalation path**: ALG-008 → PM reviews both positions; PM may mandate acceptance with documented waiver (recorded in AC §3.7 under "exceptions") or may require a third remediation. If PM mandate conflicts with a safety constraint, CSCO is engaged immediately.
+
+### Personality-Aware Conflict Engagement
+
+**Expected tension in this skill:** The SwA (Integrator — Technology) and the DE/DO (Specialists) have a structurally designed tension: the SwA maintains conceptual integrity; the specialists surface what is locally feasible and correct. The compliance loop is not a one-way correction mechanism — it is a dialogue in which the specialist's implementation experience may reveal that an architecture constraint is wrong.
+
+**SwA engagement directive:** A Compliance Notice must contain: (a) the specific AC clause that is violated (AC-ID), (b) the specific implementation behaviour that violates it, and (c) a specific correction requirement. A CN that says "this does not follow clean architecture principles" without a specific AC reference is invalid. When the DE or DO responds with a technical objection, the SwA must engage the argument — if the argument has merit (the constraint was too broadly stated, misapplied in this context, or was not actually required), the SwA revises the AC and documents the revision as a CN resolution. If the argument does not have merit, the SwA restates the requirement with the specific technical reason the objection does not hold. The SwA does not simply re-issue the CN without engaging the objection.
+
+**Resolution directive in this context:** The Compliance Remediation Loop is resolved when: (a) the implementation is demonstrably compliant per a specific AC-ID and the CN is marked resolved, or (b) the AC is revised such that the implementation is now compliant and the revision is baselined. A CN that is closed by ignoring the specialist's objection, rather than engaging it, is a process violation.
 
 ### Compliance Assessment Co-Production Loop (SwA ↔ QA)
 

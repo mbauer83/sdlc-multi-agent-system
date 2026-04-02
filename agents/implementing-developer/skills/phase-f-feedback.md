@@ -1,3 +1,19 @@
+---
+skill-id: DE-PHASE-F-FEEDBACK
+agent: DE
+name: phase-f-feedback
+display-name: Phase F Feedback — Implementation Dependency Validation
+invoke-when: >
+  PM explicitly activates DE for Phase F consulting input; DE validates the Implementation
+  Plan's technical sequencing and identifies implicit implementation dependencies.
+trigger-phases: [F]
+trigger-conditions:
+  - handoff.created (handoff-type=consulting-activation, to=implementing-developer, phase=F)
+entry-points: []
+primary-outputs: [Implementation Dependency Validation]
+version: 1.0.0
+---
+
 # Skill: Phase F Feedback — Implementation Dependency Validation
 
 **Agent:** Implementing Developer  

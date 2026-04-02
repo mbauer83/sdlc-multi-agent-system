@@ -1,3 +1,21 @@
+---
+skill-id: SA-REQ-MGMT
+agent: SA
+name: requirements-management
+display-name: Requirements Management (Cross-Phase)
+invoke-when: >
+  Activated at every phase boundary (A, B, C, H) to verify traceability, or immediately when
+  PO baselines a new RR version and SA-owned artifacts may be affected.
+trigger-phases: [req-mgmt, A, B, C, H]
+trigger-conditions:
+  - artifact.baselined (artifact-type=requirements-register)
+  - sprint.closed (any architecture sprint)
+  - cq.answered (RR-related clarifications resolved)
+entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-E, EP-F, EP-G, EP-H]
+primary-outputs: [RTM Architecture Column Contribution]
+version: 1.0.0
+---
+
 # Skill: Requirements Management (Cross-Phase)
 
 **Agent:** Solution Architect  

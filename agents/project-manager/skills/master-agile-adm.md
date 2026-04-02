@@ -1,3 +1,25 @@
+---
+skill-id: PM-MASTER
+agent: PM
+name: master-agile-adm
+display-name: Master Agile ADM Orchestration
+invoke-when: >
+  Activated once at engagement start and remains active throughout; orchestrates all phases,
+  sprint planning, gate evaluation, CQ routing, and algedonic signal handling.
+trigger-phases: [Prelim, A, B, C, D, E, F, G, H, req-mgmt]
+trigger-conditions:
+  - cycle.initiated
+  - sprint.planned
+  - sprint.started
+  - gate.evaluated
+  - cq.raised
+  - alg.raised
+  - artifact.baselined (any)
+entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-E, EP-F, EP-G, EP-H]
+primary-outputs: [Engagement Profile, Sprint kickoff records, Sprint closeout records, Gate records, CQ records, Algedonic records]
+version: 1.0.0
+---
+
 # Skill: Master Agile ADM Orchestration
 
 **Agent:** Project Manager  

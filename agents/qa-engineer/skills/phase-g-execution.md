@@ -1,3 +1,21 @@
+---
+skill-id: QA-PHASE-G
+agent: QA
+name: phase-g-execution
+display-name: Phase G — Test Execution and Compliance Assessment
+invoke-when: >
+  Each Solution Sprint starts and QA has received a PR-ready handoff from DE and a Deployment
+  Record confirming staging deployment; QA executes tests and produces Test Execution Reports.
+trigger-phases: [G]
+trigger-conditions:
+  - sprint.started (phase=G, sprint-type=solution)
+  - handoff.created (handoff-type=pr-ready-for-review, to=qa-engineer)
+  - artifact.baselined (artifact-type=deployment-record)
+entry-points: [EP-0, EP-G]
+primary-outputs: [Test Execution Report, Defect Register, Compliance Assessment contribution]
+version: 1.0.0
+---
+
 # Skill: Phase G — Test Execution and Compliance Assessment
 
 **Agent:** QA Engineer  

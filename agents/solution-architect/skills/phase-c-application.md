@@ -1,3 +1,21 @@
+---
+skill-id: SA-PHASE-C-APP
+agent: SA
+name: phase-c-application
+display-name: Phase C — Application Architecture
+invoke-when: >
+  Phase B gate has passed and the Phase C Architecture Sprint starts; produces the Application
+  Architecture (AA) concurrently with the Data Architecture (DA sub-track).
+trigger-phases: [C]
+trigger-conditions:
+  - gate.evaluated (from_phase=B, result=passed)
+  - sprint.started (phase=C)
+  - artifact.baselined (artifact-type=business-architecture, version=1.0.0)
+entry-points: [EP-0, EP-A, EP-B, EP-C]
+primary-outputs: [Application Architecture, Interface Catalog, Application Interaction Diagrams]
+version: 1.0.0
+---
+
 # Skill: Phase C — Application Architecture
 
 **Agent:** Solution Architect  

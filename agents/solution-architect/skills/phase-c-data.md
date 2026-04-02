@@ -1,3 +1,21 @@
+---
+skill-id: SA-PHASE-C-DATA
+agent: SA
+name: phase-c-data
+display-name: Phase C — Data Architecture
+invoke-when: >
+  Phase B gate has passed and the Phase C Architecture Sprint starts; produces the Data
+  Architecture (DA) concurrently with the Application Architecture (AA sub-track).
+trigger-phases: [C]
+trigger-conditions:
+  - gate.evaluated (from_phase=B, result=passed)
+  - sprint.started (phase=C)
+  - artifact.baselined (artifact-type=business-architecture, version=1.0.0)
+entry-points: [EP-0, EP-A, EP-B, EP-C]
+primary-outputs: [Data Architecture, Data Entity Catalog, Logical Data Model, Data Classification Register]
+version: 1.0.0
+---
+
 # Skill: Phase C — Data Architecture
 
 **Agent:** Solution Architect  

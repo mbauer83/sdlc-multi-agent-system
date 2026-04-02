@@ -1,3 +1,21 @@
+---
+skill-id: QA-PHASE-EF
+agent: QA
+name: phase-ef-test-planning
+display-name: Phase E/F — Test Strategy Planning and Baseline
+invoke-when: >
+  Phase C gate has passed and AA and DA are baselined; QA produces Initial Test Strategy in
+  Phase E and finalises it in Phase F after IP is baselined at 1.0.0.
+trigger-phases: [E, F]
+trigger-conditions:
+  - gate.evaluated (from_phase=C, result=passed)
+  - sprint.started (phase=E)
+  - artifact.baselined (artifact-type=implementation-plan, version=1.0.0)
+entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-E, EP-F]
+primary-outputs: [Initial Test Strategy draft, Final Test Strategy, Test Environment Requirements]
+version: 1.0.0
+---
+
 # Skill: Phase E/F — Test Strategy Planning and Baseline
 
 **Agent:** QA Engineer  

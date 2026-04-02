@@ -1,3 +1,21 @@
+---
+skill-id: PM-PHASE-H
+agent: PM
+name: phase-h
+display-name: Phase H — Architecture Change Management
+invoke-when: >
+  A change request arrives from any source (user, Phase G deviation, algedonic resolution);
+  PM creates the Warm-Start Change Record, routes to SA/SwA/CSCO, and manages phase returns.
+trigger-phases: [H]
+trigger-conditions:
+  - alg.resolved (any algedonic that identifies an architectural gap)
+  - handoff.created (handoff-type=phase-g-deviation-report)
+  - sprint.started (phase=H)
+entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-E, EP-F, EP-G, EP-H]
+primary-outputs: [Warm-Start Change Intake Record, Phase Return Scope Statement, Revision Sprint Records]
+version: 1.0.0
+---
+
 # Skill: Phase H — Architecture Change Management
 
 **Agent:** Project Manager  

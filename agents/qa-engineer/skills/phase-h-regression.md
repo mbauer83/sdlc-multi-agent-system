@@ -1,3 +1,20 @@
+---
+skill-id: QA-PHASE-H
+agent: QA
+name: phase-h-regression
+display-name: Phase H — Regression Impact Assessment
+invoke-when: >
+  A Change Record is routed to QA (via PM handoff) requiring assessment of which existing
+  tests must re-run and whether the Test Strategy must be updated.
+trigger-phases: [H]
+trigger-conditions:
+  - handoff.created (handoff-type=change-record-intake, to=qa-engineer)
+  - phase.return-triggered (any affected-artifacts)
+entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-E, EP-F, EP-G, EP-H]
+primary-outputs: [Regression Impact Assessment, Updated Test Strategy]
+version: 1.0.0
+---
+
 # Skill: Phase H — Regression Impact Assessment
 
 **Agent:** QA Engineer  

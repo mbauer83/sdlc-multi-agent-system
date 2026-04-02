@@ -1,3 +1,21 @@
+---
+skill-id: PM-PHASE-G
+agent: PM
+name: phase-g
+display-name: Phase G — Implementation Governance
+invoke-when: >
+  Phase F gate has passed and Solution Sprints begin; PM coordinates each sprint, records
+  Governance Checkpoint Records, tracks compliance assessments, and evaluates the Phase G exit gate.
+trigger-phases: [G]
+trigger-conditions:
+  - gate.evaluated (from_phase=F, result=passed)
+  - sprint.started (phase=G, sprint-type=solution)
+  - artifact.baselined (artifact-type=architecture-contract)
+entry-points: [EP-0, EP-G]
+primary-outputs: [Governance Checkpoint Records, Phase G Exit Gate Record, Sprint log records]
+version: 1.0.0
+---
+
 # Skill: Phase G — Implementation Governance
 
 **Agent:** Project Manager  

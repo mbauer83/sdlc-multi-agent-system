@@ -1,3 +1,21 @@
+---
+skill-id: SwA-PHASE-F
+agent: SwA
+name: phase-f
+display-name: Phase F — Migration Planning
+invoke-when: >
+  Phase E gate has passed and GAM and ICC are both baselined at 1.0.0; Phase F Architecture
+  Sprint starts and SwA produces Transition Architecture Diagrams and technical sequencing input.
+trigger-phases: [F]
+trigger-conditions:
+  - gate.evaluated (from_phase=E, result=passed)
+  - sprint.started (phase=F)
+  - artifact.baselined (artifact-type=implementation-candidate-catalog, version=1.0.0)
+entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-E, EP-F]
+primary-outputs: [Transition Architecture Diagrams, Technical Sequencing Analysis, Environment Provisioning Requirements]
+version: 1.0.0
+---
+
 # Skill: Phase F — Migration Planning
 
 **Agent:** Software Architect / Principal Engineer  

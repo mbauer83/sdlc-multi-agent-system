@@ -1,3 +1,20 @@
+---
+skill-id: DO-PHASE-D
+agent: DO
+name: phase-d
+display-name: Phase D — Technology Architecture Consulting
+invoke-when: >
+  SwA issues a handoff of the TA draft to DevOps for operational feasibility review during
+  Phase D; DO assesses infrastructure feasibility and produces Phase D Feedback Record.
+trigger-phases: [D]
+trigger-conditions:
+  - handoff.created (handoff-type=ta-feasibility-review, to=devops-platform)
+  - sprint.started (phase=D)
+entry-points: [EP-0, EP-D, EP-G]
+primary-outputs: [Phase D Feedback Record, Initial Environment Provisioning Catalog draft]
+version: 1.0.0
+---
+
 # Skill: Phase D — Technology Architecture Consulting
 
 **Agent:** DevOps / Platform Engineer  
@@ -205,6 +222,16 @@ This loop governs the iterative review of the TA draft between DO and SwA. The l
 - **Termination:** Loop terminates when: (a) all Infeasible and High-risk items are resolved and DO records acceptance, or (b) DO and SwA have exchanged 2 iterations and a remaining item cannot be resolved within the current sprint.
 - **Max iterations:** 2 before escalation.
 - **Escalation:** If Infeasible or High-risk items remain unresolved after 2 iterations, DO raises ALG-010 (inter-agent deadlock) to PM for adjudication. PM reviews both positions, applies RACI (SwA is accountable for TA; DO's feasibility concerns are binding input), and records the adjudication decision in `project-repository/decision-log/`.
+
+### Personality-Aware Conflict Engagement
+
+**Expected tension in this skill:** The DO (Specialist — Systems Stabilizer) and the SwA (Integrator — Technology) have a structurally designed tension: the SwA produces a coherent technology architecture from a design perspective; the DO tests it against operational reality. The Phase D feedback loop is the primary mechanism by which operational reality corrects architectural abstraction. This is a productive, necessary function — not an obstruction.
+
+**DO engagement directive:** When the DO raises an Infeasible or High-risk finding, it must include: (a) the specific TA element or decision being challenged (Technology Component ID or ADR reference), (b) the operational evidence or constraint that makes it infeasible or high-risk (observed failure patterns, load profile constraints, infrastructure limitations, vendor lifecycle concerns), and (c) a concrete alternative or question that would resolve the finding. The DO does not raise "this seems risky" without specifics; it raises "TA component TC-005 specifies synchronous database calls from three independent microservices — under the load profile in EPC §2.3, this will produce a database contention bottleneck above 200 concurrent users." That is an Infeasible finding with evidence.
+
+**SwA engagement directive (from DO's perspective):** When the SwA responds to a DO finding, the DO evaluates whether the response engages the specific operational constraint or merely re-states the design intent. A SwA response that explains *why* the design is architecturally sound without addressing the specific operational constraint is not a resolution — the DO should say so in iteration 2 and escalate if unresolved.
+
+**Resolution directive in this context:** The Phase D feedback loop is resolved when: (a) the SwA revises the TA to address the DO's Infeasible finding and the DO confirms the revision resolves the operational constraint, or (b) the DO and SwA agree that the risk is real but acceptable, with the acceptance documented in the relevant ADR under a risk acceptance entry co-signed by PM. A TA that is baselined with unresolved Infeasible findings is a governance violation (triggers ALG-010).
 
 ---
 

@@ -1,3 +1,21 @@
+---
+skill-id: SA-PHASE-A
+agent: SA
+name: phase-a
+display-name: Phase A — Architecture Vision
+invoke-when: >
+  Phase A Architecture Sprint starts (sprint.started emitted) or entry point EP-0/EP-A/EP-B is
+  active and the Architecture Vision artifact does not yet exist at version 1.0.0.
+trigger-phases: [Prelim, A]
+trigger-conditions:
+  - sprint.started (phase=A)
+  - cq.answered (blocking Phase A CQs resolved)
+  - handoff.created (from PM with scoping interview answers)
+entry-points: [EP-0, EP-A, EP-B]
+primary-outputs: [Architecture Vision, Architecture Principles Register, Stakeholder Map]
+version: 1.0.0
+---
+
 # Skill: Phase A — Architecture Vision
 
 **Agent:** Solution Architect  

@@ -1,3 +1,20 @@
+---
+skill-id: SA-PHASE-B
+agent: SA
+name: phase-b
+display-name: Phase B — Business Architecture
+invoke-when: >
+  Phase A gate has passed (gate.evaluated phase=A result=passed) and the Phase B Architecture
+  Sprint starts; or when Architecture Vision is baselined at 1.0.0 and BA does not yet exist.
+trigger-phases: [B]
+trigger-conditions:
+  - gate.evaluated (from_phase=A, result=passed)
+  - sprint.started (phase=B)
+entry-points: [EP-0, EP-A, EP-B]
+primary-outputs: [Business Architecture, Business Process Catalog, Value Stream Map, Organisational Model]
+version: 1.0.0
+---
+
 # Skill: Phase B — Business Architecture
 
 **Agent:** Solution Architect  

@@ -1,3 +1,21 @@
+---
+skill-id: SwA-PHASE-H
+agent: SwA
+name: phase-h
+display-name: Phase H — Architecture Change Management (Technology Layer)
+invoke-when: >
+  SA routes a Change Record to SwA via handoff for technology-layer impact assessment; or a
+  phase.return-triggered event identifies TA or AC as affected artifacts.
+trigger-phases: [H]
+trigger-conditions:
+  - handoff.created (handoff-type=architecture-change-impact, to=software-architect)
+  - phase.return-triggered (affected-artifacts includes TA or AC)
+  - sprint.started (phase=H)
+entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-E, EP-F, EP-G, EP-H]
+primary-outputs: [Technology Impact Assessment, Updated Technology Architecture, Updated Architecture Contract]
+version: 1.0.0
+---
+
 # Skill: Phase H — Architecture Change Management (Technology Layer)
 
 **Agent:** Software Architect / Principal Engineer  

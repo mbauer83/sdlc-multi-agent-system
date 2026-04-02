@@ -1,3 +1,21 @@
+---
+skill-id: DO-PHASE-E
+agent: DO
+name: phase-e
+display-name: Phase E — Delivery Complexity Assessment
+invoke-when: >
+  Phase E Architecture Sprint starts and SwA has issued the Gap Analysis Matrix and
+  Implementation Candidate Catalog; DO assesses deployment complexity and identifies
+  critical-path infrastructure candidates.
+trigger-phases: [E]
+trigger-conditions:
+  - sprint.started (phase=E)
+  - handoff.created (handoff-type=gap-analysis-matrix, to=devops-platform)
+entry-points: [EP-0, EP-D, EP-E, EP-G]
+primary-outputs: [Phase E Delivery Complexity Assessment, Delivery Complexity Estimate summary, EPC draft v0.2.0]
+version: 1.0.0
+---
+
 # Skill: Phase E — Opportunities and Solutions (Delivery Complexity Assessment)
 
 **Agent:** DevOps / Platform Engineer  

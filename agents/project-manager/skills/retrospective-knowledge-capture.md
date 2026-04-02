@@ -1,3 +1,21 @@
+---
+skill-id: PM-RETRO
+agent: PM
+name: retrospective-knowledge-capture
+display-name: Retrospective and Knowledge Capture
+invoke-when: >
+  Activated at every sprint close for a Sprint Retrospective, at every phase gate for a Gate
+  Observation, and once at engagement close for the full Engagement Retrospective and promotion review.
+trigger-phases: [A, B, C, D, E, F, G, H, req-mgmt]
+trigger-conditions:
+  - sprint.closed (any)
+  - gate.evaluated (any)
+  - engagement.closed
+entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-E, EP-F, EP-G, EP-H]
+primary-outputs: [Sprint Retrospective Note, Engagement Retrospective, Lessons Learned, Promotion Request Records]
+version: 1.0.0
+---
+
 # Skill: Retrospective and Knowledge Capture
 
 **Agent:** Project Manager  

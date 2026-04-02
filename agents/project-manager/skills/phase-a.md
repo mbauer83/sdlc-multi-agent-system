@@ -1,3 +1,21 @@
+---
+skill-id: PM-PHASE-A
+agent: PM
+name: phase-a
+display-name: Phase A Coordination — Architecture Vision
+invoke-when: >
+  Entry point is assessed and PM must run the Scoping Interview (EP-0) or validate warm-start
+  artifacts (EP-A/B); coordinates SA through Phase A and evaluates the A→B gate.
+trigger-phases: [Prelim, A]
+trigger-conditions:
+  - cycle.initiated (entry-point=EP-0)
+  - sprint.started (phase=A)
+  - gate.vote_cast (phase_from=A, from=solution-architect)
+entry-points: [EP-0, EP-A, EP-B]
+primary-outputs: [Scoping Interview/Entry Assessment Report, Statement of Architecture Work, Phase A Gate Record]
+version: 1.0.0
+---
+
 # Skill: Phase A Coordination — Architecture Vision
 
 **Agent:** Project Manager  

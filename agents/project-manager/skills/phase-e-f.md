@@ -1,3 +1,21 @@
+---
+skill-id: PM-PHASE-EF
+agent: PM
+name: phase-e-f
+display-name: Phase E/F — Opportunities, Solutions and Migration Planning
+invoke-when: >
+  Phase D gate has passed; PM is accountable for Work Package Catalog, Risk Register, and
+  Architecture Roadmap in Phase E, and for the Implementation Plan in Phase F.
+trigger-phases: [E, F]
+trigger-conditions:
+  - gate.evaluated (from_phase=D, result=passed)
+  - sprint.started (phase=E)
+  - sprint.started (phase=F)
+entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-E, EP-F]
+primary-outputs: [Work Package Catalog, Risk Register, Architecture Roadmap, Implementation Plan, Solution Sprint Plan]
+version: 1.0.0
+---
+
 # Skill: Phase E/F — Opportunities, Solutions & Migration Planning
 
 **Agent:** Project Manager  

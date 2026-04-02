@@ -1,3 +1,21 @@
+---
+skill-id: SA-PHASE-H
+agent: SA
+name: phase-h
+display-name: Phase H — Architecture Change Management
+invoke-when: >
+  PM routes a change request to SA via handoff (CR-000 intake), or a phase.return-triggered
+  event identifies SA-owned architecture artifacts (AV, BA, AA, DA) as affected.
+trigger-phases: [H]
+trigger-conditions:
+  - handoff.created (handoff-type=change-record-intake, to=solution-architect)
+  - phase.return-triggered (affected-artifacts includes AV or BA or AA or DA)
+  - sprint.started (phase=H)
+entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-E, EP-F, EP-G, EP-H]
+primary-outputs: [Change Record, Updated Architecture Artifacts]
+version: 1.0.0
+---
+
 # Skill: Phase H — Architecture Change Management
 
 **Agent:** Solution Architect  

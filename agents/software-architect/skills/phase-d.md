@@ -1,3 +1,21 @@
+---
+skill-id: SwA-PHASE-D
+agent: SwA
+name: phase-d
+display-name: Phase D — Technology Architecture
+invoke-when: >
+  Phase C gate has passed and AA and DA are both baselined at 1.0.0; Phase D Architecture
+  Sprint starts and SwA has acknowledged the AA and DA handoffs.
+trigger-phases: [D]
+trigger-conditions:
+  - gate.evaluated (from_phase=C, result=passed)
+  - sprint.started (phase=D)
+  - handoff.created (handoff-type=phase-D-input, to=software-architect)
+entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D]
+primary-outputs: [Technology Architecture, Technology Component Catalog, ADR Register, Infrastructure Diagram, Technology Gap Analysis]
+version: 1.0.0
+---
+
 # Skill: Phase D — Technology Architecture
 
 **Agent:** Software Architect / Principal Engineer  

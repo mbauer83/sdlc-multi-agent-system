@@ -1,3 +1,21 @@
+---
+skill-id: DO-PHASE-F
+agent: DO
+name: phase-f
+display-name: Phase F — Migration Planning (Environment Provisioning)
+invoke-when: >
+  Phase E gate has passed and Phase F Architecture Sprint starts; DO is accountable for
+  baselining the Environment Provisioning Catalog, pipeline design, and deployment runbooks.
+trigger-phases: [F]
+trigger-conditions:
+  - gate.evaluated (from_phase=E, result=passed)
+  - sprint.started (phase=F)
+  - artifact.baselined (artifact-type=technology-architecture, version=1.0.0)
+entry-points: [EP-0, EP-D, EP-E, EP-F, EP-G]
+primary-outputs: [Environment Provisioning Catalog, Pipeline Design Document, Deployment Runbooks]
+version: 1.0.0
+---
+
 # Skill: Phase F — Migration Planning (Environment Provisioning)
 
 **Agent:** DevOps / Platform Engineer  
