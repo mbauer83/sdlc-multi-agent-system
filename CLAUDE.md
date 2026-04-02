@@ -38,7 +38,7 @@ enterprise-repository/           # Organisation-wide architecture data (long-liv
 
 engagements/<id>/                # Per-engagement working directory
   engagement-profile.md          # Entry point, scope, warm-start status
-  workflow.db                    # SQLite event store — canonical, .gitignored
+  workflow.db                    # SQLite event store — canonical, git-tracked binary (NOT gitignored)
   workflow-events/               # YAML audit export — git-tracked; committed at sprint boundaries
   clarification-log/             # CQ records
   handoff-log/                   # Handoff event records

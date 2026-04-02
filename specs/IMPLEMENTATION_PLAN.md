@@ -313,25 +313,50 @@ Every skill file must include: `## Inputs Required`, `## Knowledge Adequacy Chec
 
 ---
 
-## Immediate Next Actions
+## Current State & Immediate Next Actions
 
-```bash
-# 1. Create the repository
-mkdir sdlc-agents && cd sdlc-agents && git init
+**Stages 1 and 2 are complete and committed.** The repository is initialised. Do not re-scaffold directories or re-author any existing file without first reading it — all framework files, schemas, EventStore skeleton, PM agent, and PM skills are present.
 
-# 2. Scaffold the full directory structure
-mkdir -p framework/artifact-schemas
-mkdir -p agents/{sales-marketing,product-owner,solution-architect,software-architect,devops-platform,implementing-developer,qa-engineer,project-manager,csco}/skills
-mkdir -p work-repositories/{architecture-repository,technology-repository,project-repository,safety-repository,delivery-repository,qa-repository,devops-repository}
-mkdir -p src/{agents,orchestration,models}
-mkdir -p tests/synthetic-project
+### Resume at: Stage 3 — Solution Architect
 
-# 3. Create placeholder README files in each work-repository
-# (defines ownership and path governance before any content is added)
+The next agent to author is the **Solution Architect (SA)**. Author in this order:
 
-# 4. Open Claude Code and begin authoring framework/agile-adm-cadence.md
-# using this implementation plan as context
-```
+**1. Read first (before authoring anything):**
+- `framework/raci-matrix.md` — SA owns Architecture Vision, Business Architecture, AA, DA artifacts
+- `framework/artifact-schemas/architecture-vision.schema.md` — the SA's primary Phase A output
+- `framework/artifact-schemas/business-architecture.schema.md` — Phase B output
+- `framework/artifact-schemas/application-architecture.schema.md` and `data-architecture.schema.md` — Phase C outputs
+- `agents/project-manager/AGENT.md` — to understand the PM↔SA interface and what the PM expects from SA
+- `agents/project-manager/skills/master-agile-adm.md` — especially the handoff event protocol
+
+**2. Author `agents/solution-architect/AGENT.md`:**
+- Role: TOGAF-based architecture authority; VSM System 4 (intelligence/sensing)
+- Phase coverage: Primary A, B, C, H; consulting D, E, Requirements Management
+- Repository: `architecture-repository/` (sole writer)
+- Entry-point behaviour for all 7 EPs (warm-start AV for EP-A; Gap Assessment Matrix for EP-B/C; Reverse Arch Reconstruction coordination for EP-G)
+- RACI ownership: AV, BA, AA, DA, Stakeholder Map, Change Record (Phase H)
+- Authority: CAN veto technology decisions that violate architecture principles; CANNOT override CSCO on safety
+
+**3. Author SA skills (in phase order):**
+- `skills/phase-a.md` — Architecture Vision production; Stakeholder Map; SoAW co-authoring with PM; CQ strategy for unknown business context
+- `skills/phase-b.md` — Business Architecture; capability modelling; process decomposition; BA→AA traceability setup
+- `skills/phase-c-application.md` — Application Architecture; component decomposition; interface catalog; ABB specification
+- `skills/phase-c-data.md` — Data Architecture; entity catalog; logical data model; data classification
+- `skills/phase-h.md` — Change Record production; affected-artifact identification; change impact assessment; phase return scope recommendation
+- `skills/requirements-management.md` — consuming RR from PO; traceability maintenance; requirement change detection
+
+**4. Validate SA→SwA handoff contract:**
+- Confirm AA schema sections map cleanly to TA schema's input requirements
+- If any mismatch, update schemas (not skills) first, per authoring rule #2
+
+**5. Commit as `stage-3-solution-architect` then continue with SwA, DevOps, Dev, QA in turn.**
+
+### Key decisions already made (do not re-litigate)
+- `workflow.db` is **git-tracked** (canonical EventStore). YAML in `workflow-events/` is a projection. See `framework/architecture-repository-design.md §4.2`.
+- Framework deploys **one clone per software project**. Target project is a separate git repo in `engagements/<id>/target-repo/` (.gitignored). Framework files never enter target project.
+- `delivery-repository/` holds **delivery metadata only** (PR records, test reports, branch refs). Source code lives in target project repo.
+- Change Record (Phase H) is produced by **SA** (not PM). PM produces intake record only.
+- Algedonic triggers in `algedonic-protocol.md` are the canonical list. Skill files reference them by ID (e.g., ALG-001); they do not redefine them.
 
 ---
 
