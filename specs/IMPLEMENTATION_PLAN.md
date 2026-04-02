@@ -234,29 +234,39 @@ Every skill file must include: `## Inputs Required`, `## Knowledge Adequacy Chec
 
 > Author in dependency order. Each role's skills reference the framework and the previous role's output schemas.
 
+**Additional framework document authored as part of Stage 3:**
+- [x] `framework/discovery-protocol.md` — Discovery-first protocol: five-layer scan (engagement state, enterprise repo, external sources, target-repo, EventStore); gap assessment format; CQ generation rules; annotation conventions; phase-revisit discovery; skill file requirements
+
 **Branch: `agent/solution-architect`**
-- [ ] `agents/solution-architect/AGENT.md`
-- [ ] Skills: `phase-a.md`, `phase-b.md`, `phase-c-application.md`, `phase-c-data.md`, `phase-h.md`, `requirements-management.md`
+- [x] `agents/solution-architect/AGENT.md`
+- [x] Skills: `phase-a.md`, `phase-b.md`, `phase-c-application.md`, `phase-c-data.md`, `phase-h.md`, `requirements-management.md`
 
 **Branch: `agent/software-architect`**
-- [ ] `agents/software-architect/AGENT.md`
-- [ ] Skills: `phase-d.md`, `phase-e.md`, `phase-f.md`, `phase-g-governance.md`, `phase-h.md`
+- [x] `agents/software-architect/AGENT.md`
+- [x] Skills: `phase-d.md`, `phase-e.md`, `phase-f.md`, `phase-g-governance.md`, `phase-h.md`
 
-**Validate SA → SwA/PE handoff contract** (Application Architecture schema ↔ Technology Architecture skill input)
+**SA → SwA handoff contract validated:** AA schema (§3.2–3.9) maps to TA inputs required table (§2) — all APP-nnn identifiers, IFC-nnn interfaces, and safety-relevance flags flow through. DA DE-nnn entities and classification levels drive TA ADR requirements for data store selection. No schema updates required.
 
 **Branch: `agent/devops-platform`**
-- [ ] `agents/devops-platform/AGENT.md`
-- [ ] Skills: `phase-d.md`, `phase-e.md`, `phase-f.md`, `phase-g.md`
+- [x] `agents/devops-platform/AGENT.md`
+- [x] Skills: `phase-d.md`, `phase-e.md`, `phase-f.md`, `phase-g.md`
 
 **Branch: `agent/implementing-developer`**
-- [ ] `agents/implementing-developer/AGENT.md`
-- [ ] Skills: `phase-g.md`, `phase-e-feedback.md`, `phase-f-feedback.md`
+- [x] `agents/implementing-developer/AGENT.md`
+- [x] Skills: `phase-g.md`, `phase-e-feedback.md`, `phase-f-feedback.md`
 
 **Branch: `agent/qa-engineer`**
-- [ ] `agents/qa-engineer/AGENT.md`
-- [ ] Skills: `phase-ef-test-planning.md`, `phase-g-execution.md`, `phase-h-regression.md`
+- [x] `agents/qa-engineer/AGENT.md`
+- [x] Skills: `phase-ef-test-planning.md`, `phase-g-execution.md`, `phase-h-regression.md`
 
-**Merge all stage-3 branches to `stage-3-implementation-chain`**
+**Merge all stage-3 branches to `stage-3-implementation-chain`** — complete
+
+**Post-authoring review findings addressed:**
+- Added `framework/discovery-protocol.md` — the discovery-first, ask-last protocol for all agents
+- Added Authoring Rule #12 to `CLAUDE.md` — discovery before CQs
+- Added phase-revisit handling to SA AGENT.md §10 (consistent with SwA §5.3)
+- Fixed ALG-014 misuse: SwA phase-h.md Step 3b.3 and DE phase-g.md now use ALG-006 for general mid-sprint change conflicts; ALG-014 reserved for Safety-Critical change + CSCO unavailable
+- All Stage 3 skill files require retroactive addition of discovery scan Step 0 (per discovery-protocol.md §6) — tracked as first item of Stage 5 clean-up
 
 ---
 
@@ -315,41 +325,36 @@ Every skill file must include: `## Inputs Required`, `## Knowledge Adequacy Chec
 
 ## Current State & Immediate Next Actions
 
-**Stages 1 and 2 are complete and committed.** The repository is initialised. Do not re-scaffold directories or re-author any existing file without first reading it — all framework files, schemas, EventStore skeleton, PM agent, and PM skills are present.
+**Stages 1, 2, and 3 are complete** (Stage 3 pending final commit). Do not re-scaffold directories or re-author any existing file without first reading it.
 
-### Resume at: Stage 3 — Solution Architect
+**Stage 3 completion state:**
+- `framework/discovery-protocol.md` — authored (discovery-first protocol for all agents)
+- `agents/solution-architect/` — AGENT.md + 6 skills complete
+- `agents/software-architect/` — AGENT.md + 5 skills complete
+- `agents/devops-platform/` — AGENT.md + 4 skills complete
+- `agents/implementing-developer/` — AGENT.md + 3 skills complete
+- `agents/qa-engineer/` — AGENT.md + 3 skills complete
 
-The next agent to author is the **Solution Architect (SA)**. Author in this order:
+### Resume at: Stage 4 — Framing Layer Agents
 
-**1. Read first (before authoring anything):**
-- `framework/raci-matrix.md` — SA owns Architecture Vision, Business Architecture, AA, DA artifacts
-- `framework/artifact-schemas/architecture-vision.schema.md` — the SA's primary Phase A output
-- `framework/artifact-schemas/business-architecture.schema.md` — Phase B output
-- `framework/artifact-schemas/application-architecture.schema.md` and `data-architecture.schema.md` — Phase C outputs
-- `agents/project-manager/AGENT.md` — to understand the PM↔SA interface and what the PM expects from SA
-- `agents/project-manager/skills/master-agile-adm.md` — especially the handoff event protocol
+Three agents remain before Stage 4 is complete. Author in this order:
 
-**2. Author `agents/solution-architect/AGENT.md`:**
-- Role: TOGAF-based architecture authority; VSM System 4 (intelligence/sensing)
-- Phase coverage: Primary A, B, C, H; consulting D, E, Requirements Management
-- Repository: `architecture-repository/` (sole writer)
-- Entry-point behaviour for all 7 EPs (warm-start AV for EP-A; Gap Assessment Matrix for EP-B/C; Reverse Arch Reconstruction coordination for EP-G)
-- RACI ownership: AV, BA, AA, DA, Stakeholder Map, Change Record (Phase H)
-- Authority: CAN veto technology decisions that violate architecture principles; CANNOT override CSCO on safety
+**1. Product Owner (`agents/product-owner/`)**
+- Primary phases: Prelim, A, B, H; consulting C, E, Requirements Management
+- Owns Requirements Register, Business Scenarios, Requirements Traceability Matrix
+- Collaborates with SA (requirements → architecture traceability); SM (market input); PM (sprint planning input)
+- Skills: `phase-a.md`, `phase-b.md`, `phase-h.md`, `requirements-management.md`, `stakeholder-communication.md`
 
-**3. Author SA skills (in phase order):**
-- `skills/phase-a.md` — Architecture Vision production; Stakeholder Map; SoAW co-authoring with PM; CQ strategy for unknown business context
-- `skills/phase-b.md` — Business Architecture; capability modelling; process decomposition; BA→AA traceability setup
-- `skills/phase-c-application.md` — Application Architecture; component decomposition; interface catalog; ABB specification
-- `skills/phase-c-data.md` — Data Architecture; entity catalog; logical data model; data classification
-- `skills/phase-h.md` — Change Record production; affected-artifact identification; change impact assessment; phase return scope recommendation
-- `skills/requirements-management.md` — consuming RR from PO; traceability maintenance; requirement change detection
+**2. Sales & Marketing Manager (`agents/sales-marketing/`)**
+- Primary phases: A (market research input)
+- Owns Market Analysis, Business Scenarios
+- Collaborates with PO (requirements validation); SA (business drivers)
+- Skills: `phase-a-market-research.md`, `phase-a-swot.md`, `requirements-management-feedback.md`
 
-**4. Validate SA→SwA handoff contract:**
-- Confirm AA schema sections map cleanly to TA schema's input requirements
-- If any mismatch, update schemas (not skills) first, per authoring rule #2
-
-**5. Commit as `stage-3-solution-architect` then continue with SwA, DevOps, Dev, QA in turn.**
+**3. Chief Safety & Compliance Officer (`agents/csco/`)**
+- Most complex Stage 4 agent — gate authority on every phase
+- Owns Safety Constraint Overlay (all phase updates), Safety Retrospective Assessment, CSCO Spot-check Record
+- Skills: `stamp-stpa-methodology.md`, `gate-phase-a.md`, `gate-phase-b.md`, `gate-phase-c.md`, `gate-phase-d.md`, `gate-phase-g.md`, `gate-phase-h.md`, `incident-response.md`
 
 ### Key decisions already made (do not re-litigate)
 - `workflow.db` is **git-tracked** (canonical EventStore). YAML in `workflow-events/` is a projection. See `framework/architecture-repository-design.md §4.2`.
@@ -371,3 +376,4 @@ The next agent to author is the **Solution Architect (SA)**. Author in this orde
 7. **The summary header is a contract.** The artifact summary format defined in `repository-conventions.md` must be produced faithfully by every skill that generates an artifact. It is the unit of inter-agent communication at normal operating tempo.
 8. **Knowledge self-assessment is mandatory before every binding output.** Every skill file must have a `## Knowledge Adequacy Check` section specifying: the domain knowledge required, predictable knowledge gaps for that skill, and the conditions under which a Clarification Request (`CQ`) must be raised rather than an assumption made. Agents must never silently assume facts about the user's specific domain, organisation, or system. Every assumption must be documented in the artifact's `assumptions` field. This is governed by `framework/clarification-protocol.md`.
 9. **Engagements may start at any ADM phase.** The system must support users who bring existing artifacts, designs, requirements, or codebases. Every AGENT.md must describe how the agent behaves at each of the seven entry points defined in `framework/sdlc-entry-points.md`. The Project Manager skill `master-agile-adm.md` must implement the full entry assessment procedure including the Engagement Profile and Entry Assessment Report.
+10. **Discovery before CQs.** Every skill that begins phase work must execute the Discovery Scan per `framework/discovery-protocol.md §2` as its first step. The five-layer scan covers: engagement work-repositories, enterprise repository, configured external sources (Confluence, Jira, etc.), target project repository, and EventStore state. CQs are raised only for information that cannot be obtained or inferred from available sources. Every sourced or inferred artifact field must be annotated. The system must be able to start with very little explicit input — it discovers what is available, maps it to ADM schema fields, and asks specifically for what is genuinely missing. This makes the system useful from any starting state, not only from a clean-slate EP-0.

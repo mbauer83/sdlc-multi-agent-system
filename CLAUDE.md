@@ -16,6 +16,7 @@ framework/                       # Cross-cutting specifications (read these firs
   algedonic-protocol.md          # Fast-path escalation specification
   clarification-protocol.md      # Knowledge adequacy and CQ lifecycle
   sdlc-entry-points.md           # Seven engagement entry points (EP-0 to EP-H)
+  discovery-protocol.md          # Scan-first protocol: sources, inference rules, gap assessment, CQ generation
   architecture-repository-design.md  # Enterprise/Engagement/External scope model + EventStore
   artifact-schemas/              # One schema file per major handoff artifact
 
@@ -80,8 +81,9 @@ tests/
 7. **One accountable agent per artifact per phase.** Ambiguity must be resolved in `raci-matrix.md` before proceeding.
 8. **No agent writes outside its designated engagement work-repository path.** Cross-role transfers occur through handoff events only. Enterprise repository writes require Architecture Board approval.
 9. **All workflow events go through EventStore.** No agent accesses `workflow.db` directly via sqlite3. `workflow.db` is git-tracked (canonical event store); `workflow-events/*.yaml` are the human-readable projection also committed at sprint close.
-10. **ADM iteration is non-linear.** Phases can be revisited. Skills must handle `trigger="revisit"` and `phase_visit_count > 1` cases explicitly.
+10. **ADM iteration is non-linear.** Phases can be revisited. Skills must handle `trigger="revisit"` and `phase_visit_count > 1` cases explicitly. On revisit, preserve all non-affected content, update only sections affected by the triggering change, and increment the artifact version.
 11. **Framework files never enter the target project repository.** The target project repo is a separate git repository configured per engagement in `engagements-config.yaml`. Source code lives only there. The engagement's `delivery-repository/` holds delivery metadata, not code.
+12. **Discovery before CQs.** Every skill that begins phase work must execute the Discovery Scan (`framework/discovery-protocol.md §2`) as its first step. CQs are raised only for information that cannot be obtained from available sources (engagement state, enterprise repository, configured external sources, target-repo). Every inferred or sourced field must be annotated in the artifact. Governed by `framework/discovery-protocol.md`.
 
 ## Implementation Stages (see `specs/IMPLEMENTATION_PLAN.md`)
 
@@ -89,7 +91,7 @@ tests/
 |---|---|---|
 | 1 | Foundation artifacts (framework + schemas + EventStore skeleton + directory structure) | Complete |
 | 2 | Project Manager master skill | Complete |
-| 3 | Primary implementation chain (SA → SwA → DevOps → Dev → QA) | Pending |
+| 3 | Primary implementation chain (SA → SwA → DevOps → Dev → QA) + discovery-protocol.md | Complete |
 | 4 | Framing layer (PO, Sales, CSCO) | Pending |
 | 5 | Cross-cutting skills + PydanticAI wrappers + EventStore full implementation | Pending |
 | 6 | Integration testing on synthetic project | Pending |
