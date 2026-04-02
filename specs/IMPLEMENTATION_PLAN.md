@@ -279,21 +279,42 @@ Every skill file must include: `## Inputs Required`, `## Knowledge Adequacy Chec
 
 ### Stage 4 — Framing Layer Agents
 
-**Branch: `agent/product-owner`**
-- [ ] `agents/product-owner/AGENT.md`
-- [ ] Skills: `phase-a.md`, `phase-b.md`, `phase-h.md`, `requirements-management.md`, `stakeholder-communication.md`
+**Branch: `agent/product-owner`** — Complete (2026-04-02)
+- [x] `agents/product-owner/AGENT.md`
+- [x] Skills: `phase-a.md`, `phase-b.md`, `phase-h.md`, `requirements-management.md`, `stakeholder-communication.md`
 
-**Branch: `agent/sales-marketing`**
-- [ ] `agents/sales-marketing/AGENT.md`
-- [ ] Skills: `phase-a-market-research.md`, `phase-a-swot.md`, `requirements-management-feedback.md`
+**Branch: `agent/sales-marketing`** — Complete (2026-04-02)
+- [x] `agents/sales-marketing/AGENT.md`
+- [x] Skills: `phase-a-market-research.md`, `phase-a-swot.md`, `requirements-management-feedback.md`
 
-**Branch: `agent/csco`**
-- [ ] `agents/csco/AGENT.md`
-- [ ] Skill: `stamp-stpa-methodology.md` (master methodology reference)
-- [ ] Phase-gate skills: `gate-phase-a.md`, `gate-phase-b.md`, `gate-phase-c.md`, `gate-phase-d.md`, `gate-phase-g.md`, `gate-phase-h.md`
-- [ ] Skill: `incident-response.md`
+**Branch: `agent/csco`** — Partially complete (2026-04-02)
+- [x] `agents/csco/AGENT.md`
+- [x] Skill: `stamp-stpa-methodology.md` (master methodology reference)
+- [x] `gate-phase-a.md` — Phase A gate review (Prelim→A and A→B votes; SCO Phase A baseline; STAMP Level 1)
+- [x] `gate-phase-b.md` — Phase B gate review (B→C vote; SCO Phase B update; STAMP Level 1 process analysis)
+- [x] `gate-phase-c.md` — Phase C gate review (C→D vote; SCO Phase C update; STAMP Level 2 application/data)
+- [x] `gate-phase-d.md` — Phase D gate review (D→E vote; SCO Phase D update; STAMP Level 3 technology)
+- [ ] `gate-phase-g.md` — Phase G spot-checks and G-exit gate (Compliance Assessment review)
+- [ ] `gate-phase-h.md` — Phase H gate review (change safety impact classification; SCO update)
+- [ ] Skill: `incident-response.md` — safety incident and algedonic response procedure
 
-**Merge all stage-4 branches to `stage-4-framing-layer`**
+**Remaining Stage 4 work (next session — pick up here):**
+
+> **Warning:** A background agent was running unsupervised at session end. It may have
+> written `gate-phase-g.md`, `gate-phase-h.md`, and/or `incident-response.md` to disk
+> after the last commit. If these files exist, treat them as **unreviewed drafts** —
+> do not mark them complete without reading and verifying against the framework.
+> If they do not exist, author them fresh.
+
+1. Check for untracked files in `agents/csco/skills/` — review any that exist for correctness
+2. Also review `gate-phase-b.md`, `gate-phase-c.md`, `gate-phase-d.md` — written by background
+   agents and committed without manual review; verify against framework cross-references
+3. Author or complete (as needed): `gate-phase-g.md`, `gate-phase-h.md`, `incident-response.md`
+4. Update `framework/agent-index.md` — add PO, SM, CSCO rows to Agent Routing Table and skill tables
+5. Full coherence review of all Stage 4 files against framework specs
+6. Commit as `stage-4-framing-layer`
+
+**Merge all stage-4 branches to `stage-4-framing-layer`** — Pending
 
 ---
 
