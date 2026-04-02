@@ -1,0 +1,19 @@
+---
+# Enterprise Architecture Repository Configuration
+# See framework/architecture-repository-design.md §3.2 for options and rationale.
+
+enterprise-repository:
+  mode: embedded            # embedded | submodule | external
+  path: enterprise-repository/
+  writable-by:
+    - solution-architect
+    - architecture-board
+  promotion-requires: architecture-board-approval
+
+# Notes:
+#   embedded: enterprise-repository/ is a directory in this repo.
+#             Suitable for new organisations or single-team setups.
+#   submodule: enterprise-repository/ is a git submodule pointing to an
+#              external EA repo managed by the Architecture Board.
+#   external:  No local directory; access via an external-sources adapter
+#              (read-only from all agents' perspective).

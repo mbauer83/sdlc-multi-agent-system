@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+.env.bak
+
+# Secrets and credentials — NEVER commit
+.env
+*.key
+*.pem
+secrets.yaml
+secrets.json
+
+# SQLite WAL and journal temporary files — only present while the DB is open.
+# workflow.db itself IS git-tracked (it is the canonical event store).
+# See framework/architecture-repository-design.md §4.2
+engagements/**/workflow.db-journal
+engagements/**/workflow.db-wal
+engagements/**/workflow.db-shm
+
+# Target project repository local clones — separate git repos, never committed here.
+# See framework/architecture-repository-design.md §2.4 and §3.4
+engagements/**/target-repo/
+
+# Alembic
+alembic.ini.bak
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

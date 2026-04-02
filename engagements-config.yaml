@@ -1,0 +1,52 @@
+---
+# Engagements Configuration
+# See framework/architecture-repository-design.md §3.3 and §3.4 for options and rationale.
+#
+# DEPLOYMENT MODEL: clone one instance of the sdlc-agents framework per software project.
+# Each framework instance manages one or more engagements against one target project repo.
+# Framework files never live inside the target project repository.
+
+engagements:
+  mode: single-repo         # single-repo | multi-repo
+  base-path: engagements/   # for single-repo mode
+
+  active-engagements:
+    - id: ENG-001
+      name: "Initial Engagement"
+      path: engagements/ENG-001/
+      entry-point: EP-0         # EP-0 through EP-H; see framework/sdlc-entry-points.md
+      cycle-level: capability   # strategic | segment | capability
+      status: active            # active | closed | archived
+
+      # Target project repository (the software being built/analysed)
+      # See framework/architecture-repository-design.md §2.4 and §3.4
+      target-repository:
+        url: null               # Set to git URL or local path before starting work
+                                # e.g. git@github.com:org/project.git
+                                # or   /home/user/my-project
+        default-branch: main
+        local-clone-path: engagements/ENG-001/target-repo/  # .gitignored
+        access:
+          implementing-developer: read-write    # branches, commits, PRs
+          devops-platform-engineer: read-write  # IaC and pipeline paths only
+          qa-engineer: read-only                # test execution
+          solution-architect: read-only         # EP-G reverse architecture
+          software-architect: read-only         # EP-G reverse architecture
+          all-others: none
+
+# Notes on multi-repo mode:
+#   In multi-repo mode, each engagement is a separate git repository.
+#   Replace path: with repo-url: pointing to the engagement's git remote.
+#   The framework repo holds this configuration as the registry of all
+#   active and historical engagements.
+#
+# Example multi-repo entry:
+#   - id: ENG-002
+#     name: "Project Nighthawk"
+#     repo-url: git@github.com:org/nighthawk-architecture.git
+#     entry-point: EP-B
+#     status: active
+#     target-repository:
+#       url: git@github.com:org/nighthawk-api.git
+#       default-branch: main
+#       local-clone-path: target-repo/  # relative to engagement repo root

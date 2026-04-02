@@ -1,0 +1,31 @@
+---
+# External Source Adapter — Example: Confluence
+# Copy and rename this file for each external source. See framework/architecture-repository-design.md §2.3.
+# NEVER commit credentials. All auth must reference environment variables or a secrets manager.
+
+source-id: company-confluence
+source-type: confluence      # confluence | jira | git | sharepoint | api
+display-name: "Company Confluence (Architecture & Engineering)"
+base-url: https://company.atlassian.net/wiki
+auth-method: env-var
+auth-config:
+  env-var: CONFLUENCE_API_TOKEN
+  user-env-var: CONFLUENCE_USER_EMAIL
+
+index-scope:
+  spaces: [ARCH, ENG, PRODUCT, INFRA]  # Confluence space keys
+
+access-pattern: search-only   # search-only | fetch-by-id | full-index
+
+purpose: |
+  Company-wide Confluence instance. Primary source for existing architecture
+  decision records, product documentation, infrastructure runbooks, and
+  meeting notes produced outside this system. Agents query this source during
+  Phase A (architecture vision context) and Phase B (existing business
+  capability documentation).
+
+notes: |
+  Content quality varies by space. ARCH space is curated; PRODUCT space
+  contains work-in-progress pages that should not be treated as authoritative.
+  Pages older than 18 months may be stale; agents should note creation/update
+  dates when citing content.
