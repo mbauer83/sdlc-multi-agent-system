@@ -51,6 +51,15 @@ type: project
 - Layer 4: on-demand via `read_artifact` tool
 - All other AGENT.md sections = authoring documentation only, not runtime-injected
 
+## Python Coding Standards (Stage 5 onward)
+
+Defined in `specs/IMPLEMENTATION_PLAN.md §Python Coding Standards` and CLAUDE.md rule #20. Key points:
+- Mandatory type annotations on all signatures; lowercase generics (`list[str]`, `x | y`); `Protocol` for structural subtyping
+- Monadic `Result`-style error handling; no exceptions for expected failures
+- Domain-centred four-layer architecture: Common → Domain → Application → Infrastructure
+- `src/common/` for cross-cutting concerns (logging, validation, parsing, normalisation) — usable by all layers
+- Ports-and-adapters for all I/O; domain Pydantic models are single source of truth
+
 ## Next: Stage 5
 
 Python implementation layer: EventStore completion + PydanticAI agents + LangGraph orchestration + source adapters + skill loader. Fully detailed in `specs/IMPLEMENTATION_PLAN.md §Stage 5`.

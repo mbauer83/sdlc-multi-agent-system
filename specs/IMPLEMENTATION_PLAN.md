@@ -113,9 +113,9 @@ All Python implementation (`src/`) must follow these conventions. They apply to 
 
 **Type system — expressive and mandatory:**
 - Type annotations are **required on all function and method signatures** (parameters and return types). No bare `def f(x)` without annotations.
-- Use **lowercase built-in generic aliases** throughout: `list[str]`, `dict[str, int]`, `tuple[int, ...]`, `type[T]` — never `List`, `Dict`, `Tuple`, `Type` imported from `typing`. (PEP 585, Python 3.9+)
-- Use `X | Y` union syntax instead of `Union[X, Y]`. Use `X | None` instead of `Optional[X]`. (PEP 604, Python 3.10+)
-- Use `TypeVar`, `ParamSpec`, `TypeAlias`, and `Protocol` from `typing` for parametric polymorphism. Prefer `Protocol` over `ABC` for structural subtyping.
+- **Modern syntax for built-in collection types (PEP 585/604):** Write `list[str]`, `dict[str, int]`, `tuple[int, ...]`, `set[T]`, `type[X]` directly — never the capitalised `typing` aliases `List`, `Dict`, `Tuple`, `Set`, `FrozenSet`, `Type`. Use `X | Y` instead of `Union[X, Y]`, and `X | None` instead of `Optional[X]`.
+- **Parametric polymorphism — prefer inline type parameter syntax (PEP 695, Python 3.12+):** Write `def f[T](x: T) -> T` and `class Stack[T]: ...` instead of declaring `T = TypeVar('T')` separately. Bounds and constraints are written inline — `[T: SomeBase]` for an upper bound, `[T: (int, float)]` for constraints. Use `[**P]` for a `ParamSpec` parameter and `[*Ts]` for a `TypeVarTuple`. Explicit `TypeVar` declarations are still required only when variance must be stated explicitly (covariant/contravariant) and cannot be inferred by the type checker — this is an edge case; prefer letting inference handle it. Use the `type` statement (PEP 695) for named type aliases: `type Vector = list[float]` — not `TypeAlias` from `typing`.
+- `Protocol` (from `typing`) is still required for structural subtyping — preferred over `ABC` for interface definitions. `overload` (from `typing`) is still required for multi-dispatch signatures. These have no PEP 695 equivalents.
 - Use `TypedDict` or Pydantic `BaseModel` for structured data; never `dict[str, Any]` at a boundary.
 
 **Pythonic style — current best practices:**
@@ -169,7 +169,7 @@ The codebase follows a domain-centred layered architecture (hexagonal / ports-an
 - EventStore events are also Pydantic models; the SQLite schema is derived from them (via Alembic), not defined independently.
 - If a framework (PydanticAI, LangGraph) requires its own data shape, adapt at the boundary — wrap or map from the domain model; do not let framework types leak into domain or application code.
 
-- **Runtime:** Python 3.11+, Pydantic v2 for all data models, artifact schemas, and event payloads
+- **Runtime:** Python 3.12+ (required for PEP 695 inline type parameter syntax — `def f[T](...)`), Pydantic v2 for all data models, artifact schemas, and event payloads
 - **Orchestration:** PydanticAI (primary) — provides agent definition, tool use, and structured output natively; avoids heavy framework lock-in while enabling clean composition
 - **LLM backend:** Anthropic Claude API (claude-sonnet-4-6 for primary agents; claude-haiku-4-5 for lightweight routing/summarisation tasks)
 - **Workflow graph (if needed for complex multi-agent flows):** LangGraph as an optional layer on top of PydanticAI for stateful multi-step orchestration — to be introduced only when the simpler PydanticAI patterns prove insufficient
