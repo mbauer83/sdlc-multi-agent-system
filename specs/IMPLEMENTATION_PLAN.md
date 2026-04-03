@@ -178,7 +178,7 @@ The codebase follows a domain-centred layered architecture (hexagonal / ports-an
 - **Workflow state persistence:** SQLite event store (`engagements/<id>/workflow.db`) — **canonical, git-tracked**; Pydantic-validated, append-only, managed by the `EventStore` class in `src/events/`; YAML projection in `engagements/<id>/workflow-events/` also git-tracked for human readability and PR review; schema managed by Alembic migrations
 - **Enterprise architecture persistence:** `enterprise-repository/` (embedded) or external EA system via source adapter; configurable via `enterprise-repository-config.yaml`
 - **External source adapters:** Read-only, configured in `external-sources/<source-id>.config.yaml`; supports Confluence, Jira, external Git, SharePoint, and generic REST APIs
-- **Target project repository:** Per-engagement pointer to the software project being built; separate git repo; configured in `engagements-config.yaml`; local clone at `engagements/<id>/target-repo/` (.gitignored); delivery-repository/ holds metadata only, not code
+- **Target project repositories (multi-repo support):** Engagements may register one or more target repositories in `engagements-config.yaml`. The `target-repositories` list (or backward-compatible singular `target-repository`) associates each repo with an `id`, `label`, `role` (microservice | microfrontend | bff | event-store | shared-lib | infrastructure | api-gateway | data-platform | shared-schema | monolith), and `domain` (bounded context). Local clones live at `engagements/<id>/target-repos/<repo-id>/` (.gitignored). Multi-repo engagements require a `repository-map.md` artifact; see `framework/artifact-schemas/repository-map.schema.md`. The `delivery-repository/` holds delivery metadata (PR records, branch refs, test reports) per repo, not code.
 
 ---
 
@@ -190,7 +190,7 @@ The codebase follows a domain-centred layered architecture (hexagonal / ports-an
 - [x] **Scaffold repository directory structure**
   - `enterprise-repository/` (embedded mode, configurable via `enterprise-repository-config.yaml`)
   - `engagements/<id>/` per-engagement directories with work-repositories, event log, and log subdirectories
-  - `engagements/<id>/target-repo/` entry in `.gitignore` (local clone of target project; separate repo)
+  - `engagements/<id>/target-repos/<repo-id>/` entry in `.gitignore` (local clones of target projects; separate repos); backward-compat `target-repo/` also gitignored
   - `external-sources/` source adapter configuration
   - `src/events/` EventStore Python module skeleton
   - `enterprise-repository-config.yaml` and `engagements-config.yaml` (includes target-repository per engagement)
@@ -255,7 +255,7 @@ The codebase follows a domain-centred layered architecture (hexagonal / ports-an
   - Event taxonomy (cycle, phase, gate, sprint, artifact, handoff, CQ, algedonic, source events)
   - ADM multi-cycle and multi-level architecture model (Strategic/Segment/Capability)
   - Enterprise Promotion Protocol
-- [x] Create `.gitignore` (excludes `target-repo/`, SQLite WAL/journal temporaries, credentials, Python artifacts; `workflow.db` is NOT excluded — it is git-tracked as the canonical event store)
+- [x] Create `.gitignore` (excludes `target-repos/` and `target-repo/`, SQLite WAL/journal temporaries, credentials, Python artifacts; `workflow.db` is NOT excluded — it is git-tracked as the canonical event store)
 - [x] Commit as `stage-1-foundation`
 
 ---
@@ -360,11 +360,6 @@ Every skill file must include: `## Inputs Required`, `## Knowledge Adequacy Chec
 - [x] `gate-phase-h.md` — Phase H change safety impact classification (Safety-Neutral / Safety-Relevant / Safety-Critical) + H gate vote + SCO update
 - [x] Skill: `incident-response.md` — safety incident and algedonic response; S1/S2 containment directive; SCO gap analysis; regulatory notification assessment; post-incident safety finding
 
-**Stage 4 review findings (2026-04-03):**
-- Fixed YAML frontmatter bug in all 4 pre-existing gate skills (gate-a through gate-d): `complexity-class:` field was incorrectly placed inside the `primary-outputs:` list block
-- Upgraded all 4 gate skill `complexity-class` values from `simple` to `standard` (gate-a has 9 steps + full STAMP Level 1 analysis — well above 600-token simple budget)
-- Updated `framework/agent-index.md` v1.0.0 → v1.1.0: added PO, SM, CSCO skill routing tables; removed Stage 4 "pending" annotations from Agent Routing Table
-
 **Merge all stage-4 branches to `stage-4-framing-layer`** — Complete (2026-04-03)
 
 ---
@@ -418,17 +413,115 @@ Every skill file must include: `## Inputs Required`, `## Knowledge Adequacy Chec
 
 **Committed as `stage-4.6-learning-protocol`** (batched with Stage 4.5f, 2026-04-03)
 
+#### 4.6d — Learning Protocol 2026 Alignment + Harness Research (Complete — same session)
+
+Research conducted on: Anthropic memory_20250818 tool, MIRIX 6-component memory, Mem0 multi-level structure, LangGraph BaseStore namespacing, OpenHarness `skills` subsystem, 30-tool accuracy limit, git worktree isolation, AutoDream consolidation mapping. Key validated findings incorporated into §12; design gaps documented as future considerations.
+
+Conceptual basis updated and new framework sections authored:
+
+- [x] `framework/learning-protocol.md` updated v1.0.0 → v1.1.0:
+  - **§1 Conceptual Basis** extended with 2026 research and production patterns: Claude Code file-based memory system (validates our approach), LangGraph BaseStore (Stage 5 implementation guidance), A-MEM graph connectivity (`related` links in index), memory consolidation as first-class operation
+  - **§2.3 Index format** extended with `related: []` field (A-MEM graph traversal pointers; set at synthesis and promotion time, not automatically) and explicit `synthesis-superseded: null` field
+  - **§9 `query_learnings` spec** updated: graph expansion via `related` links (up to 2 extra results when primary filter < 3); semantic supplement tier (enterprise corpus ≥ 50 entries + sqlite-vec available → top-1 embedding match above 0.75 cosine threshold)
+  - **§12 Stage 5 Implementation Guidance** authored (new section): LangGraph `SQLiteStore` backend with `(engagement_id, agent_role, "learnings")` namespace tuples; Anthropic `memory_20250818` tool as optional alternative backend; durable file serialisation contract; AutoDream→PM-synthesis mapping; semantic retrieval tier (sqlite-vec, sentence-transformers/all-MiniLM-L6-v2); graph expansion procedure; cross-agent visibility via PM cross-role synthesis index; consolidation growth trigger; MIRIX 6-component gap analysis (current protocol covers procedural memory only)
+
 #### 4.6c — Python Tooling (deferred to Stage 5b)
 
 Implemented alongside other `universal_tools.py` additions in Stage 5b:
 
 - [ ] `src/tools/universal_tools.py` — add `query_learnings()` and `record_learning()` (spec below; see also Stage 5b tool list)
-- [ ] `src/models/learning.py` — `LearningEntry` Pydantic model (fields: `learning_id`, `agent`, `phase`, `artifact_type`, `trigger_event`, `error_type`, `importance`, `applicability`, `generated_at_phase`, `generated_at_sprint`, `generated_at_engagement`, `promoted`, `synthesis_superseded`, `synthesised_from`, `trigger_text`, `correction_text`, `context_text`)
+- [ ] `src/models/learning.py` — `LearningEntry` Pydantic model (fields: `learning_id`, `agent`, `phase`, `artifact_type`, `trigger_event`, `error_type`, `importance`, `applicability`, `generated_at_phase`, `generated_at_sprint`, `generated_at_engagement`, `promoted`, `synthesis_superseded`, `synthesised_from`, `related: list[str]`, `trigger_text`, `correction_text`, `context_text`)
 - [ ] EventStore event models — add `learning.created`, `learning.synthesised`, `learning.promoted` to `src/events/`
 
-**`query_learnings` spec:** reads `agents/<agent>/learnings/index.yaml`; filters by phase + artifact_type + applicability; skips `synthesis-superseded` entries; sorts S1 → S2 → S3; returns top 5 `## Correction` texts.
+**`query_learnings` spec:** See `framework/learning-protocol.md §9` and §12.1–12.2. Reads from LangGraph `BaseStore` (runtime) and falls back to file-based index on cold start. Applies metadata filter, graph expansion (`related` links), and optional semantic supplement tier (enterprise corpus ≥ 50 entries + `sqlite-vec` available). Returns top 5 `## Correction` texts.
 
-**`record_learning` spec:** validates entry against schema (9 rules); assigns next `<ROLE>-L-NNN` id; writes `agents/<agent>/learnings/<ROLE>-L-NNN.md`; appends `index.yaml`; emits `learning.created` EventStore event; raises `LearningSchemaError` on validation failure.
+**`record_learning` spec:** validates entry against schema (9 rules); assigns next `<ROLE>-L-NNN` id; writes to LangGraph `BaseStore` AND writes `agents/<agent>/learnings/<ROLE>-L-NNN.md` + updates `index.yaml` (durable serialisation); emits `learning.created` EventStore event; raises `LearningSchemaError` on validation failure.
+
+**`src/agents/learning_store.py`:** `LearningStore` wraps LangGraph `BaseStore`. Namespace: `(engagement_id, agent_role, "learnings")`. Startup: calls `rebuild_from_files()` if store is empty to rehydrate from `learnings/index.yaml`. Implements `query(phase, artifact_type, domain, expand_related=True) → list[str]` and `record(entry: LearningEntry) → str`. Optional semantic tier gated on `sqlite-vec` availability check at init time. Optional `memory_20250818` backend: if configured, the store uses Anthropic's official memory tool type (client-side) instead of direct SQLiteStore — enables the same memory patterns Claude Code uses internally; governed by `framework/learning-protocol.md §12.1`.
+
+---
+
+### Stage 4.7 — Multi-Target-Repository Support (Complete — same session)
+
+> Cross-cutting framework extension enabling engagements that span multiple target repositories (microservices, CQRS, microfrontends, multi-product change requests).
+
+- [x] `framework/artifact-schemas/repository-map.schema.md` — authored: Repository Map (`REPO-MAP`) artifact schema; §3.2 repository registry with role taxonomy (10 roles); §3.3 inter-repo dependency map with 7 dependency types; §3.4 bounded-context allocation table; §3.5 change-impact matrix (for Phase H multi-repo CRs); §3.6 access control summary; §4 validation rules (exactly-one-primary, no duplicate IDs, all config repos represented); §5 discovery annotations; §6 file path and ownership
+- [x] `engagements-config.yaml` — updated: `target-repositories` (plural list) format added alongside backward-compatible `target-repository` (singular); role taxonomy documented; multi-repo example (microservices + shared-schema engagement) added as inline comment; `local-clone-path` updated to `target-repos/<id>/` pattern
+- [x] `framework/discovery-protocol.md §2 Layer 4` — updated: multi-repo procedure (load Repository Map first; `list_target_repositories()` call; per-repo discovery steps 4–10; cross-repo synthesis for shared-dependency divergence, undocumented integration contracts, circular dependencies); annotation updated to `[inferred: target-repo:<id> scan]`
+
+**Framework design decisions recorded:**
+- `target-repository` (singular) is treated by all tools as `target-repositories: [{id: default, primary: true, ...}]` — fully backward-compatible.
+- All `target_repo_tools` functions require explicit `repo_id` parameter in multi-repo engagements; default to primary repo only when exactly one repo is registered.
+- Repository Map is produced at engagement bootstrap by PM (registry section) and completed by SA during Phase A/B (dependency map + bounded-context allocation).
+- Delivery-repository metadata is per-repo: `delivery-repository/repos/<repo-id>/` subdirectory tracks PRs, branch refs, test reports for each target repo independently.
+
+---
+
+### Stage 4.8 — Entity Registry Pattern (ERP) Framework
+
+> One file per entity or connection instance, organised by ArchiMate layer/aspect (all diagram language types are subsumable under ArchiMate taxonomy). No `_index.yaml` files — frontmatter is the single source of truth; the ephemeral `ModelRegistry` is built at startup by scanning frontmatter. All relational information lives in typed connection files (sibling `connections/<diagram-language>/<connection-type>/` directories). Entity files contain no cross-references. `§content` and `§display` sections (delimited by `<!-- §<name> -->` markers) separate semantic content from per-diagram-language rendering specs (`### <language-id>` H3 subsections within `§display`).
+
+**Diagram rendering strategy:** Diagrams are views over the model. `_macros.puml` is generated by scanning entity `§display ###archimate` blocks — each entity's artifact-id becomes its PUML alias. For ER diagrams, `generate_er_content(entity_ids)` and `generate_er_relations(connection_ids)` read entity/connection `§display ###er` blocks and return PUML class declarations and cardinality lines respectively. For sequence, activity, and use-case diagrams, participant labels and flow lines are derived from corresponding `§display ###sequence/activity/usecase` blocks. `validate_diagram` confirms all PUML aliases resolve to existing entities in ModelRegistry. The model-first rule (ERP-2/§9 of artifact-registry-design.md) prohibits diagram elements with no backing entity; entities may freely exist without being in any diagram.
+
+#### 4.8a — Framework Specification (Complete)
+
+- [x] `framework/artifact-registry-design.md` v2.0.0 — ERP master spec: ArchiMate-organised directory structure (motivation/strategy/business/application/implementation + technology-repository); full entity type registry covering all 40+ ArchiMate elements across all layers/aspects (§4); connection type registry for archimate/er/sequence/activity/usecase diagram languages (§5); unified file format with `§content` + `§display ###language` sections (§3); ModelRegistry design replacing `_index.yaml` (§6); ID assignment rules (§7); cache-first discovery protocol (§8); model-first rule (§9); tool contracts for `write_artifact`, `read_artifact`, `list_artifacts`, `list_connections` (§10); authoring rules ERP-1 through ERP-6 (§11); migration procedure (§12)
+- [x] **Two-scope ID space and promotion design** (§6.1, §7): engagement artifact-IDs are engagement-local only (no cross-engagement uniqueness); enterprise IDs are globally unique, assigned at promotion from `enterprise-repository/governance-log/id-counters.yaml`; `promote_entity` performs deterministic reference sweep (old engagement-ID → new enterprise-ID across all connection files, diagram PUML aliases, inline references) then moves the entity file; Architecture Board members are the only writers to the enterprise repository
+
+#### 4.8b — Entity Conventions Schema (Complete)
+
+- [x] `framework/artifact-schemas/entity-conventions.md` v2.0.0 — unified entity and connection file format: mandatory frontmatter (no `references`, no `diagram-element-id`); `§content` + `§display` section structure with `### language` H3 subsections; properties tables per ArchiMate entity type across all layers; five exemplar files (capability, app-component, data-object, archimate connection, er connection)
+
+#### 4.8c — Diagram Conventions Update (Complete)
+
+- [x] `framework/diagram-conventions.md` v2.0.0 — model-driven diagram production: no separate `elements/` catalog directory; `_macros.puml` generated from entity `§display ###archimate` blocks; artifact-ids as PUML aliases; D1–D5 production protocol (query ModelRegistry → verify §display coverage → author PUML → validate → render); `generate_er_content`/`generate_er_relations` tools for ER diagrams; diagram index format (§9); PUML templates updated for all diagram types
+- [x] **Diagram referencing design** (§4.1, §9): existing enterprise and prior-engagement diagrams are referenced in-place via `entry_type: reference` entries in `diagrams/index.yaml` — never copied; `render_diagram` on a reference entry renders the source `.puml` at its original path; engagement bootstrap creates catalog structure + runs `regenerate_macros()` only, no entity import; `promote_diagram` moves (not copies) promoted diagrams to enterprise path
+
+#### 4.8d — Artifact Schema and Framework Doc Updates (Pending — pre-Stage-5)
+
+The domain artifact schemas and cross-cutting framework docs need updating to align with the new ERP design.
+
+- [ ] `framework/artifact-schemas/business-architecture.schema.md` — refactor to ArchiMate-layer entity-type registry; remove `_index.yaml` references; update output paths to `motivation/`, `strategy/`, `business/`
+- [ ] `framework/artifact-schemas/application-architecture.schema.md` — refactor; update paths to `application/`
+- [ ] `framework/artifact-schemas/data-architecture.schema.md` — refactor; `data-object` entities in `application/data-objects/`; ER connections in `connections/er/`
+- [ ] `framework/artifact-schemas/technology-architecture.schema.md` — refactor; paths to `technology/`; connections in `technology-repository/connections/`
+- [ ] `framework/repository-conventions.md` — update §2.2 directory layout; add §14 ERP conventions summary
+- [ ] `framework/discovery-protocol.md` — update Layer 1 to `list_artifacts` ModelRegistry scan; update diagram discovery to D1–D5 protocol
+- [ ] `framework/agent-runtime-spec.md §6` — update all tool specs: `write_artifact` (§content/§display validation, ModelRegistry update, reference resolution for connections); `list_artifacts`/`list_connections` (ModelRegistry queries); `regenerate_macros`; `generate_er_content`; `generate_er_relations`; `validate_diagram` (alias→ModelRegistry check)
+- [ ] Retroactive skill file update: skills producing entity artifacts must use new ERP paths and file format. **Script-based** (grep/sed, not parallel agents).
+
+#### 4.8e — CLAUDE.md Authoring Rules (Complete)
+
+- [x] CLAUDE.md updated: ERP authoring rules ERP-1 through ERP-6; stage table updated
+
+#### 4.8f — Reverse Architecture Skills (Pending — pre-Stage-6)
+
+> SA and SwA skills for reverse architecture / repository-building engagements (EP-G): scanning an existing codebase/system and populating the model repository with discovered entities and connections, before any diagrams are drawn. This is the primary use case where model-first matters most — the model is built up incrementally from discovered artefacts, and diagrams are produced only after the model achieves sufficient coverage.
+
+- [ ] `agents/solution-architect/skills/reverse-architecture-ba.md` — Phase B reverse: discover business entities (actors, capabilities, services, processes) from codebase, ADRs, docs; produce ERP entity files in ArchiMate-organised directories; generate ArchiMate connections
+- [ ] `agents/software-architect/skills/reverse-architecture-ta.md` — Phase D/E reverse: discover technology layer (nodes, system-software, services, artifacts) from infrastructure-as-code, Dockerfiles, CI/CD configs; produce ERP entity files in `technology-repository/technology/`
+
+---
+
+### Stage 4.9 — ENG-001 Reference Model and Initial Diagrams (Pending — pre-Stage-5)
+
+> Populates `engagements/ENG-001/work-repositories/architecture-repository/` with a reference implementation of the ERP v2.0 directory structure (ArchiMate-organised layers + `connections/` sibling), entity files, connection files, and four PUML diagrams. The modelled domain is the SDLC multi-agent system itself. Serves as usage example, integration test fixture, and living self-documentation.
+
+- [ ] ERP directory structure: `motivation/`, `strategy/`, `business/`, `application/`, `implementation/`, `connections/archimate/`, `connections/er/`, `connections/sequence/`, `connections/activity/`, `diagram-catalog/`
+
+- [ ] **Entity files** — initial set covering the SDLC system: strategy capabilities (CAP), application components (APP), data objects (DOB), business actors (ACT), business services (BSV); each with correct `§content` + `§display` sections
+
+- [ ] **Connection files** — typed connections between the above entities: `connections/archimate/realization/`, `connections/archimate/serving/`, `connections/er/one-to-many/`, `connections/sequence/synchronous/`
+
+- [ ] **`_macros.puml`** — generated from entity `§display ###archimate` blocks; `_archimate-stereotypes.puml` present
+
+- [ ] **Four PUML diagrams** in `diagram-catalog/diagrams/`:
+  - `phase-b-archimate-business-v1.puml` — ArchiMate business layer: agent roles, capabilities, services
+  - `phase-c-archimate-application-v1.puml` — ArchiMate application layer: agent components, EventStore, SkillLoader, LangGraph
+  - `phase-c-class-er-v1.puml` — ER diagram: core DOB entities (Engagement, WorkflowEvent, LearningEntry, ClarificationRequest, AlgedonicSignal)
+  - `phase-b-activity-sprint-v1.puml` — Activity/BPMN: ADM sprint lifecycle (planning → phase execution → gate evaluation → sprint close)
+
+- [ ] **`diagrams/index.yaml`** — catalog index for all four diagrams with `entity_ids_used` and `connection_ids_used` lists
 
 ---
 
@@ -447,6 +540,7 @@ Implemented alongside other `universal_tools.py` additions in Stage 5b:
 
 > Governed by `framework/agent-runtime-spec.md`. Each agent is a PydanticAI `Agent[AgentDeps, str | PMDecision]` built via `build_agent()`.
 
+- [ ] **`src/common/model_registry.py`**: `ModelRegistry` — `dict[Path, dict]` built at startup by scanning all `.md` entity/connection files for YAML frontmatter; `watchdog` filesystem listener keeps it fresh; used by all `list_artifacts`/`list_connections` calls; `write_artifact` updates it synchronously on write; thread-safe (read-heavy, write-rare — `threading.RLock`); never persisted
 - [ ] **`src/agents/deps.py`**: `AgentDeps` dataclass (engagement_id, event_store, active_skill_id, workflow_state, engagement_base_path, framework_path)
 - [ ] **`src/agents/base.py`**: `build_agent(agent_id)` factory — layered system prompt assembly:
   - Layer 1: `AgentSpec.load(agent_id)` parses YAML frontmatter, extracts `system-prompt-identity` verbatim (hard cap ≤150 tokens; raises `AgentSpecError` if exceeded)
@@ -454,11 +548,12 @@ Implemented alongside other `universal_tools.py` additions in Stage 5b:
   - Layer 3: active skill via `@agent.instructions` calling `SkillLoader.load_instructions(ctx.deps.active_skill_id)`
 - [ ] **`src/agents/skill_loader.py`**: `SkillLoader.load_instructions(skill_id)` — parses skill Markdown file, extracts included sections (Inputs Required, Steps, Algedonic Triggers, Feedback Loop, Outputs); excludes Knowledge Adequacy Check; reads `complexity-class` from frontmatter to select token threshold (simple ≤600, standard ≤1200, complex ≤2000); counts tokens via `tiktoken`; truncation priority if soft cap exceeded: Algedonic Triggers → compact ALG-IDs only; Feedback Loop → termination conditions + iteration count only; Outputs → artifact paths only; **Steps are never truncated**; raises `SkillBudgetExceededError` only above hard cap (complex=2000, standard=1440, simple=720 — 20% over soft cap; indicates a skill that needs splitting, not compressing)
 - [ ] **`src/agents/tools/`**: tool implementations (all tools described in `framework/agent-runtime-spec.md §6`):
-  - `universal_tools.py` — read_artifact, query_event_store, emit_event, raise_cq, raise_algedonic, read_framework_doc, discover_standards (reads `technology-repository/coding-standards/` and `enterprise-repository/standards/`; SA/SwA/DE/DO only)
+  - `universal_tools.py` — `read_artifact(id_or_path, mode)` (resolves artifact-id → path via ModelRegistry; modes: `summary`=frontmatter+first two §content sections, `full`=entire file); `list_artifacts(directory, **filter)` (queries ModelRegistry; returns metadata list without loading bodies; filters: artifact-type, status, domain, safety-relevant, phase-produced); `list_connections(source, target, artifact_type)` (ModelRegistry query scoped to `connections/`; all params optional); `query_event_store`, `emit_event`, `raise_cq`, `raise_algedonic`, `read_framework_doc`, `discover_standards` (reads `technology-repository/coding-standards/` and `enterprise-repository/standards/`; SA/SwA/DE/DO only), `list_target_repositories()` (reads `engagements-config.yaml`; returns all registered repos with id/label/role/domain/primary/clone-path; available to all agents), `query_learnings(phase, artifact_type, domain, expand_related=True)` (per `framework/learning-protocol.md §9` + §12.1–12.2), `record_learning(entry: LearningEntry)` (per §9 + §12.1)
   - `write_tools.py` — per-agent path-constrained write tools (RepositoryBoundaryError on violation → ALG-007)
-  - `target_repo_tools.py` — read_target_repo (DE, DO, SwA EP-G), write_target_repo (DE), execute_pipeline (DO)
+  - `target_repo_tools.py` — **multi-repo aware**: `read_target_repo(path, repo_id=None)` (repo_id=None → primary repo; raises TargetRepoNotFoundError if id not registered); `write_target_repo(path, content, repo_id=None)` (DE and DO only, per their respective access grants); `execute_pipeline(repo_id=None)` (DO only); `scan_target_repo(repo_id=None)` (Discovery Layer 4 single-repo scan — called once per repo by Layer 4 procedure); `list_target_repos()` (alias for `list_target_repositories()` — convenience import in this module). **Backward compatibility:** when `target-repository` (singular) is configured, `repo_id=None` and `repo_id="default"` both refer to it.
   - `pm_tools.py` — invoke_specialist (agent-as-tool pattern), batch_cqs, evaluate_gate, record_decision
-  - `diagram_tools.py` — `catalog_lookup(query, ontological_layer)` (semantic search across `elements/<layer>/`; returns matching element IDs + names); `catalog_propose(element_spec)` (submits new element via `diagram.catalog-proposal` handoff; non-SA only); `catalog_register(element_spec)` (SA only; writes to correct sub-catalog YAML; regenerates `_macros.puml`; validates no duplicate IDs); `validate_diagram(puml_file_path)` (post-authoring validation: reads .puml file, extracts all element aliases, checks each against catalog YAML sub-catalogs; verifies `!include _macros.puml` is present; returns list of validation errors — missing catalog IDs, broken cross-references, missing required header; SA calls before rendering); `render_diagram(puml_file_path)` (invokes local `plantuml` CLI; on success writes SVG to `rendered/` and returns SVG path; on failure returns error output for agent to diagnose; sprint-boundary render only unless on-demand render is requested by PM). **Note: agents author PUML source text directly using `write_artifact` — no intermediate spec format is generated by a tool. The LLM follows per-diagram-type templates from `framework/diagram-conventions.md §7` (PUML syntax conventions). Text generation is the model's task; tools handle catalog I/O and CLI invocation only.**
+  - `diagram_tools.py` — Model-driven diagram production per `framework/diagram-conventions.md §5` (D1–D5 protocol): `regenerate_macros(repo_path)` (scans all entity `§display ###archimate` blocks via ModelRegistry; rewrites `_macros.puml`; called automatically by `write_artifact` when an entity's archimate display spec changes — ALG-C04 if count drift detected); `generate_er_content(entity_ids)` (reads each DOB entity's `§display ###er` block; returns PUML class declarations with attribute lists for direct paste into ER diagram); `generate_er_relations(connection_ids)` (reads each er-connection's `§display ###er` block; returns cardinality lines); `validate_diagram(puml_file_path)` (extracts all PUML aliases; checks each against ModelRegistry; verifies each resolved entity has the appropriate `§display ###<language>` section; confirms `!include _macros.puml` present for ArchiMate/use-case diagrams; returns list of validation errors; ALG-C03 on alias with no backing entity — model must be extended, alias must not be removed); `render_diagram(puml_file_path)` (invokes local `plantuml` CLI; writes SVG to `rendered/`; sprint-boundary render only unless on-demand requested by PM). Non-SA agents call `diagram.display-spec-request` handoff when a needed `§display ###<language>` subsection is missing from an entity. **Agents author PUML source text directly via `write_artifact`, following templates from `framework/diagram-conventions.md §7`.**
+- [ ] **`src/agents/learning_store.py`**: `LearningStore` wrapper around LangGraph `BaseStore` (per `framework/learning-protocol.md §12.1`); implements `query()` and `record()` with graph-expansion and optional semantic tier; handles store rebuild from files on startup
 - [ ] **`src/agents/project_manager.py`**: PM agent with `result_type=PMDecision`; all PM skills loaded via SkillLoader
 - [ ] **`src/agents/solution_architect.py`**: SA agent; Discovery Scan tool registered; all SA skills loadable
 - [ ] **`src/agents/software_architect.py`**: SwA agent; Reverse Architecture Reconstruction support for EP-G
@@ -471,7 +566,7 @@ Implemented alongside other `universal_tools.py` additions in Stage 5b:
 
 > Governed by `framework/orchestration-topology.md`. LangGraph graph with PM supervisor + specialist nodes.
 
-- [ ] **`src/orchestration/graph_state.py`**: `SDLCGraphState` TypedDict — exactly as specified in orchestration-topology.md §3
+- [ ] **`src/orchestration/graph_state.py`**: `SDLCGraphState` TypedDict — as specified in orchestration-topology.md §3, extended with: `target_repository_ids: list[str]` (all registered repo IDs for this engagement; populated at `EngagementSession` startup from `engagements-config.yaml`); `primary_repository_id: str | None` (id of the primary repo, or None for single-repo backward compat)
 - [ ] **`src/orchestration/pm_decision.py`**: `PMDecision` Pydantic model — PM's structured output (next_action, specialist_id, skill_id, task_description, reasoning, gate_id)
 - [ ] **`src/orchestration/routing.py`**: all routing functions — `route_from_pm`, `route_after_specialist`, `route_after_gate`, `route_after_cq`, `route_after_algedonic`, `route_after_sprint_close`; algedonic bypass check in every routing function
 - [ ] **`src/orchestration/nodes.py`**: all node implementations — `pm_node` (PM deliberative reasoning); `sa_node`, `swa_node`, `do_node`, `de_node`, `qa_node` (each calls `invoke_specialist` via PM tools); `gate_check_node`, `cq_user_node`, `algedonic_handler_node`, `sprint_close_node`, `engagement_complete_node`
@@ -484,7 +579,7 @@ Implemented alongside other `universal_tools.py` additions in Stage 5b:
 
 - [ ] **`src/sources/base.py`**: adapter base class — `SourceAdapter.query(query: str) → str`; all queries emit `source.queried` EventStore event; adapter is read-only
 - [ ] **`src/sources/confluence.py`**, **`src/sources/jira.py`**, **`src/sources/git_source.py`**: external source implementations; wired to `external-sources/<id>.config.yaml`
-- [ ] **`src/sources/target_repo.py`**: local clone manager for target project repository; read path for all agents; write path for DE only; never commits framework files into target repo
+- [ ] **`src/sources/target_repo.py`**: `TargetRepoManager` — multi-repo aware clone manager; reads `engagements-config.yaml` to build repo registry; `clone_or_update(repo_id)` clones/fetches to `engagements/<id>/target-repos/<repo-id>/`; `get_clone_path(repo_id) → Path`; `check_access(repo_id, agent_role) → Literal["read-write","read-only","none"]`; `get_primary_id() → str | None`; **`create_worktree(repo_id, branch_name) → Path`** (creates a git worktree at `engagements/<id>/target-repos/<repo-id>-wt-<branch>/` for agent-isolated code changes — non-negotiable for safe concurrent agent writes; DE and DO each get their own worktree per sprint; merged back by PM on sprint close); backward-compatible: `target-repository` (singular) registered as `id="default"`. Never commits framework files into any target repo.
 
 #### 5e — Cross-cutting skill docs and retroactive updates
 
@@ -593,19 +688,26 @@ Implemented alongside other `universal_tools.py` additions in Stage 5b:
 
 ## Current State & Immediate Next Actions
 
-**Stages 1 through 4.6b are complete.** All framework documents, AGENT.md files, and skill files have been authored. Stage 5 (Python implementation) is next.
+**Stages 1 through 4.9 are complete** (4.8c/4.8d pending retroactive schema/doc updates — tracked above). Stage 5 (Python implementation) is next.
 
 ### Resume at: Stage 5 — Python Implementation Layer
 
-Read `framework/agent-runtime-spec.md` and `framework/orchestration-topology.md` before authoring any `src/` file. Begin with Stage 5a (EventStore completion), then 5b (agent layer).
+Read `framework/agent-runtime-spec.md` and `framework/orchestration-topology.md` before authoring any `src/` file. Begin with Stage 5a (EventStore completion), then 5b (agent layer). Key implementation dependencies:
+- `src/sources/target_repo.py` implements `TargetRepoManager` (multi-repo aware; see Stage 5d)
+- `src/agents/learning_store.py` wraps LangGraph `BaseStore` for the learning system (see Stage 4.6c + `framework/learning-protocol.md §12`)
+- `src/orchestration/graph_state.py` includes `target_repository_ids` and `primary_repository_id` (see Stage 5c)
 
 **Outstanding retroactive item (complete before or alongside Stage 5e):**
 - Discovery Scan Step 0 (five-layer scan per `framework/discovery-protocol.md §2`) not yet added to Stage 3 skill files. Step 0.L is present in all 43 files; the broader Step 0 envelope (engagement profile read, enterprise repo, external sources, target-repo, EventStore state) is missing from Stage 3 skills. See Stage 5e checklist.
 
 ### Key decisions already made (do not re-litigate)
 - `workflow.db` is **git-tracked** (canonical EventStore). YAML in `workflow-events/` is a projection. See `framework/architecture-repository-design.md §4.2`.
-- Framework deploys **one clone per software project**. Target project is a separate git repo in `engagements/<id>/target-repo/` (.gitignored). Framework files never enter target project.
-- `delivery-repository/` holds **delivery metadata only** (PR records, test reports, branch refs). Source code lives in target project repo.
+- Framework deploys **one clone per software project**. Target project repos are separate git repos at `engagements/<id>/target-repos/<repo-id>/` (.gitignored). Framework files never enter any target project repo.
+- `delivery-repository/` holds **delivery metadata only** (PR records, test reports, branch refs), per target repo in `delivery-repository/repos/<repo-id>/`. Source code lives in target repos.
+- **Multi-repo: `target-repository` (singular) is backward-compatible.** Tools treat it as `target-repositories: [{id: "default", primary: true, ...}]`. All `target_repo_tools` functions accept `repo_id=None` (→ primary repo). See `engagements-config.yaml` for multi-repo example.
+- **Repository Map (`REPO-MAP`) artifact is required for multi-repo engagements.** PM bootstraps registry section; SA completes dependency map + bounded-context allocation. Schema: `framework/artifact-schemas/repository-map.schema.md`.
+- **Git worktrees are non-negotiable for DE and DO when writing to target repos.** Each agent (DE/DO) gets its own git worktree per sprint (created via `TargetRepoManager.create_worktree()`), preventing cross-contamination between concurrent agents. Sprint close merges worktrees back to the branch tracked by the engagement. This is the 2026 standard for safe multi-agent code modification.
+- **Learning store uses LangGraph `BaseStore` at runtime** with file-based `learnings/` as durable serialisation. Semantic retrieval tier is optional (enterprise corpus ≥ 50 entries + `sqlite-vec` available). Cross-agent learnings flow through enterprise promotion and PM's `cross-role-learnings/` index.
 - Change Record (Phase H) is produced by **SA** (not PM). PM produces intake record only.
 - Algedonic triggers in `algedonic-protocol.md` are the canonical list. Skill files reference them by ID (e.g., ALG-001); they do not redefine them.
 - **Diagram authoring:** agents write PUML source text directly via `write_artifact` — no intermediate spec format. Tools handle catalog I/O (`catalog_lookup`, `catalog_register`, `catalog_propose`, `validate_diagram`, `render_diagram`) and CLI invocation only. See `framework/diagram-conventions.md §1`.

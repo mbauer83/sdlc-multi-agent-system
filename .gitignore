@@ -45,8 +45,13 @@ engagements/**/workflow.db-wal
 engagements/**/workflow.db-shm
 
 # Target project repository local clones — separate git repos, never committed here.
+# Multi-repo engagements use target-repos/<repo-id>/; single-repo uses target-repos/default/
+# Backward-compat: old engagements may use target-repo/ (singular) — also excluded.
 # See framework/architecture-repository-design.md §2.4 and §3.4
+engagements/**/target-repos/
 engagements/**/target-repo/
+# Git worktrees created per agent/sprint for isolation (merged back at sprint close)
+engagements/**/*-wt-*/
 
 # Alembic
 alembic.ini.bak

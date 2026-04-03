@@ -100,34 +100,48 @@ Query configured external sources if `external-sources/<source-id>.config.yaml` 
 
 **No-config fallback:** If no external sources are configured, this layer is skipped. Note in the Gap Assessment that external source discovery was unavailable.
 
-### Layer 4 — Target Project Repository
+### Layer 4 — Target Project Repository (Single or Multi-Repo)
 
-Scan the target project repository if `target-repository.url` is set in the Engagement Profile and the local clone exists at `engagements/<id>/target-repo/`.
+Scan all registered target repositories. The set of registered repositories is determined by reading `engagements-config.yaml`:
+- If `target-repositories` (plural list) is present: scan each entry in the list.
+- If `target-repository` (singular, legacy format) is present: treat as a single-item list with `id: default`.
+- Skip repos whose `url` is `null` or whose `local-clone-path` does not exist.
 
-**This layer is mandatory for EP-G and EP-H entries.** For EP-0 through EP-D it is optional but should be performed if target-repo is accessible.
+**This layer is mandatory for EP-G and EP-H entries.** For EP-0 through EP-D it is optional but should be performed for any repo that is accessible.
 
-**Discovery steps:**
+**Multi-repo procedure:**
 
-1. **Enumerate repository structure:** List top-level directories; identify project type (web service, library, monolith, microservices, etc.) from directory layout, build files, and configuration.
+1. **Load Repository Map** (`architecture-repository/repository-map.md`) if it exists. The Repository Map provides pre-scanned inter-repo dependency and bounded-context allocation data — if present and current, use it to skip re-scanning unchanged repos. If absent or stale, proceed with direct scanning.
 
-2. **Read project manifests:** `package.json`, `pyproject.toml`, `pom.xml`, `go.mod`, `Cargo.toml`, `Gemfile`, `composer.json`, `*.csproj`, etc. Extract: technology stack, direct dependencies, version constraints. Map to Technology Architecture components (TC-nnn candidates).
+2. **Call `list_target_repositories()`** to get the full registry (ids, labels, roles, domains, clone paths). This tool reads `engagements-config.yaml` and returns only repos with accessible local clones.
 
-3. **Read infrastructure/deployment definitions:**
+3. **For each accessible repository, execute the per-repo discovery steps below** (steps 4–10). Group findings by repo id.
+
+4. **Enumerate repository structure:** List top-level directories; identify project type from directory layout, build files, and configuration. Note the `role` from the registry (microservice, microfrontend, etc.) as context for interpretation.
+
+5. **Read project manifests:** `package.json`, `pyproject.toml`, `pom.xml`, `go.mod`, `Cargo.toml`, `Gemfile`, `composer.json`, `*.csproj`, etc. Extract: technology stack, direct dependencies, version constraints. Map to Technology Architecture components (TC-nnn candidates). For shared-lib and shared-schema repos, pay particular attention to exported interfaces.
+
+6. **Read infrastructure/deployment definitions:**
    - Container: `Dockerfile`, `docker-compose.yml`
    - Kubernetes: `k8s/`, `helm/`, `kustomize/`
    - Cloud IaC: `terraform/`, `pulumi/`, `cloudformation/`
    - CI/CD: `.github/workflows/`, `.gitlab-ci.yml`, `Jenkinsfile`, `azure-pipelines.yml`
-   Map to Deployment Topology and Environment Provisioning Catalog.
+   Map to Deployment Topology and Environment Provisioning Catalog. For infrastructure-role repos, this is the primary content.
 
-4. **Read architecture-level documentation:** `README.md`, `docs/`, `ADR.md` or `docs/decisions/`, `ARCHITECTURE.md`, `DESIGN.md`, `CONTRIBUTING.md`. Extract any documented architecture decisions; map to ADR candidates.
+7. **Read architecture-level documentation:** `README.md`, `docs/`, `ADR.md` or `docs/decisions/`, `ARCHITECTURE.md`, `DESIGN.md`, `CONTRIBUTING.md`. Extract any documented architecture decisions; map to ADR candidates.
 
-5. **Read interface definitions:** `openapi.yaml`, `swagger.json`, `*.proto`, `graphql/**/*.graphql`, `schemas/`. Map to Interface Catalog (IFC-nnn candidates) and Data Entity Catalog (DE-nnn candidates).
+8. **Read interface definitions:** `openapi.yaml`, `swagger.json`, `*.proto`, `graphql/**/*.graphql`, `schemas/`. Map to Interface Catalog (IFC-nnn candidates) and Data Entity Catalog (DE-nnn candidates). For multi-repo engagements, cross-reference interface definitions across repos to identify integration contracts.
 
-6. **Read test structure:** `test/`, `tests/`, `spec/`, `__tests__/`. Infer coverage targets and test strategy from structure and any CI configuration.
+9. **Read test structure:** `test/`, `tests/`, `spec/`, `__tests__/`. Infer coverage targets and test strategy from structure and any CI configuration.
 
-7. **Mark all inferences** with `[inferred: target-repo scan]`. Do not treat inferences as authoritative; they require validation.
+10. **Mark all inferences** with `[inferred: target-repo:<repo-id> scan]` (e.g., `[inferred: target-repo:order-service scan]`). For single-repo engagements with `id: default`, use `[inferred: target-repo scan]` for backward compatibility.
 
-**Agent scope limits:** Only the agents with target-repo read access (all agents for reading) and write access (DevOps for IaC/pipeline; Implementing Developer for feature code) per the Engagement Profile access control table may act on target-repo content.
+**Cross-repo synthesis (multi-repo only):** After scanning all repos, identify:
+- **Shared dependencies:** same library at different versions (flag as TC divergence risk)
+- **Undocumented integration contracts:** one repo calls an endpoint that another repo serves, but no contract doc exists — raise CQ for contract formalisation
+- **Circular dependencies:** repo A depends on B, B depends on A — raise ALG-011
+
+**Agent scope limits:** Agents may read all registered target repos per discovery. Write access is per-repo per `engagements-config.yaml` access table. All writes use `write_target_repo(repo_id=<id>, ...)` — the `repo_id` parameter is mandatory in multi-repo engagements to prevent accidental writes to the wrong repo.
 
 ### Layer 5 — EventStore State
 
@@ -191,7 +205,7 @@ If a Missing section is not on the critical path for the current output, classif
 Every field derived from a source other than direct user or CQ input must be annotated:
 - `[source: user-input]` — came directly from user's stated input
 - `[source: <source-id>]` — came from an external source query
-- `[inferred: target-repo scan]` — inferred from codebase
+- `[inferred: target-repo scan]` — inferred from codebase (single-repo; use `[inferred: target-repo:<id> scan]` in multi-repo engagements)
 - `[derived: <artifact-id>]` — derived from another ADM artifact
 - `[assumed: <assumption-text>]` — assumed; assumption documented in artifact header's `assumptions` field
 

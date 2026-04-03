@@ -4,7 +4,7 @@ description: Current implementation stage, completed work, and what to resume ne
 type: project
 ---
 
-**All stages through 4.6b are complete as of 2026-04-03.**
+**Stages 1–4.7 complete + Stage 4.8 partially complete as of 2026-04-03.**
 
 ## Completed Stages
 
@@ -16,50 +16,72 @@ type: project
 
 **Pre-Stage-4 additions** — Personality framework: `framework/agent-personalities.md`, §11 personality sections on all AGENT.md files, YAML frontmatter, `framework/agent-index.md`, `framework/agent-runtime-spec.md`, `framework/orchestration-topology.md`.
 
-**Stage 4** — Framing layer: PO (AGENT.md + 5 skills), SM (AGENT.md + 3 skills), CSCO (AGENT.md + 7 skills: stamp-stpa-methodology, gate-phase-a through gate-phase-d, gate-phase-g, gate-phase-h, incident-response). `framework/agent-index.md` updated with PO/SM/CSCO skill routing tables.
+**Stage 4** — Framing layer: PO (AGENT.md + 5 skills), SM (AGENT.md + 3 skills), CSCO (AGENT.md + 7 skills). `framework/agent-index.md` updated.
 
 **Stage 4.5** — Cross-cutting framework extensions:
 - `framework/diagram-conventions.md` — PUML conventions, ontological catalog structure, D1–D6 protocol, 6 PUML templates, _macros.puml spec
 - `framework/artifact-schemas/diagram-catalog.schema.md`
 - `framework/repository-conventions.md §13` — canonical artifact reference format
-- `framework/discovery-protocol.md §8` (Step 0.D diagram catalog lookup) and `§9` (Step 0.S standards discovery)
-- `framework/agent-runtime-spec.md §2` — Layer 2 = `### Runtime Behavioral Stance` (independently authored, ≤350 tokens)
-- `framework/algedonic-protocol.md` — ALG-C01 through ALG-C04 added (diagram catalog violations)
-- All 9 AGENT.md files: `### Runtime Behavioral Stance` + `## Artifact Discovery Priority` + `complexity-class:` on all skill frontmatter
+- `framework/discovery-protocol.md §8` (Step 0.D) and `§9` (Step 0.S standards discovery)
+- `framework/agent-runtime-spec.md §2` — Layer 2 = `### Runtime Behavioral Stance`
+- `framework/algedonic-protocol.md` — ALG-C01 through ALG-C04 added
+- All 9 AGENT.md files: `### Runtime Behavioral Stance` + `## Artifact Discovery Priority` + `complexity-class:`
 
-**Stage 4.5f** — Diagram D1–D6 steps retroactively added to SA phase-b (3 steps), SA phase-c-application (2 steps), SA phase-c-data (1 step), SwA phase-d (Step 0.D + 2 diagram steps), SwA phase-e (1 diagram step).
+**Stage 4.5f** — Diagram D1–D6 steps retroactively added to SA phase-b, SA phase-c-application, SA phase-c-data, SwA phase-d, SwA phase-e.
 
 **Stage 4.6a** — Learning protocol framework: `framework/learning-protocol.md` + `framework/artifact-schemas/learning-entry.schema.md`.
 
 **Stage 4.6b** — Retroactive skill patches: Step 0.L (Learnings Lookup) + `### Learning Generation` added to all 43 skill files. Learning Synthesis step added to PM retrospective.
 
-**Learning protocol clarification (2026-04-03):** `artifact-type` on a learning entry = the PRIMARY OUTPUT artifact of the skill when the mistake occurred, NOT the input artifact reviewed/consumed. This ensures `query_learnings(artifact_type=<primary_output>)` in Step 0.L retrieves corrections at the start of the same skill type. Schema example corrected; CLAUDE.md rule #19 updated.
+**Stage 4.6d** — Learning protocol 2026 alignment: LangGraph BaseStore, sqlite-vec semantic tier, cross-agent visibility via PM cross-role-learnings/ index, A-MEM graph links.
+
+**Stage 4.7** — Multi-target-repository support: repository-map.schema.md; multi-repo config format; discovery-protocol.md Layer 4 update.
+
+**Stage 4.8 (partial):**
+
+- **4.8a Complete** — `framework/artifact-registry-design.md` v2.0.0: ERP master spec, ArchiMate-organised entity directories, ModelRegistry, §content/§display file format, connection type registry, model-first rule, tool contracts. **Plus:** two-scope ID design — engagement IDs are local-only; enterprise IDs globally unique from `enterprise-repository/governance-log/id-counters.yaml` assigned at promotion; `promote_entity` does reference sweep then moves file; Architecture Board members are the only enterprise-repo writers.
+
+- **4.8b Complete** — `framework/artifact-schemas/entity-conventions.md` v2.0.0: unified frontmatter schema (no `references`, no `diagram-element-id`), §content/§display structure, properties tables per ArchiMate type, five exemplar files.
+
+- **4.8c Complete** — `framework/diagram-conventions.md` v2.0.0: no elements/ subdir, _macros.puml from §display blocks, artifact-ids as PUML aliases, D1–D5 protocol, ER tools. **Plus:** diagram referencing design — existing diagrams referenced in-place via `entry_type: reference` in `diagrams/index.yaml`; never copied; bootstrap has no entity import step.
+
+- **4.8e Complete** — CLAUDE.md updated: ERP authoring rules, repository layout, stages table.
+
+- **4.8d Pending** — Domain artifact schemas + cross-cutting framework doc updates (discovery-protocol, agent-runtime-spec, skill file retroactive patches).
+
+- **4.8f Pending** — Reverse architecture skills (SA + SwA).
 
 ## Key Architectural Decisions
 
-1. Diagram catalog organized by ontological layer (not vertical domain slice). Vertical slicing by domain IS used at artifact level (phase B/C/D subdirs) but NOT in the element catalog.
-2. Enterprise/engagement catalog separation is STRUCTURAL (separate repos/dirs), not a naming convention. `extends:` field for cross-catalog traceability.
-3. Import-not-include: engagement catalog imports enterprise elements at bootstrap. PUML diagrams include only engagement `_macros.puml`.
-4. Layer 2 system prompt = `### Runtime Behavioral Stance` (independently authored, NOT compressed from §11). Three mandatory elements: default bias, conflict posture, cross-cutting rule.
-5. `workflow.db` (SQLite) is git-tracked as the canonical event store. YAML export in `workflow-events/` is human-readable projection.
+1. **ModelRegistry replaces `_index.yaml`**: in-process lookup built from frontmatter at startup; never persisted; per-EngagementSession scope covering all work-repositories + enterprise (read-only paths).
+2. **Two-scope ID spaces**: engagement IDs (`CAP-001` etc.) are local-only; enterprise IDs globally unique assigned from `id-counters.yaml` at promotion time. `promote_entity` performs a deterministic reference sweep (old → new ID) before moving the file.
+3. **Architecture Board members are the only enterprise-repo writers.** Engagement agents get `RegistryReadOnlyError` on any write attempt to enterprise paths.
+4. **No entity import at bootstrap**: enterprise entities visible via unified ModelRegistry (read-only paths); no file copying.
+5. **Diagrams referenced not copied**: existing enterprise/prior-engagement diagrams in `diagrams/index.yaml` as `entry_type: reference`; `render_diagram` renders in place at source path.
+6. **Model-first**: entities/connections may exist without diagrams; diagram elements must have a backing entity (violations → ALG-C03).
+7. Diagram catalog organized by ontological layer; vertical domain slicing at artifact level only.
+8. Layer 2 system prompt = `### Runtime Behavioral Stance` (independently authored, ≤350 tokens).
+9. `workflow.db` (SQLite) is git-tracked as the canonical event store.
+10. Multi-repo: `target-repositories` (plural) preferred; `target-repository` backward-compat.
+11. Learning store: LangGraph BaseStore at runtime; files are durable serialisation; sqlite-vec semantic tier optional.
 
 ## Runtime Extraction Contract
 
 - Layer 1: `system-prompt-identity` frontmatter (≤150 tokens, always)
 - Layer 2: `### Runtime Behavioral Stance` in §11 (≤350 tokens, always)
-- Layer 3: full skill file up to complexity-class budget (≤600/1200/2000) — PRIMARY behavioral delivery vehicle
+- Layer 3: full skill file up to complexity-class budget (≤600/1200/2000)
 - Layer 4: on-demand via `read_artifact` tool
-- All other AGENT.md sections = authoring documentation only, not runtime-injected
 
-## Python Coding Standards (Stage 5 onward)
+## Next: Stage 4.8d
 
-Defined in `specs/IMPLEMENTATION_PLAN.md §Python Coding Standards` and CLAUDE.md rule #20. Key points:
-- Mandatory type annotations on all signatures; lowercase generics (`list[str]`, `x | y`); `Protocol` for structural subtyping
-- Monadic `Result`-style error handling; no exceptions for expected failures
-- Domain-centred four-layer architecture: Common → Domain → Application → Infrastructure
-- `src/common/` for cross-cutting concerns (logging, validation, parsing, normalisation) — usable by all layers
-- Ports-and-adapters for all I/O; domain Pydantic models are single source of truth
+Update domain artifact schemas and cross-cutting framework docs to align with ERP v2.0:
+- `framework/artifact-schemas/business-architecture.schema.md`
+- `framework/artifact-schemas/application-architecture.schema.md`
+- `framework/artifact-schemas/data-architecture.schema.md`
+- `framework/artifact-schemas/technology-architecture.schema.md`
+- `framework/repository-conventions.md` — §2.2 directory layout update
+- `framework/discovery-protocol.md` — Layer 1 ModelRegistry scan update
+- `framework/agent-runtime-spec.md §6` — tool specs update
+- Retroactive skill file patches (script-based)
 
-## Next: Stage 5
-
-Python implementation layer: EventStore completion + PydanticAI agents + LangGraph orchestration + source adapters + skill loader. Fully detailed in `specs/IMPLEMENTATION_PLAN.md §Stage 5`.
+Then: Stage 4.8f (reverse architecture skills), Stage 4.9 (ENG-001 reference model), Stage 5 (Python implementation).

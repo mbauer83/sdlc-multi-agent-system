@@ -3,8 +3,16 @@
 # See framework/architecture-repository-design.md §3.3 and §3.4 for options and rationale.
 #
 # DEPLOYMENT MODEL: clone one instance of the sdlc-agents framework per software project.
-# Each framework instance manages one or more engagements against one target project repo.
-# Framework files never live inside the target project repository.
+# Each framework instance manages one or more engagements. Each engagement can target
+# one or more software project repositories (microservices, CQRS, microfrontends, etc.).
+# Framework files never live inside the target project repositories.
+#
+# TARGET REPOSITORY FORMATS:
+#   Single-repo (backward-compatible):
+#     target-repository: {url: ..., default-branch: ..., local-clone-path: ..., access: {...}}
+#   Multi-repo (preferred for microservices / CQRS / microfrontend architectures):
+#     target-repositories: [{id: ..., label: ..., role: ..., domain: ..., primary: ..., ...}, ...]
+#   See framework/artifact-schemas/repository-map.schema.md for the repository role taxonomy.
 
 engagements:
   mode: single-repo         # single-repo | multi-repo
@@ -18,14 +26,14 @@ engagements:
       cycle-level: capability   # strategic | segment | capability
       status: active            # active | closed | archived
 
-      # Target project repository (the software being built/analysed)
+      # Single target repository (simple project — use target-repositories list for multi-repo)
       # See framework/architecture-repository-design.md §2.4 and §3.4
       target-repository:
         url: null               # Set to git URL or local path before starting work
                                 # e.g. git@github.com:org/project.git
                                 # or   /home/user/my-project
         default-branch: main
-        local-clone-path: engagements/ENG-001/target-repo/  # .gitignored
+        local-clone-path: engagements/ENG-001/target-repos/default/  # .gitignored
         access:
           implementing-developer: read-write    # branches, commits, PRs
           devops-platform-engineer: read-write  # IaC and pipeline paths only
@@ -34,19 +42,101 @@ engagements:
           software-architect: read-only         # EP-G reverse architecture
           all-others: none
 
-# Notes on multi-repo mode:
+# ---------------------------------------------------------------------------
+# MULTI-REPO ENGAGEMENT EXAMPLE
+# Use this format when the product spans multiple repositories
+# (microservices, CQRS event-store, microfrontends, etc.)
+# Remove the target-repository block above and replace with target-repositories.
+#
+# Example — microservices engagement:
+#
+# - id: ENG-002
+#   name: "Platform Re-architecture"
+#   path: engagements/ENG-002/
+#   entry-point: EP-A
+#   cycle-level: segment
+#   status: active
+#
+#   target-repositories:
+#     - id: order-service
+#       label: "Order Service"
+#       role: microservice          # microservice|microfrontend|bff|event-store|shared-lib|
+#                                   # infrastructure|api-gateway|data-platform|shared-schema|monolith
+#       domain: orders              # bounded context label; maps to BA bounded context
+#       url: git@github.com:org/order-service.git
+#       default-branch: main
+#       local-clone-path: engagements/ENG-002/target-repos/order-service/  # .gitignored
+#       primary: true               # exactly one repo must be primary: true
+#       access:
+#         implementing-developer: read-write
+#         devops-platform-engineer: read-write
+#         qa-engineer: read-only
+#         solution-architect: read-only
+#         software-architect: read-only
+#         all-others: none
+#
+#     - id: payment-service
+#       label: "Payment Service"
+#       role: microservice
+#       domain: payments
+#       url: git@github.com:org/payment-service.git
+#       default-branch: main
+#       local-clone-path: engagements/ENG-002/target-repos/payment-service/  # .gitignored
+#       primary: false
+#       access:
+#         implementing-developer: read-write
+#         devops-platform-engineer: read-write
+#         qa-engineer: read-only
+#         solution-architect: read-only
+#         software-architect: read-only
+#         all-others: none
+#
+#     - id: customer-frontend
+#       label: "Customer Frontend"
+#       role: microfrontend
+#       domain: ui
+#       url: git@github.com:org/customer-frontend.git
+#       default-branch: main
+#       local-clone-path: engagements/ENG-002/target-repos/customer-frontend/  # .gitignored
+#       primary: false
+#       access:
+#         implementing-developer: read-write
+#         devops-platform-engineer: read-write
+#         qa-engineer: read-only
+#         solution-architect: read-only
+#         software-architect: read-only
+#         all-others: none
+#
+#     - id: domain-events
+#       label: "Domain Event Schemas"
+#       role: shared-schema
+#       domain: cross-cutting
+#       url: git@github.com:org/domain-events.git
+#       default-branch: main
+#       local-clone-path: engagements/ENG-002/target-repos/domain-events/  # .gitignored
+#       primary: false
+#       access:
+#         implementing-developer: read-write
+#         devops-platform-engineer: read-only
+#         qa-engineer: read-only
+#         solution-architect: read-only
+#         software-architect: read-only
+#         all-others: none
+#
+# ---------------------------------------------------------------------------
+# Notes on multi-repo framework engagement mode:
 #   In multi-repo mode, each engagement is a separate git repository.
 #   Replace path: with repo-url: pointing to the engagement's git remote.
 #   The framework repo holds this configuration as the registry of all
 #   active and historical engagements.
 #
-# Example multi-repo entry:
-#   - id: ENG-002
+# Example multi-repo framework entry:
+#   - id: ENG-003
 #     name: "Project Nighthawk"
 #     repo-url: git@github.com:org/nighthawk-architecture.git
 #     entry-point: EP-B
 #     status: active
-#     target-repository:
-#       url: git@github.com:org/nighthawk-api.git
-#       default-branch: main
-#       local-clone-path: target-repo/  # relative to engagement repo root
+#     target-repositories:           # same format as above
+#       - id: nighthawk-api
+#         ...
+#         primary: true

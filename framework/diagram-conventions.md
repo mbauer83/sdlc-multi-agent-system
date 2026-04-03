@@ -1,124 +1,74 @@
 ---
 doc-id: diagram-conventions
-version: 1.0.0
-status: Approved — Stage 4.5
+version: 2.0.0
+status: Approved — Stage 4.8
 governs: All diagram production across all agent roles
 ---
 
 # Diagram Conventions
 
-Specifies the production, registration, and reuse of PlantUML (PUML) diagrams across all agent roles. This document is the canonical specification for all diagram work in the SDLC multi-agent system. Drift risk in a multi-agent architecture repository is acute — without a strict catalog-and-reuse protocol, the same actor or system will be drawn differently in every diagram.
+Specifies the production, rendering, and maintenance of PlantUML (PUML) diagrams. Diagrams are **views over the model**: they select and compose entities and connections from the architecture/technology repositories and render them according to the `§display` sections in those files. No separate element catalog exists — the model IS the catalog.
 
 ---
 
 ## 1. Authoring Model
 
-Agents author PlantUML source text directly. There is no intermediate "diagram spec" format that a tool generates PUML from.
-
-**Rationale:** PUML is already a compact textual DSL. LLMs produce syntactically regular text reliably when given clear templates and rules. Adding a second intermediate format creates two translation steps without benefit.
+Agents author PlantUML source text directly. The model (entity and connection files) drives diagram content; the diagram file expresses a selected view over that model for a specific purpose.
 
 **Division of responsibility:**
 
 | What | Who |
 |---|---|
-| Author PUML text, following §7 templates | The agent (LLM), using `write_artifact` to write the `.puml` file |
-| Catalog I/O: lookup, register, propose | Tools (`catalog_lookup`, `catalog_register`, `catalog_propose`) |
-| Post-authoring validation | `validate_diagram` tool (checks catalog ID references + PUML structure) |
-| Rendering to SVG | `render_diagram` tool (invokes plantuml CLI; run at sprint boundary commit) |
+| Author/maintain entity and connection files with correct `§display` sections | SA (architecture-repository); SwA (technology-repository) |
+| Author PUML diagram files from entity/connection `§display` specs | SA using D1–D5 protocol below |
+| Generate/regenerate `_macros.puml` from entity `§display ###archimate` blocks | `regenerate_macros()` tool (called by `write_artifact` when entity display specs change) |
+| Post-authoring validation | `validate_diagram` tool |
+| Rendering to SVG | `render_diagram` tool (invokes PlantUML CLI; run at sprint boundary) |
+
+**Constraint:** Every element alias used in a `.puml` file must correspond to an entity artifact-id that exists in the ModelRegistry and has the appropriate `§display ###<language>` subsection. Diagrams cannot introduce entities that the model does not contain.
 
 ---
 
 ## 2. Catalog Structure
 
-Two separate catalogs, each with identical internal package structure. Scope is structural — not a naming convention.
-
 ```
 [enterprise-repository OR engagements/<id>/work-repositories/architecture-repository]/diagram-catalog/
 
-  _macros.puml                       # Auto-generated !define macros for all catalog elements
-                                     # Engagement version contains imported enterprise elements + engagement elements
-  _archimate-stereotypes.puml        # Shared ArchiMate skinparam + stereotype library
-                                     # (enterprise-repository version is canonical; engagement copies on import)
-  elements/
-    motivation/                      # ArchiMate Motivation layer
-      stakeholders.yaml              # STK-nnn: stakeholders (map to ArchiMate Stakeholder)
-      drivers.yaml                   # DRV-nnn: business drivers (map to ArchiMate Driver)
-      goals.yaml                     # GOL-nnn: goals (map to ArchiMate Goal)
-      constraints.yaml               # CON-nnn: architecture constraints (map to ArchiMate Constraint)
-      requirements.yaml              # REQ-nnn: architecture requirements (map to ArchiMate Requirement)
-      principles.yaml                # PRI-nnn: principles (map to ArchiMate Principle)
-
-    business/
-      actors.yaml                    # ACT-nnn: business actors/roles (map to ArchiMate Business Actor)
-      functions.yaml                 # BFN-nnn: business functions (map to ArchiMate Business Function)
-      processes.yaml                 # BPR-nnn: business processes (map to ArchiMate Business Process)
-      objects.yaml                   # BOB-nnn: business objects / domain concepts
-      services.yaml                  # BSV-nnn: business services (map to ArchiMate Business Service)
-      events.yaml                    # BEV-nnn: business events
-
-    application/
-      components.yaml                # CMP-nnn: application components / microservices
-      interfaces.yaml                # IFC-nnn: application interfaces / API endpoints
-      services.yaml                  # ASV-nnn: application services
-      interactions.yaml              # INT-nnn: application interactions
-
-    technology/
-      nodes.yaml                     # NOD-nnn: technology nodes / infrastructure
-      artifacts.yaml                 # ART-nnn: technology artifacts (deployable units)
-      services.yaml                  # TSV-nnn: technology services (DBs, message brokers, etc.)
-      networks.yaml                  # NET-nnn: networks / communication paths
-
-    data/
-      entities.yaml                  # DE-nnn: canonical data entities (source of truth for Data Architecture)
-                                     # Must match DE-nnn identifiers in data-architecture artifacts
-      attributes.yaml                # DAT-nnn: entity attributes (referenced in ER diagrams, not in ArchiMate)
-      relationships.yaml             # DRL-nnn: semantic data relationships (maps to ER cardinality constraints)
-
-  connections/
-    archimate.yaml                   # ArchiMate relationships: CON-A-nnn (association, composition, realization, etc.)
-    er-relationships.yaml            # ER relationships: CON-E-nnn (one-to-many, many-to-many, etc.)
-    sequence-links.yaml              # Sequence message flows: CON-S-nnn
-    process-flows.yaml               # BPMN flows: CON-P-nnn (sequence flow, message flow, default flow)
+  _macros.puml                    # Auto-generated from entity §display ###archimate blocks
+                                  # Do not edit manually — regenerated by write_artifact and regenerate_macros()
+  _archimate-stereotypes.puml     # Shared ArchiMate skinparam + stereotype library (SA-maintained)
 
   diagrams/
-    <phase>-<diagram-type>-<subject>[-<domain>]-v<N>.puml
-                                     # domain suffix optional; used when diagram scope is one domain slice
+    index.yaml                    # SA-authored; one entry per diagram (see §9)
+    <phase>-<type>-<subject>[-<domain>]-v<N>.puml
+    ...
 
   rendered/
-    <same-stem>.svg                  # SVG outputs; committed at sprint boundary
+    <same-stem>.svg               # SVG outputs; committed at sprint boundary
+    ...
 ```
 
-**Enterprise catalog:** `enterprise-repository/diagram-catalog/` — org-wide, long-lived elements. Writes require Architecture Board approval. Baseline: primary stakeholder roles, major enterprise systems, canonical enterprise data entities, shared infrastructure nodes, enterprise processes.
+There are no `elements/` or `connections/` subdirectories in the diagram catalog. The model entities and connections in `architecture-repository/` and `technology-repository/` serve as the element and connection catalog. The `§display` sections in those files define how each entity/connection is rendered.
 
-**Engagement catalog:** `engagements/<id>/work-repositories/architecture-repository/diagram-catalog/` — self-contained, per-engagement. Created and maintained by SA. Holds all elements used in this engagement's diagrams, including imported enterprise elements.
+**Enterprise catalog:** `enterprise-repository/diagram-catalog/` contains only `_macros.puml`, `_archimate-stereotypes.puml`, diagrams, and rendered outputs — no separate element files. Enterprise-scope entity files in `enterprise-repository/` provide the element definitions.
+
+**Engagement catalog:** `engagements/<id>/work-repositories/architecture-repository/diagram-catalog/` — self-contained per engagement. Enterprise entities are visible to the engagement via the unified ModelRegistry (read-only to engagement agents); no import or copy step is required or permitted.
 
 ---
 
-## 3. Element ID Namespaces
+## 3. Element Identity
 
-| Prefix | Ontological layer | Primary diagram type | Secondary uses |
-|---|---|---|---|
-| `STK-nnn` | Motivation | ArchiMate motivation overlay | Use Case (actors), gate records |
-| `DRV-nnn` | Motivation | ArchiMate motivation overlay | Architecture Vision |
-| `GOL-nnn` | Motivation | ArchiMate motivation overlay | Architecture Vision |
-| `CON-nnn` | Motivation | ArchiMate motivation overlay | Safety Constraint Overlay cross-refs |
-| `REQ-nnn` | Motivation | ArchiMate motivation overlay | Requirements Register cross-refs |
-| `PRI-nnn` | Motivation | ArchiMate motivation overlay | Principles Catalog |
-| `ACT-nnn` | Business | Use Case, Activity/BPMN | Sequence (lifelines), ArchiMate |
-| `BFN-nnn` | Business | ArchiMate business | Phase B capability maps |
-| `BPR-nnn` | Business | Activity/BPMN | Phase B process flows |
-| `BOB-nnn` | Business | ArchiMate business | Phase B business objects |
-| `BSV-nnn` | Business | ArchiMate business | Phase B services |
-| `CMP-nnn` | Application | ArchiMate application, Sequence | Phase C-App component diagrams |
-| `IFC-nnn` | Application | Sequence | API contract flows (Phase E) |
-| `ASV-nnn` | Application | ArchiMate application | Phase C-App |
-| `NOD-nnn` | Technology | ArchiMate technology | Phase D/E infrastructure |
-| `ART-nnn` | Technology | ArchiMate technology | Deployment diagrams |
-| `TSV-nnn` | Technology | ArchiMate technology | Phase D/E technology services |
-| `DE-nnn` | Data | Class/ER | MUST match DA artifact DE-nnn identifiers |
-| `DAT-nnn` | Data | Class/ER | Attribute declarations within ER diagrams |
+Diagram element aliases ARE the entity artifact-ids from the model (`APP-001`, `DOB-001`, `BPR-003`, etc.). There is no separate element ID namespace. The `_macros.puml` `!define` macro for an entity uses the artifact-id as both the macro name (with `-` replaced by `_`) and the PUML alias:
 
-**ID assignment rule:** IDs are assigned sequentially within each sub-catalog. SA assigns IDs; non-SA agents propose candidate IDs in their catalog-proposal handoff which SA validates and confirms.
+```plantuml
+' Entity: APP-001 (app-component "PM Agent")
+!define APP_001 rectangle "PM Agent" <<applicationComponent>> as APP-001
+```
+
+Using artifact-ids directly as aliases:
+- Eliminates the dual-ID problem (was: `BC-001` entity ↔ `BFN-001` catalog element)
+- Makes diagram source files self-documenting — an alias `APP-001` is unambiguously the PM Agent component
+- Enables `validate_diagram` to verify all aliases against the ModelRegistry with no secondary lookup
 
 ---
 
@@ -126,302 +76,288 @@ Two separate catalogs, each with identical internal package structure. Scope is 
 
 ### 4.1 Engagement Bootstrap (Preliminary / Phase A)
 
-SA creates the empty engagement catalog directory structure. If an enterprise catalog is configured in `enterprise-repository-config.yaml`:
+SA creates the engagement `diagram-catalog/` directory structure and runs `regenerate_macros()`. There is no entity import step: enterprise entities are already visible to the engagement via the unified ModelRegistry (the enterprise repository is registered as a read-only path at session initialisation). `_macros.puml` is built from all engagement entities and enterprise entities together — `regenerate_macros()` reads `§display ###archimate` blocks from both scopes in a single pass.
 
-1. Query `enterprise-repository/diagram-catalog/` for elements relevant to the engagement scope.
-2. Import relevant entries into the engagement catalog, assigning new engagement-local IDs.
-3. Set `extends: <enterprise-catalog-path>/<source-element-id>` on each imported element (cross-catalog traceability).
-4. Add imported elements to `_macros.puml`.
+**Existing diagrams — reference, do not copy.** Enterprise diagrams (`enterprise-repository/diagram-catalog/diagrams/`) and prior-engagement diagrams are never copied into the new engagement's catalog. SA registers relevant existing diagrams as reference entries in the engagement's `diagrams/index.yaml` (entry type `reference`, pointing to the source path). If a rendered SVG is needed for a deliverable, `render_diagram` is called against the source `.puml` in place — no file is duplicated. If the SA needs a variant or extension of an existing diagram, a new `.puml` file is authored in the engagement catalog; it may `!include _macros.puml` and reference any entities visible in the unified ModelRegistry.
 
-No diagram work begins until bootstrap is complete (SA gate condition at Phase A entry).
-
-**Import rule:** Enterprise elements are imported into the engagement catalog, not referenced in-place. Engagement PUML files reference only engagement-catalog IDs.
+No diagram work begins until bootstrap is complete.
 
 ### 4.2 During Engagement
 
-SA maintains the engagement catalog as the single authoritative source for all diagram production. Updates to `_macros.puml` happen synchronously with each element registration.
+`write_artifact` calls `regenerate_macros()` automatically whenever an entity file's `§display ###archimate` block is created or modified. SA does not need to trigger this manually.
 
 ### 4.3 At Engagement Close
 
-Enterprise Promotion Protocol (`framework/repository-conventions.md §12`) applies to catalog elements. SA nominates sufficiently general engagement elements (elements representing concepts that would recur across other engagements) for promotion. Architecture Board approves and adds to enterprise catalog.
+SA nominates engagement entities and diagrams that are sufficiently general for enterprise promotion per `repository-conventions.md §12`. Architecture Board approves and runs `promote_entity` / `promote_diagram`, which move the file to the appropriate enterprise path (assigning a new enterprise-scope ID for entities). No copies are made; the engagement retains only the `artifact.promoted` event record and any `reference` entries in `diagrams/index.yaml` pointing to the promoted enterprise path.
 
 ---
 
-## 5. Reuse-First Protocol (D1–D6 Sequence)
+## 5. Diagram Production Protocol (D1–D5)
 
-Every skill step that produces or updates a diagram executes this sequence. Governed by `framework/discovery-protocol.md §8` (Step 0.D) for the discovery phase; D1–D6 for the production phase.
+Every skill step that produces or updates a diagram executes this protocol.
 
-### D1 — Catalog Query
+### D1 — Query Model Entities
 
-Query the relevant ontological sub-catalog(s) for semantically matching elements:
-- Business process or capability diagram → `elements/business/`
-- Data model diagram → `elements/data/`
-- Application component or interaction diagram → `elements/application/`
-- Technology architecture diagram → `elements/technology/`
-- Motivation / architecture vision diagram → `elements/motivation/`
+Identify which entities belong in the diagram:
 
-Use `catalog_lookup(query, layer)` tool. Match on: name, type, cross-reference fields (e.g., `DE-nnn` in data-architecture artifact cross-references `DE-nnn` in `elements/data/entities.yaml`).
+```
+list_artifacts("<layer-dir>", domain="<domain>", status="baselined")
+```
 
-Also query the enterprise catalog for any new concepts not yet imported — if found, import before proceeding.
+For cross-layer diagrams: query multiple directories. Review the `§display ###<target-language>` subsection of each candidate via `read_artifact(id, mode="summary")` to confirm applicability.
 
-### D2 — Reuse or Draft New
+Also query relevant connections:
 
-For each concept required in the diagram:
-- **Match ≥ 90% confidence** → use existing ID. Do not create a duplicate.
-- **No match** → draft new element registration record using the sub-catalog YAML structure (§6 below). Assign a candidate ID (next available in sequence).
+```
+list_connections(artifact_type="archimate-realization", target="BSV-001")
+list_connections(artifact_type="er-one-to-many", source="DOB-001")
+```
 
-### D3 — Register New Elements (SA) / Propose (Non-SA)
+### D2 — Verify §display Coverage
 
-- **SA:** Write new element records directly to the relevant `elements/<layer>/*.yaml` file. Update `_macros.puml` immediately.
-- **Non-SA:** Call `catalog_propose(element_spec)` — emits `diagram.catalog-proposal` handoff to SA. Do not write to `diagram-catalog/` directly. Non-SA agents may write `.puml` files to their own work-repository `diagrams/` directory; SA integrates at phase transition.
+For each entity that will appear in the diagram, confirm the required `§display ###<language>` subsection is present.
 
-### D4 — Catalog Integrity Check (SA only)
+- **SA**: if the subsection is missing, add it via `write_artifact` (update to existing entity file). `regenerate_macros()` runs automatically.
+- **Non-SA**: emit a `diagram.display-spec-request` handoff to SA specifying which entities need which language subsections.
 
-Before completing registration, validate:
-- No duplicate ID within the namespace.
-- No name collision within the sub-catalog.
-- Cross-reference fields populated if the element links to another ontological layer (e.g., a `CMP-nnn` application component that realizes a `BSV-nnn` business service must have `realizes: BSV-nnn` in its record).
-- `_macros.puml` is updated synchronously.
+### D3 — Author PUML
 
-### D5 — Author PUML
+**D3a:** Load the template for the diagram type from §7 via `read_framework_doc("framework/diagram-conventions.md §7.<type>")`.
 
-**D5a:** Call `read_framework_doc("framework/diagram-conventions.md §7.<diagram-type>")` to load the authoritative boilerplate template for the diagram type being produced (e.g., `§7.sequence`, `§7.archimate-business`, `§7.class-er`).
+**D3b — ArchiMate and Use Case diagrams:** use `!include _macros.puml` at the top. Reference entities by their artifact-id alias. `_macros.puml` provides the PUML element declaration via the `!define` macro. Relationship lines are authored from connection `§display ###archimate` specs.
 
-**D5b:** Author the PUML source text:
-- Substitute catalog IDs (from D1–D2) as PUML aliases throughout the template.
-- Populate relationships from `connections/` data (identified in Step 0.D point 3).
-- Add diagram-specific content per the artifact being produced.
-- The LLM generates the PUML text directly — no intermediate spec format is used.
+**D3b — ER (class) diagrams:** call `generate_er_content(entity_ids)` — this tool reads each entity's `§display ###er` block and returns PUML class declarations with attribute lists. Call `generate_er_relations(connection_ids)` to get cardinality lines from connection `§display ###er` blocks. Paste both into the PUML file. No `!include _macros.puml` needed for pure ER diagrams.
 
-**D5c:** Call `write_artifact(<target-diagrams-dir>/<filename>.puml, <puml_content>)`. Filename convention: `<phase>-<diagram-type>-<subject>[-<domain>]-v<N>.puml`.
+**D3b — Sequence diagrams:** participants are declared from entity `§display ###sequence` specs (`participant-type` and `label`). Message lines are authored from connection `§display ###sequence` blocks.
 
-**D5d:** Update `diagrams/index.yaml`: add or update the entry (fields: `diagram_id`, `title`, `diagram_type`, `puml_file_path`, `domain`, `agent_owner`, `phase`, `elements_used[]`, `connections_used[]`).
+**D3b — Activity/BPMN diagrams:** swimlane pool labels come from entity `§display ###activity` blocks (`swimlane-label`). Flow arrows come from connection `§display ###activity` blocks.
 
-### D6 — Validate
+**D3c:** Write the `.puml` file via `write_artifact`. Filename: `<phase>-<type>-<subject>[-<domain>]-v<N>.puml`.
 
-Call `validate_diagram(<puml_file_path>)` immediately after writing. The tool checks:
-- All element aliases are registered catalog IDs (present in `_macros.puml`).
-- `!include _macros.puml` is present.
-- ArchiMate diagrams also include `!include _archimate-stereotypes.puml`.
-- No free-floating labels (all elements declared via catalog alias macros).
+**D3d:** Update `diagrams/index.yaml`: add or update the entry (see §9).
 
-**On validation errors:** Fix in the PUML text (amend via `write_artifact`) and call `validate_diagram` again. Do not emit `artifact.produced` until validation passes.
+### D4 — Validate
+
+Call `validate_diagram(<puml_file_path>)` immediately after writing. The tool:
+
+- Checks all element aliases resolve to known entity artifact-ids in ModelRegistry.
+- Verifies each resolved entity has the appropriate `§display ###<language>` subsection.
+- Confirms `!include _macros.puml` is present in ArchiMate/use-case diagrams.
+- Confirms ArchiMate diagrams also include `!include _archimate-stereotypes.puml`.
+- Returns a list of errors; SA fixes and re-calls until clean.
+
+**On ALG-C03** (diagram alias has no backing entity): the agent must create the missing entity file before re-validating — the diagram cannot be made valid by deleting the alias; the model must be extended.
+
+### D5 — Render
+
+Call `render_diagram(<puml_file_path>)` at sprint boundary. Invokes PlantUML CLI; writes SVG to `rendered/`. Commit both `.puml` and `.svg` at sprint close.
 
 ---
 
-## 6. Write Authority
+## 6. `_macros.puml` Structure and Generation
 
-| Operation | SA | Non-SA agents |
+`_macros.puml` is generated by scanning all entity files across the engagement's architecture-repository and technology-repository for `§display ###archimate` blocks. Do not edit manually.
+
+```plantuml
+' Auto-generated by regenerate_macros() — DO NOT EDIT MANUALLY
+' Last regenerated: <ISO8601 timestamp>
+' Entity count: N
+
+' --- strategy/ ---
+!define CAP_001 rectangle "Agent Orchestration" <<capability>> as CAP-001
+!define CAP_002 rectangle "Artifact Management" <<capability>> as CAP-002
+
+' --- business/ ---
+!define ACT_001 rectangle "Solution Architect Agent" <<businessActor>> as ACT-001
+!define BPR_001 rectangle "Execute ADM Phase" <<businessProcess>> as BPR-001
+!define BSV_001 rectangle "Architecture Modelling Service" <<businessService>> as BSV-001
+
+' --- application/ ---
+!define APP_001 rectangle "PM Agent" <<applicationComponent>> as APP-001
+!define APP_002 rectangle "SA Agent" <<applicationComponent>> as APP-002
+!define DOB_001 class "WorkflowEvent" as DOB-001
+
+' --- technology/ ---
+!define NOD_001 node "Container Host" <<technologyNode>> as NOD-001
+!define SSW_001 rectangle "Python 3.12 Runtime" <<systemSoftware>> as SSW-001
+!define TSV_001 database "SQLite EventStore" <<technologyService>> as TSV-001
+```
+
+**ArchiMate element type → PUML syntax mapping** (used by `regenerate_macros()`):
+
+| element-type | layer | PUML declaration |
 |---|---|---|
-| Write to `elements/<layer>/*.yaml` | Yes | No — use `catalog_propose` |
-| Write to `connections/*.yaml` | Yes | No — use `catalog_propose` |
-| Write to `_macros.puml` | Yes (auto-generated from elements) | No |
-| Write `.puml` to `diagram-catalog/diagrams/` | Yes | No |
-| Write `.puml` to own work-repo `diagrams/` | — | Yes |
-| Assign element IDs | Yes (confirms) | Propose only |
+| Stakeholder, Driver, Goal, Requirement, Constraint, Principle | motivation | `rectangle "..." <<motivation-type>> as ID` |
+| Capability, ValueStream, Resource, CourseOfAction | strategy | `rectangle "..." <<strategy-type>> as ID` |
+| BusinessActor, BusinessRole | business | `rectangle "..." <<businessActor/Role>> as ID` |
+| BusinessProcess, BusinessFunction, BusinessService | business | `rectangle "..." <<business-type>> as ID` |
+| BusinessObject, Contract, Product | business | `rectangle "..." <<business-passive-type>> as ID` |
+| ApplicationComponent, ApplicationService | application | `rectangle "..." <<application-type>> as ID` |
+| DataObject | application | `class "..." as ID` |
+| Node, Device, SystemSoftware | technology | `node "..." <<tech-type>> as ID` |
+| TechnologyService | technology | `database "..." <<technologyService>> as ID` |
+| Artifact | technology | `artifact "..." as ID` |
+| WorkPackage, Deliverable, Gap, Plateau | implementation | `rectangle "..." <<impl-type>> as ID` |
 
-Non-SA agents may draft element records and PUML files in their own directories. Handoff to SA via `diagram.catalog-proposal` event for integration.
+**Sync rule (ALG-C04):** If the entity count in `_macros.puml` does not match the count of entities with `###archimate` display sections in ModelRegistry, `validate_diagram` raises ALG-C04. SA calls `regenerate_macros()` to resync.
 
 ---
 
 ## 7. PUML Authoring Templates
 
-These templates are the **primary runtime specification** for diagram authoring. Agents load the relevant template via `read_framework_doc("framework/diagram-conventions.md §7.<type>")` at Step D5a and follow it exactly. The template provides the canonical header, `!include` lines, element declaration pattern, and relationship syntax for each diagram type.
+Load via `read_framework_doc("framework/diagram-conventions.md §7.<type>")` at step D3a. All element aliases are artifact-ids.
 
 ---
 
 ### §7.archimate-motivation — Architecture Vision Motivation Overlay
 
-Used in: SA Phase A (Architecture Vision), SA Phase H (change impact).
-
 ```plantuml
 @startuml
 !include _macros.puml
 !include _archimate-stereotypes.puml
 
-skinparam rectangle {
-  BackgroundColor<<motivation>> LightYellow
-  BorderColor<<motivation>> DarkGoldenrod
-  BackgroundColor<<business>> LightBlue
-  BorderColor<<business>> SteelBlue
-}
-
 ' --- Stakeholders ---
-rectangle "Stakeholder Name" <<motivation>> as STK-001
-rectangle "Stakeholder Name 2" <<motivation>> as STK-002
+STK_001
+STK_002
 
 ' --- Drivers ---
-rectangle "Driver Description" <<driver>> as DRV-001
+DRV_001
+DRV_002
 
 ' --- Goals ---
-rectangle "Goal Description" <<goal>> as GOL-001
+GOL_001
+GOL_002
 
 ' --- Constraints ---
-rectangle "Constraint Description" <<constraint>> as CON-001
+CST_001
 
-' --- Relationships (ArchiMate association) ---
+' --- Relationships (from connection files §display ###archimate) ---
 STK-001 --> GOL-001 : influences
-STK-001 --> DRV-001 : associated with
-DRV-001 --> GOL-001 : motivates
-GOL-001 --> CON-001 : realizes
+STK-001 --> DRV-001 : association
+DRV-001 --> GOL-001 : influence
+GOL-001 --> CST-001 : association
 
 @enduml
 ```
 
 **Rules:**
-- Every stakeholder must map to a `STK-nnn` catalog ID.
-- Drivers, goals, and constraints must map to their respective catalog IDs.
-- Use ArchiMate stereotype labels (`<<motivation>>`, `<<driver>>`, `<<goal>>`, `<<constraint>>`).
-- `_archimate-stereotypes.puml` defines all stereotype skinparams — do not redeclare them inline.
+- Macro calls expand to the PUML declarations from `_macros.puml`.
+- Relationship lines are authored from `archimate-influence` and `archimate-association` connection files in `connections/archimate/`.
+- ArchiMate stereotype labels are defined in `_archimate-stereotypes.puml`.
 
 ---
 
 ### §7.archimate-business — Business Architecture Capability/Service Map
 
-Used in: SA Phase B (business architecture), PO Phase B (requirements scope).
-
 ```plantuml
 @startuml
 !include _macros.puml
 !include _archimate-stereotypes.puml
 
-skinparam rectangle {
-  BackgroundColor<<business>> AliceBlue
-  BorderColor<<business>> SteelBlue
-  BackgroundColor<<businessService>> LightCyan
-  BorderColor<<businessService>> CadetBlue
-}
+' --- Strategy: Capabilities ---
+CAP_001
+CAP_002
+CAP_003
 
 ' --- Business Actors ---
-rectangle "Actor Name" <<businessActor>> as ACT-001
-rectangle "Actor Name 2" <<businessActor>> as ACT-002
+ACT_001
+ACT_002
 
-' --- Business Functions (capabilities) ---
-rectangle "Function Name" <<businessFunction>> as BFN-001
-rectangle "Function Name 2" <<businessFunction>> as BFN-002
+' --- Business Functions ---
+BFN_001
+BFN_002
 
 ' --- Business Services ---
-rectangle "Service Name" <<businessService>> as BSV-001
-
-' --- Business Objects ---
-rectangle "Object Name" <<businessObject>> as BOB-001
+BSV_001
+BSV_002
 
 ' --- Relationships ---
-ACT-001 --> BFN-001 : performs
-BFN-001 --> BSV-001 : realizes
-BSV-001 --> BOB-001 : accesses
-ACT-002 --> BSV-001 : uses
+ACT-001 --> BFN-001 : assignment
+BFN-001 --> BSV-001 : realization
+CAP-001 --> BFN-001 : realization
+ACT-002 --> BSV-001 : serving
 
 @enduml
 ```
 
 **Rules:**
-- All actors reference `ACT-nnn` catalog IDs.
-- All functions reference `BFN-nnn` catalog IDs.
-- Services reference `BSV-nnn`; business objects reference `BOB-nnn`.
-- ArchiMate relationship labels (`performs`, `realizes`, `accesses`, `uses`, `triggers`, `associated with`, `composed of`) are mandatory on all arrows.
+- Capabilities (CAP), actors (ACT), functions (BFN), services (BSV) use their artifact-id aliases.
+- Relationship labels match ArchiMate relationship types from connection `§display ###archimate`.
 
 ---
 
 ### §7.archimate-application — Application Architecture Component Overview
 
-Used in: SA Phase C-App (application architecture component diagram).
-
 ```plantuml
 @startuml
 !include _macros.puml
 !include _archimate-stereotypes.puml
 
-skinparam rectangle {
-  BackgroundColor<<applicationComponent>> LightGreen
-  BorderColor<<applicationComponent>> DarkGreen
-  BackgroundColor<<applicationService>> Honeydew
-  BorderColor<<applicationService>> SeaGreen
-  BackgroundColor<<applicationInterface>> MintCream
-  BorderColor<<applicationInterface>> MediumSeaGreen
-}
-
 ' --- Application Components ---
-rectangle "Component Name" <<applicationComponent>> as CMP-001
-rectangle "Component Name 2" <<applicationComponent>> as CMP-002
+APP_001
+APP_002
+APP_003
 
 ' --- Application Interfaces ---
-rectangle "Interface Name" <<applicationInterface>> as IFC-001
+AIF_001
 
 ' --- Application Services ---
-rectangle "Service Name" <<applicationService>> as ASV-001
+ASV_001
 
-' --- Business Actor (external user) ---
-rectangle "Actor Name" <<businessActor>> as ACT-001
+' --- External Actor ---
+ACT_001
 
 ' --- Relationships ---
-ACT-001 --> IFC-001 : uses
-IFC-001 --> CMP-001 : serves
-CMP-001 --> ASV-001 : realizes
-CMP-001 --> CMP-002 : uses
+ACT-001 --> AIF-001 : serving
+AIF-001 --> APP-001 : serving
+APP-001 --> ASV-001 : realization
+APP-001 --> APP-002 : serving
+APP-002 --> APP-003 : triggering
 
 @enduml
 ```
-
-**Rules:**
-- Application components reference `CMP-nnn` catalog IDs.
-- Interfaces reference `IFC-nnn`. Services reference `ASV-nnn`.
-- External actors from `ACT-nnn` may appear as initiating elements.
-- Each component that realizes a business service must carry the `realizes: BSV-nnn` cross-reference in the catalog (not in the PUML text, but verified at D4).
 
 ---
 
 ### §7.archimate-technology — Technology Architecture Node Diagram
 
-Used in: SA/SwA Phase D/E (technology architecture), DO Phase E (infrastructure spec).
-
 ```plantuml
 @startuml
 !include _macros.puml
 !include _archimate-stereotypes.puml
 
-skinparam node {
-  BackgroundColor<<technologyNode>> LightSteelBlue
-  BorderColor<<technologyNode>> SlateBlue
-}
-skinparam database {
-  BackgroundColor<<technologyService>> Lavender
-  BorderColor<<technologyService>> MediumPurple
-}
-
 ' --- Technology Nodes ---
-node "Node Name" <<technologyNode>> as NOD-001
-node "Node Name 2" <<technologyNode>> as NOD-002
+NOD_001
+NOD_002
 
-' --- Technology Services (DBs, message brokers, etc.) ---
-database "Service Name" <<technologyService>> as TSV-001
+' --- System Software ---
+SSW_001
+SSW_002
 
-' --- Technology Artifacts (deployable units) ---
-artifact "Artifact Name" as ART-001
+' --- Technology Services ---
+TSV_001
+TSV_002
 
-' --- Application Components hosted on nodes ---
-rectangle "Component Name" <<applicationComponent>> as CMP-001
+' --- Artifacts ---
+ART_001
+
+' --- Application Components (hosted) ---
+APP_001
+APP_002
 
 ' --- Relationships ---
-NOD-001 --> CMP-001 : hosts
-CMP-001 --> TSV-001 : uses
-ART-001 --> NOD-001 : deployed on
-NOD-001 --> NOD-002 : communicates with
+NOD-001 --> SSW-001 : assignment
+SSW-001 --> APP-001 : realization
+APP-001 --> TSV-001 : serving
+ART-001 --> NOD-001 : assignment
+NOD-001 --> NOD-002 : association
 
 @enduml
 ```
 
-**Rules:**
-- Technology nodes reference `NOD-nnn` catalog IDs.
-- Technology services (databases, brokers) reference `TSV-nnn`. Artifacts reference `ART-nnn`.
-- Application components hosted on nodes must use their `CMP-nnn` IDs from the application sub-catalog.
-- Network paths (`NOD-nnn` → `NET-nnn` → `NOD-nnn`) may be added when network topology is in scope.
-
 ---
 
 ### §7.usecase — Use Case Diagram
-
-Used in: SA Phase B (business capability/actor interaction), PO Phase B (requirements scope).
 
 ```plantuml
 @startuml
@@ -429,49 +365,39 @@ Used in: SA Phase B (business capability/actor interaction), PO Phase B (require
 
 left to right direction
 
-skinparam actor {
-  BackgroundColor LightYellow
-  BorderColor DarkGoldenrod
-}
-skinparam usecase {
-  BackgroundColor AliceBlue
-  BorderColor SteelBlue
-}
-
-' --- Actors (reference catalog ACT-nnn IDs) ---
-actor "Actor Name" as ACT-001
-actor "Actor Name 2" as ACT-002
+' --- Actors ---
+ACT_001
+ACT_002
 
 ' --- System boundary ---
 rectangle "System Name" {
-  usecase "Use Case 1" as UC-001
-  usecase "Use Case 2" as UC-002
-  usecase "Use Case 3 (extension)" as UC-003
+  BSV_001
+  BSV_002
+  BSV_003
 }
 
 ' --- Relationships ---
-ACT-001 --> UC-001
-ACT-001 --> UC-002
-ACT-002 --> UC-002
-UC-003 .> UC-001 : <<extend>>
+ACT-001 --> BSV-001
+ACT-001 --> BSV-002
+ACT-002 --> BSV-002
+BSV-003 .> BSV-001 : <<extend>>
 
 @enduml
 ```
 
 **Rules:**
-- Actors must reference `ACT-nnn` catalog IDs as their PUML alias.
-- Use case labels are free-text but must map to functions (`BFN-nnn`) or services (`BSV-nnn`) in the diagram annotation (add a comment block at the bottom of the file mapping UC-nnn to BFN/BSV IDs).
-- `<<include>>` and `<<extend>>` relationships are the only valid stereotype labels on use case arrows.
+- Business service (BSV) artifact-ids represent use cases in the system boundary.
+- `<<include>>` and `<<extend>>` are the only stereotype labels on use-case arrows.
+- Actor aliases reference `ACT-nnn` artifact-ids.
 
 ---
 
-### §7.class-er — Class / Entity-Relationship Diagram
+### §7.class-er — Entity-Relationship (Class) Diagram
 
-Used in: SA Phase C-Data (data entity model with PK/FK + cardinalities), SwA Phase D (domain model).
+ER diagrams do not use `_macros.puml`. Class declarations and relationships are generated from entity/connection `§display ###er` blocks using `generate_er_content()` and `generate_er_relations()`.
 
 ```plantuml
 @startuml
-!include _macros.puml
 
 skinparam class {
   BackgroundColor LightCyan
@@ -479,45 +405,48 @@ skinparam class {
   ArrowColor SteelBlue
 }
 
-' --- Data Entities (reference catalog DE-nnn IDs) ---
-' Note: class alias = DE-nnn ID; label = entity name
-class "EntityName" as DE-001 {
+' --- Generated from DOB entity §display ###er blocks ---
+' (paste output of generate_er_content([DOB-001, DOB-002, DOB-003]) here)
+
+class "WorkflowEvent" as DOB-001 {
   + id : UUID <<PK>>
-  + attribute1 : String
-  + attribute2 : Integer
-  --
-  # foreignKey : UUID <<FK>>
+  + engagement_id : String
+  + event_type : String
+  + sequence_num : Integer
+  + timestamp : DateTime
+  + payload : JSON
 }
 
-class "EntityName2" as DE-002 {
+class "Engagement" as DOB-002 {
   + id : UUID <<PK>>
-  + attribute1 : String
+  + name : String
+  + entry_point : String
 }
 
-class "JunctionEntity" as DE-003 {
-  + entity1Id : UUID <<FK>>
-  + entity2Id : UUID <<FK>>
+class "LearningEntry" as DOB-003 {
+  + id : UUID <<PK>>
+  + agent_role : String
+  + artifact_type : String
+  + error_type : String
 }
 
-' --- Relationships with cardinalities ---
-DE-001 "1" -- "0..*" DE-002 : has
-DE-001 "1" -- "0..*" DE-003
-DE-002 "1" -- "0..*" DE-003
+' --- Generated from er connection §display ###er blocks ---
+' (paste output of generate_er_relations([DOB-001---DOB-002, DOB-001---DOB-003]) here)
+
+DOB-002 "1" -- "0..*" DOB-001 : has
+DOB-002 "1" -- "0..*" DOB-003 : records
 
 @enduml
 ```
 
 **Rules:**
-- Entity class aliases MUST be the `DE-nnn` ID from `elements/data/entities.yaml`. This is a hard constraint — the entity must be registered in the catalog before the diagram is authored.
-- Every relationship must show cardinality labels (`"1"`, `"0..*"`, `"1..*"`, `"0..1"`) on both ends.
-- PK/FK annotations are required in the attribute block.
-- A `DE-nnn` entity appearing in the ER diagram must have a linked ArchiMate Data Object (`BOB-nnn` with `linked_data_entity: DE-nnn`) in the business sub-catalog — this cross-ontology link is validated at D4.
+- Class aliases MUST be `DOB-nnn` artifact-ids.
+- Every relationship must show cardinality on both ends (from `§display ###er` `source-cardinality`/`target-cardinality`).
+- PK/FK annotations derive from entity `§display ###er` `primary-key` and `attributes` fields.
 
 ---
 
 ### §7.sequence — Sequence Diagram
-
-Used in: SA Phase C-App (key interaction flows), SwA Phase E (API contract flows).
 
 ```plantuml
 @startuml
@@ -526,48 +455,42 @@ Used in: SA Phase C-App (key interaction flows), SwA Phase E (API contract flows
 skinparam sequence {
   ParticipantBackgroundColor AliceBlue
   ParticipantBorderColor SteelBlue
-  ArrowColor SteelBlue
-  LifeLineBorderColor Gray
 }
 
-' --- Participants (reference catalog CMP-nnn or ACT-nnn IDs as aliases) ---
-actor "Actor Name" as ACT-001
-participant "Component Name" as CMP-001
-participant "Component Name 2" as CMP-002
-database "Data Store" as TSV-001
+' --- Participants (from entity §display ###sequence blocks) ---
+actor "Solution Architect Agent" as ACT-001
+participant "PM Agent" as APP-001
+participant "SA Agent" as APP-002
+database "EventStore" as TSV-001
 
-' --- Interaction flows ---
-ACT-001 -> CMP-001 : initiateOperation(params)
-activate CMP-001
+' --- Messages (from sequence connection §display ###sequence blocks) ---
+ACT-001 -> APP-001 : initiateEngagement(config)
+activate APP-001
 
-CMP-001 -> CMP-002 : delegateCall(data)
-activate CMP-002
+APP-001 -> APP-002 : invokeSkill(phase="B")
+activate APP-002
 
-CMP-002 -> TSV-001 : query(criteria)
-TSV-001 --> CMP-002 : result
+APP-002 -> TSV-001 : emit(artifact.drafted)
+TSV-001 --> APP-002 : ok
 
-CMP-002 --> CMP-001 : response
-deactivate CMP-002
+APP-002 --> APP-001 : phaseComplete(result)
+deactivate APP-002
 
-CMP-001 --> ACT-001 : confirmation
-deactivate CMP-001
+APP-001 --> ACT-001 : phaseGatePassed
+deactivate APP-001
 
 @enduml
 ```
 
 **Rules:**
-- All participant aliases MUST be `CMP-nnn`, `ACT-nnn`, `TSV-nnn`, or `NOD-nnn` catalog IDs.
-- Message labels use the format `operationName(params)` for synchronous calls and `eventName` for asynchronous messages.
-- Asynchronous messages use `->>` arrow syntax.
-- `activate`/`deactivate` blocks are required for every participant that handles a request synchronously.
-- Return arrows (`-->`) are required for all synchronous calls.
-- Loops and alternatives use `loop`, `opt`, `alt`/`else` blocks with guard conditions.
+- Participant aliases are artifact-ids; `participant-type` from `§display ###sequence` determines PUML keyword (`actor`, `participant`, `database`, etc.).
+- `label` from `§display ###sequence` provides the display name.
+- Asynchronous messages use `->>`; returns use `-->`.
+- `activate`/`deactivate` blocks required for synchronous participants.
 
 ---
 
 ### §7.activity-bpmn — Activity / BPMN-Overlay Process Diagram
-
-Used in: SA Phase B (business process flows), SA/SwA Phase C/E (solution-level process specs).
 
 ```plantuml
 @startuml
@@ -576,101 +499,120 @@ Used in: SA Phase B (business process flows), SA/SwA Phase C/E (solution-level p
 skinparam activity {
   BackgroundColor AliceBlue
   BorderColor SteelBlue
-  ArrowColor SteelBlue
   DiamondBackgroundColor LightYellow
   DiamondBorderColor DarkGoldenrod
 }
 
-' --- Swimlane pools (reference catalog ACT-nnn or SYS-nnn/CMP-nnn IDs) ---
+' --- Swimlane labels from entity §display ###activity blocks ---
 |ACT-001|
-' Pool label = Actor or System name from catalog
+' swimlane-label: "Solution Architect Agent"
 start
 
-:Task Name;
-note right: Annotation if needed
+:Initiate Phase B;
 
-|CMP-001|
-:Automated Step;
+|APP-001|
+' swimlane-label: "PM Agent"
+:Load phase skills;
+:Invoke SA agent;
 
-' --- Gateway (exclusive) ---
-if (Condition?) then (yes)
-  |ACT-001|
-  :Task on true branch;
+|APP-002|
+' swimlane-label: "SA Agent"
+:Execute Discovery Scan;
+:Produce capabilities;
+
+if (Phase gate passed?) then (yes)
+  |APP-001|
+  :Emit phase.completed;
 else (no)
-  |CMP-001|
-  :Task on false branch;
+  |APP-002|
+  :Raise algedonic signal;
 endif
 
-' --- End ---
-|ACT-001|
-:Final Task;
+|APP-001|
 stop
 
 @enduml
 ```
 
 **Rules:**
-- Swimlane pool delimiters (`|ACT-nnn|`) MUST reference catalog IDs (`ACT-nnn` for business actors/organizations, `CMP-nnn` for system components).
-- Only BPMN-compatible constructs: sequential tasks (`:Task;`), exclusive gateways (`if`/`else`/`endif`), parallel gateways (`fork`/`fork again`/`end fork`), start (`start`) and end (`stop` or `end`), intermediate events (`:<event_name>>`).
-- Free-form branching syntax (direct `if`/`while` without swimlane context) is not permitted.
-- Task names must be verb-object phrases (e.g., `:Submit Application;`, not `:Application;`).
-- Gateways must have labelled condition branches (`(yes)` / `(no)`, or named conditions).
+- Swimlane pool labels (`|ACT-001|` etc.) use entity artifact-ids; the label text comes from `§display ###activity` `swimlane-label`.
+- Only BPMN-compatible constructs: sequential tasks, exclusive/parallel gateways, start/stop, intermediate events.
+- Task names are verb-object phrases.
 
 ---
 
-## 8. _macros.puml Structure
+## 8. Write Authority
 
-`_macros.puml` is auto-generated by the `catalog_register` tool when new elements are added. Agents do not write to it directly. Structure:
-
-```plantuml
-' Auto-generated by catalog_register — DO NOT EDIT MANUALLY
-' Last updated: <ISO8601 timestamp>
-' Element count: N
-
-' --- motivation/ ---
-!define STK_001 rectangle "Stakeholder Name" <<motivation>> as STK-001
-!define DRV_001 rectangle "Driver Description" <<driver>> as DRV-001
-
-' --- business/ ---
-!define ACT_001 rectangle "Actor Name" <<businessActor>> as ACT-001
-!define BFN_001 rectangle "Function Name" <<businessFunction>> as BFN-001
-
-' --- application/ ---
-!define CMP_001 rectangle "Component Name" <<applicationComponent>> as CMP-001
-
-' --- technology/ ---
-!define NOD_001 node "Node Name" <<technologyNode>> as NOD-001
-
-' --- data/ ---
-!define DE_001 class "EntityName" as DE-001
-```
-
-**Naming convention:** Macro name replaces `-` with `_` in the element ID (e.g., `STK-001` → `STK_001`). This avoids PUML identifier conflicts.
-
-**Sync rule (ALG-C04):** If `_macros.puml` element count does not match the total element count across all `elements/` sub-catalogs, `validate_diagram` raises ALG-C04. SA must regenerate `_macros.puml` before further diagram authoring.
+| Operation | SA | Non-SA agents |
+|---|---|---|
+| Add/update `§display` blocks on own-domain entities | Yes | Yes (own-domain entities only) |
+| Add/update `§display` blocks on SA-owned entities | Yes | No — emit `diagram.display-spec-request` handoff |
+| Write `.puml` to `diagram-catalog/diagrams/` | Yes | No |
+| Write `.puml` to own work-repo `diagrams/` | — | Yes (draft diagrams pending SA integration) |
+| Trigger `regenerate_macros()` | Yes (auto via write_artifact) | No |
+| Trigger `render_diagram()` | Yes | No (sprint boundary only) |
 
 ---
 
-## 9. Sub-Catalog YAML Element Record Format
+## 9. Diagram Index Format
 
-Each element in an `elements/<layer>/*.yaml` file follows this structure:
+`diagrams/index.yaml` — SA-authored; one entry per diagram. Two entry types: `local` (diagram file lives in this catalog) and `reference` (diagram lives in the enterprise repository or another engagement; referenced in-place, never copied).
 
 ```yaml
-- element_id: CMP-001          # Required; unique within this sub-catalog namespace; never reused
-  name: "Component Name"       # Human-readable name; unique within sub-catalog
-  type: applicationComponent   # ArchiMate element type or domain type (DE for data entities)
-  description: "One sentence." # Optional; populated when element semantics are non-obvious
-  extends: null                # null for engagement-local elements; <enterprise-catalog-path>/<id> for imported elements
-  phase_introduced: B          # ADM phase when first registered
-  sprint_introduced: 1         # Sprint number
-  cross_refs:                  # Optional cross-ontology links; validated at D4
-    realizes: BSV-001          # This component realizes business service BSV-001
-    linked_data_entity: null   # For BOB-nnn: DE-nnn of the corresponding data entity
-    hosted_on: NOD-001         # For CMP-nnn: infrastructure node
+diagrams:
+  # Local diagram — authored in this engagement's catalog
+  - entry_type: local
+    diagram_id: phase-b-archimate-business-v1
+    title: "Business Architecture — Agent Roles and Services (Phase B)"
+    diagram_type: archimate-business
+    puml_file: diagrams/phase-b-archimate-business-v1.puml
+    domain: core-platform
+    phase: B
+    agent_owner: SA
+    entity_ids_used:
+      - CAP-001
+      - CAP-002
+      - ACT-001
+      - ACT-002
+      - BFN-001
+      - BSV-001
+      - BSV-002
+    connection_ids_used:
+      - APP-001---BSV-001
+      - ACT-001---ROL-001
+    version: 1
+    last-updated: 2026-04-03
+
+  # Local diagram — authored in this engagement's catalog
+  - entry_type: local
+    diagram_id: phase-c-class-er-v1
+    title: "Core Domain Data Model (Phase C)"
+    diagram_type: class-er
+    puml_file: diagrams/phase-c-class-er-v1.puml
+    domain: core-platform
+    phase: C
+    agent_owner: SA
+    entity_ids_used:
+      - DOB-001
+      - DOB-002
+      - DOB-003
+    connection_ids_used:
+      - DOB-001---DOB-002
+      - DOB-001---DOB-003
+    version: 1
+    last-updated: 2026-04-03
+
+  # Reference entry — existing diagram in enterprise repository, referenced in-place
+  - entry_type: reference
+    diagram_id: ent-phase-a-archimate-capability-v2
+    title: "Enterprise Capability Map (Phase A)"
+    source_path: enterprise-repository/diagram-catalog/diagrams/phase-a-archimate-capability-v2.puml
+    rendered_path: enterprise-repository/diagram-catalog/rendered/phase-a-archimate-capability-v2.svg
+    relevance: "Scope context for this engagement — referenced, not extended"
+    last-accessed: 2026-04-03
 ```
 
-**Mandatory fields:** `element_id`, `name`, `type`, `extends`, `phase_introduced`, `sprint_introduced`.
-**Optional fields:** `description`, `cross_refs`.
+`reference` entries carry no `entity_ids_used` or `connection_ids_used` — those are properties of the source diagram. `render_diagram` called on a `reference` entry renders against `source_path` in place; the SVG is written to `rendered_path` in the source catalog, not the engagement catalog.
 
 ---
 
@@ -678,19 +620,20 @@ Each element in an `elements/<layer>/*.yaml` file follows this structure:
 
 | Section | Governs |
 |---|---|
-| §1 | Authoring model: direct PUML vs. tool-generated |
-| §2 | Catalog structure: directory layout, two-catalog model |
-| §3 | Element ID namespaces (STK, ACT, CMP, DE, etc.) |
+| §1 | Authoring model: model-driven diagram production |
+| §2 | Catalog structure: no element files; entity files are the catalog |
+| §3 | Element identity: artifact-ids as PUML aliases |
 | §4 | Catalog lifecycle: bootstrap, import, engagement close |
-| §5 | D1–D6 reuse-first protocol (discovery → authoring → validation) |
-| §6 | Write authority table |
-| §7 | PUML templates: archimate-motivation, archimate-business, archimate-application, archimate-technology, usecase, class-er, sequence, activity-bpmn |
-| §8 | `_macros.puml` structure and sync rule |
-| §9 | Sub-catalog YAML element record format |
+| §5 | D1–D5 production protocol: query → verify → author → validate → render |
+| §6 | `_macros.puml` generation from `§display ###archimate` blocks |
+| §7 | PUML templates per diagram type |
+| §8 | Write authority table |
+| §9 | Diagram index format |
 
 **Cross-references:**
+- `framework/artifact-registry-design.md §3.6` — `§display` spec schemas per language
+- `framework/artifact-schemas/entity-conventions.md` — entity/connection file format
 - `framework/discovery-protocol.md §8` — Step 0.D (Diagram Catalog Lookup in Discovery Scan)
-- `framework/artifact-schemas/diagram-catalog.schema.md` — formal schema for sub-catalog YAML files
-- `framework/algedonic-protocol.md` — ALG-C01 (duplicate ID), ALG-C02 (unauthorized write), ALG-C03 (broken cross-ontology link), ALG-C04 (_macros.puml out of sync)
-- `framework/repository-conventions.md §12` — Enterprise Promotion Protocol (applies to catalog elements)
-- `framework/agent-runtime-spec.md §3` — tool set definitions for `catalog_lookup`, `catalog_register`, `catalog_propose`, `validate_diagram`, `render_diagram`
+- `framework/algedonic-protocol.md` — ALG-C03 (diagram alias has no backing entity), ALG-C04 (`_macros.puml` out of sync)
+- `framework/repository-conventions.md §12` — Enterprise Promotion Protocol
+- `framework/agent-runtime-spec.md §6` — tool specs: `validate_diagram`, `render_diagram`, `regenerate_macros`, `generate_er_content`, `generate_er_relations`

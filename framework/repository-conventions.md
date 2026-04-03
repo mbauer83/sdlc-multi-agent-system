@@ -321,11 +321,11 @@ An artifact is a candidate for promotion when it:
 ### 12.2 Promotion Procedure
 
 1. **SA identifies candidates** during engagement closeout, listing candidate artifact-ids and their proposed enterprise target level (Segment or Capability landscape).
-2. **PM raises a Promotion Request** as a record in `enterprise-repository/governance-log/`. The Promotion Request includes: artifact-id, artifact version, proposed target path, justification, and any required modifications.
-3. **Architecture Board (or PM if no Board is constituted)** reviews the request and approves, rejects, or requests modifications.
-4. **On approval:** The artifact is copied (not moved) to the enterprise target path. The engagement copy remains unchanged. The enterprise copy is assigned a new version (`1.0.0` for first promotion) and updated to remove engagement-specific metadata.
-5. **`artifact.promoted` event** is written to both the engagement's workflow event store and the enterprise governance log.
-6. **Enterprise artifact is then read-only** to all future engagements (i.e., consumed as enterprise input, not written to by engagement agents).
+2. **PM raises a Promotion Request** as a record in `enterprise-repository/governance-log/`. The Promotion Request includes: engagement artifact-id, artifact version, proposed enterprise target path, justification, and any required modifications.
+3. **Architecture Board** reviews the request and approves, rejects, or requests modifications. Only Architecture Board members may write to the enterprise repository.
+4. **On approval:** An Architecture Board member runs `promote_entity`, which: (a) assigns a new enterprise-scope ID (next available for the entity's prefix from `enterprise-repository/governance-log/id-counters.yaml`); (b) rewrites the entity's frontmatter with the new ID, resets version to `1.0.0`, and strips `engagement` and `produced-by-skill` fields; (c) performs a deterministic reference sweep across all engagement artifacts — connection `source`/`target` fields, diagram PUML alias occurrences, and inline `[@old-id …]` references — replacing the old engagement-ID with the new enterprise-ID; (d) moves the entity file to the enterprise target path.
+5. **`artifact.promoted` event** is written to both the engagement's workflow event store and the enterprise governance log, recording the old engagement-ID and new enterprise-ID for audit traceability.
+6. **Enterprise entity is read-only to all future engagement agents.** Architecture Board members continue to maintain, version, and update it through normal enterprise governance.
 
 ### 12.3 Promotion Scope
 
@@ -337,8 +337,12 @@ Only the following artifact types are eligible for promotion:
 | Business Architecture (segment scope) | `enterprise-repository/landscape/segment/` |
 | Technology Architecture (standards-setting ADRs) | `enterprise-repository/standards/` |
 | Safety Constraint Overlay (class-of-system applicability) | `enterprise-repository/standards/safety/` |
-| Architecture Principles | `enterprise-repository/metamodel/principles/` |
+| Architecture Principles (`PRI` model-entities) | `enterprise-repository/metamodel/principles/` |
 | Capability Architecture (general) | `enterprise-repository/landscape/capability/` |
+| **Model entities** (reusable across engagements) | Target layer path within `enterprise-repository/` matching the entity's ArchiMate layer/aspect (e.g. `enterprise-repository/strategy/capabilities/`, `enterprise-repository/business/roles/`, `enterprise-repository/application/components/`) |
+| **Model connections** (between promoted entities) | `enterprise-repository/connections/<lang>/<type>/` |
+
+Model-entity and connection promotion is most common for: capabilities (`CAP`), enterprise-wide roles and actors (`ROL`, `ACT`), shared application components and services (`APP`, `ASV`), reusable data objects (`DOB`), and organisation-wide principles and constraints (`PRI`, `CST`). Engagement-specific entities (e.g. a one-off work-package) are not promoted.
 
 ---
 

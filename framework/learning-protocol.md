@@ -1,7 +1,7 @@
 ---
 document: learning-protocol
-version: 1.0.0
-status: Approved — Stage 4.6
+version: 1.1.0
+status: Approved — Stage 4.6 (updated Stage 5 design)
 last-updated: 2026-04-03
 ---
 
@@ -20,13 +20,27 @@ The goal is to prevent the same class of mistake from recurring without burdenin
 
 ### Conceptual basis
 
-The design draws on three LLM agent memory approaches:
+The design draws on foundational LLM agent memory research and validated production memory patterns:
 
+**Foundational research (2023) — remain valid:**
 - **Reflexion** (Shinn et al. 2023): verbal self-correction expressed as natural language, prepended to context for future similar tasks. The core insight: correction expressed in the same language the model reasons in is more effective than any parametric update.
 - **Generative Agents** (Park et al. 2023): importance scoring and periodic synthesis. Not every episode warrants a learning; periodic "reflection" synthesises patterns across episodes into higher-order heuristics.
 - **ExpeL** (Zhao et al. 2023): insight extraction from task trajectories. What matters is not the raw episode but the extracted rule: "when X, do Y instead of Z."
 
-The system does **not** use embedding-based retrieval or vector stores. Retrieval is metadata-filtered (phase, artifact type, applicability), which is deterministic, transparent, and appropriate for the structured, ontologically-rich context of SDLC work.
+**2025–2026 additions:**
+- **File-based memory with MEMORY.md index** (Claude Code production pattern, 2026): Anthropic's Claude Code memory system uses exactly this pattern — individual human-readable Markdown files, a compact index (first 200 lines loaded every session), topic files loaded on-demand. An "AutoDream" background consolidation sub-agent prunes stale entries at sprint boundaries — this maps directly to the PM `retrospective-knowledge-capture.md` synthesis step. The file-based approach is validated as production-grade at the model capability level this system targets.
+- **Anthropic `memory_20250818` tool** (official Claude API, 2026): Anthropic's official client-side memory tool type — commands: `view`, `create`, `str_replace`, `insert`, `delete`. The system prompt injected when enabled reads: "ALWAYS VIEW YOUR MEMORY DIRECTORY BEFORE DOING ANYTHING ELSE" — structurally equivalent to Step 0.L in this protocol. In Stage 5, `LearningStore` may optionally use this tool type as its backend interface instead of direct file I/O, enabling the same memory patterns that Claude Code uses internally.
+- **LangGraph BaseStore** (LangGraph 0.2+, 2025): LangGraph's memory layer provides a `BaseStore` abstraction with namespace-path key-value storage. The idiomatic namespace for this system: `(engagement_id, agent_role, phase)` tuple — e.g., `("ENG-001", "csco", "A")`. In Stage 5 the learning store is implemented using `LangGraph SQLiteStore` (reusing `workflow.db`) as the runtime backend, with the file-based `learnings/` directory as the durable serialisation layer.
+- **A-MEM graph connectivity** (Adaptive Memory for Agents, 2025): Structured learnings maintain explicit `related` links to other entries, forming a lightweight traversal graph. This allows `query_learnings` to optionally "expand" a result set by following related-entry pointers when the primary filter returns < 3 results.
+- **Memory consolidation as first-class operation**: Synthesis is not only a sprint-boundary activity — it must also be triggered when the unsynced index grows beyond 20 entries to prevent context-bloat at retrieval time.
+
+**Memory type coverage (gap analysis):** The current learning protocol addresses **procedural memory** (corrections, calibrations, heuristics — "when X, do Y"). MIRIX (2026) and Mem0 identify three additional memory types not currently addressed: *episodic* (what specifically happened in past engagements), *semantic* (domain facts about the client's industry/system), and *resource* (shared documents, reference files). These are out of scope for this protocol version — they are addressed by the enterprise repository, engagement profile, and external source adapters respectively. Future protocol versions may formalise episodic retrieval (past engagement outcomes) and semantic caching (domain-fact extraction from CQ answers).
+
+**Design invariants that hold despite evolution:**
+- The system does **not** require a vector database for normal operation. Retrieval is primarily metadata-filtered (phase, artifact type, applicability), which is deterministic, transparent, and appropriate for the structured, ontologically-rich context of SDLC work.
+- Optional semantic retrieval (§12) supplements metadata filtering only for the enterprise knowledge base query when the corpus exceeds 50 entries and `sqlite-vec` is available. It never replaces metadata filtering.
+- The N=5 context cap is retained; research consistently shows > 5 prepended corrections degrade task-focus.
+- Per-role skill scoping (each agent sees only its own ≤12 skills, not all 43+) is validated by the empirical finding that agent accuracy degrades significantly past 30 available tools — our scoping design is correct and must not be relaxed.
 
 ---
 
@@ -94,6 +108,8 @@ Not injected at retrieval time — authoring context only.>
   correction-summary: "When producing Phase A SCO baseline, check whether any AV system described as 'internal' processes employee PII — if so, add as a safety-critical data scope constraint"
   file: CSCO-L-001.md
   promoted: false
+  related: []           # IDs of related entries in this index (or enterprise index) — used by §12 expansion
+  synthesis-superseded: null  # Set to synthesis entry ID when this entry is superseded
 ```
 
 **`artifact-type` assignment rule:** Use the PRIMARY OUTPUT artifact of the skill, not the artifact reviewed or consumed as input. In the example above, CSCO is producing the `safety-constraint-overlay` (Phase A SCO baseline) when the mistake occurred — the AV was the input artifact being reviewed. The correction text describes what to examine in the input AV, but the learning is tagged by CSCO's output so that `query_learnings(artifact_type="safety-constraint-overlay")` retrieves it at the start of the next CSCO gate review skill. Had it been tagged `architecture-vision`, it would never be retrieved by CSCO's Step 0.L.
@@ -318,12 +334,14 @@ The `### Learning Generation` subsection is the authoring specification; the run
 
 ## 9. Tool Specification (for Stage 5b implementation)
 
-### `query_learnings(phase, artifact_type, domain) → list[str]`
+### `query_learnings(phase, artifact_type, domain, expand_related=True) → list[str]`
 
 - Reads `<role-repo>/learnings/index.yaml` and (optionally) `enterprise-repository/knowledge-base/learnings/index.yaml`
 - Applies filters: phase match, applicability match, importance ≥ S2 (or S3 if results < 3), not deprecated/superseded
+- **Graph expansion (§12):** If primary filter returns < 3 results AND `expand_related=True`, traverse `related` pointers of matching entries to collect additional candidates; apply the same filters to candidates; add up to 2 expanded entries to the result set
+- **Semantic supplement (§12):** If primary + expanded results < 3 AND enterprise corpus ≥ 50 entries AND `sqlite-vec` is available: run embedding similarity against the enterprise index using the current task context as query; add top-1 result if relevance score > 0.75
 - Sorts: S1 first, then S2, then recency descending
-- Caps results at 5 total (role-specific + enterprise combined)
+- Caps results at 5 total (role-specific + enterprise + expanded combined)
 - For each matching entry: reads the full `Correction` section from the entry file
 - Returns list of Correction texts (not the full entries)
 
@@ -364,3 +382,82 @@ Two new event types (add to the event taxonomy in `framework/architecture-reposi
 | EventStore event taxonomy | `framework/architecture-repository-design.md §4.4` |
 | Tool implementation | `src/agents/tools/universal_tools.py` — `query_learnings`, `record_learning` |
 | Learning entry schema | `framework/artifact-schemas/learning-entry.schema.md` |
+
+---
+
+## 12. Stage 5 Implementation Guidance
+
+This section provides design decisions for the Python implementation of the learning store in Stage 5. It does not add new protocol requirements — it specifies *how* §8–§9 are implemented.
+
+### 12.1 Storage Backend: LangGraph BaseStore
+
+The learning store is implemented using **LangGraph's `BaseStore`** (`langgraph.store.base.BaseStore`), available from LangGraph 0.2+. This provides:
+- Namespaced key-value storage: `(engagement_id, agent_role)` namespace per engagement
+- Cross-thread access: learnings created by one agent invocation are visible to the next
+- Pluggable backends: `InMemoryStore` for testing, `SQLiteStore` for production (reuses the existing `workflow.db` connection)
+
+**Implementation contract:**
+```python
+# LearningStore wraps LangGraph BaseStore for typed learning access
+# Namespace: (engagement_id, role_id, "learnings")  — e.g., ("ENG-001", "csco", "learnings")
+# Key: learning_id                                   — e.g., "CSCO-L-003"
+# Value: LearningEntry (Pydantic model, serialised to JSON by the store)
+# Cross-role index namespace: (engagement_id, "pm", "cross-role-learnings")
+# Enterprise namespace: ("enterprise", "global", "learnings")  — read-only for non-PM agents
+```
+
+**Durable serialisation:** On every `record_learning()` call, after writing to the store, the implementation also writes the `.md` file and updates `index.yaml`. The store is the runtime access path; the files are the durable, git-tracked record. `query_learnings()` reads from the store (fast, in-memory); the files are read only for disaster recovery (store rebuild from YAML/files).
+
+**Store rebuild:** If the store is empty on startup (new session, new deployment), `EventStore.replay()` replays `learning.created` events and rehydrates the store from the `.md` files. This is a one-time startup cost, not a per-query cost.
+
+### 12.2 Semantic Retrieval Tier (Enterprise Knowledge Base Only)
+
+Semantic retrieval supplements metadata filtering only for the enterprise `query_learnings` call when:
+- The enterprise `learnings/index.yaml` has ≥ 50 entries, AND
+- The `sqlite-vec` extension is loadable (Python `sqlite-vec` package installed), AND
+- The primary metadata filter returned fewer than 3 results
+
+**Implementation:**
+```python
+# On enterprise index load (cached, refreshed at session start):
+#   embed all correction-summary texts using a lightweight embedding model
+#   (prefer sentence-transformers/all-MiniLM-L6-v2 — 22MB, no API call required)
+#   store vectors in sqlite-vec virtual table within workflow.db
+# On semantic query:
+#   embed the current task context (agent role + phase + artifact_type + skill description)
+#   query sqlite-vec for top-3 nearest; apply relevance threshold (cosine > 0.75)
+#   return at most 1 additional result beyond metadata-filtered set
+```
+
+**Rationale for conservative design:** Semantic retrieval can surface thematically related learnings with different metadata labels (e.g., a CSCO `omission` learning about PII is semantically relevant to an SA learning about data classification). The 0.75 threshold and max-1 addition ensure the semantic signal is high-confidence before injecting into context.
+
+### 12.3 Graph Expansion via `related` Links
+
+Each `index.yaml` entry has a `related: [<id>, ...]` field. When the primary filter returns < 3 results:
+
+1. Collect all `related` IDs from matching entries.
+2. Load those entries from the same index (or enterprise index if the pointer crosses).
+3. Apply the same metadata filters (phase, applicability, importance).
+4. Add at most 2 qualifying entries to the result set.
+5. These entries are marked with `[expanded]` in the Correction text so the agent knows they are related-expansion results, not direct matches.
+
+`related` links are set at synthesis time (by the synthesising agent) and at enterprise promotion (by the Architecture Board). They are not set automatically.
+
+### 12.4 Cross-Agent Learning Visibility
+
+The file-based system is role-siloed (each agent reads its own `learnings/` directory). Cross-agent visibility is achieved at two levels:
+
+**Level 1 — Enterprise promotion** (already in §7): Widely applicable learnings are promoted to `enterprise-repository/knowledge-base/learnings/`. All agents read this in Step 0.L. This is the primary cross-agent channel.
+
+**Level 2 — PM cross-role synthesis index** (new in Stage 5): When PM's retrospective synthesis identifies the same error-type appearing in 2+ roles' learnings within the same sprint, PM writes a cross-role synthesis entry to `project-repository/knowledge-base/cross-role-learnings/index.yaml`. Agents read this as a third index in Step 0.L (after role-specific and enterprise):
+```
+query_learnings sources (in order):
+  1. <role-repo>/learnings/index.yaml                              — role-specific
+  2. enterprise-repository/knowledge-base/learnings/index.yaml    — enterprise
+  3. project-repository/knowledge-base/cross-role-learnings/index.yaml  — cross-role (new)
+```
+Cross-role entries use the same format as regular learnings. They are authored by PM, not by the role agent. The `agent` field is set to `"PM-synthesis"`.
+
+### 12.5 Consolidation Trigger
+
+The existing sprint-boundary synthesis trigger (§6.1) is supplemented by a **growth trigger**: if `index.yaml` has more than 20 entries that are not `synthesis-superseded`, PM is alerted at the next sprint planning check-in to request synthesis from the affected agent. This prevents index bloat that would degrade the N=5 cap's effectiveness. The alert is an `algedonic`-adjacent signal routed to PM's decision queue (not a full ALG signal — it is informational, not urgent).
