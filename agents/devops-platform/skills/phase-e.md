@@ -71,6 +71,12 @@ DO raises a CQ when:
 
 ## Procedure
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="DO", phase="E", artifact_type="implementation-plan")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### Step 1 — Review implementation candidates for deployment complexity
 
 For each candidate in the Implementation Candidate Catalog, classify deployment complexity on the following scale:
@@ -168,6 +174,17 @@ The DO provides deployment complexity estimates to PM; PM incorporates them into
 - **Termination:** Loop terminates when PM has incorporated DO's estimates into the Work Package Catalog and the Implementation Candidate Catalog's deployment complexity column is complete.
 - **Max iterations:** 2 before PM proceeds with documented uncertainty.
 - **Escalation:** If a complexity estimate cannot be resolved because of missing information (e.g., data migration volume unknown, deployment model undefined), PM records the uncertainty in the Work Package Catalog and raises a CQ to the user if the uncertainty is material to sprint planning. DO does not escalate directly; PM owns the Work Package Catalog and the risk register.
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="implementation-plan"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

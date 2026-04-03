@@ -62,6 +62,12 @@ version: 1.0.0
 
 ## Procedure
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="QA", phase="G", artifact_type="test-strategy")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### Step 0 — Discovery Scan (Sprint Entry)
 
 At the start of each Solution Sprint, execute the Discovery Scan per `framework/discovery-protocol.md §2`.
@@ -200,6 +206,17 @@ At the conclusion of all Solution Sprints:
 - **Iteration 2**: If fix introduces a regression, QA notifies DE with regression detail. DE fixes regression. QA re-tests.
 - **Termination**: Defect verified fixed with no new regressions.
 - **Maximum iterations**: 2 per defect (3 test executions total: original + fix + regression re-test). Beyond 2 iterations without resolution: escalate to PM as ALG-010 for Severity 1-2 defects.
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="test-strategy"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

@@ -72,6 +72,12 @@ SA raises a CQ when:
 
 ## Procedure
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="SA", phase="C", artifact_type="application-architecture")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### Pre-condition Check
 
 1. Confirm `sprint.started` has been emitted for the Phase C Architecture Sprint.
@@ -114,6 +120,14 @@ Validate against the technology-independence constraint:
 - Review each component description for technology product names. If found, remove them and replace with logical descriptions.
 - If an architectural style decision is made (e.g., "this component is an event-driven integration adapter"), record the decision in `architecture-repository/adrs/adr-<id>.md` with rationale. The ADR is an architecture-domain decision — not a technology-domain ADR (which would belong in `technology-repository/`).
 
+**Diagram Step D — ArchiMate Application Architecture Diagram**
+
+Execute D1–D6 per `framework/diagram-conventions.md §5–5c`:
+- **D1–D4:** Scan `elements/application/` sub-catalogs (components.yaml CMP-nnn, interfaces.yaml IFC-nnn, services.yaml ASV-nnn). Register new catalog entries for each APP-nnn component and IFC-nnn interface defined in this step. Validate no duplicate IDs; populate `linked_data_entity` cross-references where applicable.
+- **D5a:** Load PUML template `framework/diagram-conventions.md §7.archimate-application`. Author ArchiMate application-layer diagram: components (CMP-nnn), interfaces (IFC-nnn), application services (ASV-nnn); catalog IDs as PUML aliases. Write to `architecture-repository/diagram-catalog/diagrams/c-archimate-application-v1.puml`. Update `diagrams/index.yaml`.
+- **D6:** Call `validate_diagram`; fix errors; re-validate before proceeding.
+
+
 ---
 
 ### Step 3 — Author Interface Catalog
@@ -130,6 +144,14 @@ Per-interface attributes (per schema §3.3):
 - `Safety-Relevant`: Yes / No (follows from involved components and data entities)
 
 Every interface must appear in at least one Application Interaction Diagram (Step 5). An interface in the catalog with no corresponding diagram is an incomplete AA.
+
+**Diagram Step D — Sequence Diagrams (Key Interaction Flows)**
+
+Execute D1–D6 per `framework/diagram-conventions.md §5–5c`:
+- **D1–D4:** Scan `elements/application/components.yaml` and `elements/application/interfaces.yaml` for CMP-nnn and IFC-nnn participants. Check `sequences/participant-map.yaml`; register lifeline entries for any participants not yet mapped.
+- **D5a:** Load PUML template `framework/diagram-conventions.md §7.sequence`. For each key interaction flow identified in this step, author a sequence diagram: CMP-nnn lifelines, IFC-nnn boundaries, synchronous vs. async message notation, `alt`/`opt` blocks for error paths. Write to `architecture-repository/diagram-catalog/diagrams/c-sequence-<flow-id>-v1.puml`. Update `diagrams/index.yaml`.
+- **D6:** Call `validate_diagram`; fix errors; re-validate before proceeding.
+
 
 ---
 
@@ -278,6 +300,17 @@ After AA is baselined and handed off to SwA for Phase D:
 - **Termination:** CSCO signs off; `csco-sign-off: true`.
 - **Max iterations:** 2.
 - **Escalation:** Raise `ALG-010` if unresolved; PM adjudicates. Do not baseline AA without CSCO sign-off if safety-relevant components are present.
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="application-architecture"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

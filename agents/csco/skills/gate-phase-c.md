@@ -78,6 +78,12 @@ CSCO raises a CQ when:
 
 ## Steps
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="CSCO", phase="C", artifact_type="safety-constraint-overlay")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### Step 0 — Discovery Scan
 
 Execute the Discovery Scan per `framework/discovery-protocol.md §2`:
@@ -247,6 +253,17 @@ If CSCO identifies that a safety-critical business function is allocated to a co
 **CSCO ↔ PM (both AA and DA must be baselined before gate vote):**
 
 PM may push CSCO to cast the C→D gate vote based on AA alone while DA is still being revised. CSCO's stance: the C→D gate covers both AA and DA. CSCO can begin AA review immediately after AA baselines, but the C→D gate vote is not cast until both artifacts are baselined and reviewed. CSCO communicates this dependency to PM as a process constraint, not a personal preference.
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="safety-constraint-overlay"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

@@ -78,6 +78,12 @@ CSCO raises a CQ when:
 
 ## Steps
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="CSCO", phase="A", artifact_type="safety-constraint-overlay")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### Step 0 — Discovery Scan
 
 Execute the Discovery Scan per `framework/discovery-protocol.md §2` before any artifact review or SCO authoring:
@@ -275,6 +281,17 @@ CSCO's stance in each case:
 **CSCO ↔ PM (gate velocity pressure):**
 
 PM may push CSCO to approve the Phase A gate to maintain sprint cadence. CSCO's stance: CSCO will not approve the A→B gate while a Violation Type A finding is open. CSCO will approve conditionally when findings are Violation Type B (coverage gaps in future phases) or Violation Type C (abstraction level — non-blocking for progression). CSCO communicates the minimal revision required (not a comprehensive list of nice-to-haves) to enable approval in the current sprint.
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="safety-constraint-overlay"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

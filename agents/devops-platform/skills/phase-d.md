@@ -78,6 +78,12 @@ CQ format: per `clarification-protocol.md §3`. DO does not raise CQs about tech
 
 ## Procedure
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="DO", phase="D", artifact_type="technology-architecture")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### Step 1 — Acknowledge and retrieve TA draft
 
 On receipt of `handoff.issued` from SwA for the TA draft:
@@ -233,6 +239,17 @@ This loop governs the iterative review of the TA draft between DO and SwA. The l
 **SwA engagement directive (from DO's perspective):** When the SwA responds to a DO finding, the DO evaluates whether the response engages the specific operational constraint or merely re-states the design intent. A SwA response that explains *why* the design is architecturally sound without addressing the specific operational constraint is not a resolution — the DO should say so in iteration 2 and escalate if unresolved.
 
 **Resolution directive in this context:** The Phase D feedback loop is resolved when: (a) the SwA revises the TA to address the DO's Infeasible finding and the DO confirms the revision resolves the operational constraint, or (b) the DO and SwA agree that the risk is real but acceptable, with the acceptance documented in the relevant ADR under a risk acceptance entry co-signed by PM. A TA that is baselined with unresolved Infeasible findings is a governance violation (triggers ALG-010).
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="technology-architecture"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

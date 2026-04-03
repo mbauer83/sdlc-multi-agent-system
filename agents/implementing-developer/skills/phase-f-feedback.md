@@ -69,6 +69,12 @@ This skill has **no blocking CQ conditions** — it is advisory only.
 
 This procedure is executed once per PM activation.
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="DE", phase="F", artifact_type="implementation-plan")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### Step 1 — Read the Implementation Plan and Dependency Matrix
 
 Retrieve both the IP and Dependency Matrix in full. Build a working understanding of:
@@ -166,6 +172,17 @@ This skill has a **single advisory iteration**:
 
 **Maximum iterations:** 1 delivery + 1 optional clarification response.  
 **Escalation path:** None. Advisory output only; Phase F gate authority rests with PM, SwA, and CSCO per `raci-matrix.md §4`.
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="implementation-plan"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

@@ -78,6 +78,12 @@ CSCO raises a CQ when:
 
 ## Mode 1 — Implementation Spot-Check
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="CSCO", phase="G", artifact_type="safety-constraint-overlay")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### Step 0 — Discovery Scan (Mode 1)
 
 Execute the Discovery Scan per `framework/discovery-protocol.md §2` before each spot-check:
@@ -227,6 +233,17 @@ SwA may argue that an SC-nnn constraint omitted from the AC is covered by the ov
 **CSCO ↔ PM (G-exit sprint pressure):**
 
 PM may argue that the G-exit gate is holding up Phase H and request CSCO to conditionally approve while gaps are tracked. CSCO's stance: CSCO will issue a conditional approval for S3 and below uncovered constraints where PM accepts Phase H tracking. CSCO will not approve conditionally for S1 or S2 uncovered constraints — these are blocking regardless of sprint pressure. CSCO communicates the exact minimal action required (specific test or configuration change) to achieve approval, not a comprehensive list.
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="safety-constraint-overlay"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

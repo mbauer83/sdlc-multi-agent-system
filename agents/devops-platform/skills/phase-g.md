@@ -74,6 +74,12 @@ DO raises a CQ when:
 
 ## Procedure
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="DO", phase="G", artifact_type="process")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### Step 0.S — Standards and Coding Guidelines Discovery
 
 Before provisioning any environment or writing infrastructure-as-code, scan in this order:
@@ -277,6 +283,17 @@ If a security gate blocks a pipeline:
 - **Termination:** Loop terminates when the sprint's delivery goals are met (all work package PRs deployed, all environments healthy) or when an ALG escalation removes the scope from normal iteration.
 - **Max iterations per sprint:** 2 deployment cycles within a single Solution Sprint before PM is notified of persistent infrastructure instability. If 2 deployment cycles do not produce a stable environment, PM decides whether to extend the sprint or escalate.
 - **Escalation:** Persistent environment instability (more than 2 deployment failures for the same root cause) triggers ALG-006 (dependency failure / TC category) to PM. PM restructures the sprint plan or initiates a Phase H change process if the root cause is architectural.
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="process"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

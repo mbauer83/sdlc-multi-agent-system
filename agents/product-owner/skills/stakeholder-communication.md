@@ -74,6 +74,12 @@ PO raises a CQ when:
 
 ## Steps
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="PO", phase="all", artifact_type="process")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### Step 0 — Discovery Scan
 
 Execute the Discovery Scan per `framework/discovery-protocol.md §2`. Scoped to the trigger event — read only what is needed to produce an accurate communication record. Proceed to Step 1 only after the relevant sources are checked.
@@ -283,6 +289,17 @@ This skill has no cross-agent feedback loop. The communication record is a PO-in
 If PM determines that the communication record content is inadequate for the intended stakeholder interaction, PM raises a CQ to PO with specific additional content requirements. PO produces an amended record. Maximum 1 amendment cycle — if PO and PM cannot agree on the communication record content, PM escalates to a user interaction without the PO communication record and notes the gap in the sprint log.
 
 Single-agent skill: the only cross-role interaction in this skill's lifecycle is the handoff to PM. No feedback loop is required for the communication record production itself.
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="process"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

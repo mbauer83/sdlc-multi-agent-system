@@ -79,6 +79,12 @@ Route structured feedback to SA (`target: Solution Architect`) if:
 
 ## Procedure
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="SwA", phase="F", artifact_type="implementation-plan")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### Step 1 — Produce Transition Architecture Diagrams
 
 1.1 Determine whether Transition Architecture Diagrams are required. They are required if any of the following apply:
@@ -214,6 +220,17 @@ Route structured feedback to SA (`target: Solution Architect`) if:
 - **Termination**: SA confirms no AA inconsistencies in transition states.
 - **Maximum iterations**: 1 (SA consulting review; not a gating approval). If SA identifies a fundamental AA inconsistency that cannot be resolved without revising the AA, escalate to PM as a potential Phase C/D revisit via `phase.return-triggered`.
 - **Escalation**: If AA revision is required, PM records `phase.return-triggered` referencing the affected AA artifact. Do not baseline Transition Architecture Diagrams until the AA inconsistency is resolved.
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="implementation-plan"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

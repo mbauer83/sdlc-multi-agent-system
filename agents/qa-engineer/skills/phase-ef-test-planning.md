@@ -83,6 +83,12 @@ version: 1.0.0
 
 ## Procedure
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="QA", phase="E", artifact_type="test-strategy")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### Phase E: Initial Test Strategy
 
 #### Step 1 — Read all available architecture artifacts; identify testability concerns
@@ -252,6 +258,17 @@ Cast `gate.vote_cast` for Phase F→G gate (QA contribution): QA approves F→G 
 
 **Maximum iterations:** 1 substantive review round. If CSCO raises substantive feedback requiring architectural changes (new safety requirements), this feeds back as a structured feedback item from CSCO → QA, and QA updates the TS. CSCO cannot block TS baseline for non-safety sections; only safety-specific sections are held.  
 **Escalation target:** PM (ALG-002 if CSCO unavailable and safety gate review is blocking sprint progression).
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="test-strategy"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

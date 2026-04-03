@@ -84,6 +84,12 @@ Route to PM if:
 
 ## Procedure
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="SwA", phase="E", artifact_type="implementation-plan")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### Step 1 — Produce Consolidated Gap Analysis Matrix
 
 1.1 Read gap analyses from all three architecture domains:
@@ -136,6 +142,16 @@ Route to PM if:
 - **Risk Level**: Low / Medium / High (technical risk: new technology, unknown vendor, integration complexity)
 
 2.5 **Reuse candidates require an additional reuse assessment entry**: confirm the existing SBB's version, its functional coverage of the gap, and whether modification is needed. If modification >20% of the SBB's scope, classify as Build (reuse with major modification).
+
+**Diagram Step D — Sequence Diagrams (API Contract Flows)**
+
+Execute D1–D6 per `framework/diagram-conventions.md §5–5c`:
+- **D1–D4:** For each implementation candidate that specifies API contracts or inter-component interfaces: verify IFC-nnn IDs exist in `architecture-repository/diagram-catalog/elements/application/interfaces.yaml` (SA catalog). Verify CMP-nnn lifeline entries in `sequences/participant-map.yaml`. If an IFC-nnn or CMP-nnn is absent from the SA engagement catalog, raise a `diagram.catalog-proposal` handoff to SA before authoring — do not create orphan aliases.
+- **D5a:** Load PUML template `framework/diagram-conventions.md §7.sequence`. Author one sequence diagram per major API flow: IFC-nnn boundary aliases, CMP-nnn participant lifelines; synchronous vs. async message notation; `alt`/`opt` blocks for error and auth paths. Write to `technology-repository/diagrams/e-sequence-<flow-id>-v1.puml`. Update `technology-repository/diagrams/index.yaml`.
+- **D6:** Call `validate_diagram`; fix errors; re-validate before proceeding.
+
+*Note: SwA writes to `technology-repository/diagrams/`; SA integrates via `diagram.catalog-proposal` handoff at phase transition.*
+
 
 ### Step 3 — Provide Input to Risk Register
 
@@ -236,6 +252,17 @@ Route to PM if:
 - **Termination**: IC Risk Levels reflect both technical complexity (SwA) and test complexity (QA) inputs.
 - **Maximum iterations**: 1 (QA consulting contribution, not an approval loop). If QA's test complexity estimates are significantly higher than SwA's expectation, swA raises the discrepancy to PM for Risk Register update.
 - **Escalation**: No algedonic trigger for this loop unless QA's findings reveal a safety-relevant testing gap → ALG-013 if a safety-relevant component has no viable test approach.
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="implementation-plan"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

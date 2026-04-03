@@ -85,6 +85,20 @@ Route to PM if:
 
 ## Procedure
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="SwA", phase="D", artifact_type="technology-architecture")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
+**Step 0.D — Diagram Catalog Lookup** *(insert before Step 1)*
+
+Before authoring technology diagrams, scan the SA engagement catalog:
+1. Read `architecture-repository/diagram-catalog/elements/application/components.yaml` — extract CMP-nnn IDs for all application components in scope.
+2. Read `architecture-repository/diagram-catalog/elements/technology/` sub-catalogs (nodes.yaml, artifacts.yaml, services.yaml) — identify existing NOD-nnn, ART-nnn, TSV-nnn entries.
+3. Annotate working context: "Diagram catalog: N application components (CMP-nnn); M technology nodes (NOD-nnn) found relevant."
+
+
 ### Step 1 — Read and Validate Inputs
 
 1.1 Read AA in full (not summary-only). Retrieve AA from canonical path. Confirm version is ≥ 1.0.0. Record all APP-nnn entries; note which are `safety-relevant: true`.
@@ -141,6 +155,16 @@ Route to PM if:
 **Specificity requirement:** Every TC-nnn must have a `Selected Product / Platform` value that names a specific product (e.g., "PostgreSQL 16", "Amazon EKS 1.29+", "Redis 7.2"). Generic type names ("a relational database") are not acceptable and fail the quality gate.
 
 4.3 Every TC-nnn with `Status: Selected` must have a corresponding ADR (see Step 5). Components evaluated but not selected have `Status: Evaluated` or `Status: Rejected` and appear in the relevant ADR's `Alternatives Considered` section.
+
+**Diagram Step D — Class/ER Technology Domain Model**
+
+Execute D1–D6 per `framework/diagram-conventions.md §5–5c`:
+- **D1–D4:** For each technology component (TC-nnn) defined in this step, verify or register entries in `architecture-repository/diagram-catalog/elements/technology/` (nodes.yaml or services.yaml as appropriate). Cross-reference CMP-nnn application component IDs from the SA engagement catalog.
+- **D5a:** Load PUML template `framework/diagram-conventions.md §7.class-er`. Author a domain model Class/ER diagram: TC-nnn and DE-nnn entities with CMP-nnn cross-references; technology component attributes; FK and assignment markers. Write to `technology-repository/diagrams/d-er-technology-domain-model-v1.puml`. Update or create `technology-repository/diagrams/index.yaml`.
+- **D6:** Call `validate_diagram`; fix errors; re-validate before proceeding.
+
+*Note: SwA writes to `technology-repository/diagrams/`; SA integrates via `diagram.catalog-proposal` handoff at phase transition.*
+
 
 ### Step 5 — Author Architecture Decision Records (ADR Register)
 
@@ -199,6 +223,16 @@ Route to PM if:
 8.3 For each environment, record: deployment zone, TC-nnn components present, APP-nnn components hosted, connectivity type (internal / external / isolated).
 
 8.4 Note any environment-specific configuration differences (e.g., Production uses managed RDS; Development uses local PostgreSQL container). These differences are inputs to DevOps environment provisioning.
+
+**Diagram Step D — ArchiMate Technology Architecture Diagram**
+
+Execute D1–D6 per `framework/diagram-conventions.md §5–5c`:
+- **D1–D4:** Scan `architecture-repository/diagram-catalog/elements/technology/` (nodes.yaml NOD-nnn, services.yaml TSV-nnn, artifacts.yaml ART-nnn). Import or verify enterprise technology elements where applicable. Register new elements for project-specific nodes and services.
+- **D5a:** Load PUML template `framework/diagram-conventions.md §7.archimate-technology`. Author the technology architecture diagram: NOD-nnn nodes, TSV-nnn services, ART-nnn artifacts, with CMP-nnn application component assignments from SA catalog. Write to `technology-repository/diagrams/d-archimate-technology-v1.puml`. Update `technology-repository/diagrams/index.yaml`.
+- **D6:** Call `validate_diagram`; fix errors; re-validate before proceeding.
+
+*Note: SwA writes to `technology-repository/diagrams/`; SA integrates via `diagram.catalog-proposal` handoff at phase transition.*
+
 
 ### Step 9 — Author Technology Standards Catalog
 
@@ -310,6 +344,17 @@ pm-sign-off: false
 - **Termination**: CSCO sign-off obtained; ADRs for safety-relevant decisions advanced to `Status: Accepted`.
 - **Maximum iterations**: 2. If CSCO's iteration-2 review still blocks a technology decision, the blocking condition is escalated to PM via ALG-004 (S2) with CSCO sign-off overdue flag. If CSCO is unavailable, halt safety-relevant TC decisions and raise ALG-002 (S1).
 - **Escalation path**: ALG-004 → PM escalates to CSCO with deadline; if CSCO unavailable ALG-002 → halt; if CSCO veto cannot be resolved technically, ALG-001 → user and PM via CSCO channel.
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="technology-architecture"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

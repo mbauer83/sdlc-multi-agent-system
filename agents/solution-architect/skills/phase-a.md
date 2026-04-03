@@ -81,6 +81,12 @@ CQ format: per `clarification-protocol.md §3`. All Phase A CQs are architecture
 
 ## Procedure
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="SA", phase="A", artifact_type="architecture-vision")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### Pre-condition Check
 
 Before beginning any production step:
@@ -329,6 +335,17 @@ When `entry-point: EP-B` and a user requirements document is provided:
 - **Termination:** All blocking CQs answered; SA proceeds with any remaining non-blocking items as documented assumptions.
 - **Max iterations:** 2 user interactions before SA documents remaining gaps as assumptions with risk flags and notifies PM.
 - **Escalation:** If safety-domain CQs are unanswered after 2 iterations, raise `ALG-017`.
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="architecture-vision"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

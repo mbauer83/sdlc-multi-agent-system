@@ -79,6 +79,12 @@ Route to PM if:
 
 ## Procedure
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="SwA", phase="G", artifact_type="architecture-contract")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### Step 0.S — Standards and Coding Guidelines Discovery
 
 Before producing or updating any Architecture Contract, scan the following in order:
@@ -286,6 +292,17 @@ G-5.3 Cast gate vote: emit `gate.vote_cast` with `gate: G-exit`, `vote: approved
 - **Iteration 1**: QA produces the test-evidence portion of the Compliance Assessment (test types, pass/fail against AC-IDs). SwA produces the architecture-evidence portion (PR review results, deployment review results). Both portions are merged into AC §3.7.
 - **Termination**: Compliance Assessment is complete when both QA and SwA have submitted their portions and there are no contradictions (e.g., QA marks an AC ID as passing but SwA's PR review shows a prohibited pattern was used).
 - **Maximum iterations**: 1 (joint production; if contradictions exist, SwA and QA resolve by reviewing evidence together before submitting to PM). Unresolvable contradiction escalated to PM via ALG-010.
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="architecture-contract"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

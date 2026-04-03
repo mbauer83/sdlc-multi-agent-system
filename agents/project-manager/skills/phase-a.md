@@ -55,6 +55,12 @@ version: 1.0.0
 
 ## Procedure
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="PM", phase="A", artifact_type="process")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### EP-0 Entry: Scoping Interview
 
 When `entry-point: EP-0` in the Engagement Profile, Phase A begins with a Scoping Interview.
@@ -141,6 +147,17 @@ Write to `project-repository/` — this is a PM-owned artifact. Path: `project-r
 - Iteration 1: Gate evaluation; if blocked, SA/CSCO address open items.
 - Iteration 2: Re-evaluation.
 - Escalation: After 2 blocked evaluations → ALG-005 (timeline collapse).
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="process"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

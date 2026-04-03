@@ -53,6 +53,12 @@ version: 1.0.0
 
 ---
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="PM", phase="E", artifact_type="implementation-plan")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ## Phase E: Opportunities & Solutions
 
 ### E.1 Own: Work Package Catalog
@@ -169,6 +175,17 @@ Written as a standing operating procedure in `project-repository/sprint-log/solu
 - Iteration 2: PM revises; final review.
 - Termination: SwA confirms architectural sequencing is correct; DevOps confirms environment plan is feasible; QA confirms test plan is executable.
 - Max iterations: 2. Escalation: ALG-010 if deadlock.
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="implementation-plan"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

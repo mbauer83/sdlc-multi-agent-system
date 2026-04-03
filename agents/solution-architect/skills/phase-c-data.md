@@ -75,6 +75,12 @@ SA raises a CQ when:
 
 ## Procedure
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="SA", phase="C", artifact_type="data-architecture")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### Pre-condition Check
 
 1. Confirm `sprint.started` has been emitted for the Phase C Architecture Sprint.
@@ -120,6 +126,14 @@ Per-entity attributes (per schema §3.2):
 - **Safety-Critical:** Data whose loss, corruption, or unauthorised modification could cause a safety constraint violation (from SCO). Examples: safety log records, control system state data, emergency shutdown signals.
 
 When in doubt between classification levels: assign the higher classification. Downgrading requires explicit CSCO or legal sign-off.
+
+**Diagram Step D — Class/ER Diagram (Canonical Data Model)**
+
+Execute D1–D6 per `framework/diagram-conventions.md §5–5c`:
+- **D1–D4:** For every DE-nnn entity defined in this step, register an entry in `architecture-repository/diagram-catalog/elements/data/entities.yaml`. Populate attributes, PK/FK flags, and `linked_data_entity` cross-references in `elements/application/data-objects.yaml` (DAO-nnn) where application data objects correspond. Validate: no duplicate DE-nnn IDs; `canonical_entity` back-references populated in DAO-nnn entries.
+- **D5a:** Load PUML template `framework/diagram-conventions.md §7.class-er`. Author the Class/ER diagram: each DE-nnn as a class block with `{field}` attribute list; `"1" -- "0..*"` cardinality markers; FK references annotated. Register each ER association as CON-E-nnn in `connections/er-relationships.yaml`. Write to `architecture-repository/diagram-catalog/diagrams/c-er-canonical-data-model-v1.puml`. Update `diagrams/index.yaml`.
+- **D6:** Call `validate_diagram`; fix errors; re-validate before proceeding.
+
 
 ---
 
@@ -309,6 +323,17 @@ After DA is baselined and handed off to SwA for Phase D:
 - **Termination:** SwA acknowledges revised DA; proceeds with TA.
 - **Max iterations:** 2.
 - **Escalation:** Raise `ALG-010` if unresolved. PM adjudicates: if SwA's constraint is technology-domain, SwA's position governs (but the AA/DA must still record the logical requirement). If SwA's constraint would require a change to the logical data model (e.g., merging entities for performance), this is an architecture-layer decision and SA's position governs.
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="data-architecture"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

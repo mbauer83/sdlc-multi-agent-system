@@ -79,6 +79,12 @@ Route to PM if:
 
 ## Procedure
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="SwA", phase="H", artifact_type="change-record")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### Step 1 — Receive Change Record and Acknowledge
 
 1.1 Receive `handoff.created` event from SA referencing the CR. Read the CR in full.
@@ -242,6 +248,17 @@ Route to PM if:
 - **Termination**: All three agents emit `handoff.acknowledged` for the revised AC.
 - **Maximum iterations**: 1 (acknowledgement is binary). If an agent does not acknowledge within the sprint, raise ALG-006 (S2 — dependency unresolved within sprint) and notify PM. PM follows up with the non-acknowledging agent.
 - **Escalation**: ALG-006 → PM resolves; if an implementing agent is unavailable, PM documents and halts affected work packages.
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="change-record"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

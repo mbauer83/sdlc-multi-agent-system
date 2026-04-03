@@ -66,6 +66,12 @@ version: 1.0.0
 
 ## Procedure
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="PM", phase="all", artifact_type="process")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### Phase 0: Engagement Bootstrap
 
 Performed once per engagement before any sprint begins. Follows `architecture-repository-design.md §4.8`.
@@ -459,6 +465,17 @@ Gate: engagement-close
 - S1 signals: PM halts work, routes to responsible party, monitors resolution
 - Resolution: responsible party confirms condition cleared → PM emits `alg.resolved` → work resumes
 - No iteration limit on safety-domain algedonics — they must be resolved before affected work continues
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="process"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

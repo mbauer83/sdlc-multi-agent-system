@@ -77,6 +77,12 @@ CSCO raises a CQ when:
 
 ## Steps
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="CSCO", phase="D", artifact_type="safety-constraint-overlay")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### Step 0 — Discovery Scan
 
 Execute the Discovery Scan per `framework/discovery-protocol.md §2`:
@@ -265,6 +271,17 @@ CSCO's engagement approach for each case:
 **CSCO ↔ PM (Phase D gate delay):**
 
 Phase D typically has the longest gate review period because of the breadth of technology safety analysis. PM may push for a provisional gate passage to allow Phase E planning to begin. CSCO's engagement: CSCO cannot pass a gate with unresolved Violation Type A findings. However, CSCO can issue conditional approval (Phase E/F planning activities can proceed in parallel with Phase D veto resolution) for non-blocking findings. CSCO distinguishes explicitly: which findings block Phase E commencement and which do not.
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="safety-constraint-overlay"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

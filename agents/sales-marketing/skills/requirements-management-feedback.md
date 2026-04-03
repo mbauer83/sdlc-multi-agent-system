@@ -74,6 +74,12 @@ CQ format: per `clarification-protocol.md §3`. CQs raised in this skill are SM-
 
 ## Steps
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="SM", phase="req-mgmt", artifact_type="requirements-register")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### Step 0 — Discovery Scan
 
 Execute the Discovery Scan per `framework/discovery-protocol.md §2`. Produce an internal Gap Assessment. Proceed to Step 1 only after all five layers are scanned.
@@ -290,6 +296,17 @@ SM never holds a requirements decision hostage to SM's feedback. PO's authority 
 **Engagement directive:** SM's confrontation posture in this skill is deliberately constrained. SM's one assertive move is: if SM has identified an uncovered demand signal with High confidence and material competitive urgency (MA §6: Critical or High), and PO has not acknowledged the feedback record or has explicitly dismissed the signal without stated rationale within the agreed review window, SM notifies PM in the informational handoff follow-up: "PO has not acknowledged REQFB-nnn §3 item DS-nnn, which is High confidence and competitive-urgency High. SM recommends PM note this in the sprint log." SM does not escalate beyond this notification.
 
 **Resolution directive:** SM's advisory function is resolved by PO acknowledging the feedback record. PO may act, defer, or dismiss SM's signals — all are valid PO decisions. The only unresolved state SM escalates is: feedback record not acknowledged by PO after the standard handoff window has elapsed (SM routes this to PM as a non-urgent sprint log item, not an algedonic signal unless the signal is also Critical-urgency).
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="requirements-register"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

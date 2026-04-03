@@ -73,6 +73,12 @@ SA raises a CQ when:
 
 ## Procedure
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="SA", phase="B", artifact_type="business-architecture")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### Pre-condition Check
 
 1. Confirm `sprint.started` has been emitted for the Phase B Architecture Sprint.
@@ -104,6 +110,14 @@ Attributes per capability (per schema §3.2):
 
 ArchiMate viewpoint: **Capability Map Viewpoint** (structured as a matrix or tree; rendered in text form as a nested list or table).
 
+**Diagram Step D — ArchiMate Business Architecture Overview**
+
+Execute D1–D6 per `framework/diagram-conventions.md §5–5c`:
+- **D1–D4:** Scan `elements/business/` sub-catalogs (actors.yaml ACT-nnn, processes.yaml PRO-nnn, services.yaml BSV-nnn, objects.yaml BOB-nnn) for elements matching the capability domains defined above. Register new elements where not found. Validate no duplicate IDs; populate cross-reference fields.
+- **D5a:** Load PUML template `framework/diagram-conventions.md §7.archimate-business`. Author ArchiMate business-layer diagram using capability domain structure; catalog IDs as PUML aliases. Write to `architecture-repository/diagram-catalog/diagrams/b-archimate-business-capability-v1.puml`. Update `diagrams/index.yaml`.
+- **D6:** Call `validate_diagram`; fix errors; re-validate before proceeding.
+
+
 ---
 
 ### Step 2 — Author Business Process Catalog
@@ -126,6 +140,14 @@ When in doubt: mark as `Safety-Relevant: Yes`. The CSCO will review and may down
 
 Safety-relevant processes must be cross-referenced in the SCO Phase B update produced by CSCO.
 
+**Diagram Step D — Activity/BPMN Process Diagrams**
+
+Execute D1–D6 per `framework/diagram-conventions.md §5–5c`:
+- **D1–D4:** Scan `elements/business/actors.yaml` and `processes/pool-map.yaml`. Map each BPR-nnn owning org unit (ORG-nnn → ACT-nnn or SYS-nnn catalog ID). Register new pool-map entries for each safety-relevant and key process.
+- **D5a:** Load PUML template `framework/diagram-conventions.md §7.activity-bpmn`. For each process flagged `Safety-Relevant: Yes` and other key processes, author an Activity/BPMN diagram with swimlane pools mapped to catalog IDs. Write to `architecture-repository/diagram-catalog/diagrams/b-bpmn-<bpr-id>-v1.puml`. Update `diagrams/index.yaml`.
+- **D6:** Call `validate_diagram`; fix errors; re-validate before proceeding.
+
+
 ---
 
 ### Step 3 — Author Value Stream Map
@@ -143,6 +165,14 @@ Per-value-stream attributes (per schema §3.5):
 ArchiMate viewpoint: **Business Process Cooperation Viewpoint** — rendered as a textual representation of cross-process interactions and sequencing within each value stream.
 
 Minimum: one value stream per Level-1 capability domain. A domain with no identifiable value stream is a BA gap — flag it as an open item and raise a non-blocking CQ to PO.
+
+**Diagram Step D — Value Stream Use Case Diagrams**
+
+Execute D1–D6 per `framework/diagram-conventions.md §5–5c`:
+- **D1–D4:** Scan `elements/business/actors.yaml` for ACT-nnn entries matching VS triggering stakeholders. Verify each VS-nnn maps to a triggering stakeholder ACT-nnn and a delivered outcome capability CAP-nnn.
+- **D5a:** Load PUML template `framework/diagram-conventions.md §7.use-case`. Author one Use Case diagram per value stream: triggering stakeholder as `ACT-nnn` alias actor, value stream stages as use cases, participating actors annotated. Write to `architecture-repository/diagram-catalog/diagrams/b-usecase-<vs-id>-v1.puml`. Update `diagrams/index.yaml`.
+- **D6:** Call `validate_diagram`; fix errors; re-validate before proceeding.
+
 
 ---
 
@@ -285,6 +315,17 @@ Before baselining the BA:
 - **Termination:** CSCO signs off on Phase B SCO update; `csco-sign-off: true` in BA header.
 - **Max iterations:** 2.
 - **Escalation:** If unresolved after 2 iterations, raise `ALG-010`. Do not baseline BA without CSCO sign-off.
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="business-architecture"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

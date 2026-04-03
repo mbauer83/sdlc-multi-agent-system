@@ -72,6 +72,12 @@ version: 1.0.0
 
 ---
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="CSCO", phase="G", artifact_type="safety-constraint-overlay")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### Step 0 — Immediate Activation and Signal Receipt
 
 Upon receiving an algedonic signal or PM incident report:
@@ -196,6 +202,17 @@ DO or DE may resist a containment directive on the grounds that the rollback or 
 **CSCO ↔ PM (incident scope and urgency):**
 
 PM may attempt to downgrade the incident severity to avoid sprint disruption. CSCO's severity classification is based on the STAMP constraint analysis, not on operational convenience. CSCO presents the constraint-to-incident tracing as evidence for the severity. If PM and CSCO genuinely disagree about whether the incident constitutes an S1 violation: CSCO holds the S1 classification and escalates to the user — the user makes the final severity determination when CSCO and PM cannot agree.
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="safety-constraint-overlay"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

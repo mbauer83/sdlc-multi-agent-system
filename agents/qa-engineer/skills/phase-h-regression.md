@@ -56,6 +56,12 @@ Raise a CQ when:
 
 ## Procedure
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="QA", phase="H", artifact_type="test-strategy")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### Step 1 — Read Change Record and Affected Artifacts
 
 1.1 Read the Change Record (CR). Extract: change class (Minor/Significant/Major/Safety-Critical), affected artifact list, phase-return scope.
@@ -116,6 +122,17 @@ Raise a CQ when:
 ## Feedback Loop
 
 **No multi-iteration feedback loop for this skill.** The Regression Impact Assessment is a consulting deliverable. If PM finds the scope estimate unclear, PM routes a clarification request to QA as a CQ. QA responds within the current sprint. Maximum 1 clarification iteration.
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="test-strategy"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

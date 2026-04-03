@@ -73,6 +73,12 @@ CSCO raises a CQ when:
 
 ## Steps
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="CSCO", phase="B", artifact_type="safety-constraint-overlay")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### Step 0 — Discovery Scan
 
 Execute the Discovery Scan per `framework/discovery-protocol.md §2`:
@@ -235,6 +241,17 @@ PM may argue that business architecture review is holding up Phase C. CSCO's eng
 **CSCO ↔ PO (process scope):**
 
 PO may argue that certain business processes are outside the system's scope and therefore not subject to safety analysis. CSCO's engagement: CSCO reviews the scope boundary in AV §3.2 and the safety boundary in SCO §1. If a process is genuinely outside the agreed scope boundary, CSCO notes this and does not raise a finding. If a process appears to have been informally excluded from scope to avoid a safety constraint: CSCO flags the scope exclusion as a finding for PM and user review.
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="safety-constraint-overlay"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

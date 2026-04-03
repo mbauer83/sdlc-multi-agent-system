@@ -49,6 +49,12 @@ version: 1.0.0
 
 ---
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="PM", phase="all", artifact_type="process")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ## Sprint Retrospective (per sprint close)
 
 ### When activated
@@ -66,6 +72,9 @@ Request a retrospective note from the sprint's primary agent(s). Notes should co
 - Any algedonic signals triggered — was the threshold right?
 
 **Step 2 — PM synthesis:**
+
+**Step 3 — Learning Synthesis (per role):**
+For each agent role active in the sprint, check if synthesis conditions are met: ≥3 learning entries in the role, or ≥2 entries with the same error-type+phase, or any S1 entry. When conditions are met, call `record_learning(trigger_event="synthesis")` to produce a synthesis entry that supersedes the source entries (`synthesis-superseded` field set on each source entry). Governed by `framework/learning-protocol.md §6`.
 PM synthesises agent notes into a single Retrospective Note. Do not just concatenate agent inputs — identify cross-cutting patterns that span multiple agents' observations.
 
 Retrospective Note format (written to `project-repository/knowledge-base/<sprint-id>-retro.md`):
@@ -203,6 +212,17 @@ project-repository/knowledge-base/
 - If no response: PM escalates to user as advisory (no algedonic; this is an advisory delay).
 - Termination: Approval or rejection received and recorded.
 - Max iterations: 1 submission + 1 escalation.
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="process"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

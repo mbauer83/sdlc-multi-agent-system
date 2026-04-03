@@ -69,6 +69,12 @@ This skill has **no blocking CQ conditions** — it is advisory only. DE proceed
 
 This procedure is executed once per PM activation, covering all candidates and work packages indicated in the PM instruction.
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="DE", phase="E", artifact_type="implementation-plan")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### Step 1 — Read the Implementation Candidate Catalog
 
 Retrieve the ICC in full. For each candidate in scope:
@@ -169,6 +175,17 @@ This skill has a **single advisory iteration**:
 
 **Maximum iterations:** 1 (report delivery) + 1 optional clarification response.  
 **Escalation path:** None. This skill produces advisory output only; it has no gate authority and cannot block Phase E progression.
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="implementation-plan"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

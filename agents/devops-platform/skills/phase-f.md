@@ -74,6 +74,12 @@ DO raises a CQ when:
 
 ## Procedure
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="DO", phase="F", artifact_type="implementation-plan")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### Step 1 — Author Environment Provisioning Catalog
 
 The EPC is the DO's primary Phase F accountable artifact. It is the specification that governs all environment provisioning in Phase G. All Phase G IaC and pipeline implementation must be traceable to a section of the baselined EPC.
@@ -235,6 +241,17 @@ PM reviews the EPC draft as it develops; SwA may raise technical questions about
 - **Termination:** Loop terminates when all blocking review comments are addressed and DO baselines the EPC.
 - **Max iterations:** 2 review cycles before DO escalates unresolved items to PM for adjudication.
 - **Escalation:** If SwA identifies TA inconsistency in the EPC that DO cannot resolve without TA revision, DO raises ALG-011 to SwA (producing agent); if unresolved in 1 iteration, raises to PM (ALG-010).
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="implementation-plan"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 

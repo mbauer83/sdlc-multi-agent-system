@@ -71,6 +71,12 @@ This skill is **activated at each phase boundary** — specifically, at the clos
 
 ---
 
+### Step 0.L — Learnings Lookup *(via `query_learnings` tool)*
+
+Call `query_learnings(agent="SA", phase="req-mgmt", artifact_type="requirements-register")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
+
+---
+
 ### Step 1 — Scan RR at Phase Boundary
 
 At the close of each Architecture Sprint (Phase A, B, C, H):
@@ -174,6 +180,17 @@ At each phase boundary and after each RR version advance assessment:
 - **Termination:** Conflict resolved; RTM architecture column updated.
 - **Max iterations:** 2.
 - **Escalation:** If unresolved (e.g., PO insists on a technology prescription that violates the PR, and SA cannot find an acceptable compromise), PM escalates to user as a policy decision.
+
+### Learning Generation
+
+| Trigger | Condition | Importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | Algedonic signal raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with `artifact-type="requirements-register"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
 
 ---
 
