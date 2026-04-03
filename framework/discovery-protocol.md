@@ -39,66 +39,91 @@ Execute **before** Layer 1. Governed by `framework/learning-protocol.md §5`.
 
 ### Layer 1 — Engagement State
 
-Read the engagement directory for existing work.
+All engagement state is accessed through tools — no direct filesystem reads. The `ModelRegistry` and `EventStore` provide indexed, filtered access without loading artifact bodies unless explicitly requested.
 
-```
-engagements/<id>/engagement-profile.md          → current EP, scope, constraints, target-repo config
-engagements/<id>/work-repositories/             → all work-repository directories
-  architecture-repository/                      → existing AV, BA, AA, DA, CR, PR artifacts
-  technology-repository/                        → existing TA, ADRs, Architecture Contract
-  project-repository/                           → sprint log, decision log, SoAW
-  safety-repository/                            → SCO and all phase updates
-  qa-repository/                                → Test Strategy, defect records
-  devops-repository/                            → EPC, deployment records
-  delivery-repository/                          → PR records, branch refs
-engagements/<id>/clarification-log/             → open and resolved CQs (answers may already be there)
-engagements/<id>/handoff-log/                   → handoff events (what has been transferred and acknowledged)
-engagements/<id>/algedonic-log/                 → open algedonic signals affecting scope
-```
+**Step 1.1 — Engagement context from `AgentDeps` (in-process, no tool call needed):**
+`deps.engagement` contains the parsed engagement configuration (entry point, target repositories, sprint review settings). `deps.workflow_state` contains current phase, sprint, open CQs, pending handoffs, gate outcomes, and active algedonic signals. Both are injected at invocation time — no file read required.
 
-**Mapping rule:** For each existing artifact found, read its summary header. Confirm artifact-type, version, status (draft vs baselined), and `pending-clarifications`. Mark the corresponding ADM artifact as `Covered` in the agent's working Gap Assessment.
+**Step 1.2 — Filter artifact index by metadata:**
+`list_artifacts(phase_produced=<current_phase>, status=["baselined","draft"])` → returns metadata records (artifact-id, artifact-type, version, status, path, owner-agent) without loading bodies. Combine filters as needed: `artifact_type`, `safety_relevant`, `domain`. For each relevant result, call `read_artifact(id, mode="summary")` (frontmatter + first two §content sections, ≈200–400 tokens). Escalate to `mode="full"` only when task correctness requires the complete content — log the reason.
 
-**Draft artifact rule:** Artifacts at version 0.x.x (draft) are available as working context but must not be treated as authoritative for binding outputs. Note draft status in Gap Assessment; flag as `Partially Covered`.
+**Step 1.3 — Search artifact content by concept (when metadata filters are insufficient):**
+`search_artifacts(query="<natural language description of what is needed>", **filter)` → queries the ModelRegistry FTS5 index over artifact `§content` blocks; returns ranked `(ArtifactRecord, snippet)` pairs. Use this when the artifact type is uncertain, when looking for a concept that may appear across multiple artifact types, or when prior phases may have documented something relevant without a predictable metadata signature. The semantic tier (when available) enables similarity-based retrieval beyond keyword matching. Review snippets, then call `read_artifact(id, mode="summary")` for selected results.
+
+**Step 1.4 — Query workflow events for interaction history:**
+`query_events(event_types=["cq.raised","cq.answered","handoff.created","handoff.acknowledged","algedonic.raised","algedonic.resolved"], phase=<current_phase>)` — surfaces answered CQs whose content is relevant to the current task, pending handoffs not yet incorporated, and active algedonic signals that constrain scope. Do not re-read what `deps.workflow_state` already provides; this step retrieves event *payloads* (CQ answer text, handoff artifact content) not covered by the reconstructed state object.
+
+**Mapping rule:** For each artifact returned by the filter, confirm type, version, status, and `pending-clarifications`. Mark as `Covered` or `Partially Covered` (draft) in the Gap Assessment.
+
+**Do not** enumerate or walk directory trees. Artifact location within `work-repositories/` is an implementation detail managed by `ArtifactReadWriterPort`; agents interact exclusively through `list_artifacts`, `read_artifact`, and `list_connections`.
 
 ### Layer 2 — Enterprise Repository
 
-Read the enterprise-wide architecture data, if available.
+Accessed through the same tool interface as Layer 1. The `ModelRegistry` indexes both engagement and enterprise entities; filter by `engagement="enterprise"` to scope queries to the enterprise repository.
 
-```
-enterprise-repository/standards/                → SIB: approved technology standards
-enterprise-repository/reference-library/        → reusable patterns and templates
-enterprise-repository/landscape/                → strategic, segment, and capability architectures
-enterprise-repository/requirements/             → enterprise-level requirements
-enterprise-repository/knowledge-base/           → lessons learned from previous engagements
-```
+**Step 2.1 — Standards and approved patterns (mandatory for Phase D; recommended for all phases):**
+`list_artifacts(engagement="enterprise", artifact_type=["standard","pattern"], status="approved")` → returns SIB entries and reference patterns without loading bodies. For each result relevant to the current technology domain: `read_artifact(id, mode="summary")`. Any technology selection that contradicts a mandatory SIB entry must produce a principle-override ADR.
 
-**Rule:** Always read `enterprise-repository/standards/` before starting Phase D work. Technology selections must be checked against the SIB. Any selection that contradicts a mandatory SIB entry must produce a principle-override ADR.
+**Step 2.2 — Existing landscape architectures (recommended for Phase B and C):**
+`list_artifacts(engagement="enterprise", artifact_type=["capability-architecture","segment-architecture"], domain=<relevant_domain>)` → an existing capability architecture may satisfy entire Phase B sections without fresh production. Read summaries of relevant results; escalate to full only if partial coverage is found.
 
-**Rule:** Check `enterprise-repository/landscape/` for existing architecture models that may cover all or part of the engagement scope. An existing capability architecture may satisfy entire Phase B sections without fresh production.
+**Step 2.3 — Enterprise requirements and constraints:**
+`list_artifacts(engagement="enterprise", artifact_type=["requirement","constraint","principle"])` → filters to enterprise-level REQ, CST, PRI entities. Read summaries.
 
-### Layer 3 — External Sources
+**Step 2.4 — Search enterprise content by concept (when filter is insufficient):**
+`search_artifacts(query="<concept>", engagement="enterprise")` — queries the enterprise ModelRegistry FTS5/semantic index. Use when the relevant enterprise content may be in an artifact type that is hard to predict in advance (e.g. a cross-cutting principle buried in a landscape architecture document, or a reusable pattern filed under an unexpected domain). Review snippets, then `read_artifact(id, mode="summary")` for selected results.
 
-Query configured external sources if `external-sources/<source-id>.config.yaml` files exist for this engagement.
+**Step 2.5 — Lessons learned:**
+`query_learnings(phase=<current_phase>, artifact_type=<primary_output>, domain=<engagement_domain>, expand_related=True)` — covered by Step 0.L; do not re-execute here.
 
-**Discovery step:**
-1. List all files in `external-sources/` that match this engagement (check `engagement-scope` field in each config).
-2. For each configured source with status `active`, determine the relevant query for the current phase:
+**Do not** enumerate `enterprise-repository/` directories directly. Path layout is an implementation detail; queries go through `list_artifacts`, `search_artifacts`, and `read_artifact`.
 
-| Phase | Query Types | What to Look For |
+### Layer 3 — External Sources (Situative Only)
+
+**Governing principle:** Layers 1, 2, and 4 cover repositories that are structured, versioned, and controlled by this system — they are always queried on every skill invocation via the `list_artifacts`, `search_artifacts`, and `query_events` tool interfaces (filtered and ranked; never full directory walks). Layer 3 covers external information systems (Confluence wikis, Jira projects, read-only reference repositories) that are *not* under this system's control, are unstructured from the perspective of the architecture model, and may contain large volumes of content with no guaranteed relevance to the current task. These are **not proactively queried** on every skill invocation.
+
+Layer 3 is executed **only in the following situative conditions**:
+
+**Condition A — Reverse architecture entry (EP-G / EP-H) or reverse-architecture skills (SA-REV-*, SWA-REV-*).**
+These skills explicitly reconstruct the architecture model from all available evidence. External sources are a primary evidence tier. Execute a full Layer 3 scan.
+
+**Condition B — User-referenced source in a CQ answer or upload.**
+When a user answers a CQ and cites an external source (e.g. a Jira issue key, a Confluence page URL, a specific file path in a read-only git repository), the agent resolves only that specific reference using the relevant source adapter. This is not a broad scan — it is targeted retrieval of the cited item and its immediate context (parent epic, linked pages, etc.).
+
+**Condition C — PM explicit instruction.**
+The Project Manager skill may instruct an agent to query a specific external source when its Phase A or Phase B discovery output is known to be thin and a configured source is documented as the authoritative reference for that domain. This must be an explicit instruction, not a default.
+
+**For all other skill invocations: skip Layer 3 entirely.** Note in the Gap Assessment: "Layer 3 skipped — not a reverse-architecture context and no user source reference received."
+
+---
+
+**When Layer 3 is executed (Conditions A or C), the procedure is:**
+
+1. List all files in `external-sources/` whose `engagement-scope` includes this engagement.
+2. For each configured source with status `active`, issue phase-appropriate queries:
+
+| Phase / Context | Query Types | What to Look For |
 |---|---|---|
-| A (Architecture Vision) | space/page, wiki | Product vision, stakeholder lists, business mandates, regulatory context |
-| B (Business Architecture) | space/page, wiki, ticket | Business processes, capability descriptions, organisational charts |
-| C (Application/Data) | space/page, wiki, repo-browse | Existing application designs, API specs, data dictionaries |
-| D (Technology Architecture) | space/page, wiki, repo-browse | Technology decisions, infrastructure diagrams, ADRs, runbooks |
-| E (Opportunities & Solutions) | ticket, backlog | Existing features, work items, backlog priorities |
-| G (Implementation Governance) | repo-browse, CI/CD | Current codebase state, open PRs, test results, deployment logs |
+| Reverse arch (EP-G) | all configured types | All available context: vision, capabilities, design decisions, ADRs, infra docs |
+| A (Architecture Vision) | wiki, space/page | Product vision, stakeholder lists, business mandates, regulatory context |
+| B (Business Architecture) | wiki, ticket, space/page | Business processes, capability descriptions, organisational charts |
+| C (Application/Data) | wiki, repo-browse | Existing application designs, API specs, data dictionaries |
+| D (Technology Architecture) | wiki, repo-browse | Technology decisions, infrastructure diagrams, ADRs, runbooks |
 | H (Change Management) | ticket, wiki | Change requests, incident records, improvement ideas |
 
 3. For each query, emit `source.queried` event per `framework/repository-conventions.md §10`.
 4. Map retrieved content to ADM artifact sections. Mark fields derived from external sources with `[source: <source-id>]`.
 5. If content conflicts with an existing baselined artifact, raise ALG-011 (inconsistent artifacts) rather than silently overwriting.
 
-**No-config fallback:** If no external sources are configured, this layer is skipped. Note in the Gap Assessment that external source discovery was unavailable.
+**When Layer 3 is executed for a user-referenced source (Condition B), the procedure is:**
+
+1. Extract the source reference from the CQ answer (issue key, URL, file path, or source-id + query string).
+2. Identify the matching `external-sources/<source-id>.config.yaml` by `source-type` and `base-url`.
+3. Fetch only the specifically cited item and its immediate context. Do not issue a broad search.
+4. Emit `source.queried` event with `{source_id, query, triggered_by: "user-cq-reference", cq_id}`.
+5. Include retrieved content in the agent's answer context; annotate with `[source: <source-id> via user-reference]`.
+
+**No-config fallback:** If no external sources are configured, Layer 3 is always skipped regardless of condition. Note in Gap Assessment.
 
 ### Layer 4 — Target Project Repository (Single or Multi-Repo)
 

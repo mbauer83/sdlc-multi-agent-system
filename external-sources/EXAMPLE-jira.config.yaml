@@ -1,0 +1,41 @@
+---
+# External Source Adapter — Example: Jira
+# Copy and rename this file for each Jira source. See framework/architecture-repository-design.md §2.3.
+# NEVER commit credentials. All auth must reference environment variables or a secrets manager.
+
+source-id: company-jira
+source-type: jira
+display-name: "Company Jira (Engineering & Product)"
+base-url: https://company.atlassian.net
+auth-method: env-var
+auth-config:
+  env-var: JIRA_API_TOKEN
+  user-env-var: JIRA_USER_EMAIL
+
+# engagement-scope controls which engagements use this source.
+# "all" makes it available to every engagement in this framework instance.
+# List specific engagement IDs to restrict: [ENG-001, ENG-002]
+engagement-scope: all
+
+index-scope:
+  projects: [PROJ, PLATFORM, INFRA]  # Jira project keys to include
+  issue-types: [Epic, Story, Bug, Task, Spike]
+  max-results: 200                   # per query; increase for large backlogs
+
+access-pattern: search-only          # search-only | fetch-by-key
+
+purpose: |
+  Company Jira instance. Primary source for existing requirements, epics,
+  and user stories that pre-date this engagement. Agents query this source
+  during Phase A (requirements context) and Phases B/C (existing feature
+  scope and domain decomposition). The Product Owner agent uses it to seed
+  the Requirements Register rather than asking the user to transcribe known
+  backlog items. Users may cite specific Jira issue keys (e.g. PROJ-123)
+  when answering agent clarification requests; the adapter resolves them
+  to full issue content automatically.
+
+notes: |
+  Closed and resolved issues are included by default — useful for brownfield
+  engagements where historical scope matters. Filter by status in queries
+  if only active work is relevant. Epic links are followed to retrieve
+  child stories.

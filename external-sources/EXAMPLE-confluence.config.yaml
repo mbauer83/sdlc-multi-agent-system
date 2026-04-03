@@ -12,6 +12,11 @@ auth-config:
   env-var: CONFLUENCE_API_TOKEN
   user-env-var: CONFLUENCE_USER_EMAIL
 
+# engagement-scope controls which engagements use this source.
+# "all" makes it available to every engagement in this framework instance.
+# List specific engagement IDs to restrict: [ENG-001, ENG-002]
+engagement-scope: all
+
 index-scope:
   spaces: [ARCH, ENG, PRODUCT, INFRA]  # Confluence space keys
 
@@ -22,7 +27,8 @@ purpose: |
   decision records, product documentation, infrastructure runbooks, and
   meeting notes produced outside this system. Agents query this source during
   Phase A (architecture vision context) and Phase B (existing business
-  capability documentation).
+  capability documentation). Users may also cite specific Confluence pages
+  by URL or page ID when answering agent clarification requests.
 
 notes: |
   Content quality varies by space. ARCH space is curated; PRODUCT space

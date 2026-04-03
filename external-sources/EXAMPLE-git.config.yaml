@@ -1,0 +1,46 @@
+---
+# External Source Adapter — Example: Read-only Git repository
+# Use this for repositories that are NOT target repositories — e.g. a shared
+# library, a reference implementation, a legacy system being decommissioned,
+# or an internal standards/runbook repository.
+# See framework/architecture-repository-design.md §2.3.
+# NEVER commit credentials. All auth must reference environment variables.
+
+source-id: shared-platform-lib
+source-type: git
+display-name: "Shared Platform Library (read-only reference)"
+url: git@github.com:org/platform-lib.git
+default-branch: main
+auth-method: env-var
+auth-config:
+  env-var: GIT_SSH_KEY_PATH   # path to SSH private key, or use HTTPS token below
+  # env-var: GIT_TOKEN        # for HTTPS: token with read-only repo scope
+
+local-clone-path: external-sources/clones/shared-platform-lib/  # .gitignored
+
+# engagement-scope controls which engagements use this source.
+# "all" makes it available to every engagement in this framework instance.
+# List specific engagement IDs to restrict: [ENG-001, ENG-002]
+engagement-scope: all
+
+index-scope:
+  paths: [src/, docs/, README.md]   # paths to include in discovery scans
+  file-extensions: [.py, .ts, .md, .yaml, .json]
+  exclude-paths: [.git/, node_modules/, dist/, __pycache__/]
+
+access-pattern: read-only    # always read-only for external git sources
+
+purpose: |
+  Read-only reference to the shared platform library used by target
+  repositories in this engagement. Agents scan this repository during
+  Phase D (Technology Architecture) to understand platform constraints,
+  available abstractions, and approved integration patterns. The Software
+  Architect uses it as evidence when authoring ADRs and technology decisions.
+  Users may cite specific file paths or commit SHAs when answering agent
+  clarification requests.
+
+notes: |
+  This repository is NOT a target repository — agents never write to it
+  and it never receives framework artifacts. It is purely a discovery source.
+  Distinguish it from target-repositories in engagements-config.yaml, which
+  are the repositories the engagement governs.

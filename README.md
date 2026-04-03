@@ -118,6 +118,42 @@ sprint-review:
   auto-approve-after-hours: 0
 ```
 
+### External Information Sources
+
+Agents can query external systems during their discovery scans — Confluence wikis, Jira projects, read-only git repositories, and other sources. Each external source is configured as a separate file in `external-sources/<source-id>.config.yaml`. Credentials are never committed; all authentication references environment variables.
+
+```yaml
+# external-sources/my-confluence.config.yaml
+source-id: company-confluence
+source-type: confluence        # confluence | jira | git | sharepoint | api
+base-url: https://company.atlassian.net/wiki
+auth-method: env-var
+auth-config:
+  env-var: CONFLUENCE_API_TOKEN
+  user-env-var: CONFLUENCE_USER_EMAIL
+engagement-scope: all          # or list specific engagement IDs: [ENG-001]
+index-scope:
+  spaces: [ARCH, ENG, PRODUCT]
+access-pattern: search-only
+purpose: |
+  Source for existing ADRs, runbooks, and product documentation.
+```
+
+Example configs for Confluence, Jira, and read-only git repositories are provided in `external-sources/EXAMPLE-*.config.yaml`.
+
+**How agents use external sources:**
+
+The discovery scan (`framework/discovery-protocol.md §2`) makes a deliberate distinction between *structured, system-controlled repositories* and *unstructured external sources*:
+
+- **Always queried on every skill invocation:** the engagement work-repositories, the enterprise repository, and the target project repositories. These are structured, versioned, and owned by this system. Agents never walk directory trees — they query via `list_artifacts(**filter)` for metadata-driven lookup and `search_artifacts(query)` for content-based and semantic search, both backed by the `ModelRegistry` (in-memory frontmatter cache + SQLite FTS5 index + optional sqlite-vec semantic tier). Only artifact bodies confirmed as relevant are loaded.
+- **Queried situatively only:** external sources such as Confluence, Jira, and read-only reference repositories. These are not under the system's control, have no guaranteed structure relative to the architecture model, and may contain large volumes of irrelevant content.
+
+External sources are queried in three specific situations: (1) during reverse architecture (EP-G entry, SA-REV-* and SWA-REV-* skills), where all available evidence is gathered to reconstruct an architecture model from scratch; (2) when a user explicitly references an external source in a CQ answer — the agent resolves only the cited item, not a broad search; (3) when the Project Manager explicitly instructs an agent to consult a specific source because the relevant phase context is known to be thin. Retrieved content is annotated with `[source: <source-id>]`.
+
+**User-referenced sources in CQ answers:**
+
+When an agent raises a clarification request, users can point to external source content rather than typing it out — for example, citing a Jira epic key (`PROJ-123`) or a Confluence page URL. The `SourceAdapterPort` implementation resolves these references to full content and includes them in the agent's answer context. Users can also upload files directly via the dashboard (see User Interaction Surface below), which are stored at `engagements/<id>/user-uploads/` and available to agents as an additional source for the remainder of the engagement.
+
 ### `enterprise-repository-config.yaml`
 
 Controls whether the enterprise repository is embedded in this clone, a git submodule, or an external path. See `framework/architecture-repository-design.md` for the scope model.
