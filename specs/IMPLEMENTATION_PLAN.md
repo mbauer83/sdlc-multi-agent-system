@@ -591,7 +591,7 @@ Every APP-nnn maps to a distinct `src/` Python module. Every DOB-nnn maps to a P
 - [ ] **Components** in `application/components/`:
 
   *State & Storage (src/events/, src/common/, src/sources/):*
-  - `APP-001.md` — `EventStore` — `src/events/event_store.py`; ACID SQLite; `record_event()`, `replay() → WorkflowState`, `check_integrity()`, `query_events(**filter)`; append-only; canonical workflow state; never accessed directly via sqlite3
+  - `APP-001.md` — `EventStore` — `src/events/event_store.py`; ACID SQLite; two tables: `events` (append-only; never mutated) and `snapshots` (point-in-time `WorkflowState` serialisations); public API: `record_event(event) → None`, `replay() → WorkflowState` (full replay from event 0; used for integrity check and disaster recovery), `replay_from_latest_snapshot() → tuple[WorkflowState, int]` (fast path: deserialises latest snapshot + replays delta events since snapshot; returns `(state, resume_sequence)`), `create_snapshot(trigger: str) → str` (serialises current `WorkflowState` to JSON; inserts into `snapshots` table; returns `snapshot_id`), `check_snapshot_interval() → bool` (returns True if events since last snapshot ≥ `snapshot_interval`, default 100), `check_integrity()`, `query_events(**filter)`; canonical workflow state; never accessed directly via sqlite3
   - `APP-002.md` — `ModelRegistry` — `src/common/model_registry.py`; in-process frontmatter cache; built at startup by scanning all `*.md` ERP files; `list_artifacts(**filter)`, `list_connections(**filter)`, `get_by_id(id)`, `upsert(record)`; thread-safe (RLock); never persisted to disk; rebuilt on cold start
   - `APP-003.md` — `LearningStore` — `src/agents/learning_store.py`; LangGraph `BaseStore` wrapper; `(engagement_id, agent_role, "learnings")` namespace; `query(phase, artifact_type, domain, expand_related) → list[str]`; `record(entry: LearningEntry) → str`; optional sqlite-vec semantic tier; cold-start rebuild from `learnings/index.yaml`
 
@@ -623,10 +623,10 @@ Every APP-nnn maps to a distinct `src/` Python module. Every DOB-nnn maps to a P
   - `APP-022.md` — `TargetRepoManager` — `src/sources/target_repo.py`; reads `engagements-config.yaml`; `clone_or_update(repo_id)`; `get_clone_path(repo_id) → Path`; `check_access(repo_id, agent_role)`; `create_worktree(repo_id, branch) → Path`; `get_primary_id()`; backward-compatible with singular `target-repository`
 
 - [ ] **Interfaces** in `application/interfaces/` — ports in the ports-and-adapters model; each is a `typing.Protocol` defined in `src/agents/protocols.py` or `src/sources/base.py`:
-  - `AIF-001.md` — `EventStorePort` — `record_event(event: WorkflowEvent) → None`; `replay() → WorkflowState`; `query_events(**filter) → list[WorkflowEvent]`; implemented by APP-001; injected into all agents via AgentDeps
+  - `AIF-001.md` — `EventStorePort` — `record_event(event: WorkflowEvent) → None`; `replay() → WorkflowState`; `replay_from_latest_snapshot() → tuple[WorkflowState, int]`; `create_snapshot(trigger: str) → str`; `check_snapshot_interval() → bool`; `query_events(**filter) → list[WorkflowEvent]`; implemented by APP-001; injected into all agents via AgentDeps
   - `AIF-002.md` — `LLMClientPort` — `complete(messages, tools, result_type) → Result`; implemented by PydanticAI `Agent` backed by Anthropic API; swappable for test doubles without LLM calls; defined in `src/agents/protocols.py`; this port is what CST-001 (No Framework Lock-In) depends on
   - `AIF-003.md` — `SourceAdapterPort` — `query(query: str) → str`; `source_id: str`; implemented by Confluence, Jira, Git, UserUpload adapters in `src/sources/`; registered in source adapter registry at session startup
-  - `AIF-004.md` — `ArtifactReadWriterPort` — `read(id_or_path, mode) → str`; `write(path, content) → ArtifactRecord`; `list(**filter) → list[ArtifactRecord]`; path-constrained per agent role; validates ERP frontmatter + §content/§display structure; updates ModelRegistry synchronously on write
+  - `AIF-004.md` — `ArtifactReadWriterPort` — `read(id_or_path, mode) → str`; `write(path, content, *, upload_refs: list[str] | None = None) → ArtifactRecord`; `list(**filter) → list[ArtifactRecord]`; path-constrained per agent role; validates ERP frontmatter + §content/§display structure; updates ModelRegistry synchronously on write; **tool-transparent event emission** (no skill instruction required): (1) emits `artifact.created` or `artifact.updated` — auto-detects new vs existing file; (2) auto-extracts `source_evidence` by scanning written content for `[inferred: <source>]` annotation pattern — no agent parameter needed; (3) emits `entity.confirmed` when `active_skill_id` in AgentDeps matches a reverse-arch skill ID (SA-REV-*, SWA-REV-*) — `confirmation_method` derived from whether a user CQ round occurred (EventStore `cq.answered` event exists for this skill invocation); (4) emits `file.referenced` events for each entry in `upload_refs` when provided. All four emissions happen inside the port implementation; agents call `write(path, content)` exactly as before — no new parameters required for the common case.
   - `AIF-005.md` — `DiagramToolsPort` — `regenerate_macros(repo_path)`; `generate_er_content(entity_ids) → str`; `generate_er_relations(connection_ids) → str`; `validate_diagram(puml_path) → list[str]`; `render_diagram(puml_path) → Path`; invokes local `plantuml` CLI
   - `AIF-006.md` — `LearningStorePort` — `query(phase, artifact_type, domain, expand_related) → list[str]`; `record(entry: LearningEntry) → str`; implemented by APP-003 (`LearningStore`); swappable for in-memory fake in tests
 
@@ -643,7 +643,7 @@ Every APP-nnn maps to a distinct `src/` Python module. Every DOB-nnn maps to a P
   - `DOB-008.md` — `ReviewItem` — `src/models/review.py`; fields: `item_id: str`, `artifact_id: str`, `artifact_type: str`, `decision: Literal["approved","needs-revision","rejected"]`, `agent_tag: str | None`, `comment: str | None`; list of these is the payload of `review.submitted` event
 
   *Runtime state objects (not persisted independently):*
-  - `DOB-009.md` — `WorkflowState` — `src/events/replay.py`; rebuilt by `EventStore.replay()`; fields: `current_phase: str`, `current_sprint: str | None`, `phase_visit_counts: dict[str, int]`, `open_cqs: list[ClarificationRequest]`, `pending_handoffs: list[HandoffRecord]`, `baselined_artifacts: dict[str, str]` (id → version), `gate_outcomes: dict[str, GateOutcome]`, `last_algedonic: AlgedonicSignal | None`
+  - `DOB-009.md` — `WorkflowState` — `src/events/replay.py`; rebuilt by `EventStore.replay()` (full) or `EventStore.replay_from_latest_snapshot()` (fast path); **snapshot payload** — this is exactly what is serialised to `snapshots.state_json`; must be fully JSON-serialisable (no `Path` objects; use `str`); fields: `current_phase: str`, `current_sprint: str | None`, `phase_visit_counts: dict[str, int]`, `open_cqs: list[ClarificationRequest]`, `pending_handoffs: list[HandoffRecord]`, `baselined_artifacts: dict[str, str]` (id → version), `gate_outcomes: dict[str, GateOutcome]`, `last_algedonic: AlgedonicSignal | None`, `registered_uploads: list[str]`, `upload_reference_map: dict[str, list[str]]`, `snapshot_sequence: int | None` (sequence of the event that triggered the latest snapshot loaded; None if state was built by full replay)
   - `DOB-010.md` — `AgentDeps` — `src/agents/deps.py`; dataclass; fields: `engagement: Engagement`, `event_store: EventStorePort`, `active_skill_id: str`, `workflow_state: WorkflowState`, `engagement_base_path: Path`, `framework_path: Path`; injected by LangGraph node into each agent invocation
   - `DOB-011.md` — `PMDecision` — `src/orchestration/pm_decision.py`; Pydantic model; `result_type` for PM Agent; fields: `next_action: Literal["invoke_specialist","evaluate_gate","surface_cqs","trigger_review","close_sprint","complete_engagement"]`, `specialist_id: str | None`, `skill_id: str | None`, `task_description: str`, `reasoning: str`, `gate_id: str | None`
   - `DOB-012.md` — `SDLCGraphState` — `src/orchestration/graph_state.py`; LangGraph `TypedDict` (not Pydantic); fields: `engagement_id: str`, `current_agent: str | None`, `current_skill: str | None`, `pm_decision: PMDecision | None`, `last_specialist_output: str | None`, `target_repository_ids: list[str]`, `primary_repository_id: str | None`, `review_pending: bool`, `algedonic_active: bool`
@@ -795,20 +795,24 @@ Seven diagrams. Each has a stated **implementation purpose** — what Stage 5 de
 
 **Every mutation to an engagement work-repository and every user-contributed input must produce an EventStore event.** This is the event-sourcing invariant: the engagement event-stream is the authoritative record of *what happened and when*, while the file system is the *current state projection* of that stream. Events reference file paths; files hold content. On replay, the system reconstructs full workflow state including which entities were inferred from which evidence, which files were uploaded by the user, and which entities the user confirmed.
 
+**All events in this taxonomy are emitted by tool implementations, not by skill instructions — no agent or skill file changes are required.** `ArtifactReadWriterPort.write()`, `scan_target_repo()`, and `InteractionHandler` each emit their respective events autonomously using context from `AgentDeps` (`active_skill_id`, `event_store`). Skill files call the same tool signatures they always have.
+
 The following events govern reverse-architecture and user-input persistence. They must be added to `src/events/models.py` in Stage 5a alongside the existing base event types:
 
-| Event type | Emitted by | Key payload fields | Purpose |
+| Event type | Emitted by (tool layer) | Key payload fields | Purpose |
 |---|---|---|---|
-| `artifact.created` | `ArtifactReadWriterPort.write()` (new file) | `path`, `artifact_id`, `version`, `produced_by_skill`, `source_evidence: list[str]` | Records creation of any ERP entity/connection/diagram file. `source_evidence` lists scan evidence references for reverse-arch inferred entities (e.g. `"[inferred: target-repo] src/services/UserService.py:12"`). |
-| `artifact.updated` | `ArtifactReadWriterPort.write()` (existing file) | `path`, `artifact_id`, `version`, `previous_version`, `produced_by_skill`, `changed_fields: list[str]` | Records every version increment; `changed_fields` names the entity attributes that changed. Emitted whenever Stage 5 implementation causes a model update per the model-first discipline. |
-| `source.scanned` | Reverse-arch skill, Step 0 | `scan_scope: list[str]`, `target_repo_id: str \| None`, `external_source_ids: list[str]`, `triggered_by_skill: str`, `file_count: int` | Audit record of what was scanned and when during EP-G discovery. Enables full reconstruction of which evidence existed at the time of inference. |
-| `entity.confirmed` | SA-REV-PRELIM-A / SA-REV-BA / SWA-REV-TA, end of Step 3 (user confirmation loop) | `artifact_id`, `confirmation_method: "user" \| "inferred"`, `confirmed_fields: list[str]`, `user_note: str \| None` | Records that the user approved (or that the system auto-confirmed) the entity as inferred. Links user confirmation to the entity record. |
-| `upload.registered` | `InteractionHandler` POST /uploads | `upload_id`, `file_path: str` (relative to `engagements/<id>/user-uploads/`), `mime_type: str`, `original_filename: str`, `referenced_by_cq: str \| None` | Records user file upload. File content is in the file; event holds the reference. |
-| `file.referenced` | `ArtifactReadWriterPort.write()` when `upload_refs` present | `upload_id`, `artifact_id`, `field: str`, `context: str` | Links an uploaded file to the specific entity field it informed during reverse-arch reconstruction. Enables tracing from entity ← evidence ← uploaded document. |
+| `artifact.created` | `ArtifactReadWriterPort.write()` — new file | `path`, `artifact_id`, `version`, `produced_by_skill`, `source_evidence: list[str]` | Creation of any ERP entity/connection/diagram file. `source_evidence` **auto-extracted** from `[inferred: <source>]` annotations in written content — no agent parameter needed. |
+| `artifact.updated` | `ArtifactReadWriterPort.write()` — existing file | `path`, `artifact_id`, `version`, `previous_version`, `produced_by_skill`, `changed_fields: list[str]` | Every version increment. `changed_fields` derived by diffing new frontmatter against previous file on disk. |
+| `source.scanned` | `scan_target_repo()` tool, end of scan | `scan_scope: list[str]`, `target_repo_id: str \| None`, `external_source_ids: list[str]`, `triggered_by_skill: str`, `file_count: int` | Audit record of EP-G discovery scan. Emitted by the tool; skill files call `scan_target_repo()` as before. |
+| `entity.confirmed` | `ArtifactReadWriterPort.write()` when `active_skill_id` ∈ `{SA-REV-*, SWA-REV-*}` | `artifact_id`, `confirmation_method: "user" \| "auto"` | Post-confirmation entity write in a reverse-arch context. `confirmation_method` = `"user"` if a `cq.answered` event exists for this skill invocation; `"auto"` otherwise. Minimal payload — fully derivable from tool context. |
+| `upload.registered` | `InteractionHandler` POST /uploads | `upload_id`, `file_path: str`, `mime_type: str`, `original_filename: str`, `referenced_by_cq: str \| None` | User file upload. File content at `engagements/<id>/user-uploads/<upload_id>/`; event is the reference. |
+| `file.referenced` | `ArtifactReadWriterPort.write()` when `upload_refs` kwarg provided | `upload_id`, `artifact_id` | Links uploaded file to entity. Agent passes `upload_refs=[...]` explicitly when a CQ answer cited a file — the one optional kwarg on `write()`; omitted in all non-upload contexts. |
 
-**Reverse-architecture skill contract:** Steps 4 and 5 of SA-REV-PRELIM-A, SA-REV-BA, and SWA-REV-TA call `write_artifact` via `AIF-004`. The `ArtifactReadWriterPort` implementation must emit `artifact.created` with `source_evidence` populated from the agent's inference context at that point. The agent must pass the evidence list as a parameter to `write_artifact` — it is not reconstructable after the fact. This is the event-sourcing hook that makes reverse-architecture reconstruction fully replayable from the EventStore alone, with file path references resolving to either entity files or user-uploaded documents.
+**`source_evidence` auto-extraction:** The port implementation scans the `§content` block of every written entity file for the `[inferred: <source>]` annotation pattern already mandated by the reverse-arch skill steps. No new skill instruction is needed — the annotation is already there per existing requirements; the tool harvests it.
 
-**Model-update contract (Stage 5 forward):** Every time Stage 5 implementation causes an entity or connection file to be updated (per the model-first discipline stated in §4.9 preamble), an `artifact.updated` event is emitted with `changed_fields` and `produced_by_skill` set to the skill or developer context that caused the change. Diagrams regenerated as a consequence emit their own `artifact.updated` events with `changed_fields: ["§display"]`.
+**Model-update contract (Stage 5 forward):** Every Stage 5 implementation change that updates an entity or connection file emits `artifact.updated` with `changed_fields` derived by diff. Diagrams regenerated as a consequence emit `artifact.updated` with `changed_fields: ["§display"]`. Happens inside `write_artifact`; no new developer action required.
+
+**Contingency — if future skill additions become necessary (Stage 4.8g):** The three reverse-arch skills are `complexity-class: complex` (2000-token soft budget). Any additions to Steps 3 or 4 (e.g. explicit `upload_refs` guidance) are estimated at ≤60 tokens per skill. Truncation priority (`Algedonic Triggers → Feedback Loop → Outputs`; Steps never truncated) provides ~400 tokens of headroom before content loss. All such changes are designed in Stage 4.8g before execution — see below.
 
 ---
 
@@ -822,6 +826,18 @@ The following events govern reverse-architecture and user-input persistence. The
 - [ ] **`src/events/export.py`**: implement `write_event_yaml()` with full PyYAML serialisation; implement `import_from_yaml()` for disaster recovery round-trip
 - [ ] **`src/events/migrations/`**: Alembic migration baseline — `alembic.ini` and initial migration script for the events + snapshots tables
 - [ ] **`EventStore.check_integrity()`**: validate JSON payloads, sequence gaps, YAML vs SQLite consistency check
+- [ ] **Snapshot implementation** — `snapshots` SQLite table: `snapshot_id TEXT PK, trigger_event_type TEXT, trigger_sequence INTEGER, state_json TEXT NOT NULL, created_at DATETIME NOT NULL`; Alembic migration adds this table alongside `events`. Implement:
+  - `create_snapshot(trigger: str) → str` — serialises current `WorkflowState` to JSON (all fields; `Path` → `str`); `INSERT INTO snapshots`; returns `snapshot_id`
+  - `replay_from_latest_snapshot() → tuple[WorkflowState, int]` — `SELECT ... ORDER BY trigger_sequence DESC LIMIT 1`; deserialises `state_json` → `WorkflowState`; returns `(state, trigger_sequence)` so caller replays only events with `sequence > trigger_sequence`; falls back to full `replay()` if no snapshot exists
+  - `check_snapshot_interval() → bool` — counts events since `MAX(trigger_sequence)` in snapshots; returns True if count ≥ `snapshot_interval` (read from `engagements-config.yaml`, default 100)
+  - **Situative snapshot triggers** — called by the relevant nodes/handlers immediately after emitting the trigger event:
+    - `engagement.started` — baseline snapshot after bootstrap (before any agent work)
+    - `gate.evaluated` where `result == "passed"` — phase boundary; clean stable state
+    - `sprint.close` — end of every sprint; most frequent durable checkpoint
+    - `review.sprint-closed` — after sprint review corrections resolved
+    - `artifact.promoted` — after enterprise promotion (major structural change)
+  - **Periodic trigger** — `record_event()` calls `check_snapshot_interval()` after every write; if True, calls `create_snapshot("periodic")`; prevents unbounded replay cost between situative events
+  - `EngagementSession` startup sequence: call `replay_from_latest_snapshot()` first; if snapshot found, rebuild `SDLCGraphState` from returned `WorkflowState`; call `replay_from_latest_snapshot()` only for events after `trigger_sequence`; fall back to full `replay()` only if no snapshot (first run or corrupted snapshot)
 - [ ] **Event taxonomy — repository mutations and user inputs** (per §4.9h prescription): define the following event types in `src/events/models.py` and implement handlers in `src/events/replay.py` (each updates `WorkflowState` as noted):
 
   | Event type | Produced by | `WorkflowState` update |
@@ -1083,11 +1099,51 @@ sprint-review:
 
 ---
 
+### Stage 4.8g — Skill/Agent Alignment Audit (Pending — pre-Stage-5)
+
+> **Purpose:** Verify that existing agent and skill files are fully consistent with the revised information-discovery and work-repository interaction plans added in Stage 4.9h and the snapshotting spec. Do not assume alignment — read the files.
+
+#### Audit scope
+
+1. **Reverse-architecture skills** — read `agents/solution-architect/skills/reverse-architecture-bprelim-a.md`, `agents/solution-architect/skills/reverse-architecture-ba.md`, `agents/software-architect/skills/reverse-architecture-ta.md` in full. Check:
+   - Does Step 0 call `scan_target_repo()`? (Required to emit `source.scanned` via the tool)
+   - Does Step 3 (confirmation loop) produce any output that the tool cannot derive? If so, is `upload_refs` kwarg needed, and must the skill instruct the agent to pass it?
+   - Does Step 4 call `write_artifact`? Does current wording imply the agent must supply `source_evidence` as a parameter, or is auto-extraction from `[inferred: <source>]` annotations sufficient?
+   - Any instruction that contradicts the tool-transparent emission design (§4.9h)?
+
+2. **All `write_artifact`-using skills** — grep all skill files for `write_artifact` calls. For each: does the skill instruct the agent to pass any evidence, version, or metadata that the §4.9h port spec now handles automatically? Flag contradictions.
+
+3. **Discovery Scan step wording (all skill files)** — the existing Step 0 wording references a 5-layer scan. Verify it is consistent with `framework/discovery-protocol.md §2` as currently written. Flag any gaps vs. the EventStore-state layer (Layer 5) — this overlaps with the outstanding retroactive item in §"Current State".
+
+4. **`framework/agent-runtime-spec.md §6` (tool set spec)** — read the tool set section. Verify `ArtifactReadWriterPort.write()` signature matches the updated `write(path, content, *, upload_refs=None)` spec. Flag if `scan_target_repo` is documented as emitting `source.scanned`.
+
+5. **`framework/discovery-protocol.md`** — verify Step 0 scan coverage includes `source.scanned` event emission as a side-effect of the discovery scan, not a separate agent action.
+
+#### Outcome options per finding
+
+- **No gap:** note it; no file change.
+- **Skill wording contradicts tool-transparent design:** update the skill step to remove the contradiction (e.g., remove instruction to pass `source_evidence` explicitly if auto-extraction is sufficient).
+- **Skill wording is silent where explicit guidance adds value:** add a brief ≤2-line note to the relevant step (budget: `complexity-class: complex` = 2000 tokens; headroom is sufficient for small additions).
+- **Framework doc gap:** update the relevant framework doc section; no skill change needed.
+- **Any change that would push a skill over its `complexity-class` soft cap:** split the skill into two (e.g., `reverse-architecture-bprelim-a-steps1-3.md` + `reverse-architecture-bprelim-a-steps4-7.md`) before making the addition.
+
+#### Checklist
+
+- [ ] Read and audit 3 reverse-arch skill files (Step 0, 3, 4 focus)
+- [ ] Grep all skill files for `write_artifact`; check for conflicting instructions
+- [ ] Verify Step 0 wording across at least a representative sample of Stage 3 skills
+- [ ] Read `framework/agent-runtime-spec.md §6` tool set spec
+- [ ] Read `framework/discovery-protocol.md §2` and §4 (Layer 4 target-repo scan)
+- [ ] Execute any confirmed changes; update IMPLEMENTATION_PLAN.md findings table when done
+- [ ] Commit as part of `stage-4-pre5-alignment`
+
+---
+
 ## Current State & Immediate Next Actions
 
-**Stages 1–4.8f complete.** Remaining pre-Stage-5 work: Stage 4.8d (schema/framework doc ERP alignment), Stage 4.9 (ENG-001 reference model). Stage 5 (Python implementation) is the main next target.
+**Stages 1–4.8f complete.** Remaining pre-Stage-5 work: Stage 4.8d (schema/framework ERP alignment), Stage 4.8g (skill/agent alignment audit), Stage 4.9 (ENG-001 reference model). Stage 5 is the main target.
 
-### Resume at: Stage 4.8d → Stage 4.9 → Stage 5
+### Resume at: Stage 4.8d → Stage 4.8g → Stage 4.9 → Stage 5
 
 **Stage 4.8d** — ERP v2.0 alignment for domain artifact schemas and framework cross-cutting docs. Updates four artifact schemas (BA, AA, DA, TA) and three framework docs (repository-conventions.md, discovery-protocol.md, agent-runtime-spec.md §6). Retroactive skill file patches are script-based.
 
@@ -1114,6 +1170,7 @@ sprint-review:
 - **Diagram authoring:** agents write PUML source text directly via `write_artifact` — no intermediate spec format. Tools handle catalog I/O (`catalog_lookup`, `catalog_register`, `catalog_propose`, `validate_diagram`, `render_diagram`) and CLI invocation only. See `framework/diagram-conventions.md §1`.
 - **Stage 4.9 entities/connections/diagrams are living specifications, not a frozen design.** They will and should change during Stage 5 implementation as design decisions are refined. The model-first discipline applies in both directions: (a) forward — Stage 5 code divergences update the entity files first; (b) reverse — reverse-architecture skill output populates entity files which then drive Stage 5 implementation. Requirements (REQ, CST, PRI) are also subject to revision as implementation reveals constraints. The architecture repository always leads the code.
 - **Every engagement repository mutation must be event-sourced.** `ArtifactReadWriterPort.write()` emits `artifact.created` or `artifact.updated` (with `source_evidence` for reverse-arch inferred entities). User file uploads emit `upload.registered`. Reverse-architecture scan evidence emits `source.scanned`. User confirmation of inferred entities emits `entity.confirmed`. Events reference file paths; files hold content. This is the invariant that makes engagement state fully replayable from the EventStore alone. See §4.9h for full event taxonomy and payload contracts.
+- **EventStore snapshots are mandatory.** Two `snapshots` table in SQLite; full replay is for integrity checks and disaster recovery only. Normal startup uses `replay_from_latest_snapshot()`. Situative triggers: `engagement.started`, `gate.evaluated` (passed), `sprint.close`, `review.sprint-closed`, `artifact.promoted`. Periodic trigger: every 100 events (configurable). This keeps startup time bounded regardless of engagement length.
 
 ---
 
