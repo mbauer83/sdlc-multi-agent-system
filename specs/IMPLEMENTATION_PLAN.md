@@ -688,10 +688,10 @@ Every AGENT.md must include a section specifying, in priority order, which repos
 - `framework/diagram-conventions.md` — AUTHORED (§1 authoring model, §2 catalog structure, §3 ID namespaces, §4 lifecycle, §5 D1–D6 protocol, §6 write authority, §7 PUML templates × 6 types, §8 _macros.puml, §9 element record format, §10 reference table)
 - `framework/artifact-schemas/diagram-catalog.schema.md` — AUTHORED (element records, connections records, diagrams index, _macros.puml validation rules, `catalog_register()` validation rules, examples)
 
-**Still pending (deferred to Stage 4.6b pass):**
-- Retroactive diagram production steps (D1–D6) in SA `phase-b.md`, `phase-c-application.md`, `phase-c-data.md` and SwA `phase-d.md`, `phase-e.md` — batched with Step 0.L and `### Learning Generation` patches
+**Stage 4.5f complete (2026-04-03):**
+- Retroactive diagram production steps (D1–D6) added to SA `phase-b.md` (3 diagram steps), `phase-c-application.md` (2 diagram steps), `phase-c-data.md` (1 diagram step), SwA `phase-d.md` (Step 0.D + 2 diagram steps), `phase-e.md` (1 diagram step) — batched with Stage 4.6b patches in single commit
 
-**Commit as `stage-4.5-framework-extensions`** (once 4.5f retroactive skill patches are also complete)
+**Commit: `stage-4.5-framework-extensions` complete** (committed as part of Stage 4.6b batch 2026-04-03)
 
 ---
 
@@ -699,7 +699,7 @@ Every AGENT.md must include a section specifying, in priority order, which repos
 
 > Implements structured per-role learning repositories so agents record mistakes and retrieve relevant corrections at the start of each skill invocation. Based on Reflexion (Shinn 2023) for within-engagement self-correction and Generative Agents (Park 2023) for sprint-level synthesis. Framework documents authored in Stage 4.6a; retroactive skill file patches in 4.6b; Python tooling deferred to Stage 5b.
 
-**Status: Partial** — framework documents authored (2026-04-03); retroactive skill patches (4.6b) pending.
+**Status: Complete** — framework documents authored (2026-04-03); retroactive skill patches (4.6b) complete (2026-04-03). Python tooling deferred to Stage 5b.
 
 #### 4.6a — Framework Documents (Complete)
 
