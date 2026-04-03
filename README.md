@@ -1,15 +1,15 @@
 # SDLC Multi-Agent System
 
-A multi-agent AI framework that operationalises the full Software Development Lifecycle through a suite of specialised Claude-based agents. Each agent embodies a distinct professional role, carries role-specific skills scoped to the TOGAF ADM phases it owns, and participates in a structured workflow governed by architecture principles drawn from organisational theory, systems safety, and cybernetics.
+A multi-agent AI framework that operationalises the full Software Development Lifecycle through a suite of specialised Claude-based agents. Each agent embodies a distinct professional role, carries role-specific skills scoped to the [TOGAF ADM](https://en.wikipedia.org/wiki/The_Open_Group_Architecture_Framework) phases it owns, and participates in a structured workflow governed by architecture principles drawn from organisational theory, systems safety, and cybernetics.
 
 ---
 
 ## Goals
 
 - Make TOGAF ADM phases executable end-to-end, not just documented
-- Produce consistent, schema-valid architecture artifacts across every phase — from Architecture Vision through Implementation Governance and Change Management
+- Produce consistent, schema-valid architecture artifacts across every phase, tracked in work-repositories — from Architecture Vision through Implementation Governance to Change Management
 - Support brownfield engagements as a first-class use case: the system can reconstruct an architecture model from an existing codebase and then govern it forward
-- Keep humans in the loop at every meaningful decision point — not as a bottleneck, but through a structured query, review, and approval surface
+- Keep humans in the loop at every meaningful decision point through a structured query, review, and approval surface
 - Treat safety and compliance as a woven-in concern at every phase transition, not a final gate
 
 ---
@@ -42,7 +42,7 @@ my-project-architecture/       ← your clone of this repo
 
 **Per-engagement work-repositories** (`engagements/<id>/work-repositories/`) are git-tracked inside the clone. Each role-owned repository (architecture, technology, project, safety, delivery, QA, devops) accumulates artifacts, entity files, diagrams, and decisions for that engagement. The event store (`workflow.db`) is also git-tracked as the canonical workflow state record.
 
-**The enterprise repository** (`enterprise-repository/`) is the persistent, cross-engagement store for promoted architecture content. It holds organisation-wide standards, approved technology patterns, promoted entity files, cross-engagement governance records, and synthesised learnings. It is read by agents in every engagement (Layer 2 of the discovery scan) and written to exclusively by Architecture Board members. Its content accumulates across engagements and projects — it is the long-lived institutional memory of the architecture practice.
+**The enterprise repository** (`enterprise-repository/`) is the persistent, cross-engagement store for promoted architecture content. It holds organisation-wide standards, approved technology patterns, promoted model-entities, connections & diagrams, cross-engagement governance records, and synthesised learnings. It is read by agents in every engagement and written to exclusively by Architecture Board members. Its content accumulates across engagements and projects — it is the long-lived institutional memory of the architecture practice.
 
 The enterprise repository can be configured in three modes via `enterprise-repository-config.yaml`:
 
@@ -62,23 +62,23 @@ The enterprise repository can be configured in three modes via `enterprise-repos
 
 ### TOGAF ADM
 
-The framework uses the TOGAF Architecture Development Method as its workflow backbone. Phases run in an **Agile ADM** cadence: time-boxed Architecture Sprints feed Delivery Sprints, with explicit phase-transition gates and support for non-linear iteration. Phases are not one-shot — any phase can be revisited when a change, a new requirement, or a corrective signal demands it. The full cadence, sprint structure, and gate model are specified in `framework/agile-adm-cadence.md`.
+The framework uses the [TOGAF Architecture Development Method](https://en.wikipedia.org/wiki/The_Open_Group_Architecture_Framework) as its workflow backbone. Phases run in an **Agile ADM** cadence: time-boxed Architecture Sprints feed Delivery Sprints, with explicit phase-transition gates and support for non-linear iteration. Phases are not one-shot — any phase can be revisited when a change, a new requirement, or a corrective signal demands it. The full cadence, sprint structure, and gate model are specified in `framework/agile-adm-cadence.md`.
 
 ### Viable System Model (Beer)
 
-Each agent is modelled as a cybernetic control unit in Stafford Beer's Viable System Model sense: a defined purpose, defined input/output contracts, and distinct upward (reporting, escalation), downward (direction, feedback), and lateral (peer handoff) communication channels. No agent has unbounded authority. The Project Manager occupies VSM System 3 — the coordinator that balances operational demands and allocates work. The Solution Architect occupies VSM System 4 — the outward-facing intelligence that monitors the environment and shapes the architecture accordingly.
+Each agent is modelled as a cybernetic control unit with some conceptual similarities to [Stafford Beer's Viable System Model](https://en.wikipedia.org/wiki/Viable_system_model) and other applications of control-theoretical and systems theoretical insights: a defined purpose, defined input/output contracts, and distinct upward (reporting, escalation, feedback-giving), downward (direction, feedback-integration), and lateral (peer handoff) communication channels. No agent has unbounded authority. The Project Manager occupies VSM System 3 — the coordinator that balances operational demands and allocates work. The Solution Architect occupies VSM System 4 — the outward-facing intelligence that monitors the environment and shapes the architecture accordingly.
 
 The **algedonic channel** — Beer's fast-path signal that bypasses the hierarchy when severity demands — is formalised in `framework/algedonic-protocol.md` and referenced in every skill file.
 
 ### Contingency Theory (Lawrence & Lorsch; Galbraith)
 
-The agent roster is designed around the principle of differentiated specialisation: each role owns a bounded domain of knowledge, a distinct set of phases, and a separate work repository. Integration is achieved not through shared state but through structured handoff events and explicit gate evaluations — the same pattern Lawrence and Lorsch identified as the mechanism by which differentiated organisations maintain coherence under environmental uncertainty.
+The agent roster is designed around the principle of differentiated specialisation and integration: each role owns a bounded domain of knowledge, a distinct set of phases, and a separate work repository. Integration is achieved not through shared state but through integrator-roles (architects, CSCO), structured handoff events and explicit gate evaluations — the same pattern Lawrence and Lorsch identified as the mechanism by which differentiated organisations maintain coherence under environmental uncertainty. ([[1](https://www.researchgate.net/profile/Jay-Lorsch/publication/234021677_Differentiation_and_Integration_in_Complex_Organizations/links/569908e008ae6169e55162b5/Differentiation-and-Integration-in-Complex-Organizations.pdf)],[[2](https://armyoe.com/wp-content/uploads/2018/03/1984_vol8_number11.pdf#page=29)])
 
-Galbraith's information processing theory informs the discovery-before-CQ protocol: agents are expected to scan all available sources first, infer what they can, and raise clarification requests only for information that is genuinely absent. The system is designed to function usefully from an incomplete starting state rather than demanding a full brief upfront.
+[Galbraith's information processing theory](https://isscholar.com/wp-content/uploads/2024/10/Galbraith.pdf) informs the discovery-before-CQ protocol: agents are expected to scan all available sources first, infer what they can, and raise clarification requests only for information that is genuinely absent. The system is designed to function usefully from an incomplete starting state rather than demanding a full brief upfront.
 
 ### STAMP / STPA Safety Engineering
 
-Safety is represented as a first-class architectural concern, not a checklist. The Chief Safety and Compliance Officer agent applies STAMP (Systems-Theoretic Accident Model and Processes) and STPA (Systems-Theoretic Process Analysis) to identify hazardous control actions, inadequate feedback loops, and missing safety constraints at each phase. CSCO holds gate veto authority on every phase transition. Safety-relevant processes, actors, and components are explicitly flagged in architecture artifacts. The safety repository (`engagements/<id>/work-repositories/safety-repository/`) is the sole write target for CSCO and is never modified by other agents.
+Safety is represented as a first-class architectural concern, not a checklist. A dedicated Chief Safety and Compliance Officer agent-role applies STAMP (Systems-Theoretic Accident Model and Processes) and STPA (Systems-Theoretic Process Analysis) to identify hazardous control actions, inadequate feedback loops, and missing safety constraints at each phase.([[1](http://sunnyday.mit.edu/accidents/safetyscience-single.pdf)], [[2](https://functionalsafetyengineer.com/introduction-to-stamp/)], [[3](https://www.flighttestsafety.org/images/Engineering_a_Safer_World.pdf)], [[4](https://www.flighttestsafety.org/images/STPA_Handbook.pdf)]) CSCO holds gate veto authority on every phase transition. Safety-relevant processes, actors, and components are explicitly flagged in architecture artifacts. The safety repository (`engagements/<id>/work-repositories/safety-repository/`) is the sole write target for CSCO and is never modified by other agents.
 
 ---
 
