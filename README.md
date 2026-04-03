@@ -14,6 +14,50 @@ A multi-agent AI framework that operationalises the full Software Development Li
 
 ---
 
+## Deployment Model
+
+**Create a new repository per project from this template.** This repository is a framework template. For each software project or programme being governed, clone it and immediately push the result as a new, standalone git repository — the per-project architecture repository. All per-project and per-engagement work then accumulates in that new repository under version control, with its own git history, remote, and branch strategy. Framework files themselves are never committed into any target project's code repository.
+
+```bash
+# Bootstrap a new project architecture repository
+git clone https://github.com/your-org/sdlc-multi-agent-system my-project-architecture
+cd my-project-architecture
+git remote set-url origin git@github.com:your-org/my-project-architecture.git
+git push -u origin main
+```
+
+```
+my-project-architecture/       ← your clone of this repo
+  engagements/
+    ENG-001/                    ← one directory per engagement
+      work-repositories/        ← role-owned artifact stores (git-tracked)
+      target-repos/             ← local clones of the target codebase (.gitignored)
+      workflow.db               ← event store (git-tracked)
+      user-uploads/             ← files uploaded via dashboard (.gitignored)
+  enterprise-repository/        ← shared architecture knowledge (see below)
+  external-sources/             ← source adapter configs (credentials in env vars)
+  engagements-config.yaml       ← engagement and target-repo configuration
+  enterprise-repository-config.yaml
+```
+
+**Per-engagement work-repositories** (`engagements/<id>/work-repositories/`) are git-tracked inside the clone. Each role-owned repository (architecture, technology, project, safety, delivery, QA, devops) accumulates artifacts, entity files, diagrams, and decisions for that engagement. The event store (`workflow.db`) is also git-tracked as the canonical workflow state record.
+
+**The enterprise repository** (`enterprise-repository/`) is the persistent, cross-engagement store for promoted architecture content. It holds organisation-wide standards, approved technology patterns, promoted entity files, cross-engagement governance records, and synthesised learnings. It is read by agents in every engagement (Layer 2 of the discovery scan) and written to exclusively by Architecture Board members. Its content accumulates across engagements and projects — it is the long-lived institutional memory of the architecture practice.
+
+The enterprise repository can be configured in three modes via `enterprise-repository-config.yaml`:
+
+| Mode | Description |
+|---|---|
+| `embedded` | Lives inside this clone (default; simplest for single-team use) |
+| `submodule` | Separate git repository included as a submodule; enables sharing across multiple project clones |
+| `external` | Path or URL to an externally managed repository; read-only to this clone unless Architecture Board credentials are configured |
+
+**Promotion** is the mechanism by which engagement-local artifacts graduate to the enterprise repository. When an entity file, ADR, or learning entry has proven its value in one engagement, the PM or Architecture Board initiates promotion: the entity is assigned a globally unique enterprise ID, all references in connection and diagram files are swept, the file moves to the enterprise path, and an `artifact.promoted` event is recorded. The full procedure is in `framework/repository-conventions.md §12`.
+
+**External information sources** (Confluence, Jira, read-only git repositories) are configured separately in `external-sources/` and queried situatively — not on every skill invocation. See the Configuration section for details.
+
+---
+
 ## Conceptual Foundations
 
 ### TOGAF ADM
