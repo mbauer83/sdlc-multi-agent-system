@@ -684,11 +684,165 @@ Every AGENT.md must include a section specifying, in priority order, which repos
 - `framework/algedonic-protocol.md` ALG-C01 through ALG-C04 added (diagram catalog governance violations: duplicate ID, unauthorized write, broken cross-ontology link, `_macros.puml` out of sync).
 - `framework/agent-index.md` SM skill ID bug fixed: `SM-MARKET-RESEARCH` → `SM-PHASE-A-MR`; `SM-SWOT` → `SM-PHASE-A-SWOT`.
 
-**Still pending in Stage 4.5:**
-- `framework/diagram-conventions.md` — NOT YET AUTHORED (main blocker for retroactive diagram updates)
-- `framework/artifact-schemas/diagram-catalog.schema.md` — NOT YET AUTHORED
+**Stage 4.5 completion (2026-04-03):**
+- `framework/diagram-conventions.md` — AUTHORED (§1 authoring model, §2 catalog structure, §3 ID namespaces, §4 lifecycle, §5 D1–D6 protocol, §6 write authority, §7 PUML templates × 6 types, §8 _macros.puml, §9 element record format, §10 reference table)
+- `framework/artifact-schemas/diagram-catalog.schema.md` — AUTHORED (element records, connections records, diagrams index, _macros.puml validation rules, `catalog_register()` validation rules, examples)
 
-**Commit as `stage-4.5-framework-extensions`** (once diagram-conventions.md is authored)
+**Still pending (deferred to Stage 4.6b pass):**
+- Retroactive diagram production steps (D1–D6) in SA `phase-b.md`, `phase-c-application.md`, `phase-c-data.md` and SwA `phase-d.md`, `phase-e.md` — batched with Step 0.L and `### Learning Generation` patches
+
+**Commit as `stage-4.5-framework-extensions`** (once 4.5f retroactive skill patches are also complete)
+
+---
+
+### Stage 4.6 — Learning Protocol (Reflexion-Inspired Agent Memory)
+
+> Implements structured per-role learning repositories so agents record mistakes and retrieve relevant corrections at the start of each skill invocation. Based on Reflexion (Shinn 2023) for within-engagement self-correction and Generative Agents (Park 2023) for sprint-level synthesis. Framework documents authored in Stage 4.6a; retroactive skill file patches in 4.6b; Python tooling deferred to Stage 5b.
+
+**Status: Partial** — framework documents authored (2026-04-03); retroactive skill patches (4.6b) pending.
+
+#### 4.6a — Framework Documents (Complete)
+
+| Document | Purpose |
+|---|---|
+| `framework/learning-protocol.md` | Full 11-section spec: trigger conditions, entry format, retrieval (Step 0.L), synthesis, enterprise promotion, tool spec, EventStore events |
+| `framework/artifact-schemas/learning-entry.schema.md` | Frontmatter schema, body section rules, `record_learning()` validation rules, example entry |
+
+**Directory structure per agent role** (created at agent bootstrap, not pre-created):
+```
+agents/<role>/learnings/
+  index.yaml          # filterable index: learning-id, phase, artifact-type, error-type, importance, applicability, correction-summary, file, promoted
+  <ROLE>-L-001.md     # individual learning entries (pattern: [A-Z]+-L-\d{3})
+  <ROLE>-SYNTH-001.md # synthesis entries (pattern: [A-Z]+-SYNTH-\d{3})
+```
+
+**Enterprise promotion path:**
+```
+agents/<role>/learnings/<ROLE>-L-NNN.md
+  → (promoted=true) →
+enterprise-repository/knowledge-base/learnings/<ROLE>-L-NNN.md
+```
+
+**Key design decisions:**
+
+1. **Retrieval is metadata-filtered, not embedding-based.** `query_learnings(agent, phase, artifact_type)` filters `index.yaml` by phase + artifact_type + applicability, sorts by importance (S1 first), returns top 5 `## Correction` texts. No vector store required.
+2. **Step 0.L runs before Layer 1 of Discovery Scan.** Retrieved corrections are prepended to the agent's working context before any artifact reads or external source queries. Mirrors Reflexion's verbal self-reflection injection pattern.
+3. **Trigger discipline prevents noise.** MUST trigger: feedback-revision (first iteration only), algedonic signal, gate-veto, incorrectly-raised CQ. MUST NOT trigger: Type B findings, normal CQ flow, stakeholder scope change, first-occurrence S3 errors.
+4. **Sprint-level synthesis.** PM's retrospective skill triggers synthesis when: ≥3 entries in a role, or ≥2 entries with same error-type+phase, or any S1 entry. Synthesis entry supersedes source entries (`synthesis-superseded` field); `query_learnings` skips superseded entries.
+5. **Importance gates promotion.** Only domain-agnostic + S1/S2 + recurring entries are candidates for enterprise promotion. Architecture Board governs.
+
+#### 4.6b — Retroactive Skill File Patches (Pending)
+
+All 43 existing skill files require two additions.
+
+**Addition 1: Step 0.L in Discovery Scan**
+
+In every skill file's `## Steps` section, add Step 0.L as the first sub-step of Step 0, before Step 0.A (engagement-profile read):
+
+```markdown
+**Step 0.L — Learnings Lookup** *(via `query_learnings` tool)*
+- Query: `agent=<ROLE>`, `phase=<current-phase>`, `artifact_type=<primary-artifact-type-this-skill-produces>`
+- Inject returned corrections into working context before proceeding.
+- If no learnings returned: proceed normally.
+```
+
+**Addition 2: `### Learning Generation` in `## Feedback Loop`**
+
+Every skill's `## Feedback Loop` section must have a `### Learning Generation` subsection. Template:
+
+```markdown
+### Learning Generation
+
+| Trigger | Condition | importance |
+|---|---|---|
+| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
+| `gate-veto` | Gate vote cast Veto | S2 |
+| `algedonic` | ALG-NNN raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+
+On trigger: call `record_learning()` with artifact-type=`<primary-artifact-type>`, error-type classified per schema, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
+```
+
+Skill files requiring update (by agent):
+
+| Agent | Skill files |
+|---|---|
+| PM | pm-master.md |
+| SA | phase-a.md, phase-b.md, phase-c-app.md, phase-c-data.md, phase-d.md, phase-e.md, phase-f.md, gate-a.md, gate-b.md, gate-c.md, gate-d.md, gate-e.md, gate-f.md, gate-g.md, gate-h.md |
+| SwA | phase-d.md, phase-e.md, phase-f.md, gate-d.md, gate-e.md, gate-f.md, gate-g.md, gate-h.md |
+| DO | phase-e.md, phase-f.md, phase-g.md, gate-e.md, gate-f.md, gate-g.md, gate-h.md |
+| DE | phase-e.md, phase-f.md, phase-g.md, gate-g.md, gate-h.md |
+| QA | phase-f.md, phase-g.md, gate-f.md, gate-g.md, gate-h.md |
+| PO | phase-a.md, phase-b.md, phase-h.md, req-mgmt.md, stakeholder.md |
+| SM | phase-a-mr.md, phase-a-swot.md, req-feedback.md |
+| CSCO | gate-phase-a.md, gate-phase-b.md, gate-phase-c.md, gate-phase-d.md, gate-phase-g.md, gate-phase-h.md, incident-response.md |
+
+**Also update:** `agents/pm/skills/pm-master.md` — add a cross-role synthesis step to the sprint retrospective procedure, invoking `record_learning(trigger_event="synthesis")` for any role where synthesis conditions are met (governed by `framework/learning-protocol.md §6`).
+
+#### 4.6c — Python Tooling (Deferred to Stage 5b)
+
+Specified here for completeness; implemented in Stage 5b alongside other `universal_tools.py` additions.
+
+**`src/tools/universal_tools.py` additions:**
+
+```python
+def query_learnings(
+    agent: str,          # role abbreviation, e.g. "SA"
+    phase: str,          # ADM phase, e.g. "B"
+    artifact_type: str,  # schema-id value, e.g. "business-architecture"
+    applicability: str = "domain-agnostic",  # filter; domain-agnostic always included
+    limit: int = 5,
+) -> list[str]:
+    """
+    Reads agents/<agent>/learnings/index.yaml.
+    Filters by: phase match, artifact_type match, applicability, synthesis-superseded not set.
+    Sorts: S1 first, then S2, then S3.
+    Returns: first `limit` entries' ## Correction full texts (read from file).
+    """
+
+def record_learning(entry: LearningEntry) -> str:
+    """
+    Validates entry against learning-entry.schema.md rules (9 rules).
+    Assigns next learning-id (reads index.yaml for highest seq, increments).
+    Writes agents/<agent>/learnings/<ROLE>-L-NNN.md.
+    Appends index.yaml entry; correction-summary = first sentence of ## Correction.
+    Emits EventStore event: learning.created.
+    Returns: assigned learning-id.
+    Raises: LearningSchemaError on validation failure (field name + reason).
+    """
+```
+
+**`src/models/learning.py`** (new file):
+```python
+class LearningEntry(BaseModel):
+    learning_id: str  # pattern: [A-Z]+-L-\d{3} or [A-Z]+-SYNTH-\d{3}
+    agent: Literal["SA", "SwA", "DE", "DO", "QA", "PM", "PO", "SM", "CSCO"]
+    phase: list[str]
+    artifact_type: str
+    trigger_event: Literal["feedback-revision", "algedonic", "gate-veto", "incorrectly-raised-cq", "synthesis"]
+    error_type: Literal["omission", "wrong-inference", "wrong-scope", "protocol-skip", "calibration"]
+    importance: Literal["S1", "S2", "S3"]
+    applicability: str  # "domain-agnostic" or "domain:<specific>"
+    generated_at_phase: str
+    generated_at_sprint: int
+    generated_at_engagement: str
+    promoted: bool | Literal["enterprise-superseded"] = False
+    synthesis_superseded: str | None = None
+    synthesised_from: list[str] | None = None
+    trigger_text: str        # ## Trigger section body
+    correction_text: str     # ## Correction section body — validated against anti-patterns
+    context_text: str | None = None
+```
+
+**EventStore event types** (add to `src/events/` models):
+
+| Event type | Payload fields | Trigger |
+|---|---|---|
+| `learning.created` | `learning_id`, `agent`, `phase`, `artifact_type`, `importance`, `trigger_event` | `record_learning()` success |
+| `learning.synthesised` | `synthesis_id`, `agent`, `source_ids: list[str]`, `sprint` | PM synthesis step completes |
+| `learning.promoted` | `learning_id`, `agent`, `promoted_path` | Architecture Board approval |
+
+**Commit as `stage-4.6-learning-protocol`** (once 4.6b retroactive patches are complete)
 
 ---
 

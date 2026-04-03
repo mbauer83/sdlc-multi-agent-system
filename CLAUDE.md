@@ -104,6 +104,7 @@ tests/
 16. **Diagram production follows `framework/diagram-conventions.md`.** Every skill that produces or updates an architecture artifact must follow the diagram conventions spec. The engagement catalog (`architecture-repository/diagram-catalog/`) uses an ontological package structure (motivation/, business/, application/, technology/, data/, sequences/, processes/). Enterprise elements are imported into the engagement catalog at bootstrap — they are not referenced in-place from the enterprise catalog. Element scope is structural (catalog location), not a naming convention. Before creating any new element, agents must scan the engagement catalog; SA must run the enterprise catalog import check at engagement bootstrap. The `extends:` field on an element provides explicit cross-catalog traceability. Governed by `framework/diagram-conventions.md` and `framework/artifact-schemas/diagram-catalog.schema.md`.
 17. **Every AGENT.md must have an `## Artifact Discovery Priority` section.** Specifies the ordered list of repositories and document types the agent must scan during Discovery Scan Step 0, role-specific. Feeds the `read_artifact` tool's default search scope. Architects prioritize `architecture-repository/` then `technology-repository/`; DE and DO must list `technology-repository/coding-standards/` first. Required for all roles; critical for integrators and implementation agents. Governed by `framework/discovery-protocol.md §9` (Standards and Coding Guidelines Discovery).
 18. **Artifact references use the canonical format from `framework/repository-conventions.md §13`.** Every handoff, work-spec, or skill output that cites another artifact must use `[@<artifact-id> v<N.N>](<relative-path>)` in-text and list cited artifact-ids in frontmatter `references:`. This enables cross-artifact dependency resolution by the orchestration layer and dashboard. Agents must never reference artifacts by filename alone.
+19. **Every skill file's `## Feedback Loop` must include a `### Learning Generation` subsection.** Specifies: which §3.1/§3.2 trigger conditions apply to this skill, the default `error-type`, the `importance` floor, and the `applicability` default. Governs when and what the agent records after a feedback cycle. Governed by `framework/learning-protocol.md §8`. The Discovery Scan for every skill must include Step 0.L (Learnings Lookup) before Layer 1. Governed by `framework/discovery-protocol.md §2` and `§10`.
 
 ## Implementation Stages (see `specs/IMPLEMENTATION_PLAN.md`)
 
@@ -113,7 +114,8 @@ tests/
 | 2 | Project Manager master skill | Complete |
 | 3 | Primary implementation chain (SA → SwA → DevOps → Dev → QA) + discovery-protocol.md | Complete |
 | 4 | Framing layer (PO, Sales, CSCO) | Complete |
-| 4.5 | Cross-cutting framework extensions (diagram conventions, artifact references, standards discovery, agent profile condensation) | Pending |
+| 4.5 | Cross-cutting framework extensions (diagram conventions, artifact references, standards discovery, agent profile condensation) | Partial |
+| 4.6 | Learning protocol (agent learnings from mistakes — generation, retrieval, synthesis, promotion) | Partial |
 | 5 | Python implementation layer (EventStore completion + PydanticAI agents + LangGraph orchestration + source adapters) | Pending |
 | 5.5 | Engagement dashboard (local web server + PUML rendering + filesystem monitoring) | Pending |
 | 6 | Integration testing on synthetic project | Pending |

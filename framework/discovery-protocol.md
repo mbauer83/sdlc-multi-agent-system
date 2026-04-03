@@ -21,6 +21,22 @@ Every agent skill that begins new phase work or enters at a non-EP-0 entry point
 
 The Discovery Scan has five layers, executed in order. Each layer may yield artifacts or data that reduce the CQ list. Proceed through all layers even when earlier layers provide partial coverage.
 
+Before the five layers, execute Step 0.L (Learnings Lookup) to prime the agent's working context with corrections from prior work. This step shapes how the agent interprets all subsequent layers.
+
+### Step 0.L — Learnings Lookup
+
+Execute **before** Layer 1. Governed by `framework/learning-protocol.md §5`.
+
+1. Call `query_learnings(phase=<current_phase>, artifact_type=<primary_artifact_for_this_skill>, domain=<engagement_domain_from_profile>)`.
+2. Additionally query `enterprise-repository/knowledge-base/learnings/` with the same filter (if it exists).
+3. Sort results: S1 importance first, then S2, then most recent sprint. Cap at 5 entries total.
+4. If any entries are returned: prepend their `Correction` texts to working context as **"Learnings from prior work relevant to this task:"**. If none: skip.
+5. Proceed to Layer 1.
+
+**Purpose:** Learnings must precede artifact reading — they shape how the agent interprets what it finds. A correction such as "when AV §3.7 describes an 'internal' system, check for employee PII handling" changes how the agent reads the AV in Layer 1. Post-hoc insertion would miss this interpretive benefit.
+
+---
+
 ### Layer 1 — Engagement State
 
 Read the engagement directory for existing work.
@@ -231,6 +247,7 @@ Skills authored before this protocol was introduced are subject to the same requ
 | `architecture-repository-design.md §4` | EventStore API and WorkflowState |
 | `algedonic-protocol.md` | ALG-018 (proceeded without required CQ) |
 | `diagram-conventions.md §5` | D1–D6 diagram authoring sequence (Steps D1–D4 catalog ops + D5 PUML authoring + D6 validation) |
+| `learning-protocol.md` | Full learning lifecycle: generation triggers, entry format, retrieval (Step 0.L), synthesis, enterprise promotion |
 
 ---
 
