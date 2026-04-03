@@ -37,18 +37,19 @@ enterprise-repository/           # Organisation-wide architecture data (long-liv
   requirements/                  # Enterprise-level requirements
   solutions-landscape/           # Deployed/planned SBBs across the enterprise
   knowledge-base/                # Lessons learned, retrospectives
-  motivation/                    # Enterprise motivation entities: stakeholders, drivers, requirements, constraints, goals, principles
-  strategy/                      # Enterprise strategy entities: capabilities, value-streams
-  business/                      # Enterprise business layer entities: actors, roles, processes, functions, services, objects
-  application/                   # Enterprise application layer entities: components, services, interfaces, data-objects
-  technology/                    # Enterprise technology layer entities: nodes, system-software, tech-services
-  implementation/                # Enterprise implementation entities: work-packages, plateaus, gaps
+  model-entities/                # Enterprise ArchiMate entity files (one .md per instance; ModelRegistry built from frontmatter)
+    motivation/                  # Enterprise motivation entities: stakeholders, drivers, requirements, constraints, goals, principles
+    strategy/                    # Enterprise strategy entities: capabilities, value-streams
+    business/                    # Enterprise business layer entities: actors, roles, processes, functions, services, objects
+    application/                 # Enterprise application layer entities: components, services, interfaces, data-objects
+    technology/                  # Enterprise technology layer entities: nodes, system-software, tech-services
+    implementation/              # Enterprise implementation entities: work-packages, plateaus, gaps
   connections/                   # Enterprise connection files: connections/<lang>/<type>/
-  diagram-catalog/               # Enterprise diagrams; entity files live in layer dirs above (no elements/ subdir)
+  diagram-catalog/               # Enterprise diagrams; entity files live in model-entities/ above
     _macros.puml                 # Auto-generated from entity §display ###archimate blocks
     _archimate-stereotypes.puml  # ArchiMate skinparam + stereotype library
-    diagrams/                    # Enterprise-level .puml diagrams
-      index.yaml                 # entry_type: local | reference per diagram
+    diagrams/                    # Enterprise-level .puml files (frontmatter in PUML header comment block)
+    templates/                   # Blank per-type diagram stubs agents copy and adapt
     rendered/                    # SVG outputs; committed at sprint boundary
 
 engagements/<id>/                # Per-engagement working directory
@@ -60,17 +61,18 @@ engagements/<id>/                # Per-engagement working directory
   algedonic-log/                 # Algedonic signal records
   work-repositories/
     architecture-repository/     # Owner: Solution Architect (ERP v2.0 — entity files ARE the catalog)
-      motivation/                # Motivation entities: stakeholders, drivers, requirements, constraints, goals, principles
-      strategy/                  # Strategy entities: capabilities, value-streams
-      business/                  # Business layer entities: actors, roles, processes, functions, services, objects
-      application/               # Application layer entities: components, services, interfaces, data-objects
-      implementation/            # Implementation entities: work-packages, plateaus, gaps
+      model-entities/            # ArchiMate entity files (one .md per instance; ModelRegistry built from frontmatter)
+        motivation/              # Motivation entities: stakeholders, drivers, requirements, constraints, goals, principles
+        strategy/                # Strategy entities: capabilities, value-streams
+        business/                # Business layer entities: actors, roles, processes, functions, services, objects
+        application/             # Application layer entities: components, services, interfaces, data-objects
+        implementation/          # Implementation entities: work-packages, plateaus, gaps
       connections/               # Connection files: connections/<lang>/<type>/ (archimate/er/sequence/activity/usecase)
-      diagram-catalog/           # Diagrams over the model; no elements/ subdir
+      diagram-catalog/           # Diagrams over the model
         _macros.puml             # Auto-generated from entity §display ###archimate blocks
         _archimate-stereotypes.puml
-        diagrams/                # Engagement .puml files
-          index.yaml             # entry_type: local | reference per diagram (referenced diagrams never copied)
+        diagrams/                # Engagement .puml files (frontmatter in PUML header comment block)
+        templates/               # Blank per-type diagram stubs agents copy and adapt
         rendered/                # SVG outputs; committed at sprint boundary
       decisions/                 # Architecture Decision Records
       overview/                  # Architecture Vision + high-level narrative docs
@@ -119,7 +121,7 @@ tests/
 13. **Every AGENT.md must have a `## 11. Personality & Behavioral Stance` section.** Specifies the agent's role type (Integrator/Specialist/Framing/Coordinator), behavioral directives derived from the personality profile, conflict engagement posture, primary inter-role tensions, and a reference to `framework/agent-personalities.md`. Governed by `framework/agent-personalities.md`. Every skill file that involves significant cross-role interaction must include a `### Personality-Aware Conflict Engagement` subsection in its `## Feedback Loop` section (see `framework/agent-personalities.md §6`).
 14. **Every AGENT.md and every skill file must have YAML frontmatter.** Frontmatter provides machine-readable routing metadata for the Python orchestration layer. AGENT.md required fields: `agent-id`, `name`, `display-name`, `role-type`, `vsm-position`, `primary-phases`, `invoke-when`, `owns-repository`, `personality-ref`, `skill-index`, `runtime-ref`, `system-prompt-identity`. The `system-prompt-identity` field is the compact static Layer 1 system prompt used by `build_agent()` in `src/agents/base.py` — 3–5 sentences covering: role name/abbreviation, authority domain, owned repository, one non-negotiable constraint. Skill file required fields: `skill-id`, `agent`, `name`, `invoke-when`, `trigger-phases`, `trigger-conditions` (LLM-hint prose; not machine-parsed), `entry-points`, `primary-outputs`, `complexity-class` (`simple | standard | complex` — governs SkillLoader token budget: ≤600/1200/2000). The `trigger-phases` list is the machine-readable routing key; `trigger-conditions` is documentation only. **Runtime extraction contract:** only two AGENT.md extractions reach the live agent — `system-prompt-identity` (Layer 1, always) and `### Runtime Behavioral Stance` from §11 (Layer 2, always). All other AGENT.md content is authoring documentation that governs skill file authoring — it does not reach the agent directly. Skill files (Inputs Required + Steps + Algedonic Triggers + Feedback Loop + Outputs, up to `complexity-class` budget) are the primary runtime delivery vehicle, injected as Layer 3 when the skill is invoked. Use `framework/agent-index.md` as the compact routing reference (~500 tokens). Governed by `framework/agent-runtime-spec.md`.
 15. **Agent runtime and orchestration are governed by two framework specs.** `framework/agent-runtime-spec.md` — PydanticAI agent construction, 4-layer system prompt assembly, skill loading protocol, tool sets, agent-as-tool pattern. `framework/orchestration-topology.md` — LangGraph graph topology, `SDLCGraphState`, PM supervisor node, routing functions, EventStore integration. Every `src/agents/` and `src/orchestration/` file must implement these specs. Do not introduce coordination patterns that contradict them without updating the framework first.
-16. **Model-entity registry (ERP v2.0) and diagram production follow `framework/artifact-registry-design.md` and `framework/diagram-conventions.md`.** All architecture entities and connections are individual `.md` files organised by ArchiMate layer/aspect (no `_index.yaml`; `ModelRegistry` built from frontmatter at startup). Entity files contain `<!-- §content -->` and `<!-- §display -->` sections; `§display` has `### <language-id>` H3 subsections per diagram language. Connection files typed in filesystem (`connections/<lang>/<type>/`). Entities may exist without appearing in any diagram (model-first); diagram elements must have a backing entity in ModelRegistry (violations → ALG-C03). Engagement artifact-IDs are engagement-local; enterprise IDs are globally unique (assigned from `enterprise-repository/governance-log/id-counters.yaml` at promotion). Enterprise entities are read-only to engagement agents; Architecture Board members maintain them. Existing diagrams are referenced via `entry_type: reference` in `diagrams/index.yaml` — never copied. SA runs `regenerate_macros()` at bootstrap; no entity import step exists. Governed by `framework/artifact-registry-design.md`, `framework/diagram-conventions.md`, and `framework/artifact-schemas/entity-conventions.md`.
+16. **Model-entity registry (ERP v2.0) and diagram production follow `framework/artifact-registry-design.md` and `framework/diagram-conventions.md`.** All architecture entities and connections are individual `.md` files organised by ArchiMate layer/aspect (no `_index.yaml`; `ModelRegistry` built from frontmatter at startup). Entity files contain `<!-- §content -->` and `<!-- §display -->` sections; `§display` has `### <language-id>` H3 subsections per diagram language. Connection files typed in filesystem (`connections/<lang>/<type>/`). Entities may exist without appearing in any diagram (model-first); diagram elements must have a backing entity in ModelRegistry (violations → ALG-C03). Engagement artifact-IDs are engagement-local; enterprise IDs are globally unique (assigned from `enterprise-repository/governance-log/id-counters.yaml` at promotion). Enterprise entities are read-only to engagement agents; Architecture Board members maintain them. Diagrams carry frontmatter in a PUML header comment block (no `index.yaml`); agents read `.puml` source directly for both local and enterprise diagrams — `render_diagram` is for user-facing output only. SA runs `regenerate_macros()` at bootstrap; no entity import step exists. Governed by `framework/artifact-registry-design.md`, `framework/diagram-conventions.md`, and `framework/artifact-schemas/entity-conventions.md`.
 17. **Every AGENT.md must have an `## Artifact Discovery Priority` section.** Specifies the ordered list of repositories and document types the agent must scan during Discovery Scan Step 0, role-specific. Feeds the `read_artifact` tool's default search scope. Architects prioritize `architecture-repository/` then `technology-repository/`; DE and DO must list `technology-repository/coding-standards/` first. Required for all roles; critical for integrators and implementation agents. Governed by `framework/discovery-protocol.md §9` (Standards and Coding Guidelines Discovery).
 18. **Artifact references use the canonical format from `framework/repository-conventions.md §13`.** Every handoff, work-spec, or skill output that cites another artifact must use `[@<artifact-id> v<N.N>](<relative-path>)` in-text and list cited artifact-ids in frontmatter `references:`. This enables cross-artifact dependency resolution by the orchestration layer and dashboard. Agents must never reference artifacts by filename alone.
 20. **All Python implementation (`src/`) must follow the coding standards and domain-centred architecture defined in `specs/IMPLEMENTATION_PLAN.md §Python Coding Standards`.** Key rules: mandatory type annotations on all signatures; lowercase built-in collection aliases (`list[str]`, `x | y`) not superseded `typing` uppercase imports; inline type parameter syntax (`def f[T](...)`; PEP 695, Python 3.12+) — explicit `TypeVar` only when variance cannot be inferred; `Protocol` for structural subtyping; monadic `Result`-style error handling instead of exceptions for expected failures; no magic. Architecture: four-layer model (Common → Domain → Application → Infrastructure) with strict inward dependency rule; `src/common/` for cross-cutting concerns (logging, validation, parsing, normalisation) usable by all layers; ports-and-adapters for all I/O; domain Pydantic models are the single source of truth.
@@ -142,8 +144,8 @@ tests/
 | 4.6 | Learning protocol (agent learnings from mistakes — generation, retrieval, synthesis, promotion) | Complete |
 | 4.6d | Learning protocol 2026 alignment (LangGraph BaseStore, semantic tier, graph connectivity, cross-agent visibility) | Complete |
 | 4.7 | Multi-target-repository support (repository-map schema, multi-repo config, discovery Layer 4 update) | Complete |
-| 4.8 | Entity Registry Pattern v2.0 (ERP): artifact-registry-design, entity-conventions, diagram-conventions; 4.8a–c/e/f complete; 4.8d + 4.8g pending | Partial |
-| 4.9 | ENG-001 reference model and initial diagrams (ERP v2.0 usage example) | Pending |
+| 4.8 | Entity Registry Pattern v2.0 (ERP): artifact-registry-design, entity-conventions, diagram-conventions; 4.8a–c/e/f complete; 4.8d complete; 4.8g pending; 4.8h (SA/SwA role boundary refactor — design review + rework) pending | Partial |
+| 4.9 | ENG-001 reference model and initial diagrams (ERP v2.0 usage example) — blocked on Stage 4.8h | Pending |
 | 5 | Python implementation layer (EventStore completion + PydanticAI agents + LangGraph orchestration + source adapters) | Pending |
 | 5.5 | Engagement dashboard (local web server + PUML rendering + filesystem monitoring) | Pending |
 | 6 | Integration testing on synthetic project | Pending |

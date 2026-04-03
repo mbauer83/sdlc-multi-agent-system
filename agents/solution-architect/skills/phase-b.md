@@ -112,10 +112,11 @@ ArchiMate viewpoint: **Capability Map Viewpoint** (structured as a matrix or tre
 
 **Diagram Step D — ArchiMate Business Architecture Overview**
 
-Execute D1–D6 per `framework/diagram-conventions.md §5–5c`:
-- **D1–D4:** Scan `elements/business/` sub-catalogs (actors.yaml ACT-nnn, processes.yaml PRO-nnn, services.yaml BSV-nnn, objects.yaml BOB-nnn) for elements matching the capability domains defined above. Register new elements where not found. Validate no duplicate IDs; populate cross-reference fields.
-- **D5a:** Load PUML template `framework/diagram-conventions.md §7.archimate-business`. Author ArchiMate business-layer diagram using capability domain structure; catalog IDs as PUML aliases. Write to `architecture-repository/diagram-catalog/diagrams/b-archimate-business-capability-v1.puml`. Update `diagrams/index.yaml`.
-- **D6:** Call `validate_diagram`; fix errors; re-validate before proceeding.
+Execute D1–D4 per `framework/diagram-conventions.md §5`:
+- **D1:** Call `list_artifacts(artifact_type="capability")`, `list_artifacts(artifact_type="business-actor")`, `list_artifacts(artifact_type="business-process")`, and `list_artifacts(artifact_type="business-service")` to identify entities matching the capability domains defined above. Use `search_artifacts(query)` for cross-layer or uncertain types.
+- **D2:** For each entity that will appear in the diagram, verify its `§display ###archimate` subsection exists. Add missing subsections via `write_artifact` before proceeding; run `regenerate_macros()`.
+- **D3:** Load template via `read_framework_doc("framework/diagram-conventions.md §7.archimate-business")`. Author ArchiMate business-layer diagram using capability domain structure; entity artifact-ids as PUML aliases. Include required frontmatter comment block. Write to `architecture-repository/diagram-catalog/diagrams/b-archimate-business-capability-v1.puml` via `write_artifact`.
+- **D4:** Call `validate_diagram`; fix errors; re-validate before proceeding.
 
 
 ---
@@ -142,10 +143,11 @@ Safety-relevant processes must be cross-referenced in the SCO Phase B update pro
 
 **Diagram Step D — Activity/BPMN Process Diagrams**
 
-Execute D1–D6 per `framework/diagram-conventions.md §5–5c`:
-- **D1–D4:** Scan `elements/business/actors.yaml` and `processes/pool-map.yaml`. Map each BPR-nnn owning org unit (ORG-nnn → ACT-nnn or SYS-nnn catalog ID). Register new pool-map entries for each safety-relevant and key process.
-- **D5a:** Load PUML template `framework/diagram-conventions.md §7.activity-bpmn`. For each process flagged `Safety-Relevant: Yes` and other key processes, author an Activity/BPMN diagram with swimlane pools mapped to catalog IDs. Write to `architecture-repository/diagram-catalog/diagrams/b-bpmn-<bpr-id>-v1.puml`. Update `diagrams/index.yaml`.
-- **D6:** Call `validate_diagram`; fix errors; re-validate before proceeding.
+Execute D1–D4 per `framework/diagram-conventions.md §5`:
+- **D1:** Call `list_artifacts(artifact_type="business-process", filter={"safety-relevant": true})` and `list_artifacts(artifact_type="business-actor")` to identify swimlane participants and safety-relevant processes. Include other key processes via `search_artifacts`.
+- **D2:** For each BPR-nnn and ACT-nnn that will appear, verify `§display ###activity` subsections exist. Add missing subsections via `write_artifact`; run `regenerate_macros()`.
+- **D3:** Load template via `read_framework_doc("framework/diagram-conventions.md §7.activity-bpmn")`. For each process flagged `safety-relevant: true` and other key processes, author an Activity/BPMN diagram with swimlane pools keyed to entity artifact-ids. Include required frontmatter comment block. Write to `architecture-repository/diagram-catalog/diagrams/b-bpmn-<bpr-id>-v1.puml` via `write_artifact`.
+- **D4:** Call `validate_diagram`; fix errors; re-validate before proceeding.
 
 
 ---
@@ -168,10 +170,11 @@ Minimum: one value stream per Level-1 capability domain. A domain with no identi
 
 **Diagram Step D — Value Stream Use Case Diagrams**
 
-Execute D1–D6 per `framework/diagram-conventions.md §5–5c`:
-- **D1–D4:** Scan `elements/business/actors.yaml` for ACT-nnn entries matching VS triggering stakeholders. Verify each VS-nnn maps to a triggering stakeholder ACT-nnn and a delivered outcome capability CAP-nnn.
-- **D5a:** Load PUML template `framework/diagram-conventions.md §7.use-case`. Author one Use Case diagram per value stream: triggering stakeholder as `ACT-nnn` alias actor, value stream stages as use cases, participating actors annotated. Write to `architecture-repository/diagram-catalog/diagrams/b-usecase-<vs-id>-v1.puml`. Update `diagrams/index.yaml`.
-- **D6:** Call `validate_diagram`; fix errors; re-validate before proceeding.
+Execute D1–D4 per `framework/diagram-conventions.md §5`:
+- **D1:** Call `list_artifacts(artifact_type="value-stream")` and `list_artifacts(artifact_type="business-actor")` to identify VS-nnn entries and their triggering stakeholder ACT-nnn. Verify each VS-nnn traces to a delivered outcome CAP-nnn via `list_artifacts(artifact_type="capability")`.
+- **D2:** For each ACT-nnn and VS-nnn entity that will appear, verify `§display ###archimate` subsections exist. Add missing subsections via `write_artifact`; run `regenerate_macros()`.
+- **D3:** Load template via `read_framework_doc("framework/diagram-conventions.md §7.use-case")`. Author one Use Case diagram per value stream: triggering stakeholder as entity alias actor, value stream stages as use cases, participating actors annotated. Include required frontmatter comment block. Write to `architecture-repository/diagram-catalog/diagrams/b-usecase-<vs-id>-v1.puml` via `write_artifact`.
+- **D4:** Call `validate_diagram`; fix errors; re-validate before proceeding.
 
 
 ---

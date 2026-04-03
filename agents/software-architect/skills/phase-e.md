@@ -145,12 +145,11 @@ Call `query_learnings(agent="SwA", phase="E", artifact_type="implementation-plan
 
 **Diagram Step D — Sequence Diagrams (API Contract Flows)**
 
-Execute D1–D6 per `framework/diagram-conventions.md §5–5c`:
-- **D1–D4:** For each implementation candidate that specifies API contracts or inter-component interfaces: verify IFC-nnn IDs exist in `architecture-repository/diagram-catalog/elements/application/interfaces.yaml` (SA catalog). Verify CMP-nnn lifeline entries in `sequences/participant-map.yaml`. If an IFC-nnn or CMP-nnn is absent from the SA engagement catalog, raise a `diagram.catalog-proposal` handoff to SA before authoring — do not create orphan aliases.
-- **D5a:** Load PUML template `framework/diagram-conventions.md §7.sequence`. Author one sequence diagram per major API flow: IFC-nnn boundary aliases, CMP-nnn participant lifelines; synchronous vs. async message notation; `alt`/`opt` blocks for error and auth paths. Write to `technology-repository/diagrams/e-sequence-<flow-id>-v1.puml`. Update `technology-repository/diagrams/index.yaml`.
-- **D6:** Call `validate_diagram`; fix errors; re-validate before proceeding.
-
-*Note: SwA writes to `technology-repository/diagrams/`; SA integrates via `diagram.catalog-proposal` handoff at phase transition.*
+Execute D1–D4 per `framework/diagram-conventions.md §5`:
+- **D1:** For each implementation candidate that specifies API contracts or inter-component interfaces: call `list_artifacts(artifact_type="application-interface")` and `list_artifacts(artifact_type="application-component")` in the SA engagement architecture-repository to identify IFC-nnn and APP-nnn participants. If an entity is absent, raise a `diagram.display-spec-request` handoff to SA — do not create orphan aliases.
+- **D2:** For each entity that will appear as a participant, verify its `§display ###sequence` subsection exists. If absent on SA-owned entities, raise a `diagram.display-spec-request` handoff; if absent on SwA-owned entities, add via `write_artifact` and run `regenerate_macros()`.
+- **D3:** Load template via `read_framework_doc("framework/diagram-conventions.md §7.sequence")`. Author one sequence diagram per major API flow: entity artifact-ids as participant aliases; synchronous vs. async message notation; `alt`/`opt` blocks for error and auth paths. Include required frontmatter comment block. Write to `technology-repository/diagram-catalog/diagrams/e-sequence-<flow-id>-v1.puml` via `write_artifact`.
+- **D4:** Call `validate_diagram`; fix errors; re-validate before proceeding.
 
 
 ### Step 3 — Provide Input to Risk Register

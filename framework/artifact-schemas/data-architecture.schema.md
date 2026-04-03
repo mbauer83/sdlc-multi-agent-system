@@ -1,15 +1,17 @@
 # Schema: Data Architecture (`DA`)
 
-**Version:** 1.0.0  
-**ADM Phase:** C (Data sub-track)  
-**Owner:** Solution Architect  
-**Consumed by:** Application Architecture (AA — mutual reference), Technology Architecture (TA), Architecture Contract (AC), Safety Constraint Overlay (SCO update)  
+**Version:** 2.0.0
+**ADM Phase:** C (Data sub-track)
+**Owner:** Solution Architect
+**Consumed by:** Application Architecture (AA — mutual reference), Technology Architecture (TA), Architecture Contract (AC), Safety Constraint Overlay (SCO update)
 
 ---
 
 ## 1. Purpose
 
-The Data Architecture defines the logical data model, data entity catalogue, data flows, classification scheme, and governance rules for all data in scope. It establishes data-level ABBs that constrain Phase D persistence and platform decisions. Like the Application Architecture, it is technology-independent at baseline: it defines *what* data exists and how it relates, not *where* or *how* it is stored.
+The Data Architecture defines the logical data model, data entity catalogue, data flows, classification scheme, and governance rules for all data in scope. It establishes data entities that constrain Phase D persistence and platform decisions. Like the Application Architecture, it is **technology-independent** at baseline: it defines *what* data exists and how it relates, not *where* or *how* it is stored.
+
+Under ERP v2.0 the Data Architecture is the set of entity and connection files produced in the architecture-repository during Phase C (data sub-track). Data objects live in the `application/data-objects/` directory (ArchiMate Information Structure layer). An overview document (`overview/da-overview.md`) provides the cross-phase handoff summary.
 
 ---
 
@@ -24,125 +26,103 @@ The Data Architecture defines the logical data model, data entity catalogue, dat
 
 ---
 
-## 3. Required Sections
+## 3. ERP Entity Output
 
-### 3.1 Summary Header
-- `artifact-type: data-architecture`
-- `safety-relevant: true` if any data entity is safety-relevant (e.g., safety logs, control data)
-- `csco-sign-off:` required if safety-relevant data entities are defined
+Phase C (data track) produces entity files in the `application/data-objects/` directory and corresponding connections. All files follow the universal format in `framework/artifact-schemas/entity-conventions.md`.
 
-### 3.2 Data Entity Catalog
+### 3.1 Data Object Entities — `architecture-repository/application/data-objects/`
 
-The definitive list of logical data entities (ABBs) in scope.
-
-| Entity ID | Name | Description | Classification | Owning Application | Retention | Safety-Relevant |
-|---|---|---|---|---|---|---|
-| DE-nnn | | | Public / Internal / Confidential / Restricted / Safety-Critical | APP-nnn | Policy ref | Yes/No |
-
-**Classification levels:**
-- **Public** — no access restrictions; freely shareable
-- **Internal** — organisational use only; no external sharing without approval
-- **Confidential** — role-based access; subject to data governance policy
-- **Restricted** — highly sensitive; named-individual access; legal/regulatory obligations apply
-- **Safety-Critical** — data whose corruption, loss, or unauthorised modification could trigger a safety constraint violation
-
-### 3.3 Logical Data Model
-
-A diagram showing entities, their attributes, and relationships. ArchiMate **Information Structure Viewpoint**.
-
-Requirements:
-- All entities from the Data Entity Catalog represented
-- Relationships typed: Association / Composition / Aggregation / Specialisation
-- Cardinality noted on all relationships
-- Key attributes listed per entity (not an exhaustive field list — that belongs in detailed design)
-
-### 3.4 Data/Business Function Matrix
-
-Cross-reference showing which data entities are created, read, updated, or deleted (CRUD) by which business processes.
-
-| | DE-001 | DE-002 | DE-nnn |
+| Prefix | artifact-type | Directory | §content Required Sections |
 |---|---|---|---|
-| **BPR-001** | C | R | RU |
-| **BPR-002** | — | CRU | D |
+| `DOB-nnn` | `data-object` | `application/data-objects/` | Name; Description; Classification (see §3.2); Owning Application (`APP-nnn`); Retention Policy; Safety-Relevant (true/false); Key Attributes (name: type, not exhaustive — full field list is detailed design) |
 
-Symbols: C=Create, R=Read, U=Update, D=Delete. Combine as needed (e.g., CRUD, RU).
+### 3.2 Data Classification Levels
 
-### 3.5 Data Flow Diagram
+| Level | Meaning | Minimum Controls |
+|---|---|---|
+| Public | No access restrictions; freely shareable | None required |
+| Internal | Organisational use only; no external sharing | Access control policy |
+| Confidential | Role-based access; subject to data governance | RBAC + audit log |
+| Restricted | Highly sensitive; named-individual access | RBAC + encryption + legal/regulatory compliance |
+| Safety-Critical | Corruption, loss, or unauthorised modification could trigger a safety constraint violation | All Restricted controls + integrity checking + CSCO sign-off |
 
-Shows how data moves between application components, external systems, and stores. One diagram per major value stream or integration boundary is recommended.
+### 3.3 `§display` Requirements
 
-Content requirements:
-- All data entities involved in cross-component flows
-- Direction of flow
-- Transformation or processing that occurs in transit (if any)
-- Trust boundaries (clearly marked — relevant for security and safety analysis)
+Every `DOB-nnn` that appears in an ER diagram must have a `### er` subsection in `§display`. The `### er` block specifies: `class-label` (entity name for the PUML class declaration) and `attributes` (list of `name: type` pairs for key attributes). The `generate_er_content(entity_ids)` tool reads these blocks to produce PUML class declarations.
 
-### 3.6 Data Classification Register
-
-A summary register of all data sensitivity boundaries identified:
-
-| Boundary ID | Type | Data Crossing Boundary | Classification | Protection Requirement |
-|---|---|---|---|---|
-| DB-nnn | Internal/External / Trust / Regulatory | DE-nnn, ... | | Encryption / Anonymisation / Access control / Audit log |
-
-### 3.7 Data Governance Rules
-
-| Rule ID | Scope (entities) | Rule Statement | Owner | Enforcement Point |
-|---|---|---|---|---|
-| DGR-nnn | DE-nnn, ... | | ORG-nnn | Application component / Infrastructure / Policy |
-
-Minimum rules required:
-- Retention and deletion rules for each entity classification level
-- Access control rules for Confidential and above
-- Audit logging requirements for Safety-Critical entities
-- Cross-border or regulatory transfer restrictions (if applicable)
-
-### 3.8 Data-Level Gap Analysis
-
-| Entity / Domain | Baseline State | Target State | Gap | Resolution |
-|---|---|---|---|---|
-| DE-nnn or domain | | | New / Modified / Deprecated | Migrate / Cleanse / Create |
-
-### 3.9 Data-Level Safety Constraint Overlay (reference)
-
-Cross-reference to the `SCO` version covering Phase C (Data) constraints, particularly for Safety-Critical entities.
-
-| Entity ID | Safety Constraint Reference (SCO section) |
-|---|---|
-| DE-nnn | SCO §n.n |
+`DOB-nnn` entities that appear in ArchiMate diagrams (e.g., in a data flow or motivation diagram) additionally need a `### archimate` subsection.
 
 ---
 
-## 4. Artifact Sub-Components
+## 4. Connections Produced
 
-| Sub-Component | Type | Required | Notes |
+### 4.1 ER Connections — `architecture-repository/connections/er/`
+
+ER connections represent logical data model relationships between `DOB-nnn` entities.
+
+| Connection Type | Source → Target | Directory | Notes |
 |---|---|---|---|
-| Data Entity Catalog | Catalog | Yes | §3.2 |
-| Logical Data Model | Diagram (ArchiMate Information Structure VP) | Yes | §3.3 |
-| Data/Business Function Matrix (CRUD) | Matrix | Yes | §3.4 |
-| Data Flow Diagram(s) | Diagram | Yes | §3.5; one per major value stream |
-| Data Classification Register | Register | Yes | §3.6 |
-| Data Governance Rules | Catalog | Yes | §3.7 |
-| Gap Analysis — Data | Matrix | Yes | §3.8 |
-| SCO cross-reference | Reference | Yes if safety-relevant | §3.9 |
+| `er-one-to-many` | `DOB-nnn` → `DOB-nnn` | `connections/er/one-to-many/` | One source instance relates to many target instances; use `foreign-key:` field in `§content` |
+| `er-many-to-many` | `DOB-nnn` → `DOB-nnn` | `connections/er/many-to-many/` | Many-to-many; note the junction entity if applicable |
+| `er-one-to-one` | `DOB-nnn` → `DOB-nnn` | `connections/er/one-to-one/` | One-to-one ownership or identity relationship |
+
+Each ER connection file must include a `### er` subsection in `§display` specifying the cardinality notation (`|o--o{`, `||--||`, etc.) for use by `generate_er_relations(connection_ids)`.
+
+### 4.2 ArchiMate Access Connections — `architecture-repository/connections/archimate/access/`
+
+These are produced jointly by AA and DA tracks once both are sufficiently populated:
+
+| Connection Type | Source → Target | Directory | Notes |
+|---|---|---|---|
+| `archimate-access` | `APP-nnn` → `DOB-nnn` | `connections/archimate/access/` | Component accesses data object; `access-type:` field: read/write/read-write |
+
+### 4.3 CRUD Matrix Representation
+
+The Data/Business Function CRUD matrix (which processes Create/Read/Update/Delete which entities) is documented in `overview/da-overview.md` as a table. Individual CRUD relationships do not require separate connection files; the matrix in the overview is authoritative.
 
 ---
 
-## 5. Quality Criteria
+## 5. Data Governance Catalog
 
-- [ ] Every data entity is traceable to at least one business process in the BA.
-- [ ] Every entity has a classification and a retention rule.
-- [ ] All Safety-Critical entities are flagged and cross-referenced to the SCO.
-- [ ] Data flows across all trust boundaries are documented.
-- [ ] The data model is technology-independent — no specific databases, file formats, or storage mechanisms are prescribed (those belong in Phase D).
-- [ ] CRUD matrix covers all in-scope processes and entities.
-- [ ] CSCO sign-off present if Safety-Critical entities are defined.
+SA records the following governance artefacts in `overview/da-overview.md` (not as separate entity files):
+
+- **Data Classification Register** — boundary-crossing table: `DB-nnn | Type | Data Crossing Boundary | Classification | Protection Requirement`
+- **Data Governance Rules** — `DGR-nnn | Scope | Rule Statement | Owner | Enforcement Point`
+  - Minimum rules: retention/deletion per classification; access control for Confidential+; audit logging for Safety-Critical; cross-border/regulatory transfer restrictions if applicable.
 
 ---
 
-## 6. Version History
+## 6. Overview Document
 
-| Version | Sprint | Agent | Change Summary |
-|---|---|---|---|
-| 0.1.0 | | | Initial draft |
-| 1.0.0 | | | Baselined at Phase C gate |
+SA produces `architecture-repository/overview/da-overview.md` as a **repository-content artifact** (frontmatter `artifact-type: da-overview`).
+
+Required sections:
+- **Summary Header** — YAML frontmatter per `repository-conventions.md §7`:
+  - `artifact-type: da-overview`; `safety-relevant: true` if Safety-Critical entities defined; `csco-sign-off: required if safety-critical entities`
+  - `summary:` 2–4 sentences covering entity count, classification distribution, open data governance gaps
+  - `key-decisions:` list; `open-issues:` list; `pending-clarifications:` list
+- **CRUD Matrix** — `BPR-nnn` rows × `DOB-nnn` columns; symbols C/R/U/D combined.
+- **Data Classification Register** (see §5).
+- **Data Governance Rules** (see §5).
+- **Data-Level Gap Analysis** — Entity/Domain / Baseline / Target / Gap / Resolution.
+- **Safety Constraint Overlay Cross-reference** — per `DOB-nnn` with `safety-relevant: true`: SCO section reference.
+
+---
+
+## 7. Quality Criteria
+
+- [ ] Every `DOB-nnn` is traceable to at least one `BPR-nnn` in the CRUD matrix.
+- [ ] Every entity has a `classification` field and an entry in the Data Classification Register.
+- [ ] All Safety-Critical entities are flagged `safety-relevant: true` and cross-referenced to the SCO.
+- [ ] Data flows across trust boundaries are documented in the CRUD matrix or Data Flow section of the overview.
+- [ ] The data model is technology-independent — no specific databases, file formats, or storage mechanisms appear in any `DOB-nnn` entity.
+- [ ] CSCO sign-off present (`csco-sign-off: true` in `da-overview.md`) if Safety-Critical entities are defined.
+
+---
+
+## 8. Version History
+
+| Version | Date | Change Summary |
+|---|---|---|
+| 1.0.0 | 2026-04-02 | Initial schema — monolithic artifact format |
+| 2.0.0 | 2026-04-03 | Refactored to ERP v2.0 entity-file output; data objects in application/data-objects/; ER connections in connections/er/ |

@@ -129,10 +129,11 @@ When in doubt between classification levels: assign the higher classification. D
 
 **Diagram Step D — Class/ER Diagram (Canonical Data Model)**
 
-Execute D1–D6 per `framework/diagram-conventions.md §5–5c`:
-- **D1–D4:** For every DE-nnn entity defined in this step, register an entry in `architecture-repository/diagram-catalog/elements/data/entities.yaml`. Populate attributes, PK/FK flags, and `linked_data_entity` cross-references in `elements/application/data-objects.yaml` (DAO-nnn) where application data objects correspond. Validate: no duplicate DE-nnn IDs; `canonical_entity` back-references populated in DAO-nnn entries.
-- **D5a:** Load PUML template `framework/diagram-conventions.md §7.class-er`. Author the Class/ER diagram: each DE-nnn as a class block with `{field}` attribute list; `"1" -- "0..*"` cardinality markers; FK references annotated. Register each ER association as CON-E-nnn in `connections/er-relationships.yaml`. Write to `architecture-repository/diagram-catalog/diagrams/c-er-canonical-data-model-v1.puml`. Update `diagrams/index.yaml`.
-- **D6:** Call `validate_diagram`; fix errors; re-validate before proceeding.
+Execute D1–D4 per `framework/diagram-conventions.md §5`:
+- **D1:** Call `list_artifacts(artifact_type="data-object")` to retrieve all DOB-nnn entities defined in this step. Use `search_artifacts` to identify any cross-layer application data objects (from AA) that correspond to these data entities. Call `list_connections(artifact_type="er-one-to-many")` and related ER connection types to identify existing cardinality relationships.
+- **D2:** For each DOB-nnn that will appear in the diagram, verify its `§display ###er` subsection exists. Add missing subsections via `write_artifact`; run `regenerate_macros()`.
+- **D3:** Load template via `read_framework_doc("framework/diagram-conventions.md §7.class-er")`. Call `generate_er_content(entity_ids)` and `generate_er_relations(connection_ids)` to produce PUML class blocks and cardinality lines. Include required frontmatter comment block. Write to `architecture-repository/diagram-catalog/diagrams/c-er-canonical-data-model-v1.puml` via `write_artifact`.
+- **D4:** Call `validate_diagram`; fix errors; re-validate before proceeding.
 
 
 ---

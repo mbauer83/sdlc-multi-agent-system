@@ -122,10 +122,11 @@ Validate against the technology-independence constraint:
 
 **Diagram Step D — ArchiMate Application Architecture Diagram**
 
-Execute D1–D6 per `framework/diagram-conventions.md §5–5c`:
-- **D1–D4:** Scan `elements/application/` sub-catalogs (components.yaml CMP-nnn, interfaces.yaml IFC-nnn, services.yaml ASV-nnn). Register new catalog entries for each APP-nnn component and IFC-nnn interface defined in this step. Validate no duplicate IDs; populate `linked_data_entity` cross-references where applicable.
-- **D5a:** Load PUML template `framework/diagram-conventions.md §7.archimate-application`. Author ArchiMate application-layer diagram: components (CMP-nnn), interfaces (IFC-nnn), application services (ASV-nnn); catalog IDs as PUML aliases. Write to `architecture-repository/diagram-catalog/diagrams/c-archimate-application-v1.puml`. Update `diagrams/index.yaml`.
-- **D6:** Call `validate_diagram`; fix errors; re-validate before proceeding.
+Execute D1–D4 per `framework/diagram-conventions.md §5`:
+- **D1:** Call `list_artifacts(artifact_type="application-component")`, `list_artifacts(artifact_type="application-interface")`, and `list_artifacts(artifact_type="application-service")` to identify entities in scope. Use `search_artifacts` for cross-layer entities (e.g., business services BSV-nnn that application services realise).
+- **D2:** For each entity that will appear in the diagram, verify its `§display ###archimate` subsection exists. Add missing subsections via `write_artifact`; run `regenerate_macros()`.
+- **D3:** Load template via `read_framework_doc("framework/diagram-conventions.md §7.archimate-application")`. Author ArchiMate application-layer diagram: components, interfaces, application services with entity artifact-ids as PUML aliases. Include required frontmatter comment block. Write to `architecture-repository/diagram-catalog/diagrams/c-archimate-application-v1.puml` via `write_artifact`.
+- **D4:** Call `validate_diagram`; fix errors; re-validate before proceeding.
 
 
 ---
@@ -147,10 +148,11 @@ Every interface must appear in at least one Application Interaction Diagram (Ste
 
 **Diagram Step D — Sequence Diagrams (Key Interaction Flows)**
 
-Execute D1–D6 per `framework/diagram-conventions.md §5–5c`:
-- **D1–D4:** Scan `elements/application/components.yaml` and `elements/application/interfaces.yaml` for CMP-nnn and IFC-nnn participants. Check `sequences/participant-map.yaml`; register lifeline entries for any participants not yet mapped.
-- **D5a:** Load PUML template `framework/diagram-conventions.md §7.sequence`. For each key interaction flow identified in this step, author a sequence diagram: CMP-nnn lifelines, IFC-nnn boundaries, synchronous vs. async message notation, `alt`/`opt` blocks for error paths. Write to `architecture-repository/diagram-catalog/diagrams/c-sequence-<flow-id>-v1.puml`. Update `diagrams/index.yaml`.
-- **D6:** Call `validate_diagram`; fix errors; re-validate before proceeding.
+Execute D1–D4 per `framework/diagram-conventions.md §5`:
+- **D1:** Call `list_artifacts(artifact_type="application-component")` and `list_artifacts(artifact_type="application-interface")` to identify CMP-nnn lifelines and IFC-nnn boundaries. Use `search_artifacts` for cross-layer participants (e.g., business actors ACT-nnn that initiate flows).
+- **D2:** For each entity that will appear as a participant, verify its `§display ###sequence` subsection exists. Add missing subsections via `write_artifact`; run `regenerate_macros()`.
+- **D3:** Load template via `read_framework_doc("framework/diagram-conventions.md §7.sequence")`. For each key interaction flow, author a sequence diagram: entity artifact-ids as participant aliases, synchronous vs. async message notation, `alt`/`opt` blocks for error paths. Include required frontmatter comment block. Write to `architecture-repository/diagram-catalog/diagrams/c-sequence-<flow-id>-v1.puml` via `write_artifact`.
+- **D4:** Call `validate_diagram`; fix errors; re-validate before proceeding.
 
 
 ---

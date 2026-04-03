@@ -1,9 +1,9 @@
 # Repository Conventions
 
-**Version:** 1.2.0  
-**Status:** Approved — Foundation  
+**Version:** 1.3.0  
+**Status:** Approved — Stage 4.8d  
 **Owner:** Project Manager  
-**Last Updated:** 2026-04-02
+**Last Updated:** 2026-04-04
 
 ---
 
@@ -35,17 +35,88 @@ The **Enterprise Repository** (`enterprise-repository/`) is a separate, long-liv
 
 ### 2.2 Sub-Directory Structure
 
-Each work-repository follows a standard internal layout:
+Work-repositories that hold architecture model entities follow the **Entity Registry Pattern (ERP) v2.0** directory layout (see §14 and `framework/artifact-registry-design.md §2`). Repositories that hold only repository-content artifacts use a simpler flat layout.
+
+**Architecture Repository** (`architecture-repository/`) — canonical layout per `framework/artifact-registry-design.md §2.1`:
+
+```
+architecture-repository/
+  model-entities/        # All ArchiMate entity files — grouped by layer/aspect
+    motivation/          # STK, DRV, GOL, REQ, CST, PRI, MEA, VAL, ASS, OUT
+      stakeholders/      # STK-001.md  STK-002.md  ...
+      drivers/           # DRV-001.md  ...
+      goals/             # GOL-001.md  ...
+      requirements/      # REQ-001.md  ...
+      constraints/       # CST-001.md  ...
+      principles/        # PRI-001.md  ...
+      <other-aspects>/   # assessments/, outcomes/, meanings/, values/
+    strategy/            # CAP, VS, RES, COA
+      capabilities/      # CAP-001.md  ...
+      value-streams/     # VS-001.md  ...
+    business/            # ACT, ROL, BPR, BFN, BSV, BEV, BOB, BIF, BCO
+      actors/            # ACT-001.md  ...
+      processes/         # BPR-001.md  ...
+      services/          # BSV-001.md  ...
+      <other-aspects>/   # roles/, functions/, events/, objects/, interfaces/, ...
+    application/         # APP, ASV, AIF, AFN, AEV, DOB, APR
+      components/        # APP-001.md  ...
+      interfaces/        # AIF-001.md  ...
+      services/          # ASV-001.md  ...
+      data-objects/      # DOB-001.md  ...
+      <other-aspects>/   # functions/, events/, processes/, collaborations/
+    implementation/      # WP, DEL, GAP, PLT
+      work-packages/     # WP-001.md  ...
+      gaps/              # GAP-001.md  ...
+      <other-aspects>/   # deliverables/, plateaus/, events/
+  connections/           # Connection files — sibling of model-entities/
+    archimate/<type>/    # realization/, serving/, assignment/, composition/, ...
+    er/<type>/           # one-to-many/, many-to-many/, one-to-one/
+    sequence/<type>/     # synchronous/, asynchronous/
+    activity/<type>/     # sequence-flow/
+    usecase/<type>/      # include/, extend/
+  diagram-catalog/       # Sibling of model-entities/ and connections/
+    _macros.puml         # Auto-generated from entity §display ###archimate blocks
+    _archimate-stereotypes.puml
+    diagrams/            # Produced engagement diagrams; each .puml begins with header comment frontmatter
+      phase-b-archimate-business-v1.puml
+      phase-c-class-er-v1.puml
+    templates/           # Blank per-type stubs; agents copy, rename, and adapt for new diagrams
+      archimate-business-template.puml
+      class-er-template.puml
+    rendered/            # *.svg outputs; committed at sprint boundary
+  decisions/             # ADR-nnn-<slug>.md
+  overview/              # Phase overview documents (av-overview.md, ba-overview.md, etc.)
+```
+
+**Technology Repository** (`technology-repository/`) — same `model-entities/` / `connections/` / `diagram-catalog/` layout; entity layer is `model-entities/technology/<aspect>/`. Also contains:
+
+```
+technology-repository/
+  model-entities/
+    technology/          # NOD, SSW, TSV, ARF entities
+      nodes/             # NOD-001.md  ...
+      system-software/   # SSW-001.md  ...
+      tech-services/     # TSV-001.md  ...
+      artifacts/         # ARF-001.md  ...
+  connections/
+  diagram-catalog/
+  decisions/             # ADR-nnn-<slug>.md (primary home for Phase D ADRs)
+  coding-standards/      # Coding standards documents (scanned by Step 0.S)
+  overview/
+```
+
+**Other repositories** — flat layout; no ERP entity directories:
 
 ```
 <repo>/
-  README.md              # Ownership declaration, scope, and access rules
-  <artifact-type>/       # One directory per artifact type (e.g. architecture-vision/)
-    <artifact-id>-<version>.md   # e.g. av-1.0.0.md
-  standards/             # Standards, catalogs, registers (where applicable)
-  sprint-log/            # Sprint records (project-repository only)
-  knowledge-base/        # Lessons learned, retrospectives (project-repository only)
+  README.md
+  <artifact-type>/       # One directory per artifact type
+    <artifact-id>-<version>.md
+  sprint-log/            # Sprint records (project-repository)
+  knowledge-base/        # Lessons learned (project-repository)
 ```
+
+Agent learning entries are stored at `agents/<role>/learnings/` in the framework directory — not inside any engagement work-repository. See `framework/learning-protocol.md §4`.
 
 ### 2.3 Path Rules
 
@@ -397,3 +468,30 @@ Each row in a skill's `## Inputs Required` table that names a prior artifact mus
 | Architecture Vision | `ARCH-VIS-001` | `work-repositories/architecture-repository/architecture-vision/` | Baselined at 1.0.0 |
 
 **Artifact-id assignment:** Artifact-ids are assigned at first draft by the owning agent following the pattern `<TYPE>-<SEQ>` where TYPE is a two-to-four letter abbreviation of the artifact type (e.g., `AV` for Architecture Vision, `BA` for Business Architecture, `SCO` for Safety Constraint Overlay) and SEQ is a zero-padded three-digit sequence within the engagement. The id is recorded in the artifact's frontmatter as `artifact-id:` at creation time and never changed thereafter, even when the artifact is versioned.
+
+
+---
+
+## 14. ERP Conventions Summary
+
+The Entity Registry Pattern (ERP) v2.0 governs all model-entity and model-connection storage in the architecture-repository and technology-repository. Key rules:
+
+| Concern | Rule |
+|---|---|
+| One file per instance | Every entity, connection, diagram, and diagram-template is its own file |
+| Frontmatter is the index | ModelRegistry is built by scanning frontmatter at startup; no separate `_index.yaml` or `index.yaml` files exist |
+| Entity grouping | All ArchiMate entity files live under `model-entities/<layer>/<aspect>/` |
+| Connections are siblings | `connections/` is a top-level sibling of `model-entities/`; typed by `connections/<diagram-language>/<connection-type>/` |
+| Diagrams are siblings | `diagram-catalog/` is a top-level sibling of `model-entities/` and `connections/`; produced diagrams in `diagrams/`, blank per-type stubs in `templates/` |
+| Diagram frontmatter | `.puml` files carry YAML frontmatter in a PUML header comment block (prefix `' `); parsed by ModelRegistry |
+| Entity files have no cross-references | All relational information lives in connection files; entity frontmatter has no `references:` field |
+| IDs are immutable | Assigned at creation; never reused even after deprecation |
+| Two ID scopes | Engagement artifact-ids are engagement-local; enterprise IDs are globally unique, assigned at promotion from `id-counters.yaml` |
+| Learning entries | Stored at `agents/<role>/learnings/` in the framework directory — not in any engagement work-repository |
+
+**Canonical references:**
+- Full entity/connection file format: `framework/artifact-schemas/entity-conventions.md`
+- Full directory structure: `framework/artifact-registry-design.md §2`
+- Diagram production protocol: `framework/diagram-conventions.md §5`
+- Diagram frontmatter spec: `framework/diagram-conventions.md §9`
+- ModelRegistry design and tool contracts: `framework/artifact-registry-design.md §6–§10`

@@ -170,22 +170,23 @@ Scan all registered target repositories. The set of registered repositories is d
 
 ### Layer 5 — EventStore State
 
-Read the current WorkflowState from the EventStore.
+The current `WorkflowState` is injected into each agent invocation via `deps.workflow_state` — no direct EventStore call is needed. This layer is a check against that already-available state.
 
-```python
-from src.events.event_store import EventStore
-es = EventStore(engagement_id="ENG-<id>")
-state = es.current_state()
+Check `deps.workflow_state` for:
+- `current_phase` — confirms the active ADM phase
+- `phase_visit_counts` — how many times each phase has been visited; `> 1` means revisit mode
+- `gate_outcomes` — which gates have passed; phases with a `passed` gate are effectively complete
+- `baselined_artifacts` — `{artifact_id: version}` map of all baselined artifacts; do not re-produce any artifact listed here unless in revisit scope
+- `open_cqs` — CQs already raised; avoid duplicating
+- `last_algedonic` — active algedonic signal if any; constrains current work scope
+
+To retrieve event payloads (CQ answer text, handoff content) not captured in the state object, use the `query_event_store` tool:
+
+```
+query_event_store(event_types=["cq.answered", "handoff.created"], phase=<current_phase>)
 ```
 
-Check:
-- `state.active_cycles` — current cycle level and phase
-- `state.gate_history` — which gates have passed; marks earlier phases as effectively complete
-- `state.artifact_registry` — which artifacts are baselined at which versions
-- `state.open_cqs` — CQs already raised; avoid duplicating
-- `state.open_algedonics` — active algedonic conditions that may constrain current work
-
-**Key rule:** If `artifact_registry` shows an artifact as baselined, do not re-produce it. Consume it via handoff event. If the artifact's version in the registry is older than the consuming task requires, raise a handoff event requesting the latest version.
+**Key rule:** If `baselined_artifacts` shows an artifact, do not re-produce it. Consume it via `read_artifact(artifact_id, mode="summary")`. If the version is older than required, raise a handoff event requesting the latest version.
 
 ---
 
@@ -294,24 +295,47 @@ Skills authored before this protocol was introduced are subject to the same requ
 
 **Applies to:** Any skill that produces or updates a diagram artifact.
 
-For skills producing diagram artifacts, the standard Discovery Scan (§2) must include an additional sub-step inserted **after** the five-layer scan (Step 0) and **before** CQ assessment:
+For skills producing diagram artifacts, the standard Discovery Scan (§2) must include an additional sub-step inserted **after** the five-layer scan and **before** CQ assessment:
 
 ### Step 0.D — Diagram Catalog Lookup
 
-> 1. Identify the relevant ontological layers for the current task. Reference:
->    - Business process or capability diagram → `elements/business/` and `processes/`
->    - Data model diagram → `elements/data/` and `connections/er-relationships.yaml`
->    - Application component or interaction diagram → `elements/application/` and `sequences/`
->    - Technology architecture diagram → `elements/technology/` and `connections/archimate.yaml`
->    - Motivation / architecture vision diagram → `elements/motivation/`
-> 2. Read the relevant sub-catalog YAML files from `architecture-repository/diagram-catalog/elements/<layer>/` — extract all entries whose name, type, or cross-reference fields match the current artifact domain. Use the `catalog_lookup(query, layer)` tool.
-> 3. Read the relevant `connections/` file(s) for known relationships between extracted elements.
-> 4. Annotate the working context: "Diagram catalog: N elements found relevant; IDs: [list]"
-> 5. When the artifact production step that includes the diagram is reached, execute the full diagram authoring sequence: **D1–D4** (catalog reuse/registration per `framework/diagram-conventions.md §5`) then **D5** (load PUML template via `read_framework_doc("framework/diagram-conventions.md §7.<type>")`, author PUML text, write via `write_artifact`, update `diagrams/index.yaml`) then **D6** (`validate_diagram` — fix and re-validate before emitting `artifact.produced`).
+Under ERP v2.0 there are no separate `elements/<layer>/` YAML catalog files. The ModelRegistry (populated from entity file frontmatter) IS the catalog. Use the following procedure:
 
-**Catalog bootstrap (if catalog does not yet exist):** SA creates the empty directory structure during Preliminary / Phase A. If an enterprise catalog is configured, SA runs the enterprise catalog import scan first — querying `enterprise-repository/diagram-catalog/` for elements relevant to the engagement scope and importing them into the engagement catalog with engagement-local IDs and `extends:` back-references. No diagram work begins until the engagement catalog bootstrap is complete.
+> 1. **Identify diagram scope from the skill step brief.** The specific skill step that triggers diagram production names the diagram type and purpose (e.g. "ArchiMate Business Architecture Overview", "ER data model", "Application Cooperation Viewpoint"). Use that description — not a generic heuristic — to determine which entity types and layers are in scope.
+>
+>    **ArchiMate diagrams span multiple layers.** A Motivation diagram includes `stakeholder`, `driver`, `goal`, `requirement`, `constraint`, `principle`. A Business Architecture Overview includes `capability`, `value-stream`, `business-actor`, `business-role`, `business-process`, `business-function`, `business-service`, `business-object`. An Application Cooperation Viewpoint includes `application-component`, `application-interface`, `application-service`, `application-function` — and often `business-service` and `data-object` at the adjacent layers. A Technology Viewpoint includes `technology-node`, `system-software`, `technology-service`, `artifact`. An integrated Architecture Overview can include entities from every layer simultaneously.
+>
+>    When the entity types are not fully determinable from the skill brief, use `search_artifacts` for concept-based discovery before falling back to `list_artifacts` by type:
+>    ```
+>    search_artifacts(query="<natural language description of the diagram subject>")
+>    ```
+>    This surfaces relevant entities regardless of type by querying the FTS5/semantic index.
+>
+> 2. **Query ModelRegistry for each entity type in scope:**
+>    ```
+>    list_artifacts(artifact_type="<type>", domain="<domain>", status=["draft","baselined"])
+>    ```
+>    Repeat per entity type. Review `§display ###<language>` coverage via `read_artifact(id, mode="summary")` to confirm each candidate belongs in this diagram.
+>
+> 3. **Query relevant connections:**
+>    ```
+>    list_connections(artifact_type="archimate-realization", target="<id>")
+>    list_connections(artifact_type="er-one-to-many", source="<id>")
+>    ```
+>    Use the `source` and `target` filter parameters to scope to entities found in step 2. For ArchiMate diagrams, query all connection types that join the selected entity pairs.
+>
+> 4. **Annotate working context:** "Diagram scope: N entities found; IDs: [list]. Connections: M found."
+>
+> 5. **When the diagram authoring step is reached,** execute the full **D1–D5 protocol** per `framework/diagram-conventions.md §5`:
+>    - D1 — query model entities and connections (as above)
+>    - D2 — verify `§display ###<language>` coverage; add missing subsections via `write_artifact`
+>    - D3 — author PUML from template (`read_framework_doc("framework/diagram-conventions.md §7.<type>")`), write via `write_artifact`, update `diagrams/index.yaml`
+>    - D4 — `validate_diagram(<puml-path>)`: fix errors; re-validate before proceeding
+>    - D5 — `render_diagram(<puml-path>)` at sprint boundary
 
-**Write authority:** SA is the sole writer to all files under `diagram-catalog/`. Non-SA agents draft element proposals via `catalog_propose(element_spec)` (emits a `diagram.catalog-proposal` handoff to SA). Non-SA agents write `.puml` files to their own work-repository `diagrams/` directories; SA integrates at phase transition via the same handoff channel.
+**Catalog bootstrap (Phase A):** SA creates the `diagram-catalog/` directory structure and runs `regenerate_macros()`. There is no entity import step — enterprise entities are already visible via the unified ModelRegistry. No diagram work begins until bootstrap is complete.
+
+**Write authority:** SA is the sole writer to all files under `diagram-catalog/`. Non-SA agents that need a `§display ###<language>` subsection added to an entity emit a `diagram.display-spec-request` handoff to SA rather than writing it directly. Non-SA agents write `.puml` files to their own work-repository `diagrams/` directories if applicable; SA integrates at phase transition.
 
 ---
 

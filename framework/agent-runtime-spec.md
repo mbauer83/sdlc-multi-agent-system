@@ -1,8 +1,8 @@
 # Agent Runtime Specification
 
-**Version:** 1.0.0  
+**Version:** 1.1.0  
 **Status:** Approved — Pre-Stage 5  
-**Last Updated:** 2026-04-02
+**Last Updated:** 2026-04-03
 
 ---
 
@@ -180,49 +180,93 @@ result = await sa_agent.run(
 
 ## 6. Tool Set Per Agent
 
-All tools are defined in `src/agents/tools/`. Each tool emits the appropriate EventStore event on use (e.g., `artifact.drafted` on first write, `source.queried` on external source read).
+All tools are defined in `src/agents/tools/`. Tool event emission is **tool-transparent** — tools emit the appropriate EventStore events internally; skill instructions do not need to mention event emission explicitly.
 
 ### 6.1 Universal Tools (all agents)
 
+#### Discovery and Read
+
 | Tool | Function signature | Description |
 |---|---|---|
-| `read_artifact` | `(path: str, mode: Literal["summary","full"]) → str` | Reads artifact from any work-repository (confidence-threshold protocol) |
-| `query_event_store` | `(event_type: str, limit: int = 20) → list[dict]` | Filters events from EventStore; read-only |
-| `emit_event` | `(event_type: str, payload: dict) → str` | Emits an event; validates against EventRegistry before insert |
-| `raise_cq` | `(question: str, target: str, blocking: bool, blocked_task: str) → str` | Raises a CQ; emits `cq.raised` |
-| `raise_algedonic` | `(trigger_id: str, detail: str, severity: int) → None` | Raises an algedonic signal; emits `alg.raised` |
-| `read_framework_doc` | `(doc_name: str) → str` | Reads any file from `framework/`; cached |
-| `read_skill` | `(skill_id: str) → str` | Reads another skill's instructions (cross-reference; rare) |
+| `read_artifact` | `(id_or_path: str, mode: Literal["summary","full"]) → str` | Resolves artifact-id → path via ModelRegistry; `summary` = frontmatter + first two §content sections (≈200–400 tokens); `full` = entire file. Log reason when using `full`. |
+| `list_artifacts` | `(**filter) → list[ArtifactRecord]` | Queries ModelRegistry in-memory frontmatter cache; returns metadata records without loading bodies. Supported filters: `artifact_type`, `status`, `domain`, `safety_relevant`, `phase_produced`, `engagement` (`"enterprise"` to scope to enterprise repo). **Primary discovery tool when artifact type is known.** |
+| `search_artifacts` | `(query: str, **filter) → list[tuple[ArtifactRecord, str]]` | Queries ModelRegistry FTS5 index over `§content` blocks; optional semantic tier when corpus ≥ 50 artifacts. Returns ranked `(record, snippet)` pairs. **Primary discovery tool when artifact type is uncertain or discovery is by concept.** Same metadata filters as `list_artifacts`. |
+| `list_connections` | `(source: str \| None, target: str \| None, artifact_type: str \| None) → list[ArtifactRecord]` | ModelRegistry query scoped to `connections/`; all params optional. Use to discover relationships between known entities. |
+| `query_event_store` | `(event_types: list[str], phase: str \| None, limit: int = 20) → list[dict]` | Filters events by type and optionally phase; read-only. Used in Layer 5 discovery to retrieve CQ answer payloads and handoff content. |
+
+#### Learning Tools
+
+| Tool | Function signature | Description |
+|---|---|---|
+| `query_learnings` | `(phase: str, artifact_type: str, domain: str \| None, expand_related: bool = True) → list[str]` | Retrieves top-5 correction texts from `LearningStore`. Applies metadata filter, graph expansion via `related` links, and optional semantic tier. Call as Step 0.L before any Discovery Scan. Governed by `framework/learning-protocol.md §9`. |
+| `record_learning` | `(entry: LearningEntry) → str` | Validates entry against schema (9 rules); assigns `<ROLE>-L-NNN` id; writes to `LearningStore` AND file; emits `learning.created`. Call in `## Feedback Loop` on feedback-triggered revision. Governed by `framework/learning-protocol.md §8`. |
+
+#### Interaction and Escalation
+
+| Tool | Function signature | Description |
+|---|---|---|
+| `raise_cq` | `(question: str, target: str, blocking: bool, blocked_task: str \| None) → str` | Raises a CQ; emits `cq.raised`. Only valid after Discovery Scan confirms information is unavailable. |
+| `raise_algedonic` | `(trigger_id: str, detail: str, severity: Literal[1,2,3]) → None` | Raises an algedonic signal; emits `alg.raised`. |
+
+#### Framework and Standards
+
+| Tool | Function signature | Description |
+|---|---|---|
+| `read_framework_doc` | `(doc_name: str) → str` | Reads any file from `framework/`; cached. Used to load skill templates, protocol references, PUML templates. |
+| `discover_standards` | `() → list[str]` | Reads all files from `technology-repository/coding-standards/` and `enterprise-repository/standards/`; returns contents. **SA, SwA, DE, DO only.** Step 0.S per `framework/discovery-protocol.md §9`. |
+| `list_target_repositories` | `() → list[dict]` | Reads `engagements-config.yaml`; returns all registered repos with `id`, `label`, `role`, `domain`, `primary`, `clone-path`. All agents. |
 
 ### 6.2 Write Tools (scoped to owned repository)
 
-Each agent's write tools are path-constrained to its `owns-repository` path. Write outside that path raises `RepositoryBoundaryError` and emits `ALG-007`.
+All agents use a single `write_artifact` interface. The implementation (`ArtifactReadWriterPort`) enforces the path constraint, validates ERP frontmatter and `§content`/`§display` structure on every write, and keeps ModelRegistry in sync synchronously. Writing outside the agent's owned repository path raises `RepositoryBoundaryError` and emits `ALG-007`.
 
-| Agent | Write tool | Writes to |
+| Tool | Function signature | Description |
 |---|---|---|
-| PM | `write_project_artifact` | `project-repository/` |
-| SA | `write_architecture_artifact` | `architecture-repository/` |
-| SwA | `write_technology_artifact` | `technology-repository/` |
-| DO | `write_devops_artifact` | `devops-repository/` |
-| DE | `write_delivery_metadata` | `delivery-repository/` (metadata only) |
-| QA | `write_qa_artifact` | `qa-repository/` |
+| `write_artifact` | `(path: str, content: str, *, upload_refs: list[str] \| None = None) → ArtifactRecord` | Writes entity/connection/overview/decision file. Validates ERP frontmatter + `§content`/`§display` structure. Auto-emits `artifact.created` (new file) or `artifact.updated` (existing file). Auto-extracts `source_evidence` from `[inferred: <source>]` annotations. Auto-emits `entity.confirmed` for reverse-arch skills. `upload_refs` links the written entity to user-uploaded files. |
 
-### 6.3 Target Project Repository Tools (DE and DO only)
+**Path constraints per agent** (enforced by `ArtifactReadWriterPort`):
+
+| Agent | Permitted write path |
+|---|---|
+| PM | `project-repository/` |
+| SA | `architecture-repository/` |
+| SwA | `technology-repository/` |
+| DO | `devops-repository/` |
+| DE | `delivery-repository/` (metadata only) |
+| QA | `qa-repository/` |
+| CSCO | `safety-repository/` |
+
+### 6.3 Target Project Repository Tools
+
+Multi-repo aware. `repo_id=None` defaults to primary repo in multi-repo engagements; mandatory for write operations.
 
 | Tool | Access | Description |
 |---|---|---|
-| `read_target_repo` | DE (read), DO (read), SwA (read for EP-G RAR) | Read any file from `engagements/<id>/target-repo/` |
-| `write_target_repo` | DE only | Write application code to target-repo feature branch |
-| `execute_pipeline` | DO only | Trigger deployment pipeline run; returns pipeline outcome |
+| `read_target_repo` | All agents (read) | Read any file from `engagements/<id>/target-repos/<repo-id>/`. `repo_id=None` → primary repo. |
+| `write_target_repo` | DE, DO only | Write to target-repo feature branch or IaC files. `repo_id` mandatory. |
+| `scan_target_repo` | All agents | Discovery Layer 4 per-repo scan; emits `source.scanned`. `repo_id=None` → primary. |
+| `execute_pipeline` | DO only | Trigger deployment pipeline run; returns outcome. |
+| `create_worktree` | DE, DO | Create an isolated git worktree for agent code changes per sprint. |
 
-### 6.4 PM-Only Orchestration Tools
+### 6.4 Diagram Tools (SA, SwA)
+
+| Tool | Function signature | Description |
+|---|---|---|
+| `regenerate_macros` | `(repo_path: str) → None` | Scans all entity `§display ###archimate` blocks via ModelRegistry; rewrites `_macros.puml`. Called automatically by `write_artifact` when an entity's archimate display spec changes. |
+| `generate_er_content` | `(entity_ids: list[str]) → str` | Reads each entity's `§display ###er` block; returns PUML class declarations for paste into ER diagram. |
+| `generate_er_relations` | `(connection_ids: list[str]) → str` | Reads each er-connection's `§display ###er` block; returns cardinality lines. |
+| `validate_diagram` | `(puml_file_path: str) → list[str]` | Checks all PUML aliases resolve to ModelRegistry entity-ids with appropriate `§display ###<language>` sections; confirms `!include _macros.puml` present; returns error list. ALG-C03 if alias has no backing entity — extend the model, do not remove the alias. |
+| `render_diagram` | `(puml_file_path: str) → Path` | Invokes local PlantUML CLI; writes SVG to `rendered/`. Run at sprint boundary. |
+
+### 6.5 PM-Only Orchestration Tools
 
 | Tool | Description |
 |---|---|
-| `invoke_specialist(agent_id, skill_id, task, deps)` | Runs a specialist PydanticAI agent (agent-as-tool); returns agent output and usage |
-| `batch_cqs(cq_ids)` | Collects open CQs and formats them for user presentation |
-| `evaluate_gate(gate_id)` | Checks gate hold conditions; emits `gate.evaluated`; returns pass/hold/escalate |
-| `record_decision(decision, rationale, raci_ref)` | Writes to `project-repository/decision-log/` |
+| `invoke_specialist(agent_id, skill_id, task)` | Runs a specialist PydanticAI agent (agent-as-tool); emits `specialist.invoked`; returns agent output. |
+| `batch_cqs(cq_ids)` | Collects open CQs; emits `cq.batched`; formats for user presentation. |
+| `evaluate_gate(gate_id, votes)` | Checks gate hold conditions; emits `gate.evaluated`; calls `create_snapshot("gate.evaluated")` on pass; returns pass/hold/escalate. |
+| `record_decision(rationale)` | Writes to `project-repository/decision-log/`; emits `decision.recorded`. |
+| `trigger_review()` | Surfaces sprint review; emits `review.pending`. |
 
 ---
 
@@ -231,28 +275,34 @@ Each agent's write tools are path-constrained to its `owns-repository` path. Wri
 The PM supervisor calls specialist agents using `invoke_specialist` — a PydanticAI tool that wraps a specialist `agent.run()` call. This is the primary coordination mechanism.
 
 ```python
-# src/agents/tools/invoke_specialist.py (schematic)
+# src/agents/tools/pm_tools.py (schematic)
 async def invoke_specialist(
     ctx: RunContext[AgentDeps],
-    agent_id: str,         # e.g. "SA"
-    skill_id: str,         # e.g. "SA-PHASE-A"
-    task: str,             # Natural language task description
+    agent_id: str,   # e.g. "SA"
+    skill_id: str,   # e.g. "SA-PHASE-A"
+    task: str,       # Natural language task description
 ) -> str:
     """
     Invoke a specialist agent for a specific skill task.
-    
-    Use this to delegate phase work to the accountable agent.
-    The specialist will execute its skill procedure and return a 
-    structured result summary. All EventStore events are emitted
-    by the specialist during execution.
+    Emits specialist.invoked before running; specialist.completed after.
+    All EventStore events are emitted by the specialist during execution.
     """
-    specialist_agent = AGENT_REGISTRY[agent_id]   # pre-built Agent instances
+    ctx.deps.event_store.record_event(WorkflowEvent(
+        event_type="specialist.invoked",
+        agent=agent_id, skill_id=skill_id, payload={"task": task},
+    ))
+    specialist_agent = AGENT_REGISTRY[agent_id]
+    state, _ = ctx.deps.event_store.replay_from_latest_snapshot()
     specialist_deps = AgentDeps(
         **asdict(ctx.deps),
         active_skill_id=skill_id,
-        workflow_state=ctx.deps.event_store.current_state(),
+        workflow_state=state,
     )
     result = await specialist_agent.run(task, deps=specialist_deps)
+    ctx.deps.event_store.record_event(WorkflowEvent(
+        event_type="specialist.completed",
+        agent=agent_id, skill_id=skill_id, payload={},
+    ))
     return result.data
 ```
 

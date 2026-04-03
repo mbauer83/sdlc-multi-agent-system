@@ -91,12 +91,12 @@ Call `query_learnings(agent="SwA", phase="D", artifact_type="technology-architec
 
 ---
 
-**Step 0.D — Diagram Catalog Lookup** *(insert before Step 1)*
+**Step 0.D — Model Entity Lookup** *(insert before Step 1)*
 
-Before authoring technology diagrams, scan the SA engagement catalog:
-1. Read `architecture-repository/diagram-catalog/elements/application/components.yaml` — extract CMP-nnn IDs for all application components in scope.
-2. Read `architecture-repository/diagram-catalog/elements/technology/` sub-catalogs (nodes.yaml, artifacts.yaml, services.yaml) — identify existing NOD-nnn, ART-nnn, TSV-nnn entries.
-3. Annotate working context: "Diagram catalog: N application components (CMP-nnn); M technology nodes (NOD-nnn) found relevant."
+Before authoring technology diagrams, query the model registries:
+1. Call `list_artifacts(artifact_type="application-component")` — extract APP-nnn IDs for all application components in scope from the SA engagement architecture-repository.
+2. Call `list_artifacts(artifact_type="technology-node")`, `list_artifacts(artifact_type="technology-service")`, and `list_artifacts(artifact_type="artifact")` from the technology-repository — identify existing NOD-nnn, TSV-nnn, ARF-nnn entries.
+3. Annotate working context: "Model registry: N application components (APP-nnn); M technology nodes (NOD-nnn) found relevant."
 
 
 ### Step 1 — Read and Validate Inputs
@@ -158,12 +158,13 @@ Before authoring technology diagrams, scan the SA engagement catalog:
 
 **Diagram Step D — Class/ER Technology Domain Model**
 
-Execute D1–D6 per `framework/diagram-conventions.md §5–5c`:
-- **D1–D4:** For each technology component (TC-nnn) defined in this step, verify or register entries in `architecture-repository/diagram-catalog/elements/technology/` (nodes.yaml or services.yaml as appropriate). Cross-reference CMP-nnn application component IDs from the SA engagement catalog.
-- **D5a:** Load PUML template `framework/diagram-conventions.md §7.class-er`. Author a domain model Class/ER diagram: TC-nnn and DE-nnn entities with CMP-nnn cross-references; technology component attributes; FK and assignment markers. Write to `technology-repository/diagrams/d-er-technology-domain-model-v1.puml`. Update or create `technology-repository/diagrams/index.yaml`.
-- **D6:** Call `validate_diagram`; fix errors; re-validate before proceeding.
+Execute D1–D4 per `framework/diagram-conventions.md §5`:
+- **D1:** Call `list_artifacts(artifact_type="technology-node")` and `list_artifacts(artifact_type="technology-service")` for technology entities. Call `list_artifacts(artifact_type="application-component")` (SA engagement repo) for cross-reference APP-nnn entities. Use `search_artifacts` for data objects (DOB-nnn) that technology components store.
+- **D2:** For each entity that will appear in the diagram, verify its `§display ###er` subsection exists. Add missing subsections via `write_artifact`; run `regenerate_macros()`.
+- **D3:** Load template via `read_framework_doc("framework/diagram-conventions.md §7.class-er")`. Call `generate_er_content(entity_ids)` and `generate_er_relations(connection_ids)` to produce PUML class blocks. Include required frontmatter comment block. Write to `technology-repository/diagram-catalog/diagrams/d-er-technology-domain-model-v1.puml` via `write_artifact`.
+- **D4:** Call `validate_diagram`; fix errors; re-validate before proceeding.
 
-*Note: SwA writes to `technology-repository/diagrams/`; SA integrates via `diagram.catalog-proposal` handoff at phase transition.*
+*Note: SwA writes to `technology-repository/diagram-catalog/diagrams/`; SA integrates via `diagram.catalog-proposal` handoff at phase transition.*
 
 
 ### Step 5 — Author Architecture Decision Records (ADR Register)
@@ -226,12 +227,13 @@ Execute D1–D6 per `framework/diagram-conventions.md §5–5c`:
 
 **Diagram Step D — ArchiMate Technology Architecture Diagram**
 
-Execute D1–D6 per `framework/diagram-conventions.md §5–5c`:
-- **D1–D4:** Scan `architecture-repository/diagram-catalog/elements/technology/` (nodes.yaml NOD-nnn, services.yaml TSV-nnn, artifacts.yaml ART-nnn). Import or verify enterprise technology elements where applicable. Register new elements for project-specific nodes and services.
-- **D5a:** Load PUML template `framework/diagram-conventions.md §7.archimate-technology`. Author the technology architecture diagram: NOD-nnn nodes, TSV-nnn services, ART-nnn artifacts, with CMP-nnn application component assignments from SA catalog. Write to `technology-repository/diagrams/d-archimate-technology-v1.puml`. Update `technology-repository/diagrams/index.yaml`.
-- **D6:** Call `validate_diagram`; fix errors; re-validate before proceeding.
+Execute D1–D4 per `framework/diagram-conventions.md §5`:
+- **D1:** Call `list_artifacts(artifact_type="technology-node")`, `list_artifacts(artifact_type="technology-service")`, and `list_artifacts(artifact_type="artifact")` to identify technology entities. Call `list_artifacts(artifact_type="application-component")` (SA engagement repo) for APP-nnn assignment relationships. Use `search_artifacts` to locate any enterprise technology standard entities that should appear.
+- **D2:** For each entity that will appear in the diagram, verify its `§display ###archimate` subsection exists. Add missing subsections via `write_artifact`; run `regenerate_macros()`.
+- **D3:** Load template via `read_framework_doc("framework/diagram-conventions.md §7.archimate-technology")`. Author the technology architecture diagram with entity artifact-ids as PUML aliases; include application component assignments. Include required frontmatter comment block. Write to `technology-repository/diagram-catalog/diagrams/d-archimate-technology-v1.puml` via `write_artifact`.
+- **D4:** Call `validate_diagram`; fix errors; re-validate before proceeding.
 
-*Note: SwA writes to `technology-repository/diagrams/`; SA integrates via `diagram.catalog-proposal` handoff at phase transition.*
+*Note: SwA writes to `technology-repository/diagram-catalog/diagrams/`; SA integrates via `diagram.catalog-proposal` handoff at phase transition.*
 
 
 ### Step 9 — Author Technology Standards Catalog

@@ -477,18 +477,22 @@ Implemented alongside other `universal_tools.py` additions in Stage 5b:
 - [x] `framework/diagram-conventions.md` v2.0.0 — model-driven diagram production: no separate `elements/` catalog directory; `_macros.puml` generated from entity `§display ###archimate` blocks; artifact-ids as PUML aliases; D1–D5 production protocol (query ModelRegistry → verify §display coverage → author PUML → validate → render); `generate_er_content`/`generate_er_relations` tools for ER diagrams; diagram index format (§9); PUML templates updated for all diagram types
 - [x] **Diagram referencing design** (§4.1, §9): existing enterprise and prior-engagement diagrams are referenced in-place via `entry_type: reference` entries in `diagrams/index.yaml` — never copied; `render_diagram` on a reference entry renders the source `.puml` at its original path; engagement bootstrap creates catalog structure + runs `regenerate_macros()` only, no entity import; `promote_diagram` moves (not copies) promoted diagrams to enterprise path
 
-#### 4.8d — Artifact Schema and Framework Doc Updates (Pending — pre-Stage-5)
+#### 4.8d — Artifact Schema and Framework Doc Updates (Complete — 2026-04-03)
 
-The domain artifact schemas and cross-cutting framework docs need updating to align with the new ERP design.
+The domain artifact schemas and cross-cutting framework docs updated to align with the ERP v2.0 design.
 
-- [ ] `framework/artifact-schemas/business-architecture.schema.md` — refactor to ArchiMate-layer entity-type registry; remove `_index.yaml` references; update output paths to `motivation/`, `strategy/`, `business/`
-- [ ] `framework/artifact-schemas/application-architecture.schema.md` — refactor; update paths to `application/`
-- [ ] `framework/artifact-schemas/data-architecture.schema.md` — refactor; `data-object` entities in `application/data-objects/`; ER connections in `connections/er/`
-- [ ] `framework/artifact-schemas/technology-architecture.schema.md` — refactor; paths to `technology/`; connections in `technology-repository/connections/`
-- [ ] `framework/repository-conventions.md` — update §2.2 directory layout; add §14 ERP conventions summary
-- [ ] `framework/discovery-protocol.md` — update Layers 1 and 2 to use `list_artifacts(**filter)` and `search_artifacts(query)` tool calls (not directory walks); update diagram discovery to D1–D5 protocol; clarify situative-only Layer 3
-- [ ] `framework/agent-runtime-spec.md §6` — update all tool specs: `write_artifact` (§content/§display validation, ModelRegistry update, reference resolution for connections); `list_artifacts`/`list_connections` (ModelRegistry queries); `regenerate_macros`; `generate_er_content`; `generate_er_relations`; `validate_diagram` (alias→ModelRegistry check)
-- [ ] Retroactive skill file update: skills producing entity artifacts must use new ERP paths and file format. **Script-based** (grep/sed, not parallel agents).
+- [x] `framework/artifact-schemas/business-architecture.schema.md` — v2.0.0: refactored to ERP entity-file output; entity paths under `model-entities/` grouping; §display requirements; connections table; ba-overview.md spec
+- [x] `framework/artifact-schemas/application-architecture.schema.md` — v2.0.0: refactored; entity paths under `application/`; technology-independence constraint; connections table
+- [x] `framework/artifact-schemas/data-architecture.schema.md` — v2.0.0: refactored; DOB entities in `application/data-objects/`; `§display ###er` requirement; ER connections in `connections/er/`
+- [x] `framework/artifact-schemas/technology-architecture.schema.md` — v2.0.0: refactored; paths to `model-entities/technology/`; connections in `technology-repository/connections/`
+- [x] `framework/repository-conventions.md` — v1.3.0: §2.2 rewritten with `model-entities/` grouping, `diagram-catalog/diagrams/` + `templates/`, no `index.yaml`; §14 ERP Conventions Summary (10 rules)
+- [x] `framework/discovery-protocol.md` — Layer 5 updated to `deps.workflow_state`/`WorkflowState`; §8 Step 0.D rewritten to use `list_artifacts`, `list_connections`, `search_artifacts`; D1–D6 → D1–D5; multi-layer ArchiMate examples added
+- [x] `framework/agent-runtime-spec.md §6` — v1.1.0: §6.1–6.5 rewritten; discovery/read/learning/interaction/framework tool groups; `write_artifact` with ERP validation; §6.4 new diagram tools (`regenerate_macros`, `generate_er_content`, `generate_er_relations`, `validate_diagram`, `render_diagram`)
+- [x] `framework/diagram-conventions.md` — v2.1.0: `index.yaml` removed; `diagrams/` + `templates/` structure; PUML header comment frontmatter spec (§9); D3d updated; D5 "user-facing output only"; "Reading vs. rendering" section
+- [x] `framework/artifact-registry-design.md` — v2.1.0: `model-entities/` + `connections/` + `diagram-catalog/` sibling layout; `templates/`; §2.3 technology repo note; §2.4 diagram frontmatter; `learning-entry` path fix
+- [x] Retroactive skill file diagram step updates: SA `phase-b.md` (3 steps), `phase-c-application.md` (2 steps), `phase-c-data.md` (1 step); SwA `phase-d.md` (Step 0.D + 2 steps), `phase-e.md` (1 step) — all updated to D1–D4 protocol with `list_artifacts`/`search_artifacts`, no `index.yaml`, `diagram-catalog/diagrams/` paths
+- [x] SwA `AGENT.md` §1, §3, §12, `system-prompt-identity` updated: cross-layer diagram scope clarified; ERP v2.0 repository paths; Stage 4.8h forward-reference added
+- [x] `CLAUDE.md` repository layout updated: `model-entities/` grouping, `templates/`, no `index.yaml` in enterprise and engagement repos; rule 16 updated
 
 #### 4.8e — CLAUDE.md Authoring Rules (Complete)
 
@@ -504,7 +508,131 @@ The domain artifact schemas and cross-cutting framework docs need updating to al
 
 ---
 
-### Stage 4.9 — ENG-001 Architecture Model (Pending — pre-Stage-5)
+### Stage 4.8h — SA/SwA Role Boundary Refactoring (Design Review + Rework — pre-Stage-4.9)
+
+> **Trigger:** During Stage 4.8d diagram-step alignment, it became clear that the current SA/SwA boundary places Phase C (Application + Data Architecture) under SA primary, while SwA also inevitably produces application-layer and data-layer diagrams (sequence, ER, activity) as part of Phase D/E. The two roles produce the same diagram types in adjacent phases, with no clean boundary — a structural conflict, not a convention gap.
+
+#### Problem Statement
+
+The current model:
+
+| Agent | Primary Phases | Consulting |
+|---|---|---|
+| SA (Solution Architect) | A, B, **C**, H | D, E |
+| SwA (Software Architect / PE) | D, E, F, G | **C** |
+
+Phase C produces Application Architecture (APP, IFC, ASV entities; interaction diagrams; sequence diagrams) and Data Architecture (DOB entities; ER/class diagrams). Both artifact types are system-design artifacts, not business-design artifacts. Yet they are owned by the SA — whose primary collaborators are PO (requirements) and SM (market/business drivers) and whose primary domain is the business layer (Phases A/B).
+
+Consequences of the current boundary:
+1. **Diagram type collision**: SA produces sequence and ER diagrams in Phase C; SwA produces sequence and ER diagrams in Phase D/E. The same diagram types appear in both roles with overlapping subjects (application components, interfaces, data objects). There is no principled reason to split them across two agents.
+2. **SwA is a consumer of artifacts it has no authoring authority over**: SwA must make AA and DA technically feasible (Phase D), yet cannot revise them — only return feedback to SA. This creates a feedback loop that should be a single integrated design process.
+3. **SA does two cognitively distinct jobs**: Phases A/B require stakeholder engagement, business-domain reasoning, and collaboration with PO/SM. Phase C requires system-design reasoning and close iteration with SwA on implementation feasibility. These are different disciplines that pull the SA in opposite directions.
+4. **`technology-repository` scope is ambiguous**: SwA's work-repository is named for the ArchiMate technology layer but already holds cross-layer implementation artifacts. The naming creates false constraints on SwA's diagram scope.
+
+#### Proposed Model
+
+Architecture work splits into three collaboration zones, not two:
+
+| Zone | ArchiMate Layers | Primary | Active Collaborators |
+|---|---|---|---|
+| Business-layer architecture (Phases A, B) | Motivation, Strategy, Business | SA | PO, SM, CSCO |
+| Application + data architecture (Phase C) | Application, Data | **SwA** | SA (business traceability) |
+| Technology / infrastructure (Phase D) | Technology | **SwA** | DO (operational feasibility) |
+
+**SA (Solution Architect)** — owns the full ArchiMate **Motivation, Strategy, and Business layers**. This is not limited to strategic overviews: SA produces the complete business-layer architecture including business objects and their relations, business processes, business functions, business events, business services, business interfaces, business collaborations, business actors, business roles, and representations — in addition to motivation entities (stakeholders, drivers, goals, requirements, constraints, principles) and strategy entities (capabilities, value streams). SA works with PO (requirements) and SM (market/business drivers) as primary collaborators. SA provides business-layer context and traceability validation during Phase C as an active collaborating partner. SA owns Phase H from the business-layer impact perspective.
+
+**SwA (Software Architect / Principal Engineer)** — owns the full ArchiMate **Application and Technology layers**. Covers two adjacent collaboration zones: (1) *application and data architecture* (Phase C) — worked out with SA, who supplies the business-layer model that the application layer must realise; (2) *technology and infrastructure* (Phase D) — worked out with DO, who validates operational feasibility and implementation constraints. SwA governs the full implementation stream (Phases E–G) and provides technical feasibility input during Phase B as a consulting partner.
+
+**The ArchiMate layer boundary is the role boundary:** SA is accountable for every ArchiMate entity at or above the Business layer; SwA is accountable for every ArchiMate entity at or below the Application layer. Phase C is the handoff point — SA's business-layer model (BPR-nnn, BOB-nnn, BSV-nnn, ACT-nnn, etc.) is the primary input SwA uses to derive application components, interfaces, and data objects.
+
+The current model's error is placing Phase C under SA primary. SA's expertise and collaborator network are business-layer-focused; Phase C requires system-design reasoning. Phase C should be SwA primary, with SA as an active partner ensuring application/data architecture correctly realises the business layer.
+
+#### Open Design Decisions (resolve before implementation)
+
+These must be decided before any file changes are made — they have wide-ranging impact on repository layout and agent permissions:
+
+1. **Repository ownership for Phase C entities** (most consequential decision): APP-nnn, IFC-nnn, ASV-nnn, DOB-nnn currently live in `architecture-repository/` (SA-owned). Under the new model they are primary-authored by SwA. Options:
+   - **Option A — Co-authorship**: `architecture-repository/` stays SA-owned; SwA is granted write access to `architecture-repository/model-entities/application/` and `architecture-repository/model-entities/data/` subdirectories under a defined tenant model. SA approves Phase C work via review handoff, not direct write prevention.
+   - **Option B — Repository split**: SA owns `architecture-repository/` (motivation, strategy, business layers only). SwA owns a new `solution-repository/` (application and data layers). Technology-layer entities stay in `technology-repository/`.
+   - **Option C — Repository rename**: Rename `technology-repository/` to `solution-repository/` or `design-repository/`. SwA owns application + data + technology layers in one repo.
+   - **Option D — Unified architecture repo, SwA primary**: `architecture-repository/` becomes co-owned; SA is custodian for motivation/strategy/business; SwA is custodian for application/data. Technology-repository stays unchanged.
+   - **Recommendation**: Option D preserves the single-repo structure for all ArchiMate model entities (motivation through application/data), avoids a renaming cascade, and makes the handoff model explicit. Ownership governance changes; file layout does not.
+
+2. **Phase H split**: Should SA handle the full Change Record (as currently), or should the Phase H skill be split so SA covers business-layer impact and SwA covers application/data/technology impact? This is a significant skill authoring change.
+
+3. **SwA display-name and invoke-when**: Current "Software Architect / Principal Engineer" is compatible with expanded Phase C scope. No rename needed. `invoke-when` needs updating to include Phase C trigger conditions.
+
+4. **CSCO Phase C gate**: Currently coordinates with SA for Phase C review. Under new model, coordinates with SwA instead. Minor adjustment to `gate-phase-c.md`.
+
+#### Affected Files (complete rework list)
+
+Every file in this list requires review and likely modification. Do not attempt partial updates — the change is load-bearing.
+
+**Framework:**
+- `framework/raci-matrix.md` — Phase C ownership (SA → SwA primary; SA → consulting); Phase B (add SwA consulting)
+- `framework/agile-adm-cadence.md` — Phase C primary agent; Phase D "inputs" (no longer from SA); Phase B consulting updated
+- `framework/agent-index.md` — SA and SwA routing entries, phase lists, invoke-when descriptions
+- `framework/repository-conventions.md §2.2` — Phase C entity paths and ownership (depends on Option A–D decision)
+- `framework/artifact-registry-design.md §4.x` — owner annotations on application/data-layer entity type tables
+- `framework/discovery-protocol.md` — SA and SwA Layer 1 scan priorities
+- `framework/sdlc-entry-points.md` — EP-C entry point (currently SA-primary)
+
+**Artifact Schemas:**
+- `framework/artifact-schemas/application-architecture.schema.md` — **Owner** field: SA → SwA; consumed-by updated
+- `framework/artifact-schemas/data-architecture.schema.md` — **Owner** field: SA → SwA; consumed-by updated
+- `framework/artifact-schemas/business-architecture.schema.md` — consumed-by updated (SwA replaces SA for Phase C handoff receipt)
+
+**Agent files — SA:**
+- `agents/solution-architect/AGENT.md` — mandate clarified as full Business-layer architect (Motivation + Strategy + Business ArchiMate layers: actors, roles, collaborations, interfaces, processes, functions, events, services, objects, representations — not just strategic overviews); phase coverage updated; entry-point behaviour EP-C removed or changed to consulting; §11 tensions updated
+- `agents/solution-architect/skills/phase-c-application.md` — RETIRE (or convert to a narrow SA-consulting skill: verify AA traces to BA — business objects realised by application components, business services realised by application services, etc.)
+- `agents/solution-architect/skills/phase-c-data.md` — RETIRE (or convert to a narrow SA-consulting skill: verify DA traces to BA — business objects → data objects)
+- `agents/solution-architect/skills/phase-a.md` — update scope reference; minor
+- `agents/solution-architect/skills/phase-b.md` — update handoff target (Phase B Business Architecture now hands off to SwA for Phase C, not loops to SA Phase C); confirm that Phase B already covers the full Business Layer (currently it does: ACT, ROL, BPR, BSV, BOB — verify completeness against ArchiMate Business Layer element catalogue)
+- `agents/solution-architect/skills/phase-h.md` — scope to business/motivation/strategy impact only; SwA handles application/technology impact assessment (Phase H split)
+
+**Agent files — SwA:**
+- `agents/software-architect/AGENT.md` — mandate (add Phase C primary), phase coverage table, repository ownership, system-prompt-identity, entry-point behaviour EP-C added, §11 tensions updated
+- NEW: `agents/software-architect/skills/phase-c-application.md` — primary skill; full AA production (app components, interfaces, services, interaction diagrams, sequence diagrams)
+- NEW: `agents/software-architect/skills/phase-c-data.md` — primary skill; full DA production (data entities, ER diagrams, data flow diagrams, classification register)
+- `agents/software-architect/skills/phase-d.md` — update inputs section (AA and DA are now own-produced, not SA handoffs; validate for consistency not feasibility); Step 0 updated
+- `agents/software-architect/skills/phase-e.md` — minor update
+- `agents/software-architect/skills/reverse-architecture-ta.md` — may need expansion to cover Phase C reverse (application layer reconstruction)
+
+**Agent files — CSCO:**
+- `agents/csco/skills/gate-phase-c.md` — coordination partner changes from SA to SwA
+
+**Root files:**
+- `CLAUDE.md` — repository layout, agent phase tables, authoring rules referencing Phase C ownership
+- `specs/IMPLEMENTATION_PLAN.md` — agent roles table (line 46–47), repository ownership table (line 60–61), stage table in CLAUDE.md
+
+#### Dependencies and Sequencing
+
+- **Must complete before Stage 4.9**: Stage 4.9 produces ENG-001 entity files using current SA Phase C entities authored by SA. These would be wrong under the new model.
+- **Must complete before Stage 5**: Python agent construction (`src/agents/`) hard-codes phase trigger routing based on AGENT.md frontmatter. Getting the phase assignments wrong here means the orchestration graph routes phases to the wrong agents.
+- **Design decisions (§Open Design Decisions) must be resolved in a focused review session before any file changes begin.** The repository ownership decision (Option A–D) in particular has cascading effects on `repository-conventions.md`, all agent write-path constraints, and the Python `RegistryReadOnlyError` path enforcement.
+
+#### Checklist
+
+- [ ] Resolve Open Design Decisions (user/architect review session)
+- [ ] Update `framework/raci-matrix.md`
+- [ ] Update `framework/agile-adm-cadence.md`
+- [ ] Update artifact schemas (AA, DA, BA owner/consumed-by)
+- [ ] Rewrite `agents/solution-architect/AGENT.md`
+- [ ] Retire or convert `agents/solution-architect/skills/phase-c-application.md` and `phase-c-data.md`
+- [ ] Update remaining SA skill files
+- [ ] Rewrite `agents/software-architect/AGENT.md`
+- [ ] Author NEW `agents/software-architect/skills/phase-c-application.md`
+- [ ] Author NEW `agents/software-architect/skills/phase-c-data.md`
+- [ ] Update SwA Phase D/E skill files
+- [ ] Update `agents/csco/skills/gate-phase-c.md`
+- [ ] Update `framework/agent-index.md`
+- [ ] Update `framework/repository-conventions.md`, `artifact-registry-design.md`, `discovery-protocol.md`
+- [ ] Update `CLAUDE.md` and `specs/IMPLEMENTATION_PLAN.md` tables
+- [ ] Commit as `stage-4-sa-swa-role-refactor`
+
+---
+
+### Stage 4.9 — ENG-001 Architecture Model (Pending — blocked on Stage 4.8h)
 
 > **Primary purpose: the implementation specification for Stage 5.** The SDLC multi-agent system is modelled as a first-class ERP v2.0 architecture engagement. Entity files, connection files, and diagrams produced here are the definitive architectural plans for all Stage 5 `src/` work. Developers implement one APP entity at a time; Pydantic models in `src/models/` are derived from DOB attribute tables; the LangGraph topology follows the activity diagram. When Stage 5 diverges from these artifacts, the artifacts are updated first. Secondary purpose: integration test fixture for Stage 6.
 >
@@ -1170,13 +1298,15 @@ sprint-review:
 
 ## Current State & Immediate Next Actions
 
-**Stages 1–4.8f complete.** Remaining pre-Stage-5 work: Stage 4.8d (schema/framework ERP alignment), Stage 4.8g (skill/agent alignment audit), Stage 4.9 (ENG-001 reference model). Stage 5 is the main target.
+**Stages 1–4.8f complete. Stage 4.8d in progress (near-complete).** Remaining pre-Stage-5 work: Stage 4.8d finalisation, Stage 4.8g (skill/agent alignment audit), **Stage 4.8h (SA/SwA role boundary refactoring — design review + rework)**, Stage 4.9 (ENG-001 reference model), Stage 5.
 
-### Resume at: Stage 4.8d → Stage 4.8g → Stage 4.9 → Stage 5
+### Resume at: Stage 4.8d → Stage 4.8g → **Stage 4.8h** → Stage 4.9 → Stage 5
 
-**Stage 4.8d** — ERP v2.0 alignment for domain artifact schemas and framework cross-cutting docs. Updates four artifact schemas (BA, AA, DA, TA) and three framework docs (repository-conventions.md, discovery-protocol.md, agent-runtime-spec.md §6). Retroactive skill file patches are script-based.
+**Stage 4.8d** — ERP v2.0 alignment for domain artifact schemas and framework cross-cutting docs. Updates four artifact schemas (BA, AA, DA, TA) and three framework docs (repository-conventions.md, discovery-protocol.md, agent-runtime-spec.md §6). Retroactive skill file diagram step updates (SA phase-b/c, SwA phase-d/e). Near-complete.
 
-**Stage 4.9** — ENG-001 reference model: entity files, connection files, `_macros.puml`, four PUML diagrams, `diagrams/index.yaml`. Documents the SDLC system itself. Serves as integration test fixture.
+**Stage 4.8h** — SA/SwA role boundary refactoring. **Must precede Stage 4.9**: Stage 4.9 creates ENG-001 entity files that embed the current (incorrect) role model. See Stage 4.8h section above for full problem statement, proposed model, open design decisions, and complete rework checklist.
+
+**Stage 4.9** — ENG-001 reference model: entity files, connection files, `_macros.puml`, four PUML diagrams. Documents the SDLC system itself. Serves as integration test fixture. **Blocked on Stage 4.8h**: entity ownership annotations and Phase C attribution must reflect the refactored model.
 
 **Stage 5** — Python implementation. Read `framework/agent-runtime-spec.md` and `framework/orchestration-topology.md` before authoring any `src/` file. Begin with Stage 5a (EventStore completion), then 5b (agent layer). Key implementation dependencies:
 - `src/sources/target_repo.py` implements `TargetRepoManager` (multi-repo aware; see Stage 5d)

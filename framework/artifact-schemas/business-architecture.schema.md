@@ -1,15 +1,17 @@
 # Schema: Business Architecture (`BA`)
 
-**Version:** 1.0.0  
-**ADM Phase:** B  
-**Owner:** Solution Architect  
-**Consumed by:** Application Architecture (AA), Data Architecture (DA), Safety Constraint Overlay (SCO update), Implementation Plan (IP)  
+**Version:** 2.0.0
+**ADM Phase:** B
+**Owner:** Solution Architect
+**Consumed by:** Application Architecture (AA), Data Architecture (DA), Safety Constraint Overlay (SCO update), Implementation Plan (IP)
 
 ---
 
 ## 1. Purpose
 
-The Business Architecture elaborates the capability map introduced in the Architecture Vision into a detailed model of business capabilities, processes, value streams, and organisational structure. It establishes the functional and motivational ABBs that constrain all information systems and technology decisions in subsequent phases. It is the primary input to Phase C and to the CSCO's business-level safety constraint analysis.
+The Business Architecture elaborates the capability map introduced in the Architecture Vision into a detailed model of business capabilities, processes, value streams, and organisational structure. It establishes the functional and motivational entities that constrain all information systems and technology decisions in subsequent phases. It is the primary input to Phase C and to the CSCO's business-level safety constraint analysis.
+
+Under ERP v2.0 the Business Architecture is **not a single file**. It is the set of entity and connection files produced in the architecture-repository during Phase B, each conforming to `framework/artifact-schemas/entity-conventions.md`. An overview document (`overview/ba-overview.md`) narrates the whole and provides the cross-phase handoff summary.
 
 ---
 
@@ -24,125 +26,102 @@ The Business Architecture elaborates the capability map introduced in the Archit
 
 ---
 
-## 3. Required Sections
+## 3. ERP Entity Output
 
-### 3.1 Summary Header
-- `artifact-type: business-architecture`
-- `safety-relevant: true` (always — safety constraints at business level defined here)
-- `csco-sign-off: true` (always required)
+Phase B produces entity files across three ArchiMate layers. All files follow the universal frontmatter and `§content`/`§display` structure in `framework/artifact-schemas/entity-conventions.md`.
 
-### 3.2 Business Capability Map
+### 3.1 Motivation Layer Entities — `architecture-repository/motivation/`
 
-The primary deliverable of Phase B. Structured as a two-level hierarchy:
+These entities carry over or are refined from Phase A. SA produces or updates them.
 
-**Level 1 — Capability Domains** (3–7): High-level groupings aligned with the capability clusters from the Architecture Vision.
-
-**Level 2 — Capabilities** (per domain): Specific, named capabilities with the following attributes per capability:
-
-| Capability ID | Name | Domain | Description | Strategic Classification | Maturity Level | Gap |
-|---|---|---|---|---|---|---|
-| CAP-nnn | | | | Core / Supporting / Commodity | Current / Developing / Target | Yes / No |
-
-ArchiMate viewpoint: **Capability Map Viewpoint**.
-
-### 3.3 Business Process Catalog
-
-For each in-scope business process:
-
-| Process ID | Name | Owning Capability | Description | Triggering Event | Outcome | Safety-Relevant |
-|---|---|---|---|---|---|---|
-| BPR-nnn | | CAP-nnn | | | | Yes / No |
-
-Safety-relevant processes must be flagged and will be incorporated into the CSCO's STAMP control structure.
-
-### 3.4 Business Function / Process Matrix
-
-A matrix showing which capabilities are realised by which processes:
-
-| | BPR-001 | BPR-002 | ... |
+| Prefix | artifact-type | Directory | §content Required Sections |
 |---|---|---|---|
-| **CAP-001** | ● | — | |
-| **CAP-002** | ○ | ● | |
+| `STK-nnn` | `stakeholder` | `motivation/stakeholders/` | Name; Role (user/consumer/regulator/sponsor); Concerns; Influence; Safety Relevance |
+| `DRV-nnn` | `driver` | `motivation/drivers/` | Name; Statement; Category (market/regulatory/technical/safety); Urgency |
+| `GOL-nnn` | `goal` | `motivation/goals/` | Name; Statement; Stakeholder (`STK-nnn`); Realised By (`CAP-nnn`) |
+| `REQ-nnn` | `requirement` | `motivation/requirements/` | Name; Statement; Type (Functional/Non-Functional/Constraint/Safety); Source (`STK-nnn`/`DRV-nnn`) |
+| `CST-nnn` | `constraint` | `motivation/constraints/` | Name; Statement; Type (Business/Regulatory/Technical/Safety); Imposed By |
+| `PRI-nnn` | `principle` | `motivation/principles/` | Name; Statement; Rationale; Implications |
 
-Symbols: ● = primary realisation; ○ = contributing; — = no relationship.
+Every `REQ-nnn` produced in Phase A is reviewed for completeness before Phase B begins. New requirements uncovered in Phase B are added here.
 
-### 3.5 Value Stream Map
+### 3.2 Strategy Layer Entities — `architecture-repository/strategy/`
 
-For each primary value stream in scope:
+| Prefix | artifact-type | Directory | §content Required Sections |
+|---|---|---|---|
+| `CAP-nnn` | `capability` | `strategy/capabilities/` | Name; Description (what the business *has the ability to do*); Domain (Level-1 cluster); Strategic Classification (Core/Supporting/Commodity); Maturity Level (Current/Developing/Target); Gap (Yes/No); Traceable To (`DRV-nnn`) |
+| `VS-nnn` | `value-stream` | `strategy/value-streams/` | Name; Triggering Stakeholder (`STK-nnn`); Value Delivered; Key Processes (ordered `BPR-nnn` list); Metrics |
 
-| Value Stream ID | Name | Triggering Stakeholder | Value Delivered | Key Processes (ordered) | Metrics |
-|---|---|---|---|---|---|
-| VS-nnn | | STK-nnn | | BPR-nnn, ... | |
+**Level 1 / Level 2 capability hierarchy:** Level-1 domains are modelled as `CAP-nnn` entries with `strategic-classification: domain`; Level-2 capabilities are `CAP-nnn` entries with a `parent-domain:` field naming the Level-1 domain. This is recorded in the entity's `§content` properties table; no separate index file is required.
 
-ArchiMate viewpoint: **Business Process Cooperation Viewpoint** (showing cross-process interactions within a value stream).
+**Traceability constraint:** Every `CAP-nnn` must reference at least one `DRV-nnn`. Capabilities without a traceable driver are either out-of-scope (remove) or signals of a missing driver (add `DRV-nnn` and note the AV revision).
 
-### 3.6 Motivation Architecture
+### 3.3 Business Layer Entities — `architecture-repository/business/`
 
-Traces from stakeholder goals through to architecture drivers and business capabilities. Uses ArchiMate **Goal Realization Viewpoint** structure:
+| Prefix | artifact-type | Directory | §content Required Sections |
+|---|---|---|---|
+| `ACT-nnn` | `business-actor` | `business/actors/` | Name; Type (Human/System/External); Description; Safety Relevance |
+| `ROL-nnn` | `business-role` | `business/roles/` | Name; Description; Performed By (`ACT-nnn`) |
+| `BPR-nnn` | `business-process` | `business/processes/` | Name; Owning Capability (`CAP-nnn`); Description; Triggering Event; Outcome; Safety-Relevant (Yes/No) |
+| `BSV-nnn` | `business-service` | `business/services/` | Name; Provider (`ACT-nnn` or org unit); Consumer (`STK-nnn`); Realised By (`BPR-nnn`) |
+| `BOB-nnn` | `business-object` | `business/objects/` | Name; Description; Owning Process (`BPR-nnn`); Classification (Public/Internal/Confidential/Restricted/Safety-Critical) |
 
-| Goal ID | Stakeholder | Goal Statement | Driver (from AV) | Realising Capability |
-|---|---|---|---|---|
-| GL-nnn | STK-nnn | | DRV-nnn | CAP-nnn |
+**Safety-relevant process rule:** A process is `safety-relevant: true` if it directly controls a safety-relevant component, operates on Safety-Critical data, or is in a causal chain to a hazard category in AV §3.7. When in doubt: mark `true`. CSCO may downgrade; SA never downgrades unilaterally.
 
-### 3.7 Organisational Model
+### 3.4 `§display` Requirements
 
-| Org Unit ID | Name | Type | Primary Capabilities Owned | Key Roles |
-|---|---|---|---|---|
-| ORG-nnn | | Division / Team / External | CAP-nnn, ... | |
-
-ArchiMate viewpoint: **Organisation Viewpoint**.
-
-### 3.8 Business Services Catalog
-
-Business services are the externally visible outputs of the business architecture — what the business provides to stakeholders.
-
-| Service ID | Name | Provider (ORG) | Consumer (Stakeholder) | Realised By (Process) |
-|---|---|---|---|---|
-| BSV-nnn | | ORG-nnn | STK-nnn | BPR-nnn |
-
-### 3.9 Gap Analysis (Business Domain)
-
-Elaboration of the business-domain gap row from the Architecture Vision:
-
-| Capability | Baseline State | Target State | Gap Type | Priority |
-|---|---|---|---|---|
-| CAP-nnn | | | Missing / Underdeveloped / Redundant | High / Med / Low |
-
-### 3.10 Business-Level Safety Constraint Overlay (reference)
-
-The CSCO produces or updates the Safety Constraint Overlay artifact (`SCO`) with business-level safety constraints derived from this artifact. The `SCO` version that incorporates Phase B analysis is cross-referenced here by artifact ID and version.
+Every `CAP-nnn` entity must have a `### archimate` subsection in `§display` (used by `regenerate_macros()` to build `_macros.puml`). `BPR-nnn` and `ACT-nnn` entities that appear in diagrams must also have `### archimate` subsections. `BPR-nnn` entities that appear in activity diagrams additionally need `### activity` subsections.
 
 ---
 
-## 4. Artifact Sub-Components
+## 4. Connections Produced
 
-| Sub-Component | Type | Required | Notes |
+Connection files are written to `architecture-repository/connections/` subdirectories. Each connection file follows `entity-conventions.md §2.2` (model-connection frontmatter + `§content` + optional `§display ###archimate`).
+
+| Connection Type | Source → Target | Directory | Notes |
 |---|---|---|---|
-| Business Capability Map | Catalog + Diagram (ArchiMate Capability Map VP) | Yes | §3.2 |
-| Business Process Catalog | Catalog | Yes | §3.3 |
-| Business Function/Process Matrix | Matrix | Yes | §3.4 |
-| Value Stream Map | Diagram (ArchiMate BPC VP) | Yes | §3.5 |
-| Motivation Architecture | Diagram (ArchiMate Goal Realization VP) | Yes | §3.6 |
-| Organisational Model | Diagram (ArchiMate Organisation VP) | Yes | §3.7 |
-| Business Services Catalog | Catalog | Yes | §3.8 |
-| Gap Analysis — Business | Matrix | Yes | §3.9 |
-| SCO cross-reference | Reference | Yes | §3.10 |
+| `archimate-influence` | `DRV-nnn` → `GOL-nnn` | `connections/archimate/influence/` | Each goal must trace to a driver |
+| `archimate-association` | `STK-nnn` → `GOL-nnn` | `connections/archimate/association/` | Stakeholder holds the goal |
+| `archimate-realization` | `BPR-nnn` → `CAP-nnn` | `connections/archimate/realization/` | Process realises capability |
+| `archimate-realization` | `BSV-nnn` → `CAP-nnn` | `connections/archimate/realization/` | Service realises capability |
+| `archimate-assignment` | `ACT-nnn` → `BPR-nnn` | `connections/archimate/assignment/` | Actor performs process |
+| `archimate-serving` | `BSV-nnn` → `STK-nnn` | `connections/archimate/serving/` | Service serves stakeholder |
+| `archimate-triggering` | `BPR-nnn` → `BPR-nnn` | `connections/archimate/triggering/` | Process sequence within a value stream |
 
 ---
 
-## 5. Quality Criteria
+## 5. Overview Document
 
-- [ ] Every capability in the Capability Map is traceable to at least one business driver from the Architecture Vision.
-- [ ] Every safety-relevant process is flagged and cross-referenced to the Safety Constraint Overlay.
-- [ ] All value streams are complete end-to-end (trigger → outcome).
-- [ ] Motivation architecture traces from every goal to at least one realising capability.
-- [ ] CSCO sign-off on the business-level SCO update is recorded.
+SA produces `architecture-repository/overview/ba-overview.md` as a **repository-content artifact** (no `§display` section; frontmatter `artifact-type: ba-overview`). This is the primary cross-phase handoff summary.
+
+Required sections:
+- **Summary Header** — YAML frontmatter per `repository-conventions.md §7`:
+  - `artifact-type: ba-overview`; `safety-relevant: true`; `csco-sign-off: true`
+  - `summary:` 2–4 sentences describing capability clusters, safety-relevant process count, open gaps
+  - `key-decisions:` list
+  - `open-issues:` list
+  - `pending-clarifications:` list
+- **Business Function/Process Matrix** — table mapping `CAP-nnn` × `BPR-nnn` (● primary; ○ contributing; — none). Every capability must have at least one ● process.
+- **Capability/Process CRUD Matrix** — which processes Create/Read/Update/Delete which business objects.
+- **Gap Analysis** — table of capability gaps (Capability / Baseline State / Target State / Gap Type / Priority).
+- **Safety Constraint Overlay Cross-reference** — `SCO` version incorporating Phase B analysis; per-process safety constraint references.
 
 ---
 
-## 6. Version History
+## 6. Quality Criteria
 
-| Version | Sprint | Agent | Change Summary |
-|---|---|---|---|
-| 0.1.0 | | | Initial draft |
-| 1.0.0 | | | Baselined at Phase B gate |
+- [ ] Every `CAP-nnn` is traceable to at least one `DRV-nnn` from the Architecture Vision.
+- [ ] Every safety-relevant `BPR-nnn` is flagged `safety-relevant: true` and appears in the SCO Phase B update.
+- [ ] All `VS-nnn` value streams are complete end-to-end (trigger `STK-nnn` → outcome → `CAP-nnn`).
+- [ ] Motivation architecture traces: every `GOL-nnn` has an `archimate-influence` connection to a `DRV-nnn`.
+- [ ] `ba-overview.md` summary header is complete and `csco-sign-off: true` is recorded after CSCO Phase B gate review.
+- [ ] No entity file is referenced by a diagram alias that lacks a backing `§display ###archimate` subsection (enforced by `validate_diagram`).
+
+---
+
+## 7. Version History
+
+| Version | Date | Change Summary |
+|---|---|---|
+| 1.0.0 | 2026-04-02 | Initial schema — monolithic artifact format |
+| 2.0.0 | 2026-04-03 | Refactored to ERP v2.0 entity-file output; removed monolithic section model |

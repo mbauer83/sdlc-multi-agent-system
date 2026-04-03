@@ -1,7 +1,7 @@
 ---
 doc-id: diagram-conventions
-version: 2.0.0
-status: Approved — Stage 4.8
+version: 2.1.0
+status: Approved — Stage 4.8d
 governs: All diagram production across all agent roles
 ---
 
@@ -39,20 +39,25 @@ Agents author PlantUML source text directly. The model (entity and connection fi
   _archimate-stereotypes.puml     # Shared ArchiMate skinparam + stereotype library (SA-maintained)
 
   diagrams/
-    index.yaml                    # SA-authored; one entry per diagram (see §9)
-    <phase>-<type>-<subject>[-<domain>]-v<N>.puml
-    ...
+    <phase>-<type>-<subject>[-<domain>]-v<N>.puml   # All produced engagement diagrams
+    ...                                               # Each begins with PUML header comment frontmatter (see §9)
+
+  templates/
+    <type>-template.puml          # Per-type stubs demonstrating structure and ArchiMate conventions
+    ...                           # Agents copy into diagrams/, rename, and adapt elements and connections
 
   rendered/
     <same-stem>.svg               # SVG outputs; committed at sprint boundary
     ...
 ```
 
-There are no `elements/` or `connections/` subdirectories in the diagram catalog. The model entities and connections in `architecture-repository/` and `technology-repository/` serve as the element and connection catalog. The `§display` sections in those files define how each entity/connection is rendered.
+There are no `elements/`, `connections/`, or `index.yaml` files in the diagram catalog. Model entities and connections in `architecture-repository/model-entities/` and `connections/` are the element and connection catalog; `§display` sections in those files define rendering. Diagrams are discovered by ModelRegistry scanning PUML header comment frontmatter (§9).
 
-**Enterprise catalog:** `enterprise-repository/diagram-catalog/` contains only `_macros.puml`, `_archimate-stereotypes.puml`, diagrams, and rendered outputs — no separate element files. Enterprise-scope entity files in `enterprise-repository/` provide the element definitions.
+**Reading vs. rendering:** Agents and skills read `.puml` source files (via `read_artifact`) for both local engagement diagrams and enterprise diagrams. Reading the PUML source is sufficient for agent context, validation, and authoring decisions. `render_diagram` produces an SVG and is only called when generating user-facing output (sprint reviews, deliverable packages, documentation exports) — never as a prerequisite for agent reasoning.
 
-**Engagement catalog:** `engagements/<id>/work-repositories/architecture-repository/diagram-catalog/` — self-contained per engagement. Enterprise entities are visible to the engagement via the unified ModelRegistry (read-only to engagement agents); no import or copy step is required or permitted.
+**Enterprise catalog:** `enterprise-repository/diagram-catalog/` contains only `_macros.puml`, `_archimate-stereotypes.puml`, `diagrams/`, `templates/`, and `rendered/`. Enterprise entity files in `enterprise-repository/model-entities/` provide the element definitions. Engagement agents read enterprise diagrams via `read_artifact(<enterprise-path>)` directly; no stubs or copies are placed in the engagement catalog.
+
+**Engagement catalog:** `engagements/<id>/work-repositories/architecture-repository/diagram-catalog/` — self-contained per engagement. Enterprise entities are visible via the unified ModelRegistry (read-only to engagement agents); no import or copy step is required or permitted.
 
 ---
 
@@ -76,9 +81,9 @@ Using artifact-ids directly as aliases:
 
 ### 4.1 Engagement Bootstrap (Preliminary / Phase A)
 
-SA creates the engagement `diagram-catalog/` directory structure and runs `regenerate_macros()`. There is no entity import step: enterprise entities are already visible to the engagement via the unified ModelRegistry (the enterprise repository is registered as a read-only path at session initialisation). `_macros.puml` is built from all engagement entities and enterprise entities together — `regenerate_macros()` reads `§display ###archimate` blocks from both scopes in a single pass.
+SA creates the engagement `diagram-catalog/` directory structure, populates `templates/` with per-type stubs adapted from the framework templates in `framework/diagram-conventions.md §7`, and runs `regenerate_macros()`. There is no entity import step: enterprise entities are already visible via the unified ModelRegistry (the enterprise repository is registered as a read-only path at session initialisation). `_macros.puml` is built from all engagement and enterprise entities together — `regenerate_macros()` reads `§display ###archimate` blocks from both scopes in a single pass.
 
-**Existing diagrams — reference, do not copy.** Enterprise diagrams (`enterprise-repository/diagram-catalog/diagrams/`) and prior-engagement diagrams are never copied into the new engagement's catalog. SA registers relevant existing diagrams as reference entries in the engagement's `diagrams/index.yaml` (entry type `reference`, pointing to the source path). If a rendered SVG is needed for a deliverable, `render_diagram` is called against the source `.puml` in place — no file is duplicated. If the SA needs a variant or extension of an existing diagram, a new `.puml` file is authored in the engagement catalog; it may `!include _macros.puml` and reference any entities visible in the unified ModelRegistry.
+Enterprise and prior-engagement diagrams are never copied into the engagement catalog. Agents read them directly via `read_artifact(<enterprise-path>)`. When a new engagement diagram needs to reuse elements from an existing enterprise diagram, SA authors a new `.puml` in `diagram-catalog/diagrams/`, adapting from the relevant template in `templates/` and referencing any entities visible in the unified ModelRegistry.
 
 No diagram work begins until bootstrap is complete.
 
@@ -134,7 +139,7 @@ For each entity that will appear in the diagram, confirm the required `§display
 
 **D3c:** Write the `.puml` file via `write_artifact`. Filename: `<phase>-<type>-<subject>[-<domain>]-v<N>.puml`.
 
-**D3d:** Update `diagrams/index.yaml`: add or update the entry (see §9).
+**D3d:** Ensure the PUML file begins with the required frontmatter comment block (see §9). The frontmatter is the diagram's registry entry — no separate `index.yaml` exists.
 
 ### D4 — Validate
 
@@ -148,9 +153,9 @@ Call `validate_diagram(<puml_file_path>)` immediately after writing. The tool:
 
 **On ALG-C03** (diagram alias has no backing entity): the agent must create the missing entity file before re-validating — the diagram cannot be made valid by deleting the alias; the model must be extended.
 
-### D5 — Render
+### D5 — Render (user-facing output only)
 
-Call `render_diagram(<puml_file_path>)` at sprint boundary. Invokes PlantUML CLI; writes SVG to `rendered/`. Commit both `.puml` and `.svg` at sprint close.
+Call `render_diagram(<puml_file_path>)` when producing user-facing output: sprint reviews, deliverable packages, or documentation exports. Invokes PlantUML CLI; writes SVG to `rendered/`. Commit both `.puml` and `.svg` at sprint close. Do not call `render_diagram` as part of agent reasoning or validation — `read_artifact` on the `.puml` source is sufficient for those purposes.
 
 ---
 
@@ -554,65 +559,63 @@ stop
 
 ---
 
-## 9. Diagram Index Format
+## 9. Diagram Frontmatter (PUML Header Comment Block)
 
-`diagrams/index.yaml` — SA-authored; one entry per diagram. Two entry types: `local` (diagram file lives in this catalog) and `reference` (diagram lives in the enterprise repository or another engagement; referenced in-place, never copied).
+Diagrams are discovered by ModelRegistry scanning the PUML header comment block at the top of every `.puml` file in `diagram-catalog/diagrams/` and `diagram-catalog/templates/`. There is no separate `index.yaml` — the frontmatter in each file is the single source of truth, consistent with the ERP principle applied to model entities and connections.
 
-```yaml
-diagrams:
-  # Local diagram — authored in this engagement's catalog
-  - entry_type: local
-    diagram_id: phase-b-archimate-business-v1
-    title: "Business Architecture — Agent Roles and Services (Phase B)"
-    diagram_type: archimate-business
-    puml_file: diagrams/phase-b-archimate-business-v1.puml
-    domain: core-platform
-    phase: B
-    agent_owner: SA
-    entity_ids_used:
-      - CAP-001
-      - CAP-002
-      - ACT-001
-      - ACT-002
-      - BFN-001
-      - BSV-001
-      - BSV-002
-    connection_ids_used:
-      - APP-001---BSV-001
-      - ACT-001---ROL-001
-    version: 1
-    last-updated: 2026-04-03
+The header comment block uses PUML line-comment syntax (`' `). ModelRegistry strips the `' ` prefix from each line and parses the resulting YAML.
 
-  # Local diagram — authored in this engagement's catalog
-  - entry_type: local
-    diagram_id: phase-c-class-er-v1
-    title: "Core Domain Data Model (Phase C)"
-    diagram_type: class-er
-    puml_file: diagrams/phase-c-class-er-v1.puml
-    domain: core-platform
-    phase: C
-    agent_owner: SA
-    entity_ids_used:
-      - DOB-001
-      - DOB-002
-      - DOB-003
-    connection_ids_used:
-      - DOB-001---DOB-002
-      - DOB-001---DOB-003
-    version: 1
-    last-updated: 2026-04-03
+**Required frontmatter fields for produced diagrams (`diagrams/`):**
 
-  # Reference entry — existing diagram in enterprise repository, referenced in-place
-  - entry_type: reference
-    diagram_id: ent-phase-a-archimate-capability-v2
-    title: "Enterprise Capability Map (Phase A)"
-    source_path: enterprise-repository/diagram-catalog/diagrams/phase-a-archimate-capability-v2.puml
-    rendered_path: enterprise-repository/diagram-catalog/rendered/phase-a-archimate-capability-v2.svg
-    relevance: "Scope context for this engagement — referenced, not extended"
-    last-accessed: 2026-04-03
+```plantuml
+' ---
+' artifact-id: phase-b-archimate-business-v1
+' artifact-type: diagram
+' name: "Business Architecture — Agent Roles and Services"
+' diagram-type: archimate-business
+' version: 0.1.0
+' status: draft
+' phase-produced: B
+' owner-agent: SA
+' engagement: ENG-001
+' domain: core-platform
+' entity-ids-used: [CAP-001, CAP-002, ACT-001, BPR-001, BSV-001]
+' connection-ids-used: [CAP-001---BPR-001, ACT-001---BPR-001]
+' ---
+@startuml
+!include ../_macros.puml
+!include ../_archimate-stereotypes.puml
+...
+@enduml
 ```
 
-`reference` entries carry no `entity_ids_used` or `connection_ids_used` — those are properties of the source diagram. `render_diagram` called on a `reference` entry renders against `source_path` in place; the SVG is written to `rendered_path` in the source catalog, not the engagement catalog.
+**Required frontmatter fields for template stubs (`templates/`):**
+
+```plantuml
+' ---
+' artifact-id: archimate-business-template
+' artifact-type: diagram-template
+' name: "ArchiMate Business Layer — Starting Template"
+' diagram-type: archimate-business
+' owner-agent: SA
+' engagement: ENG-001
+' ---
+@startuml
+!include ../_macros.puml
+!include ../_archimate-stereotypes.puml
+
+' ADAPT THIS TEMPLATE: add, remove, and rewire elements and connections
+' to match the specific diagram. Replace PLACEHOLDER aliases with real artifact-ids.
+
+' --- Example structure (replace with actual entities) ---
+' PLACEHOLDER_CAP_001  ' capability
+' PLACEHOLDER_BPR_001  ' business process
+' PLACEHOLDER_CAP_001 --> PLACEHOLDER_BPR_001 : <<realization>>
+
+@enduml
+```
+
+**`entity-ids-used` and `connection-ids-used`:** These fields in diagram frontmatter enable `validate_diagram` to check that every listed entity-id exists in ModelRegistry with the appropriate `§display ###<language>` subsection. They also enable `regenerate_macros()` to detect when a diagram references entities whose archimate display spec has changed.
 
 ---
 
@@ -628,7 +631,7 @@ diagrams:
 | §6 | `_macros.puml` generation from `§display ###archimate` blocks |
 | §7 | PUML templates per diagram type |
 | §8 | Write authority table |
-| §9 | Diagram index format |
+| §9 | Diagram frontmatter: PUML header comment block — single source of truth for diagram metadata |
 
 **Cross-references:**
 - `framework/artifact-registry-design.md §3.6` — `§display` spec schemas per language

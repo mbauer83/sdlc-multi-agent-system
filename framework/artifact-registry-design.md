@@ -1,8 +1,8 @@
 ---
 document: artifact-registry-design
-version: 2.0.0
-status: Approved — Stage 4.8
-last-updated: 2026-04-03
+version: 2.1.0
+status: Approved — Stage 4.8d
+last-updated: 2026-04-04
 ---
 
 # Artifact Registry Design — Entity Registry Pattern
@@ -27,7 +27,7 @@ The `artifact-type` value determines the category via the framework lookup table
 2. **Frontmatter is the single source of truth for metadata.** No secondary index files. The `ModelRegistry` (§6) is built by scanning frontmatter at startup.
 3. **Entity files contain no cross-references.** All relational information lives in connection files. There is no `references` field on entity frontmatter.
 4. **Entities are organised by ArchiMate layer/aspect.** All diagram language element types are subsumable under ArchiMate taxonomy, eliminating the need for separate per-language entity directories. A model entity can have multiple `§display` subsections — one per diagram language where it appears.
-5. **Connections are siblings to entity layer directories.** Within `connections/`, subdirectories encode diagram-language then connection-type, analogous to entity layer/type nesting.
+5. **`model-entities/`, `connections/`, and `diagram-catalog/` are top-level siblings within each repository.** All ArchiMate entity layer directories live under `model-entities/`. Within `connections/`, subdirectories encode diagram-language then connection-type. Within `diagram-catalog/`, produced diagrams live under `diagrams/` and blank per-type starting-point stubs live under `templates/`.
 6. **Dependency is strictly one-way.** Connections reference entities via `source`/`target` fields. Diagrams reference entities and connections via their `§display` specs. Entity files have no knowledge of connections or diagrams.
 7. **IDs are immutable.** Assigned at creation; never reused even after deprecation.
 
@@ -39,51 +39,52 @@ The `artifact-type` value determines the category via the framework lookup table
 
 ```
 engagements/<id>/work-repositories/architecture-repository/
-  motivation/
-    stakeholders/     STK-001.md  STK-002.md  STK-003.md
-    drivers/          DRV-001.md  DRV-002.md  DRV-003.md
-    assessments/      ASS-001.md  ASS-002.md
-    goals/            GOL-001.md  GOL-002.md  GOL-003.md
-    outcomes/         OUT-001.md  OUT-002.md
-    principles/       PRI-001.md  PRI-002.md  PRI-003.md
-    requirements/     REQ-001.md  REQ-002.md  REQ-003.md  REQ-004.md  REQ-005.md
-    constraints/      CST-001.md  CST-002.md
-    meanings/         MEA-001.md
-    values/           VAL-001.md  VAL-002.md
-  strategy/
-    capabilities/     CAP-001.md  CAP-002.md  CAP-003.md  CAP-004.md
-    value-streams/    VS-001.md   VS-002.md
-    resources/        RES-001.md  RES-002.md
-    courses-of-action/ COA-001.md  COA-002.md
-  business/
-    actors/           ACT-001.md  ACT-002.md  ACT-003.md  ACT-004.md
-    roles/            ROL-001.md  ROL-002.md
-    processes/        BPR-001.md  BPR-002.md  BPR-003.md  BPR-004.md  BPR-005.md
-    functions/        BFN-001.md  BFN-002.md  BFN-003.md
-    services/         BSV-001.md  BSV-002.md  BSV-003.md
-    events/           BEV-001.md  BEV-002.md
-    objects/          BOB-001.md  BOB-002.md  BOB-003.md
-    interfaces/       BIF-001.md
-    collaborations/   BCO-001.md
-    products/         PRD-001.md
-    contracts/        CTR-001.md
-    representations/  RPR-001.md
-  application/
-    components/       APP-001.md  APP-002.md  APP-003.md  APP-004.md  APP-005.md  APP-006.md
-    services/         ASV-001.md  ASV-002.md  ASV-003.md
-    interfaces/       AIF-001.md  AIF-002.md
-    functions/        AFN-001.md  AFN-002.md
-    events/           AEV-001.md
-    data-objects/     DOB-001.md  DOB-002.md  DOB-003.md  DOB-004.md  DOB-005.md
-    processes/        APR-001.md
-    collaborations/   ACO-001.md
-  implementation/
-    work-packages/    WP-001.md   WP-002.md   WP-003.md
-    deliverables/     DEL-001.md  DEL-002.md
-    gaps/             GAP-001.md  GAP-002.md  GAP-003.md
-    plateaus/         PLT-001.md
-    events/           IEV-001.md
-  connections/                            ← sibling to all layer directories
+  model-entities/                       ← all ArchiMate entity files grouped here
+    motivation/
+      stakeholders/     STK-001.md  STK-002.md  STK-003.md
+      drivers/          DRV-001.md  DRV-002.md  DRV-003.md
+      assessments/      ASS-001.md  ASS-002.md
+      goals/            GOL-001.md  GOL-002.md  GOL-003.md
+      outcomes/         OUT-001.md  OUT-002.md
+      principles/       PRI-001.md  PRI-002.md  PRI-003.md
+      requirements/     REQ-001.md  REQ-002.md  REQ-003.md  REQ-004.md  REQ-005.md
+      constraints/      CST-001.md  CST-002.md
+      meanings/         MEA-001.md
+      values/           VAL-001.md  VAL-002.md
+    strategy/
+      capabilities/     CAP-001.md  CAP-002.md  CAP-003.md  CAP-004.md
+      value-streams/    VS-001.md   VS-002.md
+      resources/        RES-001.md  RES-002.md
+      courses-of-action/ COA-001.md  COA-002.md
+    business/
+      actors/           ACT-001.md  ACT-002.md  ACT-003.md  ACT-004.md
+      roles/            ROL-001.md  ROL-002.md
+      processes/        BPR-001.md  BPR-002.md  BPR-003.md  BPR-004.md  BPR-005.md
+      functions/        BFN-001.md  BFN-002.md  BFN-003.md
+      services/         BSV-001.md  BSV-002.md  BSV-003.md
+      events/           BEV-001.md  BEV-002.md
+      objects/          BOB-001.md  BOB-002.md  BOB-003.md
+      interfaces/       BIF-001.md
+      collaborations/   BCO-001.md
+      products/         PRD-001.md
+      contracts/        CTR-001.md
+      representations/  RPR-001.md
+    application/
+      components/       APP-001.md  APP-002.md  APP-003.md  APP-004.md  APP-005.md  APP-006.md
+      services/         ASV-001.md  ASV-002.md  ASV-003.md
+      interfaces/       AIF-001.md  AIF-002.md
+      functions/        AFN-001.md  AFN-002.md
+      events/           AEV-001.md
+      data-objects/     DOB-001.md  DOB-002.md  DOB-003.md  DOB-004.md  DOB-005.md
+      processes/        APR-001.md
+      collaborations/   ACO-001.md
+    implementation/
+      work-packages/    WP-001.md   WP-002.md   WP-003.md
+      deliverables/     DEL-001.md  DEL-002.md
+      gaps/             GAP-001.md  GAP-002.md  GAP-003.md
+      plateaus/         PLT-001.md
+      events/           IEV-001.md
+  connections/                          ← sibling to model-entities/
     archimate/
       realization/    APP-001---BSV-001.md   APP-002---BSV-001.md   APP-003---CAP-001.md
       serving/        APP-001---APP-003.md   APP-002---APP-004.md   APP-004---APP-005.md
@@ -111,21 +112,24 @@ engagements/<id>/work-repositories/architecture-repository/
       include/        BSV-001---BSV-002.md
       extend/         BSV-003---BSV-001.md
       actor-association/ ACT-001---BSV-001.md   ACT-001---BSV-002.md   ACT-002---BSV-003.md
+  diagram-catalog/                      ← sibling to model-entities/ and connections/
+    _macros.puml                        # Auto-generated from entity §display blocks — do not edit
+    _archimate-stereotypes.puml         # Shared ArchiMate skinparam library
+    diagrams/                           # All produced engagement diagrams
+      phase-b-archimate-business-v1.puml      # Naming: <phase>-<type>-<subject>[-<domain>]-v<N>.puml
+      phase-c-archimate-application-v1.puml   # Each starts with PUML header comment frontmatter (see §2.4)
+      phase-c-class-er-v1.puml               # May reference entities from any ModelRegistry scope
+      phase-b-activity-sprint-v1.puml
+    templates/                          # Per-type starting stubs demonstrating structure and conventions
+      archimate-business-template.puml  # Naming: <type>-template.puml
+      class-er-template.puml            # Agents copy into diagrams/, rename, then adapt: add, remove,
+      sequence-template.puml            # and rewire elements and connections for the specific diagram
+    rendered/
+      phase-b-archimate-business-v1.svg
   decisions/          ADR-001.md  ADR-002.md  ADR-003.md
   overview/
     architecture-vision.md
     ba-overview.md    aa-overview.md    da-overview.md
-  diagram-catalog/
-    _macros.puml                        # Auto-generated from entity §display blocks
-    _archimate-stereotypes.puml         # Shared ArchiMate skinparam library
-    diagrams/
-      index.yaml
-      phase-b-archimate-business-v1.puml
-      phase-c-archimate-application-v1.puml
-      phase-c-class-er-v1.puml
-      phase-b-activity-sprint-v1.puml
-    rendered/
-      phase-b-archimate-business-v1.svg
 ```
 
 ### 2.2 Technology Repository
@@ -155,9 +159,21 @@ engagements/<id>/work-repositories/technology-repository/
   coding-standards/   (repository-content; not ERP model entities)
 ```
 
-### 2.3 Repository-Content Artifacts
+### 2.3 Technology Repository Structure Note
 
-Not model entities; no `§display` section; not organised in ArchiMate layer directories.
+The technology-repository follows the same `model-entities/` / `connections/` / `diagram-catalog/` sibling layout as the architecture-repository (§2.1), with entity layer directories (`technology/nodes/`, `technology/system-software/`, etc.) nested under `model-entities/`.
+
+### 2.4 Diagram File Frontmatter
+
+`.puml` files in `diagram-catalog/diagrams/` and `diagram-catalog/templates/` carry metadata as a PUML header comment block. ModelRegistry strips the `' ` prefix from each line and parses the block as YAML. The full field specification is in `framework/diagram-conventions.md §9`.
+
+Required fields for produced diagrams: `artifact-id`, `artifact-type: diagram`, `name`, `diagram-type`, `version`, `status`, `phase-produced`, `owner-agent`, `engagement`, `entity-ids-used`, `connection-ids-used`.
+
+Required fields for template stubs: `artifact-id`, `artifact-type: diagram-template`, `name`, `diagram-type`, `owner-agent`, `engagement`.
+
+### 2.5 Repository-Content Artifacts
+
+Not model entities; no `§display` section; not organised in `model-entities/` layer directories.
 
 | artifact-type | Location | Description |
 |---|---|---|
@@ -168,8 +184,9 @@ Not model entities; no `§display` section; not organised in ArchiMate layer dir
 | `architecture-contract` | `architecture-repository/ac-<v>.md` | Binding governance document |
 | `coding-standard` | `technology-repository/coding-standards/` | Technical standard reference |
 | `test-strategy` | `qa-repository/` | QA strategy document |
-| `diagram` | `diagram-catalog/diagrams/*.puml` | PUML diagram file |
-| `learning-entry` | `project-repository/knowledge-base/` | Agent learning record |
+| `diagram` | `diagram-catalog/diagrams/*.puml` | PUML diagram file; frontmatter in header comment block (§2.4) |
+| `diagram-template` | `diagram-catalog/templates/*.puml` | Blank per-type stub; frontmatter in header comment block (§2.4) |
+| `learning-entry` | `agents/<role>/learnings/<ROLE>-L-NNN.md` | Agent learning record; stored at framework/agent level, not per-engagement |
 | `repository-map` | `architecture-repository/` | Multi-repo engagement map |
 
 ---
