@@ -252,6 +252,8 @@ The SA occupies **System 4** (Intelligence / Environmental Scanning) in Beer's V
 | `skills/phase-c-data.md` | Phase C — Data Architecture | BA (baselined), AA (draft — mutual ref), RR (current), SCO Phase B | DA (all sub-components) |
 | `skills/phase-h.md` | Phase H — Architecture Change Management; EP-H | CR-000 from PM, affected architecture artifacts | Change Record (CR), updated architecture artifacts |
 | `skills/requirements-management.md` | Cross-phase; activated at each phase boundary | RR (current), all SA architecture artifacts | Architecture column of RTM; gap reports to PM |
+| `skills/reverse-architecture-bprelim-a.md` | EP-G warm-start — Prelim/Phase A motivation & strategy reconstruction | EP-G PM handoff, target repos, user-provided docs/diagrams | Motivation/strategy ERP entity files (STK, DRV, GOL, PRI, REQ, CST, CAP, VS), connection files, Architecture Vision overview |
+| `skills/reverse-architecture-ba.md` | EP-G warm-start — Phase B business layer reconstruction (after SA-REV-PRELIM-A) | Motivation/strategy entities (0.1.0+), target repos, user-provided process docs | Business ERP entity files (ACT, ROL, BPR, BFN, BSV, BOB, BEV, BCO), connection files, BA overview |
 
 ---
 

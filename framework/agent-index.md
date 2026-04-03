@@ -48,6 +48,8 @@
 | SA-PHASE-C-DATA | `skills/phase-c-data.md` | Phase C sprint starts; BA baselined; produce Data Architecture (runs with SA-PHASE-C-APP, mutual reference) |
 | SA-PHASE-H | `skills/phase-h.md` | PM issues Phase H Change Record intake; SA assesses architecture impact and produces Change Record |
 | SA-REQ-MGMT | `skills/requirements-management.md` | Cross-phase at each phase boundary; maintain architecture column of Requirements Traceability Matrix |
+| SA-REV-PRELIM-A | `skills/reverse-architecture-bprelim-a.md` | EP-G warm-start: reconstruct motivation/strategy entities (STK, DRV, GOL, PRI, REQ, CST, CAP, VS) from user input, docs, target repos |
+| SA-REV-BA | `skills/reverse-architecture-ba.md` | EP-G warm-start (after SA-REV-PRELIM-A): reconstruct business layer entities (ACT, ROL, BPR, BFN, BSV, BOB) from codebase and user docs |
 
 ### SwA Skills
 
@@ -58,6 +60,7 @@
 | SwA-PHASE-F | `skills/phase-f.md` | Phase F sprint starts; produce Transition Architecture Diagrams; review PM's Implementation Plan for technical feasibility |
 | SwA-PHASE-G | `skills/phase-g-governance.md` | Phase F gate passed; each Solution Sprint starts; author Architecture Contract; review PRs; issue Compliance Notices |
 | SwA-PHASE-H | `skills/phase-h.md` | SA issues Change Record; SwA assesses technology-layer impact; update TA and AC as required |
+| SWA-REV-TA | `skills/reverse-architecture-ta.md` | EP-G warm-start: reconstruct technology layer (NOD, SSW, TSV, ART, TIF) from IaC, Dockerfiles, CI/CD; produce ADR stubs and Gap & Risk Assessment |
 
 ### DO Skills
 

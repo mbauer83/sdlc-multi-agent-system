@@ -274,6 +274,7 @@ The SwA does NOT act as System 4 (Environment Scanning) except within the techno
 | `skills/phase-f.md` | Phase F Migration Planning sprint | Gap Analysis Matrix, Implementation Candidate Catalog, Work Package Catalog (PM), Risk Register (PM) | Transition Architecture Diagrams (baselined), sequencing input to IP, technical feasibility review |
 | `skills/phase-g-governance.md` | Phase G (entire Implementation Stream) | Architecture Contract (SwA produces), Implementation Plan, Solution Sprint Plan | Architecture Contract (baselined per sprint), Compliance Assessment contribution, Architecture Compliance Notices, gate votes |
 | `skills/phase-h.md` | Phase H change events affecting technology layer | Change Record (SA), affected TA/AC artifacts | Updated TA (if technology-layer impact), Updated AC (if compliance criteria change), Technology Impact Assessment |
+| `skills/reverse-architecture-ta.md` | EP-G warm-start — Phase D/E technology layer reconstruction | EP-G PM handoff, target repos (IaC, Dockerfiles, CI/CD), user-provided docs | Technology ERP entity files (NOD, SSW, TSV, ART, TIF, NET), ADR stubs, connection files, TA overview, Gap & Risk Assessment |
 
 ---
 
