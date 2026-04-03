@@ -78,7 +78,7 @@ The standard greenfield flow: the user initiates a new engagement, the Project M
 
 ### Brownfield Onboarding (EP-G)
 
-For existing codebases, the system enters at Phase G via a reverse architecture reconstruction workflow. Specialist agents scan the target repository (IaC, source structure, package manifests, configuration) and user-provided documents to infer and populate an ERP v2.0 architecture model. The user confirms inferred entities before they are committed. The result is a populated architecture repository that the system can then govern forward. The reverse architecture skills are in `agents/solution-architect/skills/` and `agents/software-architect/skills/`.
+For existing codebases, the system enters at Phase G via a reverse architecture reconstruction workflow. Specialist agents scan the target repository (IaC, source structure, package manifests, configuration) and user-provided documents to infer and populate an architecture model (registering entities and connections). The user confirms inferred entities before they are committed. The result is a populated architecture repository that the system can then govern forward. The reverse architecture skills are in `agents/solution-architect/skills/` and `agents/software-architect/skills/`.
 
 ### Other Entry Points
 
