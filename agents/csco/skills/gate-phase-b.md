@@ -14,10 +14,10 @@ trigger-conditions:
   - cq.answered resolving a blocking Phase B CSCO safety CQ
 entry-points: [EP-0, EP-A, EP-B]
 primary-outputs:
-complexity-class: simple
   - SCO Phase B Update (sco-B-1.0.0.md)
   - Gate Record Phase B (gr-B-C-1.0.0.md)
   - gate.vote_cast for B→C gate
+complexity-class: standard
 version: 1.0.0
 ---
 

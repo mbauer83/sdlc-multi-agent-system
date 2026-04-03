@@ -1,8 +1,8 @@
 # Agent & Skill Routing Index
 
-**Version:** 1.0.0  
-**Status:** Approved — Pre-Stage 4  
-**Last Updated:** 2026-04-02  
+**Version:** 1.1.0  
+**Status:** Approved — Stage 4  
+**Last Updated:** 2026-04-03  
 **Purpose:** Low-token routing reference. Load this file (~500 tokens) to decide which agent and skill to invoke. Full specifications live in `agents/<role>/AGENT.md` and `agents/<role>/skills/<skill>.md` (load only when the full spec is needed for execution).
 
 ---
@@ -17,9 +17,9 @@
 | DO | DevOps / Platform Engineer (Specialist) | D, E, F, G | Platform feasibility review of TA (Phase D); infrastructure planning (E/F); environment provisioning, pipeline execution, deployment records (G) |
 | DE | Implementing Developer (Specialist) | G | Phase G Solution Sprint feature implementation; PR submission against Architecture Contract |
 | QA | QA Engineer (Specialist) | G | Test strategy/planning (E/F); Phase G test execution; defect records; Compliance Assessment; Phase G gate vote; Phase H regression scope |
-| PO | Product Owner (Framing) | Prelim, A, B, H | Requirements Register; Business Scenarios; requirements traceability; stakeholder communication *(Stage 4 — pending)* |
-| SM | Sales & Marketing Manager (Framing) | A | Market Analysis; SWOT; business drivers input *(Stage 4 — pending)* |
-| CSCO | Chief Safety & Compliance Officer (Integrator) | A, B, C, D, G, H | Safety Constraint Overlay; gate authority on all phases; STAMP/STPA analysis; incident response *(Stage 4 — pending)* |
+| PO | Product Owner (Framing) | Prelim, A, B, H | Requirements Register; Business Scenarios; requirements traceability; stakeholder communication |
+| SM | Sales & Marketing Manager (Framing) | A | Market Analysis; SWOT; business drivers input to Architecture Vision |
+| CSCO | Chief Safety & Compliance Officer (Integrator) | A, B, C, D, G, H | Safety Constraint Overlay; gate authority on all phase transitions; STAMP/STPA analysis; implementation spot-checks; incident response |
 
 **Decision rule:** Match current phase → agents with that phase in Primary Phases. Then match task type to RACI (accountable vs consulting). When multiple agents are eligible, the accountable agent's skill runs first; consulting agents run in parallel or receive handoffs.
 
@@ -83,6 +83,37 @@
 | QA-PHASE-EF | `skills/phase-ef-test-planning.md` | Phase E/F sprint starts; produce Test Strategy and Test Case Catalog from Architecture Contract and TA |
 | QA-PHASE-G | `skills/phase-g-execution.md` | Phase G Solution Sprint starts; AC baselined; execute test plans, manage defect records, contribute to Compliance Assessment |
 | QA-PHASE-H | `skills/phase-h-regression.md` | Phase H Change Record issued; assess regression scope; update Test Strategy; produce regression test plan |
+
+### PO Skills
+
+| Skill ID | File | Invoke When |
+|---|---|---|
+| PO-PHASE-A | `skills/phase-a.md` | Phase A sprint starts or Scoping Interview is active; produce and maintain Requirements Register; provide Business Scenarios to SA |
+| PO-PHASE-B | `skills/phase-b.md` | Phase B sprint starts; BA is being authored; PO provides domain context, validates capability model and value stream map |
+| PO-PHASE-H | `skills/phase-h.md` | Phase H Change Record issued; PO assesses requirements impact of the change; update Requirements Register |
+| PO-REQ-MGMT | `skills/requirements-management.md` | Cross-phase; maintain Requirements Register; trace requirements through architecture phases; flag contradictions to SA |
+| PO-STAKEHOLDER | `skills/stakeholder-communication.md` | PM requests stakeholder update; PO drafts and routes stakeholder-facing communication on scope, progress, or change |
+
+### SM Skills
+
+| Skill ID | File | Invoke When |
+|---|---|---|
+| SM-MARKET-RESEARCH | `skills/phase-a-market-research.md` | Engagement start (EP-0) or PM requests market context for Phase A; SM produces Market Analysis and business driver inputs |
+| SM-SWOT | `skills/phase-a-swot.md` | Phase A sprint starts; SM produces SWOT Analysis and competitive landscape inputs to Architecture Vision |
+| SM-REQ-FEEDBACK | `skills/requirements-management-feedback.md` | PO requests SM consulting input on market fit or commercial feasibility of proposed requirements |
+
+### CSCO Skills
+
+| Skill ID | File | Invoke When |
+|---|---|---|
+| CSCO-STAMP-STPA | `skills/stamp-stpa-methodology.md` | Master methodology reference — loaded by all CSCO gate skills; not invoked directly by PM router |
+| CSCO-GATE-A | `skills/gate-phase-a.md` | AV baselined at 1.0.0; SA requests CSCO Phase A gate review; CSCO casts Prelim→A and A→B gate votes |
+| CSCO-GATE-B | `skills/gate-phase-b.md` | BA baselined at 1.0.0; CSCO performs STAMP Level 1 update and casts B→C gate vote |
+| CSCO-GATE-C | `skills/gate-phase-c.md` | Both AA and DA baselined at 1.0.0; CSCO performs STAMP Level 2 analysis and casts C→D gate vote |
+| CSCO-GATE-D | `skills/gate-phase-d.md` | TA baselined at 1.0.0; CSCO performs STAMP Level 3 analysis and casts D→E gate vote |
+| CSCO-GATE-G | `skills/gate-phase-g.md` | (Mode 1) PM requests implementation spot-check during Phase G sprint; (Mode 2) QA Compliance Assessment baselined — CSCO casts G-exit gate vote |
+| CSCO-GATE-H | `skills/gate-phase-h.md` | Change Record baselined; CSCO classifies change safety impact and casts H gate vote |
+| CSCO-INCIDENT | `skills/incident-response.md` | Algedonic signal (S1/S2) received; PM reports production safety incident; safety constraint violation detected post-deployment |
 
 ---
 

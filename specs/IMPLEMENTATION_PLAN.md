@@ -287,34 +287,23 @@ Every skill file must include: `## Inputs Required`, `## Knowledge Adequacy Chec
 - [x] `agents/sales-marketing/AGENT.md`
 - [x] Skills: `phase-a-market-research.md`, `phase-a-swot.md`, `requirements-management-feedback.md`
 
-**Branch: `agent/csco`** — Partially complete (2026-04-02)
+**Branch: `agent/csco`** — Complete (2026-04-03)
 - [x] `agents/csco/AGENT.md`
 - [x] Skill: `stamp-stpa-methodology.md` (master methodology reference)
 - [x] `gate-phase-a.md` — Phase A gate review (Prelim→A and A→B votes; SCO Phase A baseline; STAMP Level 1)
 - [x] `gate-phase-b.md` — Phase B gate review (B→C vote; SCO Phase B update; STAMP Level 1 process analysis)
 - [x] `gate-phase-c.md` — Phase C gate review (C→D vote; SCO Phase C update; STAMP Level 2 application/data)
 - [x] `gate-phase-d.md` — Phase D gate review (D→E vote; SCO Phase D update; STAMP Level 3 technology)
-- [ ] `gate-phase-g.md` — Phase G spot-checks and G-exit gate (Compliance Assessment review)
-- [ ] `gate-phase-h.md` — Phase H gate review (change safety impact classification; SCO update)
-- [ ] Skill: `incident-response.md` — safety incident and algedonic response procedure
+- [x] `gate-phase-g.md` — Phase G spot-checks (Mode 1: PM-requested; Mode 2: QA CA review) + G-exit gate vote
+- [x] `gate-phase-h.md` — Phase H change safety impact classification (Safety-Neutral / Safety-Relevant / Safety-Critical) + H gate vote + SCO update
+- [x] Skill: `incident-response.md` — safety incident and algedonic response; S1/S2 containment directive; SCO gap analysis; regulatory notification assessment; post-incident safety finding
 
-**Remaining Stage 4 work (next session — pick up here):**
+**Stage 4 review findings (2026-04-03):**
+- Fixed YAML frontmatter bug in all 4 pre-existing gate skills (gate-a through gate-d): `complexity-class:` field was incorrectly placed inside the `primary-outputs:` list block
+- Upgraded all 4 gate skill `complexity-class` values from `simple` to `standard` (gate-a has 9 steps + full STAMP Level 1 analysis — well above 600-token simple budget)
+- Updated `framework/agent-index.md` v1.0.0 → v1.1.0: added PO, SM, CSCO skill routing tables; removed Stage 4 "pending" annotations from Agent Routing Table
 
-> **Warning:** A background agent was running unsupervised at session end. It may have
-> written `gate-phase-g.md`, `gate-phase-h.md`, and/or `incident-response.md` to disk
-> after the last commit. If these files exist, treat them as **unreviewed drafts** —
-> do not mark them complete without reading and verifying against the framework.
-> If they do not exist, author them fresh.
-
-1. Check for untracked files in `agents/csco/skills/` — review any that exist for correctness
-2. Also review `gate-phase-b.md`, `gate-phase-c.md`, `gate-phase-d.md` — written by background
-   agents and committed without manual review; verify against framework cross-references
-3. Author or complete (as needed): `gate-phase-g.md`, `gate-phase-h.md`, `incident-response.md`
-4. Update `framework/agent-index.md` — add PO, SM, CSCO rows to Agent Routing Table and skill tables
-5. Full coherence review of all Stage 4 files against framework specs
-6. Commit as `stage-4-framing-layer`
-
-**Merge all stage-4 branches to `stage-4-framing-layer`** — Pending
+**Merge all stage-4 branches to `stage-4-framing-layer`** — Complete (2026-04-03)
 
 ---
 
@@ -327,6 +316,16 @@ Every skill file must include: `## Inputs Required`, `## Knowledge Adequacy Chec
 **New document: `framework/diagram-conventions.md`**
 
 Purpose: formalize the production, registration, and reuse of PlantUML diagrams across all agent roles. Drift risk in a multi-agent architecture repository is acute — without a strict catalog-and-reuse protocol, the same actor or system will be drawn differently in every diagram. This document is the canonical specification for all diagram work.
+
+**Diagram authoring model — design decision:**
+
+Agents author PlantUML source text directly. There is no intermediate "diagram spec" format that a tool generates PUML from. Rationale: PUML is already a compact textual DSL; LLMs produce syntactically regular text reliably when given clear templates and rules; adding a second intermediate format creates two translation steps without benefit. The division of responsibility is:
+
+- **The model authors PUML.** Skill steps instruct the agent to write a `.puml` file following the per-diagram-type template from `diagram-conventions.md §7`. The agent uses `write_artifact` to write the file.
+- **Tools handle catalog I/O.** `catalog_lookup`, `catalog_register`, `catalog_propose` are tool operations because they require reading/writing YAML files with validation logic.
+- **Tools handle post-authoring operations.** `validate_diagram` checks the authored PUML against the catalog (a filesystem + parsing operation); `render_diagram` invokes the plantuml CLI (a subprocess operation).
+
+This means `diagram-conventions.md §7` (PUML syntax conventions) must include **per-diagram-type authoring templates** — not examples or illustrations, but the authoritative boilerplate patterns the LLM follows: standard header block, `!include` lines, how catalog IDs map to PUML aliases for each diagram type, and ArchiMate stereotype syntax. These templates are the primary runtime specification for diagram authoring, analogous to skill Steps for task execution.
 
 Sections required:
 
@@ -509,12 +508,28 @@ Sections required:
    - Step D3: Submit new elements to SA for catalog integration via handoff event `diagram.catalog-proposal`; SA writes directly; non-SA agents must not write to `diagram-catalog/`
    - Step D4: When adding a new element, SA validates: no duplicate ID within the namespace, no name collision within the sub-catalog, cross-reference fields populated if the element links to another ontological layer
 
+5b. **PUML authoring step** (D5) — follows D1–D4 in every diagram-producing skill:
+   - **D5a:** Call `read_framework_doc("framework/diagram-conventions.md §7.<diagram-type>")` to load the authoritative boilerplate template for the diagram type being produced (e.g., §7.sequence, §7.archimate-business, §7.class-er). This gives the agent the exact PUML header, `!include` lines, and alias-declaration syntax to follow.
+   - **D5b:** Author the PUML source text: substitute catalog IDs (from D1–D2) as PUML aliases throughout the template; populate relationships from `connections/` data (Step 0.D point 3); add diagram-specific content per the artifact being built (processes, entities, components, etc.). **The LLM generates the PUML text directly — no intermediate spec format is used.**
+   - **D5c:** Call `write_artifact(<diagram-catalog/diagrams/ or own-work-repo/diagrams/>, <puml_content>)` to write the `.puml` file using the filename convention `<phase>-<diagram-type>-<subject>[-<domain>]-v<N>.puml`.
+   - **D5d:** Update `diagrams/index.yaml`: add or update the entry for this diagram (diagram_id, title, diagram_type, puml_file_path, domain, agent_owner, phase, elements_used[], connections_used[]).
+
+5c. **Post-authoring validation** (D6):
+   - **D6:** Call `validate_diagram(<puml_file_path>)` immediately after writing. The tool checks: all element aliases are registered catalog IDs; `!include _macros.puml` is present; ArchiMate diagrams also include `!include _archimate-stereotypes.puml`; no free-floating labels. If validation returns errors: fix in the PUML text (amend via `write_artifact`) and call `validate_diagram` again before proceeding. Do not emit `artifact.produced` until validation passes.
+
 6. **Write authority**:
    - SA: sole writer to all files under `diagram-catalog/`; runs `plantuml` to regenerate `_macros.puml` after any catalog update
    - SwA, PO, and other agents: may draft `.puml` files in their own work-repositories (e.g., `technology-repository/diagrams/` for SwA), referencing catalog IDs; SA integrates these via `diagram.catalog-proposal` handoff on phase transition
    - No agent may create a new element ID without SA catalog registration
 
-7. **PUML syntax conventions** per diagram type: every `.puml` file must begin with a standard header block (title, scale, skinparam), followed by `!include <relative-path>/_macros.puml` and (for ArchiMate diagrams) `!include <relative-path>/_archimate-stereotypes.puml`; elements are declared using their catalog ID as the PUML alias; free-floating labels not connected to catalogued elements are prohibited
+7. **PUML authoring templates** per diagram type (the primary runtime artifact of this document — agents author PUML directly, guided by these templates):
+   - Each diagram type must have a **full boilerplate template** covering: `@startuml` / `@enduml` wrapper, standard skinparam block, `!include` lines for `_macros.puml` and (for ArchiMate) `_archimate-stereotypes.puml`, and the canonical pattern for declaring elements using their catalog ID as the PUML alias
+   - **ArchiMate overlay template**: `!include`, stereotype macro usage (`<<motivation>>`, `<<business>>`, `<<application>>`, `<<technology>>`), element declaration form (`rectangle "Name" <<stereotype>> as STK-001`), relationship syntax
+   - **Use Case template**: `actor` declaration form using `ACT-nnn` ID as alias, `usecase` block form, `(use case label)` vs `UC-nnn` alias conventions, `include` / `extend` relationship syntax
+   - **Class/ER template**: class block form using `DE-nnn` as class alias, attribute list syntax, cardinality markers (`"1" -- "0..*"`), `{field}` notation for PK/FK, note block form
+   - **Sequence template**: `participant`, `actor`, `boundary`, `database` declaration forms using `CMP-nnn` / `ACT-nnn` aliases; synchronous (`->`) vs async (`->>`) message syntax; `activate` / `deactivate`; `alt` / `opt` / `loop` block syntax; note placement
+   - **Activity/BPMN template**: swimlane (`|pool_label|`) declaration using `ACT-nnn` / `SYS-nnn` IDs; task notation (`:task label;`); BPMN-compatible gateway forms (diamond `if (...) then ... else ... endif` for XOR; `fork ... fork again ... end fork` for AND-split); start/end event markers; restriction: no free-form branching syntax outside these BPMN constructs
+   - **Common rule**: free-floating labels not connected to catalogued elements are prohibited; every element in a diagram must have a catalog ID as its PUML alias
 
 8. **Rendering**: Diagrams must be renderable by the local `plantuml` CLI (JAR or system install). At sprint close, SA runs `plantuml -tsvg diagrams/*.puml -o rendered/`. SVGs are committed to git at sprint boundary.
 
@@ -558,7 +573,7 @@ For any skill step that produces or updates a diagram, the standard Discovery Sc
 > 2. Read the relevant sub-catalog files from `architecture-repository/diagram-catalog/elements/<layer>/` — extract all entries whose name, type, or cross-reference fields match the current artifact domain
 > 3. Read the relevant `connections/` file(s) for known relationships between extracted elements
 > 4. Annotate the working context: "Diagram catalog: N elements found relevant; IDs: [...]"
-> 5. Proceed to diagram production using Steps D1–D4 from `framework/diagram-conventions.md §5`
+> 5. When the relevant artifact production step is reached, execute the full diagram authoring sequence: **D1–D4** (catalog reuse/registration from `framework/diagram-conventions.md §5`) then **D5** (author PUML directly using the per-diagram-type template from `§7`, write via `write_artifact`, update `index.yaml`) then **D6** (validate via `validate_diagram`; fix and re-validate before proceeding). Do not emit `artifact.produced` until D6 passes.
 
 If the engagement catalog does not yet exist (Preliminary / Phase A bootstrap): SA creates the empty directory structure and, if an enterprise catalog is configured, runs the enterprise catalog import scan to seed the engagement catalog with relevant elements before any diagram work begins.
 
@@ -630,18 +645,25 @@ The investment in carefully-designed skill procedures and behavioral stances jus
 
 #### 4.5f — Retroactive Diagram and Reference Updates to Existing Skill Files
 
-Tracked for Stage 5 retroactive pass (do not block Stage 4.5 authoring on these):
+Tracked for Stage 5 retroactive pass (do not block Stage 4.5 authoring on these).
+
+**What "Add Step D" means operationally:** Each skill file below needs a diagram production block inserted at the appropriate artifact-authoring step (not just in the discovery scan). The block follows the full D1–D6 sequence from `framework/diagram-conventions.md §5` + §5b + §5c:
+- D1–D4: catalog lookup, reuse or propose/register new elements
+- D5: call `read_framework_doc("framework/diagram-conventions.md §7.<type>")` to load the PUML template; author PUML text directly; call `write_artifact`; update `index.yaml`
+- D6: call `validate_diagram`; fix errors; re-validate before proceeding
+
+The skill step must specify: which diagram type(s) are required at this phase, what content the diagram must capture (tied to the artifact sections being produced at that step), and which ontological layers are relevant for the catalog lookup. This is enough to drive D1–D6 without per-diagram prescriptions in the skill file itself — the templates in `diagram-conventions.md §7` supply the PUML syntax.
 
 | File | Update Required |
 |---|---|
-| `agents/solution-architect/skills/phase-b.md` | Add Step D: ArchiMate capability map + Use Case diagram production (Steps D1–D4 from diagram-conventions.md) |
-| `agents/solution-architect/skills/phase-c-application.md` | Add Step D: Sequence diagram for key interactions; Class/ER for conceptual application model |
-| `agents/solution-architect/skills/phase-c-data.md` | Add Step D: Class/ER diagram with DE-nnn IDs; register all DE-nnn entities in diagram catalog |
-| `agents/software-architect/skills/phase-d.md` | Add Step D: Class diagram (domain model); component diagram; reference SA diagram catalog |
-| `agents/software-architect/skills/phase-e.md` | Add Step D: Sequence diagram for API flows referencing IFC-nnn catalog IDs |
-| `agents/software-architect/skills/phase-g-governance.md` | Add Step 0.S: Mandatory coding-guidelines pre-read |
-| `agents/implementing-developer/skills/phase-g.md` | Add Step 0.S: Mandatory coding-guidelines pre-read |
-| `agents/devops-platform/skills/phase-g.md` | Add Step 0.S: Advisory coding-guidelines and platform-standards pre-read |
+| `agents/solution-architect/skills/phase-b.md` | Add Step D at end of Step 1 (Capability Map): produce ArchiMate business-layer diagram (ACT, PRO, BSV, BOB elements); add Step D at Step 3 (Process Catalog): produce Activity/BPMN diagram per process (ACT pools, PRO nodes); add Step D at Step 4 (Value Stream): produce Use Case diagram (ACT actors + VS as use cases) |
+| `agents/solution-architect/skills/phase-c-application.md` | Add Step D at Step 2 (Component Model): produce ArchiMate application-layer diagram (CMP, IFC, ASV); add Step D at Step 3 (Interaction Flows): produce Sequence diagram per key flow (CMP lifelines, IFC boundaries) |
+| `agents/solution-architect/skills/phase-c-data.md` | Add Step D at Step 1 (Canonical Data Model): produce Class/ER diagram (DE-nnn as class aliases, attributes, cardinalities); register all DE-nnn entities in `elements/data/entities.yaml` before diagram authoring |
+| `agents/software-architect/skills/phase-d.md` | Add Step 0.D to discovery scan; add Step D at domain model step: produce Class/ER diagram (DE-nnn and CMP-nnn domain model); add Step D at component step: produce ArchiMate technology-layer diagram (NOD, TSV, ART) referencing SA diagram catalog for CMP IDs |
+| `agents/software-architect/skills/phase-e.md` | Add Step D at API contract step: produce Sequence diagram per API flow (IFC-nnn boundaries, CMP-nnn lifelines from SA catalog); verify all IFC-nnn IDs exist in SA engagement catalog before authoring |
+| `agents/software-architect/skills/phase-g-governance.md` | Add Step 0.S: Mandatory coding-guidelines pre-read — **COMPLETE** |
+| `agents/implementing-developer/skills/phase-g.md` | Add Step 0.S: Mandatory coding-guidelines pre-read — **COMPLETE** |
+| `agents/devops-platform/skills/phase-g.md` | Add Step 0.S: Advisory coding-guidelines and platform-standards pre-read — **COMPLETE** |
 | All AGENT.md files (SA, SwA, DO, DE, PM, QA, PO, SM, CSCO) | Add `### Runtime Behavioral Stance` subsection to §11 + `## Artifact Discovery Priority` section — **COMPLETE** |
 | All AGENT.md files (all roles) | Add `## Artifact Discovery Priority` subsection: defines ordered list of repositories to scan, by role; architects prioritize `architecture-repository/` then `technology-repository/`; DE and DO must always check `technology-repository/coding-standards/` first |
 
@@ -686,7 +708,7 @@ Every AGENT.md must include a section specifying, in priority order, which repos
   - `write_tools.py` — per-agent path-constrained write tools (RepositoryBoundaryError on violation → ALG-007)
   - `target_repo_tools.py` — read_target_repo (DE, DO, SwA EP-G), write_target_repo (DE), execute_pipeline (DO)
   - `pm_tools.py` — invoke_specialist (agent-as-tool pattern), batch_cqs, evaluate_gate, record_decision
-  - `diagram_tools.py` — `catalog_lookup(query, ontological_layer)` (semantic search across `elements/<layer>/`; returns matching element IDs + names); `catalog_propose(element_spec)` (submits new element via `diagram.catalog-proposal` handoff; non-SA only); `catalog_register(element_spec)` (SA only; writes to correct sub-catalog YAML; regenerates `_macros.puml`; validates no duplicate IDs); `produce_diagram(diagram_spec)` (generates PUML source from a structured spec following diagram-conventions.md syntax rules; writes to agent's own work-repository or to `diagram-catalog/diagrams/` for SA)
+  - `diagram_tools.py` — `catalog_lookup(query, ontological_layer)` (semantic search across `elements/<layer>/`; returns matching element IDs + names); `catalog_propose(element_spec)` (submits new element via `diagram.catalog-proposal` handoff; non-SA only); `catalog_register(element_spec)` (SA only; writes to correct sub-catalog YAML; regenerates `_macros.puml`; validates no duplicate IDs); `validate_diagram(puml_file_path)` (post-authoring validation: reads .puml file, extracts all element aliases, checks each against catalog YAML sub-catalogs; verifies `!include _macros.puml` is present; returns list of validation errors — missing catalog IDs, broken cross-references, missing required header; SA calls before rendering); `render_diagram(puml_file_path)` (invokes local `plantuml` CLI; on success writes SVG to `rendered/` and returns SVG path; on failure returns error output for agent to diagnose; sprint-boundary render only unless on-demand render is requested by PM). **Note: agents author PUML source text directly using `write_artifact` — no intermediate spec format is generated by a tool. The LLM follows per-diagram-type templates from `framework/diagram-conventions.md §7` (PUML syntax conventions). Text generation is the model's task; tools handle catalog I/O and CLI invocation only.**
 - [ ] **`src/agents/project_manager.py`**: PM agent with `result_type=PMDecision`; all PM skills loaded via SkillLoader
 - [ ] **`src/agents/solution_architect.py`**: SA agent; Discovery Scan tool registered; all SA skills loadable
 - [ ] **`src/agents/software_architect.py`**: SwA agent; Reverse Architecture Reconstruction support for EP-G
@@ -724,7 +746,7 @@ Every AGENT.md must include a section specifying, in priority order, which repos
 - [x] Retroactive: add `## Artifact Discovery Priority` section to all AGENT.md files (all 9 roles) — **COMPLETE**
 - [ ] Retroactive: add diagram production Steps D1–D4 to SA `phase-b.md`, `phase-c-application.md`, `phase-c-data.md` and SwA `phase-d.md`, `phase-e.md` per Stage 4.5f table
 - [x] Retroactive: add Step 0.S (Standards and Coding Guidelines Discovery) to SwA `phase-g-governance.md`, DE `phase-g.md`, DO `phase-g.md` — **COMPLETE**
-- [ ] Retroactive: add Step 0.D (Diagram Catalog Lookup) to SA `phase-b.md`, `phase-c-application.md`, `phase-c-data.md` and SwA `phase-d.md`, `phase-e.md` — **blocked on `framework/diagram-conventions.md`**
+- [ ] Retroactive: add Step 0.D (Diagram Catalog Lookup) + full D1–D6 diagram authoring sequence to SA `phase-b.md`, `phase-c-application.md`, `phase-c-data.md` and SwA `phase-d.md`, `phase-e.md` per Stage 4.5f table — **blocked on `framework/diagram-conventions.md`** (must be authored in Stage 4.5 before this step can be executed)
 
 - [ ] Commit as `stage-5-python-implementation`
 

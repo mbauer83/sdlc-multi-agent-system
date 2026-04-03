@@ -112,7 +112,7 @@ tests/
 | 1 | Foundation artifacts (framework + schemas + EventStore skeleton + directory structure) | Complete |
 | 2 | Project Manager master skill | Complete |
 | 3 | Primary implementation chain (SA → SwA → DevOps → Dev → QA) + discovery-protocol.md | Complete |
-| 4 | Framing layer (PO, Sales, CSCO) | Partial |
+| 4 | Framing layer (PO, Sales, CSCO) | Complete |
 | 4.5 | Cross-cutting framework extensions (diagram conventions, artifact references, standards discovery, agent profile condensation) | Pending |
 | 5 | Python implementation layer (EventStore completion + PydanticAI agents + LangGraph orchestration + source adapters) | Pending |
 | 5.5 | Engagement dashboard (local web server + PUML rendering + filesystem monitoring) | Pending |
