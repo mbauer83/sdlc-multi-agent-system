@@ -504,25 +504,311 @@ The domain artifact schemas and cross-cutting framework docs need updating to al
 
 ---
 
-### Stage 4.9 — ENG-001 Reference Model and Initial Diagrams (Pending — pre-Stage-5)
+### Stage 4.9 — ENG-001 Architecture Model (Pending — pre-Stage-5)
 
-> Populates `engagements/ENG-001/work-repositories/architecture-repository/` with a reference implementation of the ERP v2.0 directory structure (ArchiMate-organised layers + `connections/` sibling), entity files, connection files, and four PUML diagrams. The modelled domain is the SDLC multi-agent system itself. Serves as usage example, integration test fixture, and living self-documentation.
+> **Primary purpose: the implementation specification for Stage 5.** The SDLC multi-agent system is modelled as a first-class ERP v2.0 architecture engagement. Entity files, connection files, and diagrams produced here are the definitive architectural plans for all Stage 5 `src/` work. Developers implement one APP entity at a time; Pydantic models in `src/models/` are derived from DOB attribute tables; the LangGraph topology follows the activity diagram. When Stage 5 diverges from these artifacts, the artifacts are updated first. Secondary purpose: integration test fixture for Stage 6.
+>
+> **Model evolution is expected and normal.** The entities, connections, and diagrams in Stage 4.9 are *living* specifications — not a frozen snapshot. Every Stage 5 implementation decision that contradicts, extends, or refines the model (e.g. a new interface discovered, a data object field renamed, a component split into two) must be reflected by updating the relevant entity/connection files *before* changing the code. Requirements and constraints (REQ, CST, PRI) are likewise updated when implementation reveals that a stated requirement or constraint needs revision. Diagrams are regenerated from the updated model after each such update. Connection files are added or removed as actual component relationships are established. This is the model-first discipline applied to forward implementation: the architecture repository always leads the code, not the reverse.
 
-- [ ] ERP directory structure: `motivation/`, `strategy/`, `business/`, `application/`, `implementation/`, `connections/archimate/`, `connections/er/`, `connections/sequence/`, `connections/activity/`, `diagram-catalog/`
+#### 4.9a — ERP Directory Bootstrap
 
-- [ ] **Entity files** — initial set covering the SDLC system: strategy capabilities (CAP), application components (APP), data objects (DOB), business actors (ACT), business services (BSV); each with correct `§content` + `§display` sections
+- [ ] Create under `engagements/ENG-001/work-repositories/architecture-repository/`: `motivation/`, `strategy/`, `business/actors/`, `business/processes/`, `business/services/`, `application/components/`, `application/interfaces/`, `application/services/`, `application/data-objects/`, `implementation/`, `connections/archimate/realization/`, `connections/archimate/serving/`, `connections/archimate/assignment/`, `connections/archimate/composition/`, `connections/archimate/access/`, `connections/er/one-to-many/`, `connections/sequence/synchronous/`, `connections/activity/sequence-flow/`, `diagram-catalog/diagrams/`, `diagram-catalog/rendered/`, `decisions/`, `overview/`
+- [ ] Create `diagram-catalog/_archimate-stereotypes.puml` stub; `diagram-catalog/diagrams/index.yaml` empty list
 
-- [ ] **Connection files** — typed connections between the above entities: `connections/archimate/realization/`, `connections/archimate/serving/`, `connections/er/one-to-many/`, `connections/sequence/synchronous/`
+#### 4.9b — Motivation and Strategy Entities (Phase A)
 
-- [ ] **`_macros.puml`** — generated from entity `§display ###archimate` blocks; `_archimate-stereotypes.puml` present
+- [ ] **Motivation** in `motivation/`:
+  - `STK-001.md` — `User / Engagement Owner` — directs the engagement; answers CQs; approves sprint output; primary consumer of all agent-produced artifacts
+  - `STK-002.md` — `Architecture Board` — governs enterprise promotion; approves cross-engagement standards; only writers to `enterprise-repository/`
+  - `DRV-001.md` — `SDLC Execution Cost` — manual execution of TOGAF ADM phases is expensive, error-prone, and rarely completed end-to-end
+  - `DRV-002.md` — `Architecture Documentation Debt` — brownfield systems lack architecture models; decisions are undocumented; onboarding is slow
+  - `GOL-001.md` — `Full ADM Phase Coverage` — every TOGAF phase (Prelim through H) executable by a specialist agent
+  - `GOL-002.md` — `End-to-End Traceability` — every artifact traceable to a requirement, a producing agent, a skill, and a sprint
+  - `GOL-003.md` — `Safety-by-Default` — CSCO gate woven into every phase transition; safety cannot be bypassed
+  - `REQ-001.md` — `Multi-Agent Coordination` — agents hand off artifacts through structured events; no ad-hoc coupling
+  - `REQ-002.md` — `Human-in-the-Loop` — user can inspect, question, and approve any agent output before it is promoted
+  - `REQ-003.md` — `Brownfield Support` — system reconstructs architecture models from existing codebases (EP-G)
+  - `REQ-004.md` — `Resumable State` — workflow survives process restarts; EventStore is the sole durable state
+  - `REQ-005.md` — `Agent Learning` — agents record corrections; accuracy improves within and across engagements
+  - `CST-001.md` — `No Framework Lock-In` — orchestration and LLM layers are swappable; domain logic has zero framework imports
+  - `CST-002.md` — `Local-Only Runtime` — no required external services; only outbound call is the LLM API
+  - `PRI-001.md` — `Domain-Centric Layering` — strict inward dependency rule: Infrastructure → Application → Domain → Common; never reversed
+  - `PRI-002.md` — `EventStore Primacy` — `workflow.db` is the sole canonical state; no agent holds private mutable state between invocations
+  - `PRI-003.md` — `Model-First` — entity files exist before any diagram; diagram aliases must resolve to ModelRegistry entries
 
-- [ ] **Four PUML diagrams** in `diagram-catalog/diagrams/`:
-  - `phase-b-archimate-business-v1.puml` — ArchiMate business layer: agent roles, capabilities, services
-  - `phase-c-archimate-application-v1.puml` — ArchiMate application layer: agent components, EventStore, SkillLoader, LangGraph
-  - `phase-c-class-er-v1.puml` — ER diagram: core DOB entities (Engagement, WorkflowEvent, LearningEntry, ClarificationRequest, AlgedonicSignal)
-  - `phase-b-activity-sprint-v1.puml` — Activity/BPMN: ADM sprint lifecycle (planning → phase execution → gate evaluation → sprint close)
+- [ ] **Strategy** in `strategy/`:
+  - `CAP-001.md` — `Phase Execution` — execute any TOGAF ADM phase via a specialist agent invoked by PM
+  - `CAP-002.md` — `Artifact Production` — produce schema-valid, versioned, ERP-compliant architecture artifacts
+  - `CAP-003.md` — `Multi-Agent Orchestration` — coordinate specialist agents under PM supervision via LangGraph
+  - `CAP-004.md` — `Knowledge Retention` — record, retrieve, and synthesise learnings across skills, sprints, and engagements
+  - `CAP-005.md` — `User Interaction` — surface CQs, accept answers and file uploads, present sprint reviews via dashboard
+  - `CAP-006.md` — `Reverse Architecture` — reconstruct ERP model from existing codebase, IaC, and user-provided documents
+  - `VS-001.md` — `Forward SDLC` — EP-0 cold start → Phase A–G sequential execution → enterprise promotion
+  - `VS-002.md` — `Brownfield Onboarding` — EP-G entry → codebase scan → model reconstruction → gap assessment → Phase G governance
 
-- [ ] **`diagrams/index.yaml`** — catalog index for all four diagrams with `entity_ids_used` and `connection_ids_used` lists
+#### 4.9c — Business Layer Entities (Phase B)
+
+Agent roles, core SDLC processes, and business services — the "what the system does" view, independent of Python.
+
+- [ ] **Actors** in `business/actors/` — `safety-relevant: false` on all; `phase-produced: B`:
+  - `ACT-001.md` — `User` — human; initiates phases; answers CQs; uploads files; reviews and approves sprint output
+  - `ACT-002.md` — `PM Agent` — VSM System 3; orchestrates all agents; sprint lifecycle; gate coordination; CQ batching; review trigger
+  - `ACT-003.md` — `SA Agent` — VSM System 4; phases A/B/C/H + EP-G Prelim/A and BA reconstruction
+  - `ACT-004.md` — `SwA Agent` — phases D/E/F/G + EP-G TA reconstruction; technology authority
+  - `ACT-005.md` — `DevOps Agent` — phases D/E/F/G; IaC, pipelines, deployments
+  - `ACT-006.md` — `DE Agent` — phase G; code delivery; git worktree per sprint
+  - `ACT-007.md` — `QA Agent` — phases E/F (test planning) + G (execution); compliance assessment co-production
+  - `ACT-008.md` — `PO Agent` — phases Prelim/A/B/H; requirements register; stakeholder communication
+  - `ACT-009.md` — `SM Agent` — phase A; market analysis; SWOT; requirements-management feedback
+  - `ACT-010.md` — `CSCO Agent` — all phases (gate reviews); safety constraints; STAMP/STPA; incident response
+  - `ACT-011.md` — `Architecture Board` — enterprise promotion reviews; enterprise-repository write authority
+
+- [ ] **Processes** in `business/processes/` — each `safety-relevant: false` except BPR-005:
+  - `BPR-001.md` — `Sprint Planning` — PM assigns work-packages to agents; emits `sprint.started`
+  - `BPR-002.md` — `Skill Execution` — agent invoked with skill; reads artifacts; calls tools; produces output; emits events
+  - `BPR-003.md` — `CQ Lifecycle` — agent raises CQ → PM batches → dashboard surfaces → user answers → agent resumes
+  - `BPR-004.md` — `Gate Evaluation` — PM collects votes; evaluates checklist; records `gate.evaluated` event
+  - `BPR-005.md` — `Algedonic Escalation` — `alg.raised` bypasses topology; reaches escalation target immediately — `safety-relevant: true`
+  - `BPR-006.md` — `Sprint Review` — PM emits `review.pending`; dashboard surfaces review; user marks items; PM routes corrections; sprint closes
+  - `BPR-007.md` — `Enterprise Promotion` — entity promoted from engagement to enterprise repo; ID reference sweep; Architecture Board review
+  - `BPR-008.md` — `Reverse Architecture` — EP-G entry; multi-source scan; entity inference; user confirmation; ERP model population
+
+- [ ] **Services** in `business/services/` — what each role offers to the system, consumed by other actors or processes:
+  - `BSV-001.md` — `Architecture Modelling` (SA) — produces AV, BA, AA, DA, Change Records; owns architecture-repository
+  - `BSV-002.md` — `Technology Architecture` (SwA) — produces TA, ADRs, Architecture Contract; owns technology-repository
+  - `BSV-003.md` — `Project Coordination` (PM) — sprint lifecycle management; gate evaluation; CQ routing; review coordination
+  - `BSV-004.md` — `Safety Governance` (CSCO) — gate vote authority on all phases; SCO updates; incident response
+  - `BSV-005.md` — `Requirements Management` (PO) — maintains RR; stakeholder communication; phase A/B consulting
+  - `BSV-006.md` — `Code Delivery` (DE) — implements work packages; submits PRs; contributes test reports
+  - `BSV-007.md` — `Quality Assurance` (QA) — test strategy; test execution; compliance assessment
+  - `BSV-008.md` — `Platform Engineering` (DO) — IaC; CI/CD pipelines; environment provisioning; deployment records
+  - `BSV-009.md` — `User Decisions` (User) — CQ answers; file uploads; sprint review approvals — the user's contribution as a bounded service consumed by BPR-003 and BPR-006
+
+#### 4.9d — Application Layer Entities (Phase C) — Primary Stage 5 Implementation Specification
+
+Every APP-nnn maps to a distinct `src/` Python module. Every DOB-nnn maps to a Pydantic model (or TypedDict for LangGraph state). These are the binding specifications Stage 5 developers work from.
+
+- [ ] **Components** in `application/components/`:
+
+  *State & Storage (src/events/, src/common/, src/sources/):*
+  - `APP-001.md` — `EventStore` — `src/events/event_store.py`; ACID SQLite; `record_event()`, `replay() → WorkflowState`, `check_integrity()`, `query_events(**filter)`; append-only; canonical workflow state; never accessed directly via sqlite3
+  - `APP-002.md` — `ModelRegistry` — `src/common/model_registry.py`; in-process frontmatter cache; built at startup by scanning all `*.md` ERP files; `list_artifacts(**filter)`, `list_connections(**filter)`, `get_by_id(id)`, `upsert(record)`; thread-safe (RLock); never persisted to disk; rebuilt on cold start
+  - `APP-003.md` — `LearningStore` — `src/agents/learning_store.py`; LangGraph `BaseStore` wrapper; `(engagement_id, agent_role, "learnings")` namespace; `query(phase, artifact_type, domain, expand_related) → list[str]`; `record(entry: LearningEntry) → str`; optional sqlite-vec semantic tier; cold-start rebuild from `learnings/index.yaml`
+
+  *Agent Runtime (src/agents/ infrastructure):*
+  - `APP-004.md` — `SkillLoader` — `src/agents/skill_loader.py`; parses skill `.md` frontmatter + body; extracts Inputs/Steps/Algedonic/FeedbackLoop/Outputs sections; enforces token budget by `complexity-class` (600/1200/2000); truncation priority order; `load_instructions(skill_id) → str`
+  - `APP-005.md` — `AgentFactory` — `src/agents/base.py`; `build_agent(agent_id) → Agent[AgentDeps, str | PMDecision]`; Layer 1 = `system-prompt-identity` (≤150 tok); Layer 2 = `### Runtime Behavioral Stance` (≤350 tok); Layer 3 = `SkillLoader.load_instructions()` via `@agent.instructions`; Layer 4 = tool results at runtime; registers tool sets per agent role
+  - `APP-006.md` — `AgentRegistry` — `src/agents/__init__.py`; `AGENT_REGISTRY: dict[str, Agent]` of pre-built instances for all 9 roles; populated at module import; used by LangGraph nodes to invoke agents without re-constructing
+
+  *Agent Instances (src/agents/*.py — one module each):*
+  - `APP-007.md` — `PM Agent` — `src/agents/project_manager.py`; `result_type=PMDecision`; `pm_tools` (invoke_specialist, batch_cqs, evaluate_gate, record_decision); all PM skills loadable
+  - `APP-008.md` — `SA Agent` — `src/agents/solution_architect.py`; `universal_tools` + `write_tools` (architecture-repository bound) + `target_repo_tools` (read-only); all SA skills including SA-REV-PRELIM-A and SA-REV-BA
+  - `APP-009.md` — `SwA Agent` — `src/agents/software_architect.py`; `universal_tools` + `write_tools` (technology-repository bound) + `target_repo_tools` (read-only); all SwA skills including SWA-REV-TA
+  - `APP-010.md` — `DO Agent` — `src/agents/devops_platform.py`; `universal_tools` + `write_tools` (devops-repository bound) + `target_repo_tools` (read-write for DO) + `execute_pipeline()`
+  - `APP-011.md` — `DE Agent` — `src/agents/implementing_developer.py`; `universal_tools` + `write_tools` (delivery-repository metadata bound) + `target_repo_tools` (read-write for DE; git worktree per sprint)
+  - `APP-012.md` — `QA Agent` — `src/agents/qa_engineer.py`; `universal_tools` + `write_tools` (qa-repository bound) + `target_repo_tools` (read-only)
+  - `APP-013.md` — `PO Agent` — `src/agents/product_owner.py`; `universal_tools` + `write_tools` (project-repository RR bound)
+  - `APP-014.md` — `SM Agent` — `src/agents/sales_marketing.py`; `universal_tools` + read-only external source access
+  - `APP-015.md` — `CSCO Agent` — `src/agents/csco.py`; `universal_tools` + `write_tools` (safety-repository bound); gate vote authority on all phases
+
+  *Orchestration (src/orchestration/):*
+  - `APP-016.md` — `LangGraph Orchestrator` — `src/orchestration/graph.py`; `build_sdlc_graph() → CompiledGraph`; nodes: pm_node, sa_node … csco_node, gate_check_node, cq_user_node, algedonic_handler_node, sprint_close_node, review_processing_node, engagement_complete_node; `SDLCGraphState` as shared state
+  - `APP-017.md` — `EngagementSession` — `src/orchestration/session.py`; top-level entry point; loads `engagements-config.yaml`; bootstraps EventStore; calls `EventStore.replay()` to reconstruct `SDLCGraphState`; invokes `graph.stream()`; manages the outer user interaction loop (blocks on `cq_user_node`, passes answers back as events)
+  - `APP-018.md` — `UserInteractionOrchestrator` — `src/orchestration/user_interaction.py`; runs as async monitor alongside the graph; watches for `cq.answered` and `review.submitted` EventStore events (emitted by Dashboard); routes CQ answers to the raising agent node; emits `cq.routed` event; signals PM review-processing node on review submission
+  - `APP-019.md` — `PromotionOrchestrator` — `src/orchestration/promotion.py`; implements `repository-conventions.md §12` enterprise promotion procedure; `promote_entity(entity_id, engagement_id)`: reads entity file, assigns enterprise ID from `id-counters.yaml`, performs reference sweep across all connection/diagram files, moves entity file to enterprise path, emits `artifact.promoted` event
+
+  *Dashboard & User Interaction (src/dashboard/):*
+  - `APP-020.md` — `DashboardServer` — `src/dashboard/server.py`; FastAPI; all read-only view routes + POST interaction routes; SSE endpoint `/events/stream`; starts `watchdog` observer; mounts static files; single process; 127.0.0.1 only
+  - `APP-021.md` — `InteractionHandler` — `src/dashboard/interaction.py`; handles POST /queries/<cq_id>/answer, POST /uploads, POST /review/submit; validates inputs; calls `EventStore.record_event()` for all writes; enforces MIME allow-list; path-restricted; never touches work-repositories directly
+  - `APP-022.md` — `TargetRepoManager` — `src/sources/target_repo.py`; reads `engagements-config.yaml`; `clone_or_update(repo_id)`; `get_clone_path(repo_id) → Path`; `check_access(repo_id, agent_role)`; `create_worktree(repo_id, branch) → Path`; `get_primary_id()`; backward-compatible with singular `target-repository`
+
+- [ ] **Interfaces** in `application/interfaces/` — ports in the ports-and-adapters model; each is a `typing.Protocol` defined in `src/agents/protocols.py` or `src/sources/base.py`:
+  - `AIF-001.md` — `EventStorePort` — `record_event(event: WorkflowEvent) → None`; `replay() → WorkflowState`; `query_events(**filter) → list[WorkflowEvent]`; implemented by APP-001; injected into all agents via AgentDeps
+  - `AIF-002.md` — `LLMClientPort` — `complete(messages, tools, result_type) → Result`; implemented by PydanticAI `Agent` backed by Anthropic API; swappable for test doubles without LLM calls; defined in `src/agents/protocols.py`; this port is what CST-001 (No Framework Lock-In) depends on
+  - `AIF-003.md` — `SourceAdapterPort` — `query(query: str) → str`; `source_id: str`; implemented by Confluence, Jira, Git, UserUpload adapters in `src/sources/`; registered in source adapter registry at session startup
+  - `AIF-004.md` — `ArtifactReadWriterPort` — `read(id_or_path, mode) → str`; `write(path, content) → ArtifactRecord`; `list(**filter) → list[ArtifactRecord]`; path-constrained per agent role; validates ERP frontmatter + §content/§display structure; updates ModelRegistry synchronously on write
+  - `AIF-005.md` — `DiagramToolsPort` — `regenerate_macros(repo_path)`; `generate_er_content(entity_ids) → str`; `generate_er_relations(connection_ids) → str`; `validate_diagram(puml_path) → list[str]`; `render_diagram(puml_path) → Path`; invokes local `plantuml` CLI
+  - `AIF-006.md` — `LearningStorePort` — `query(phase, artifact_type, domain, expand_related) → list[str]`; `record(entry: LearningEntry) → str`; implemented by APP-003 (`LearningStore`); swappable for in-memory fake in tests
+
+- [ ] **Data objects** in `application/data-objects/` — authoritative field-level specification for all Pydantic models and TypedDicts in `src/models/` and `src/orchestration/`:
+
+  *Persisted domain objects (EventStore-recorded or file-stored):*
+  - `DOB-001.md` — `WorkflowEvent` — `src/events/models.py`; base model; fields: `event_id: str`, `event_type: str`, `agent: str | None`, `phase: str | None`, `sprint_id: str | None`, `skill_id: str | None`, `payload: dict`, `sequence: int`, `timestamp: datetime`; all EventStore-specific models inherit from this
+  - `DOB-002.md` — `Engagement` — `src/models/engagement.py`; root domain entity; fields: `engagement_id: str`, `entry_point: str`, `target_repositories: list[TargetRepo]`, `primary_repo_id: str | None`, `sprint_review: SprintReviewConfig`, `uploads: UploadConfig`; loaded from `engagements-config.yaml` at session start; passed into `AgentDeps`
+  - `DOB-003.md` — `LearningEntry` — `src/models/learning.py`; fields: `learning_id: str`, `agent: str`, `phase: str`, `artifact_type: str`, `trigger_event: str`, `error_type: str`, `importance: Literal["S1","S2","S3"]`, `applicability: str`, `correction_text: str`, `context_text: str | None`, `related: list[str]`, `synthesis_superseded: str | None`, `promoted: bool`, `generated_at_sprint: str`, `generated_at_engagement: str`
+  - `DOB-004.md` — `ClarificationRequest` — `src/models/cq.py`; fields: `cq_id: str`, `raising_agent: str`, `skill_id: str`, `phase: str`, `question_text: str`, `blocking: bool`, `blocks_task: str | None`, `status: Literal["open","answered","withdrawn"]`, `answer_text: str | None`, `upload_refs: list[str]`, `raised_at: datetime`, `answered_at: datetime | None`
+  - `DOB-005.md` — `AlgedonicSignal` — `src/models/algedonic.py`; fields: `alg_id: str`, `trigger_id: str`, `category: str`, `severity: Literal["S1","S2","S3"]`, `escalation_target: str`, `raised_by: str`, `raised_at: datetime`, `status: Literal["active","resolved","superseded"]`, `resolution_notes: str | None`
+  - `DOB-006.md` — `HandoffRecord` — `src/models/handoff.py`; fields: `handoff_id: str`, `from_agent: str`, `to_agent: str`, `artifact_id: str`, `artifact_type: str`, `version: str`, `handoff_type: str`, `payload: dict`, `acknowledged: bool`, `acknowledged_at: datetime | None`; stored in `handoff-log/` and as EventStore `handoff.created` event
+  - `DOB-007.md` — `GateOutcome` — `src/models/gate.py`; fields: `gate_id: str`, `phase_from: str`, `phase_to: str`, `votes: list[GateVote]`, `result: Literal["passed","failed","deferred"]`, `evaluated_at: datetime`, `rationale: str`; `GateVote` sub-model: `agent: str`, `result: Literal["approved","veto","abstain"]`, `rationale: str | None`
+  - `DOB-008.md` — `ReviewItem` — `src/models/review.py`; fields: `item_id: str`, `artifact_id: str`, `artifact_type: str`, `decision: Literal["approved","needs-revision","rejected"]`, `agent_tag: str | None`, `comment: str | None`; list of these is the payload of `review.submitted` event
+
+  *Runtime state objects (not persisted independently):*
+  - `DOB-009.md` — `WorkflowState` — `src/events/replay.py`; rebuilt by `EventStore.replay()`; fields: `current_phase: str`, `current_sprint: str | None`, `phase_visit_counts: dict[str, int]`, `open_cqs: list[ClarificationRequest]`, `pending_handoffs: list[HandoffRecord]`, `baselined_artifacts: dict[str, str]` (id → version), `gate_outcomes: dict[str, GateOutcome]`, `last_algedonic: AlgedonicSignal | None`
+  - `DOB-010.md` — `AgentDeps` — `src/agents/deps.py`; dataclass; fields: `engagement: Engagement`, `event_store: EventStorePort`, `active_skill_id: str`, `workflow_state: WorkflowState`, `engagement_base_path: Path`, `framework_path: Path`; injected by LangGraph node into each agent invocation
+  - `DOB-011.md` — `PMDecision` — `src/orchestration/pm_decision.py`; Pydantic model; `result_type` for PM Agent; fields: `next_action: Literal["invoke_specialist","evaluate_gate","surface_cqs","trigger_review","close_sprint","complete_engagement"]`, `specialist_id: str | None`, `skill_id: str | None`, `task_description: str`, `reasoning: str`, `gate_id: str | None`
+  - `DOB-012.md` — `SDLCGraphState` — `src/orchestration/graph_state.py`; LangGraph `TypedDict` (not Pydantic); fields: `engagement_id: str`, `current_agent: str | None`, `current_skill: str | None`, `pm_decision: PMDecision | None`, `last_specialist_output: str | None`, `target_repository_ids: list[str]`, `primary_repository_id: str | None`, `review_pending: bool`, `algedonic_active: bool`
+  - `DOB-013.md` — `ArtifactRecord` — `src/common/model_registry.py`; ModelRegistry's in-process representation of a scanned entity file; fields: `artifact_id: str`, `artifact_type: str`, `path: Path`, `version: str`, `status: str`, `owner_agent: str`, `safety_relevant: bool`, `produced_by_skill: str | None`, `domain: str | None`, `engagement: str`, `name: str`; never persisted; rebuilt at startup
+
+- [ ] **Application services** in `application/services/` — named service groupings that span multiple components; useful for the business diagram and for tracing capability-to-implementation:
+  - `ASV-001.md` — `Agent Invocation Service` — APP-005 + APP-004 + APP-006; accepts `(agent_id, skill_id, deps)` → 4-layer prompt assembly → PydanticAI execution → structured result; governed by `framework/agent-runtime-spec.md`
+  - `ASV-002.md` — `Artifact I/O Service` — APP-002 + AIF-004; read/write/list on ERP entity files; path constraints enforced; ModelRegistry kept in sync; ERP format validated on every write
+  - `ASV-003.md` — `Sprint Review Service` — APP-018 + APP-021 + APP-016 review_processing_node; full lifecycle from `review.pending` → dashboard presentation → user submission → correction routing → `sprint.close`
+  - `ASV-004.md` — `CQ Management Service` — APP-007 (PM batching) + APP-018 (event monitoring) + APP-020 (dashboard surfacing) + APP-021 (answer submission); full CQ lifecycle from `cq.raised` → user answer → agent resumption
+  - `ASV-005.md` — `Learning Service` — APP-003 + AIF-006; implements `learning-protocol.md §9` full query logic (metadata filter → graph expansion via `related` → optional semantic tier) and `record()` with schema validation, ID assignment, durable file write, and EventStore event
+
+#### 4.9e — Connection Files
+
+Enumerate specific connection files. Each is an `.md` file with frontmatter and brief `§content`. `§display ###archimate` block where applicable.
+
+- [ ] **`connections/archimate/realization/`** (capability/process/service realized by component):
+  - `CAP-001---APP-016.md` — LangGraph Orchestrator realises Phase Execution capability
+  - `CAP-002---ASV-002.md` — Artifact I/O Service realises Artifact Production capability
+  - `CAP-003---ASV-001.md` — Agent Invocation Service realises Multi-Agent Orchestration
+  - `CAP-004---ASV-005.md` — Learning Service realises Knowledge Retention
+  - `CAP-005---ASV-004.md` — CQ Management Service realises User Interaction (query half)
+  - `CAP-005---ASV-003.md` — Sprint Review Service realises User Interaction (review half)
+  - `CAP-006---APP-008.md` — SA Agent realises Reverse Architecture (SA-REV-PRELIM-A, SA-REV-BA)
+  - `CAP-006---APP-009.md` — SwA Agent realises Reverse Architecture (SWA-REV-TA)
+  - `BPR-002---ASV-001.md` — Agent Invocation Service realises Skill Execution process
+  - `BPR-003---ASV-004.md` — CQ Management Service realises CQ Lifecycle process
+  - `BPR-006---ASV-003.md` — Sprint Review Service realises Sprint Review process
+  - `BSV-001---APP-008.md` — SA Agent realises Architecture Modelling service
+  - `BSV-002---APP-009.md` — SwA Agent realises Technology Architecture service
+  - `BSV-003---APP-007.md` — PM Agent realises Project Coordination service
+  - `BSV-009---APP-020.md` — DashboardServer realises User Decisions service
+
+- [ ] **`connections/archimate/serving/`** (component serves another component or actor):
+  - `APP-001---APP-016.md` — EventStore serves LangGraph Orchestrator (state reads/writes in all nodes)
+  - `APP-001---APP-017.md` — EventStore serves EngagementSession (replay on startup)
+  - `APP-001---APP-018.md` — EventStore serves UserInteractionOrchestrator (event monitoring)
+  - `APP-001---APP-021.md` — EventStore serves InteractionHandler (writes CQ answers, uploads, reviews)
+  - `APP-002---APP-004.md` — ModelRegistry serves SkillLoader (artifact lookup for skill routing)
+  - `APP-002---APP-005.md` — ModelRegistry serves AgentFactory (AgentSpec frontmatter load)
+  - `APP-003---APP-007.md` — LearningStore serves PM Agent (via `query_learnings` tool)
+  - `APP-003---APP-008.md` — LearningStore serves SA Agent
+  - `APP-003---APP-009.md` — LearningStore serves SwA Agent
+  - `APP-004---APP-007.md` — SkillLoader serves PM Agent (Layer 3 injection)
+  - `APP-004---APP-008.md` — SkillLoader serves SA Agent
+  - `APP-004---APP-009.md` — SkillLoader serves SwA Agent (and DO, DE, QA, PO, SM, CSCO — four more serving connections; one per remaining agent)
+  - `APP-005---APP-006.md` — AgentRegistry serves LangGraph Orchestrator (agent instance lookup in nodes)
+  - `APP-016---APP-017.md` — LangGraph Orchestrator serves EngagementSession (graph execution)
+  - `APP-020---ACT-001.md` — DashboardServer serves User (all views + interaction endpoints)
+  - `APP-022---APP-008.md` — TargetRepoManager serves SA Agent (read-only target-repo access)
+  - `APP-022---APP-009.md` — TargetRepoManager serves SwA Agent (read-only; SWA-REV-TA uses scan_target_repo)
+  - `APP-022---APP-011.md` — TargetRepoManager serves DE Agent (read-write; git worktree per sprint)
+
+- [ ] **`connections/archimate/assignment/`** (actor assigned to process):
+  - `ACT-002---BPR-001.md` — PM assigned to Sprint Planning
+  - `ACT-002---BPR-004.md` — PM assigned to Gate Evaluation
+  - `ACT-002---BPR-006.md` — PM assigned to Sprint Review
+  - `ACT-003---BPR-002.md` — SA assigned to Skill Execution (phases A/B/C/H)
+  - `ACT-004---BPR-002.md` — SwA assigned to Skill Execution (phases D/E/F/G)
+  - `ACT-001---BPR-003.md` — User assigned to CQ Lifecycle (answer step)
+  - `ACT-001---BPR-006.md` — User assigned to Sprint Review (marking step)
+  - `ACT-011---BPR-007.md` — Architecture Board assigned to Enterprise Promotion
+
+- [ ] **`connections/archimate/composition/`** (structural containment):
+  - `APP-016---APP-007.md` — LangGraph Orchestrator composes PM Agent node
+  - `APP-016---APP-008.md` — composes SA Agent node
+  - `APP-016---APP-009.md` — composes SwA Agent node
+  - `APP-016---APP-018.md` — composes UserInteractionOrchestrator node
+  - `APP-006---APP-007.md` — AgentRegistry contains PM Agent instance
+  - `APP-006---APP-008.md` — contains SA Agent instance (and one entry per remaining agent)
+
+- [ ] **`connections/archimate/access/`** (component reads/writes data object):
+  - `APP-001---DOB-001.md` — EventStore reads/writes WorkflowEvent
+  - `APP-001---DOB-009.md` — EventStore produces WorkflowState (via replay)
+  - `APP-003---DOB-003.md` — LearningStore reads/writes LearningEntry
+  - `APP-016---DOB-012.md` — LangGraph Orchestrator reads/writes SDLCGraphState
+  - `APP-017---DOB-002.md` — EngagementSession accesses Engagement (config)
+  - `APP-007---DOB-011.md` — PM Agent writes PMDecision
+  - `APP-021---DOB-004.md` — InteractionHandler writes ClarificationRequest answers
+  - `APP-021---DOB-008.md` — InteractionHandler writes ReviewItems
+
+- [ ] **`connections/er/one-to-many/`** (entity relationships for ER diagram):
+  - `DOB-002---DOB-001.md` — Engagement has many WorkflowEvents (`engagement_id` FK)
+  - `DOB-009---DOB-001.md` — WorkflowState is derived from many WorkflowEvents
+  - `DOB-004---DOB-001.md` — ClarificationRequest produces WorkflowEvents (cq.raised, cq.answered)
+  - `DOB-007---DOB-007.md` — GateOutcome contains many GateVotes (self-referential sub-model)
+  - `DOB-009---DOB-007.md` — WorkflowState contains many GateOutcomes (one per evaluated gate)
+  - `DOB-004---DOB-009.md` — WorkflowState contains many open ClarificationRequests
+  - `DOB-006---DOB-009.md` — WorkflowState contains many pending HandoffRecords
+
+#### 4.9f — Diagrams (Phase C outputs — binding implementation views)
+
+Seven diagrams. Each has a stated **implementation purpose** — what Stage 5 decision or module it specifies. Diagrams are prescribed at the level of content and grouping; the SA authors the actual PUML.
+
+- [ ] **`phase-b-archimate-business-v1.puml`**
+  *Purpose:* Defines agent role taxonomy and SDLC process model used in all Stage 5 agent module naming and EventStore event routing.
+  *Contents:* All ACT-nnn actors (two columns: human actors left, agent actors right); BPR-001 through BPR-008 processes (centre); BSV-001 through BSV-009 services (right column, aligned to their providing actor); assignment connections ACT→BPR; realization connections BSV→BPR; CAP-001 through CAP-006 capabilities shown as an aggregation grouping above the process column.
+  *Grouping:* Two swim-lanes — "Human" (ACT-001, ACT-011) and "Agents" (ACT-002 through ACT-010).
+
+- [ ] **`phase-c-archimate-application-v1.puml`**
+  *Purpose:* Primary implementation map for Stage 5b — every box is a Python module; every serving connection is a function call boundary.
+  *Contents:* All APP-nnn and AIF-nnn entities. Serving, composition, and access connections.
+  *Grouping — five ArchiMate grouping rectangles:*
+  - **State & Storage** (APP-001 EventStore, APP-002 ModelRegistry, APP-003 LearningStore) — `src/events/ + src/common/`
+  - **Agent Runtime** (APP-004 SkillLoader, APP-005 AgentFactory, APP-006 AgentRegistry; AIF-002 LLMClientPort, AIF-004 ArtifactReadWriterPort, AIF-005 DiagramToolsPort) — `src/agents/` infrastructure
+  - **Agent Roster** (APP-007 PM through APP-015 CSCO — 9 agents) — `src/agents/*.py`; served by Agent Runtime group
+  - **Orchestration** (APP-016 LangGraph, APP-017 Session, APP-018 UIO, APP-019 Promotion; AIF-001 EventStorePort) — `src/orchestration/`
+  - **Dashboard & Interaction** (APP-020 DashboardServer, APP-021 InteractionHandler; AIF-003 SourceAdapterPort, APP-022 TargetRepoManager) — `src/dashboard/ + src/sources/`
+  *Key connections shown:* State & Storage → Agent Runtime (serving); Agent Runtime → Agent Roster (serving); Orchestration ↔ Agent Roster (composition + serving); Dashboard ↔ Orchestration (via EventStore serving both); External Access → Agent Roster (serving).
+
+- [ ] **`phase-c-class-er-v1.puml`**
+  *Purpose:* Pydantic model specification for `src/models/` — field names in this diagram are the authoritative attribute names used in Stage 5 code.
+  *Scope:* The eight persisted domain objects that flow through EventStore and define workflow state: DOB-001 (WorkflowEvent), DOB-002 (Engagement), DOB-003 (LearningEntry), DOB-004 (ClarificationRequest), DOB-005 (AlgedonicSignal), DOB-006 (HandoffRecord), DOB-007 (GateOutcome), DOB-008 (ReviewItem). Runtime-only objects (DOB-009 WorkflowState, DOB-010 AgentDeps, DOB-011 PMDecision, DOB-012 SDLCGraphState, DOB-013 ArtifactRecord) are in the model but excluded from this diagram — they have no ER relationships to show.
+  *Contents:* Each DOB as a PlantUML class with attribute list (name: type). ER connections with cardinalities per `connections/er/` entries. `DOB-002 Engagement` at top-left as aggregate root; `DOB-001 WorkflowEvent` as the central hub entity.
+
+- [ ] **`phase-b-activity-sprint-v1.puml`**
+  *Purpose:* LangGraph graph topology specification for Stage 5c — every decision diamond maps to a routing function; every action box maps to a node implementation.
+  *Contents:* Full ADM sprint lifecycle as UML activity diagram. Start fork: entry point selection (EP-0 through EP-H). Main path: Sprint Planning (BPR-001) → Phase Execution (BPR-002, loop per agent per phase) → Gate Evaluation (BPR-004) → decision: gate passed? → next phase or return. Branches: (1) CQ suspension fork from any phase execution node → await `cq.answered` → resume; (2) Algedonic bypass from any node → ALG handler → resolution → resume or halt; (3) Sprint review branch after each sprint close: decision `sprint-review.enabled?` → if true: `review.pending` → await `review.submitted` → corrections loop → sprint close; if false: direct close. End: Engagement Complete.
+  *Swim-lanes:* PM (planning/gating/review), Agent (execution), User (CQ answers/review), EventStore (state writes at each transition).
+
+- [ ] **`phase-g-sequence-skill-invocation-v1.puml`**
+  *Purpose:* Specifies the Stage 5b core runtime loop — the sequence every Stage 5 developer must internalise before implementing a single agent or node.
+  *Contents:* Participants: EngagementSession, LangGraph, pm_node, routing_function, specialist_node, AgentFactory, SkillLoader, PydanticAI_Agent, UniversalTools, EventStore. Sequence: Session invokes graph.stream() → PM node runs (PM Agent via AgentFactory, Layer 1+2 prompt) → PMDecision returned → routing function reads next_action → specialist node selected → specialist_node calls AgentFactory.build_agent() → build_agent calls SkillLoader.load_instructions(skill_id) (Layer 3) → PydanticAI.run_sync(deps) → agent calls tool (e.g. read_artifact via AIF-004, query_learnings via AIF-006) → agent calls write_artifact → ModelRegistry.upsert() + file written → agent calls EventStore.record_event(artifact.created) → agent returns → specialist_node emits handoff.created if needed → returns to LangGraph → next iteration.
+  *Note at bottom:* "Layer 4 = tool results appended to context by PydanticAI between tool calls — not shown separately."
+
+- [ ] **`phase-c-sequence-cq-lifecycle-v1.puml`**
+  *Purpose:* Specifies `src/orchestration/user_interaction.py` and Dashboard `/queries` interaction for Stage 5b + 5.5b.
+  *Participants:* Agent (any specialist), EventStore, UserInteractionOrchestrator, DashboardServer, User.
+  *Sequence:* Agent raises CQ → `EventStore.record_event(cq.raised)` → PM batches open CQs → UserInteractionOrchestrator detects `cq.raised` → DashboardServer serves `/queries` page (open CQs visible with count badge) → User types answer + optional file attach → POST /queries/<id>/answer → InteractionHandler validates → `EventStore.record_event(cq.answered)` → UserInteractionOrchestrator detects `cq.answered` → emits `cq.routed` to raising agent's node → agent resumes with answer in context.
+
+- [ ] **`phase-c-sequence-sprint-review-v1.puml`**
+  *Purpose:* Specifies Stage 5.5b `ReviewManager`, `sprint_close_node`, and `review_processing_node` for Stage 5c + 5.5b.
+  *Participants:* PM_node, EventStore, UserInteractionOrchestrator, DashboardServer, User, review_processing_node.
+  *Sequence:* PM node decides close_sprint → checks `sprint-review.enabled` → `EventStore.record_event(review.pending)` (sprint NOT closed yet) → DashboardServer surfaces `/review` with artifact list → User marks each item (approved/needs-revision/rejected + agent_tag + comment) → POST /review/submit → InteractionHandler validates all items decided → `EventStore.record_event(review.submitted)` → UserInteractionOrchestrator signals `review_processing_node` → review_processing_node processes: rejected items → `artifact.rejected` events; needs-revision items → `handoff.created` to tagged agent (or PM routes if no tag); approved items → proceed → `review.sprint-closed` → `sprint.close`.
+
+- [ ] **`diagrams/index.yaml`** — entry per diagram; `entry_type: local`; `entity_ids_used` and `connection_ids_used` lists populated from above
+
+#### 4.9g — Overview Documents and Decisions
+
+- [ ] `overview/architecture-vision.md` — AV for ENG-001: engagement context (modelling the SDLC system itself); capability clusters (CAP-001 through CAP-006); STK-001 and STK-002; safety classification: Safety-Neutral (no physical actuation, no regulated user data, no financial transactions)
+- [ ] `overview/aa-overview.md` — Application Architecture summary: lists all APP-nnn with `src/` path and one-line function; states the four-layer dependency rule (Common → Domain → Application → Infrastructure); lists all DOB-nnn Pydantic models with their `src/models/` path; lists all AIF-nnn ports with their `Protocol` location
+- [ ] `decisions/ADR-001.md` — `PydanticAI for agent definition` — context: evaluated LangChain, Autogen, raw API; decision: PydanticAI; rationale: structured output via `result_type`, native tool use, minimal magic, first-class Anthropic support; consequences: tighter Pydantic v2 dependency, simpler than alternatives
+- [ ] `decisions/ADR-002.md` — `LangGraph for orchestration graph` — context: PM-as-supervisor pattern requires stateful multi-step routing with conditional branches and interrupt support; decision: LangGraph; rationale: built-in state persistence, interrupt/resume for CQ handling, conditional edge routing, compatible with PydanticAI; consequences: LangGraph version pinning, graph must be rebuilt if topology changes
+- [ ] `decisions/ADR-003.md` — `SQLite EventStore as canonical state` — context: need durable, auditable, ACID workflow state; decision: SQLite via EventStore class; rationale: local-only (CST-002), git-trackable binary, zero-infrastructure, ACID guarantees, replay from scratch gives WorkflowState; consequences: single-process only (no concurrent writer), binary in git (acceptable at engagement scale)
+- [ ] `decisions/ADR-004.md` — `FastAPI + Jinja2 + SSE for dashboard` — context: user interaction surface needed; decision: FastAPI server-side rendering; rationale: no build step, no frontend framework, works with Python-only stack, SSE is standard HTTP (no WebSocket needed for change notifications), POST forms sufficient for CQ/review interaction; consequences: minimal JS budget (two blocks only)
+- [ ] `decisions/ADR-005.md` — `File-based ERP entity storage` — context: need to store architecture model; decision: one `.md` file per entity, organised by ArchiMate layer; rationale: git-native diff and blame, human-readable, no DB schema migration for model changes, ModelRegistry is ephemeral (rebuilt at startup); consequences: startup scan time proportional to entity count; mitigated by watchdog incremental updates
+
+#### 4.9h — Event-Sourcing of Repository Mutations and User Inputs
+
+**Every mutation to an engagement work-repository and every user-contributed input must produce an EventStore event.** This is the event-sourcing invariant: the engagement event-stream is the authoritative record of *what happened and when*, while the file system is the *current state projection* of that stream. Events reference file paths; files hold content. On replay, the system reconstructs full workflow state including which entities were inferred from which evidence, which files were uploaded by the user, and which entities the user confirmed.
+
+The following events govern reverse-architecture and user-input persistence. They must be added to `src/events/models.py` in Stage 5a alongside the existing base event types:
+
+| Event type | Emitted by | Key payload fields | Purpose |
+|---|---|---|---|
+| `artifact.created` | `ArtifactReadWriterPort.write()` (new file) | `path`, `artifact_id`, `version`, `produced_by_skill`, `source_evidence: list[str]` | Records creation of any ERP entity/connection/diagram file. `source_evidence` lists scan evidence references for reverse-arch inferred entities (e.g. `"[inferred: target-repo] src/services/UserService.py:12"`). |
+| `artifact.updated` | `ArtifactReadWriterPort.write()` (existing file) | `path`, `artifact_id`, `version`, `previous_version`, `produced_by_skill`, `changed_fields: list[str]` | Records every version increment; `changed_fields` names the entity attributes that changed. Emitted whenever Stage 5 implementation causes a model update per the model-first discipline. |
+| `source.scanned` | Reverse-arch skill, Step 0 | `scan_scope: list[str]`, `target_repo_id: str \| None`, `external_source_ids: list[str]`, `triggered_by_skill: str`, `file_count: int` | Audit record of what was scanned and when during EP-G discovery. Enables full reconstruction of which evidence existed at the time of inference. |
+| `entity.confirmed` | SA-REV-PRELIM-A / SA-REV-BA / SWA-REV-TA, end of Step 3 (user confirmation loop) | `artifact_id`, `confirmation_method: "user" \| "inferred"`, `confirmed_fields: list[str]`, `user_note: str \| None` | Records that the user approved (or that the system auto-confirmed) the entity as inferred. Links user confirmation to the entity record. |
+| `upload.registered` | `InteractionHandler` POST /uploads | `upload_id`, `file_path: str` (relative to `engagements/<id>/user-uploads/`), `mime_type: str`, `original_filename: str`, `referenced_by_cq: str \| None` | Records user file upload. File content is in the file; event holds the reference. |
+| `file.referenced` | `ArtifactReadWriterPort.write()` when `upload_refs` present | `upload_id`, `artifact_id`, `field: str`, `context: str` | Links an uploaded file to the specific entity field it informed during reverse-arch reconstruction. Enables tracing from entity ← evidence ← uploaded document. |
+
+**Reverse-architecture skill contract:** Steps 4 and 5 of SA-REV-PRELIM-A, SA-REV-BA, and SWA-REV-TA call `write_artifact` via `AIF-004`. The `ArtifactReadWriterPort` implementation must emit `artifact.created` with `source_evidence` populated from the agent's inference context at that point. The agent must pass the evidence list as a parameter to `write_artifact` — it is not reconstructable after the fact. This is the event-sourcing hook that makes reverse-architecture reconstruction fully replayable from the EventStore alone, with file path references resolving to either entity files or user-uploaded documents.
+
+**Model-update contract (Stage 5 forward):** Every time Stage 5 implementation causes an entity or connection file to be updated (per the model-first discipline stated in §4.9 preamble), an `artifact.updated` event is emitted with `changed_fields` and `produced_by_skill` set to the skill or developer context that caused the change. Diagrams regenerated as a consequence emit their own `artifact.updated` events with `changed_fields: ["§display"]`.
 
 ---
 
@@ -536,6 +822,22 @@ The domain artifact schemas and cross-cutting framework docs need updating to al
 - [ ] **`src/events/export.py`**: implement `write_event_yaml()` with full PyYAML serialisation; implement `import_from_yaml()` for disaster recovery round-trip
 - [ ] **`src/events/migrations/`**: Alembic migration baseline — `alembic.ini` and initial migration script for the events + snapshots tables
 - [ ] **`EventStore.check_integrity()`**: validate JSON payloads, sequence gaps, YAML vs SQLite consistency check
+- [ ] **Event taxonomy — repository mutations and user inputs** (per §4.9h prescription): define the following event types in `src/events/models.py` and implement handlers in `src/events/replay.py` (each updates `WorkflowState` as noted):
+
+  | Event type | Produced by | `WorkflowState` update |
+  |---|---|---|
+  | `artifact.created` | `ArtifactReadWriterPort.write()` — new file | append to `baselined_artifacts` |
+  | `artifact.updated` | `ArtifactReadWriterPort.write()` — existing file | update version in `baselined_artifacts` |
+  | `source.scanned` | Reverse-arch skill Step 0 | no state change; audit only |
+  | `entity.confirmed` | Reverse-arch skill Step 3 | flag entity as user-confirmed in artifact metadata |
+  | `upload.registered` | `InteractionHandler` POST /uploads | append to `registered_uploads: list[str]` |
+  | `file.referenced` | `ArtifactReadWriterPort.write()` when `upload_refs` present | append to `upload_reference_map: dict[str, list[str]]` (upload_id → artifact_ids) |
+
+  Key payload contracts:
+  - `artifact.created` / `artifact.updated`: `{path, artifact_id, version, produced_by_skill, source_evidence: list[str], changed_fields: list[str] | None}`; `source_evidence` is mandatory for reverse-arch writes — populated from the agent's active inference context at call time; not reconstructable after the fact.
+  - `upload.registered`: `{upload_id, file_path, mime_type, original_filename, referenced_by_cq: str | None}`; file content lives at `engagements/<id>/user-uploads/<upload_id>/`; event is the reference.
+  - `source.scanned`: `{scan_scope: list[str], target_repo_id: str | None, external_source_ids: list[str], triggered_by_skill: str, file_count: int}`.
+  - `entity.confirmed`: `{artifact_id, confirmation_method: "user" | "inferred", confirmed_fields: list[str], user_note: str | None, upload_refs: list[str]}`.
 
 #### 5b — Agent implementation layer
 
@@ -597,80 +899,174 @@ The domain artifact schemas and cross-cutting framework docs need updating to al
 
 ---
 
-### Stage 5.5 — Engagement Dashboard (Local Web Server)
+### Stage 5.5 — Engagement Dashboard (Local Web Server + User Interaction Surface)
 
-> Lightweight local web server providing users with a readable, explorable view of engagement state, SDLC progress, produced artifacts, and agent activity. Runs alongside the Python multi-agent system; reads EventStore and work-repositories; no write access.
+> Local web server providing a readable, explorable view of engagement state, SDLC progress, produced artifacts, and agent activity — **and** the primary surface through which users interact with the running engagement: answering agent queries, uploading reference documents, reviewing and approving sprint output, and inspecting the full audit trail of agent work.
 
-**Requirement:** Users need to efficiently and intelligibly view and explore: what has been produced, where the project is in the SDLC, what is available to review, and the current state of all artifacts and agent activity.
+**Core requirements:**
+1. Users can view and explore: current phase, produced artifacts, agent activity, event history.
+2. Users can see and respond to pending queries (CQs) from agents without leaving the browser.
+3. Users can upload files (documents, diagrams, specs) and reference them from query answers — essential for reverse architecture engagements.
+4. (Configurable) Before sprint close or entity/diagram promotion, users review output and mark items as approved, needing revision, or rejected; can tag specific agents for corrections; PM handles routing of untagged items.
+5. Audit logs make it unambiguous: **which agent, using which skill, in which sprint, produced which artifact**.
+
+---
+
+#### 5.5a — Core Dashboard (Read-Only Views + Audit Trail)
 
 **Architecture:**
 
-- **Server:** Python `FastAPI` (already in the Python ecosystem; zero additional dependencies beyond what Stage 5 introduces). Single file: `src/dashboard/server.py`. Started with `python -m src.dashboard.server --engagement <id>`.
+- **Server:** Python `FastAPI`. Single entry point: `python -m src.dashboard.server --engagement <id> [--port 8000]`.
 - **Data sources (read-only):**
-  - `engagements/<id>/workflow.db` — EventStore (via `EventStore.replay()` to get `WorkflowState`)
-  - `engagements/<id>/work-repositories/*/` — markdown artifact files
+  - `engagements/<id>/workflow.db` — EventStore (via `EventStore.replay()` → `WorkflowState`)
+  - `engagements/<id>/work-repositories/*/` — ERP entity files, overview docs, decisions, diagrams
   - `engagements/<id>/clarification-log/`, `handoff-log/`, `algedonic-log/`
-  - `framework/agent-index.md` — for agent/skill display metadata
-- **Rendering:** Server-side HTML with Jinja2 templates; no JavaScript framework required. Markdown rendered to HTML via `markdown-it-py` (lightweight, no build step).
-- **No auth:** Local-only server (`127.0.0.1`); not exposed to network. No authentication needed.
+  - `framework/agent-index.md` — agent/skill display metadata
+- **Rendering:** Server-side Jinja2 templates; markdown rendered via `markdown-it-py`. No JavaScript framework.
+- **No auth:** `127.0.0.1` only; local-only process.
+- **Filesystem monitoring:** `watchdog` observer on `engagements/<id>/`; changes pushed via SSE (`/events/stream`); single `<script>` block in `base.html` listens and shows a "N artifact(s) updated — click to refresh" banner. No polling, no WebSocket, no framework.
+- **PUML rendering:** `src/dashboard/puml_renderer.py` calls local `plantuml` binary; renders to `.svg`; cached in `render_cache/` (.gitignored); falls back to `<code>` block with install notice. No external network calls.
 
-**Views:**
-
-| View | URL | Content |
-|---|---|---|
-| Engagement Overview | `/` | Engagement ID, entry point, current phase, sprint number, gate status summary |
-| SDLC Progress | `/progress` | ADM phase timeline; completed/active/pending phases with gate outcomes; current sprint plan |
-| Artifact Browser | `/artifacts` | Tree view by work-repository; each artifact shows: status (draft/baselined), version, agent owner, last updated; click to view rendered markdown |
-| Artifact Detail | `/artifacts/<path>` | Full rendered markdown content of any artifact; shows frontmatter metadata, version history links |
-| Event Log | `/events` | Chronological event stream from EventStore (paginated); filter by event type, agent, phase |
-| CQ Log | `/cqs` | Open and resolved Clarification Requests; shows routing target, blocking status, answer |
-| Algedonic Log | `/algedonic` | Algedonic signals: trigger ID, severity, status (active/resolved), escalation target |
-| Handoff Log | `/handoffs` | Inter-agent handoffs: from, to, artifact, version, acknowledged status |
-| Agent Status | `/agents` | Per-agent status: active phase, last event, open CQs, pending handoffs |
-
-**Extended architecture (additions beyond original spec):**
-
-- **PUML rendering:** Local PlantUML CLI integration. `src/dashboard/puml_renderer.py` detects a local `plantuml` executable (JAR or system install); if found, renders `.puml` to `.svg` on-demand and caches in `src/dashboard/render_cache/` (.gitignored); if not found, displays the PUML source in a `<code>` block with an installation notice. No external network calls to plantuml.com.
-- **Static file and document display:** `src/dashboard/file_server.py` serves `.svg` and `.png` files inline (via `<img>` tag); `.pdf` files as browser-native embed or download link; `.docx`/`.xlsx` as download links with file metadata. Images from `diagram-catalog/rendered/` are served directly.
-- **Filesystem monitoring + change alerts:** `src/dashboard/watcher.py` uses `watchdog` to monitor `engagements/<id>/work-repositories/` for file creation/modification events. Changed file events are pushed via Server-Sent Events (SSE) on `/events/stream`. A minimal `<script>` block in `base.html` (the only JavaScript in the entire dashboard) listens on the SSE endpoint and displays a non-intrusive "N artifact(s) updated — click to refresh" banner at the top of any page; clicking refreshes. No polling, no WebSocket, no JavaScript framework.
-- **Diagram browser view** (`/diagrams`): lists all `.puml` files in `architecture-repository/diagram-catalog/diagrams/`; renders each inline as SVG (via `puml_renderer.py`); shows element count from the sub-catalog files; links each diagram to the artifact that produced it (via `diagrams/index.yaml`).
-- **Updated views table:**
+**Views (read-only):**
 
 | View | URL | Content |
 |---|---|---|
-| Engagement Overview | `/` | Engagement ID, entry point, current phase, sprint number, gate status summary |
-| SDLC Progress | `/progress` | ADM phase timeline; completed/active/pending phases with gate outcomes; current sprint plan |
-| Artifact Browser | `/artifacts` | Tree view by work-repository; each artifact shows: status (draft/baselined), version, agent owner, last updated; click to view rendered markdown; inline SVGs for artifacts with associated diagrams |
-| Artifact Detail | `/artifacts/<path>` | Full rendered markdown; frontmatter as metadata table; `[@artifact-id]` references resolved as hyperlinks; associated diagrams rendered inline |
+| Engagement Overview | `/` | Engagement ID, entry point, current phase, sprint, gate status summary; pending query count badge linking to `/queries` |
+| SDLC Progress | `/progress` | ADM phase timeline; completed/active/pending phases; gate outcomes; current sprint plan |
+| Artifact Browser | `/artifacts` | Tree view by work-repository and ArchiMate layer; each entity file shows: type, version, status, owner-agent, produced-by-skill; inline SVG for diagram files |
+| Artifact Detail | `/artifacts/<path>` | Full rendered markdown; frontmatter as metadata table; provenance badge (agent → skill → sprint → phase); `[@artifact-id]` references as hyperlinks; associated diagrams rendered inline |
 | Diagram Browser | `/diagrams` | All `.puml` diagrams from diagram-catalog; rendered SVG inline; element stats; link to producing artifact |
-| Event Log | `/events` | Chronological event stream from EventStore (paginated); filter by event type, agent, phase |
-| CQ Log | `/cqs` | Open and resolved Clarification Requests; routing target, blocking status, answer |
-| Algedonic Log | `/algedonic` | Algedonic signals: trigger ID, severity, status (active/resolved), escalation target |
 | Handoff Log | `/handoffs` | Inter-agent handoffs: from, to, artifact, version, acknowledged status |
-| Agent Status | `/agents` | Per-agent status: active phase, last event, open CQs, pending handoffs |
+| Algedonic Log | `/algedonic` | Algedonic signals: trigger ID, severity, status (active/resolved), escalation target |
+| Agent Status | `/agents` | Per-agent: active phase, last event, open CQs, pending handoffs, skills active this sprint |
+| Audit Trail | `/audit` | Per-agent, per-skill, per-sprint work chain: each entry shows agent → skill invoked → artifact(s) produced → EventStore events emitted. Filterable by agent, skill, phase, sprint. Primary visibility surface for understanding who did what. |
+| Event Log | `/events` | Raw EventStore event stream (paginated); each event shows: timestamp, type, agent, phase, sprint, skill-id (extracted from payload), artifact reference. Filter by event type / agent / phase / sprint. |
 
-**Implementation tasks:**
+**Audit Trail detail (`/audit`):** Each row = one skill invocation. Columns: sprint, phase, agent, skill-id, skill-display-name, start-event timestamp, artifacts produced (linked), CQs raised, handoffs created, duration. Derived by joining `skill.started` / `skill.completed` EventStore events with `artifact.created` / `artifact.baselined` / `handoff.created` / `cq.raised` events in the same sprint window. Makes it unambiguous which agent used which skill to produce which work.
+
+**Provenance badge** on Artifact Detail: derived from `produced-by-skill` frontmatter field and EventStore `artifact.created` event. Displayed as: `[SA] · [SA-PHASE-B] · Sprint 2 · Phase B · 2026-04-03`.
+
+**Implementation tasks (5.5a):**
 
 - [ ] `src/dashboard/__init__.py`
-- [ ] `src/dashboard/server.py` — FastAPI app, route definitions, startup; SSE endpoint `/events/stream` for filesystem change notifications
-- [ ] `src/dashboard/state.py` — `EngagementSnapshot` dataclass: hydrated from `EventStore.replay()` + filesystem scan of work-repositories; refreshed on each page request
-- [ ] `src/dashboard/watcher.py` — `watchdog` observer on `engagements/<id>/work-repositories/`; pushes SSE events; one observer instance per server lifetime
-- [ ] `src/dashboard/puml_renderer.py` — detects `plantuml` CLI; renders `.puml` → `.svg`; caches renders; returns SVG content or source fallback
-- [ ] `src/dashboard/file_server.py` — serves image files, documents; MIME-type dispatch; no path traversal (restricted to engagement directory)
-- [ ] `src/dashboard/markdown_renderer.py` — renders `.md` to safe HTML via `markdown-it-py`; strips embedded HTML; renders frontmatter as metadata table; resolves `[@artifact-id vN.N](path)` references to hyperlinks
-- [ ] `src/dashboard/templates/` — Jinja2 templates: `base.html` (includes SSE listener `<script>`), `overview.html`, `progress.html`, `artifacts.html`, `artifact_detail.html`, `diagrams.html`, `events.html`, `cqs.html`, `algedonic.html`, `handoffs.html`, `agents.html`
-- [ ] `src/dashboard/static/style.css` — minimal CSS; readable, print-friendly; no build step
-- [ ] `src/dashboard/render_cache/` — `.gitignore` entry for cached SVG renders
-- [ ] `docs/dashboard.md` — usage guide: starting the server, PlantUML install, SSE change alerts, engagement ID configuration
+- [ ] `src/dashboard/server.py` — FastAPI app; all read-only routes; SSE endpoint `/events/stream`; startup
+- [ ] `src/dashboard/state.py` — `EngagementSnapshot` dataclass: hydrated from `EventStore.replay()` + ModelRegistry filesystem scan; refreshed per-request; `AuditEntry` list built from event join
+- [ ] `src/dashboard/watcher.py` — `watchdog` observer; pushes SSE events; one observer per server lifetime
+- [ ] `src/dashboard/puml_renderer.py` — detects `plantuml` CLI; renders `.puml` → `.svg`; caches; fallback to source
+- [ ] `src/dashboard/file_server.py` — serves `.svg`, `.png` inline; `.pdf` as embed; `.docx`/`.xlsx` as download; path-restricted to engagement directory
+- [ ] `src/dashboard/markdown_renderer.py` — renders `.md` → safe HTML; frontmatter table; `[@artifact-id]` as hyperlinks; `[inferred:]` and `[UNKNOWN]` annotations highlighted
+- [ ] `src/dashboard/audit.py` — `build_audit_trail(events: list[WorkflowEvent]) → list[AuditEntry]`: joins skill/artifact/handoff/cq events; returns per-skill-invocation records
+- [ ] `src/dashboard/templates/` — Jinja2 templates: `base.html` (SSE `<script>`), `overview.html`, `progress.html`, `artifacts.html`, `artifact_detail.html`, `diagrams.html`, `events.html`, `handoffs.html`, `algedonic.html`, `agents.html`, `audit.html`
+- [ ] `src/dashboard/static/style.css` — minimal; readable; print-friendly; no build step
+- [ ] `src/dashboard/render_cache/` — `.gitignore` entry
 
-**Constraints:**
+---
 
-- Dashboard is strictly read-only. It never writes to EventStore, work-repositories, or any engagement file.
-- It does not invoke agents, emit events, or trigger any workflow action.
-- It must work with a partially-complete engagement (some phases not yet run, some artifacts missing) — absent artifacts display as "not yet produced."
-- Startup must complete in under 5 seconds for engagements with up to 500 events and 100 artifacts.
-- No external network calls. All data comes from the local filesystem and SQLite. PUML rendering uses the local `plantuml` binary only.
-- The SSE listener `<script>` in `base.html` is the only JavaScript permitted. No JavaScript framework, no npm, no build step.
+#### 5.5b — User Interaction Layer (Queries, Uploads, Sprint Review)
+
+**Purpose:** The dashboard becomes the primary surface for user input into the SDLC workflow. All user interactions write to the EventStore via the same `EventStore.record_event()` path used by agents — no special write channel.
+
+**Architecture additions:**
+
+- **Interaction routes** (`POST` endpoints on `server.py`): CQ answer submission, file upload, sprint review submission. All writes go through `src/dashboard/interaction.py` which calls `EventStore.record_event()`.
+- **User-uploads store:** Uploaded files written to `engagements/<id>/user-uploads/` (git-tracked; committed at sprint boundaries). Each upload registered as an EventStore `upload.registered` event with `filename`, `content-type`, `sha256`, `uploaded-at`, `referenced-by-cq` (optional). Agents access uploads via `UserUploadAdapter` (see Stage 5d).
+- **Sprint review config:** Read from `engagements-config.yaml` under `sprint-review:`. When enabled, PM emits `review.pending` event (instead of `sprint.close`) at sprint end; dashboard surfaces `/review`; user submits → `review.submitted` event → PM processes corrections.
+- **JavaScript budget:** Two vanilla `<script>` blocks permitted — (1) SSE change-alert listener (5.5a), (2) review-toolbar state management: counts selected items, enables/disables submit button, shows per-item comment toggle. No framework, no npm, no build step.
+
+**New EventStore event types (add to `src/events/` models):**
+
+| Event type | Emitted by | Payload |
+|---|---|---|
+| `cq.answered` (user) | Dashboard interaction | `cq_id`, `answer_text`, `upload_refs: list[str]` |
+| `upload.registered` | Dashboard interaction | `upload_id`, `filename`, `content-type`, `sha256`, `size_bytes`, `referenced-by-cq` |
+| `review.pending` | PM (sprint close trigger) | `sprint_id`, `phase`, `artifact_ids: list[str]`, `connection_ids: list[str]`, `diagram_ids: list[str]` |
+| `review.submitted` | Dashboard interaction | `sprint_id`, `reviewer: "user"`, `items: list[ReviewItem]`, `submitted-at` |
+| `review.correction-routed` | PM (post-review processing) | `sprint_id`, `item_id`, `target-agent`, `comment`, `artifact_id` |
+| `review.sprint-closed` | PM (post-review processing) | `sprint_id`, `approved_count`, `revision_count`, `rejected_count` |
+
+`ReviewItem` schema: `{ artifact_id: str, decision: "approved" | "needs-revision" | "rejected", agent_tag: str | null, comment: str | null }`.
+
+**Sprint Review Configuration** (`engagements-config.yaml`):
+
+```yaml
+sprint-review:
+  enabled: true                        # false by default (automated engagements skip review)
+  trigger:                             # when review is required
+    - sprint-close                     # before PM closes any sprint
+    - entity-promotion                 # before entities are promoted to enterprise repo
+  scope:                               # what artifact types appear in the review list
+    - entities                         # ERP model entity files
+    - connections                      # ERP connection files
+    - diagrams                         # PUML diagram files
+    - decisions                        # ADR files
+    - overview-docs                    # architecture-vision.md, ba-overview.md, ta-overview.md
+  default-agent-for-untagged: PM       # PM routes corrections when reviewer didn't tag an agent
+  auto-approve-after-hours: 48         # auto-approve all pending items after timeout (0 = never)
+```
+
+**New / updated views (5.5b):**
+
+| View | URL | Mode | Content |
+|---|---|---|---|
+| Queries | `/queries` | Read + Write | All pending CQs requiring user input; count badge in nav header (e.g. "Queries (3)"); per-CQ: description, raising agent, skill, blocking status, related artifact; text area to compose answer; file-attach button (uploads file, inserts reference into answer); submit button |
+| Uploads | `/uploads` | Read + Write | All user-uploaded files: filename, size, upload date, SHA256, referenced-by CQ/review; upload form (drag-and-drop or file picker); download links |
+| Sprint Review | `/review` | Read + Write | Active only when `review.pending` event exists for current sprint (otherwise shows "No review pending" with last review outcome); artifact list grouped by type (entities, connections, diagrams, decisions); per-item: rendered preview, provenance badge, decision radio (approved / needs-revision / rejected), agent-tag dropdown, comment textarea; sticky review toolbar showing: total items, N approved / N flagged / N rejected, Submit Review button (enabled when all items have a decision); submission POST → `review.submitted` event |
+| Engagement Overview (updated) | `/` | Read | Adds: pending query count badge ("Queries (N)") linking to `/queries`; sprint review status badge if review is pending ("Review needed") |
+
+**Query response workflow (`/queries`):**
+
+1. Dashboard reads all `cq.raised` events; filters to status `open` (no matching `cq.answered` event).
+2. Displays each open CQ: agent identity, skill-id, blocking status, the question text, any prior partial answers.
+3. User types answer in textarea. Optionally clicks "Attach file" → file picker → file uploaded to `engagements/<id>/user-uploads/`; `upload.registered` event emitted; upload reference ID auto-inserted into answer textarea.
+4. User submits → `POST /queries/<cq_id>/answer` → `interaction.py` validates non-empty, emits `cq.answered` event with answer text and any upload_refs; records to EventStore.
+5. PM's `user_interaction.py` (`src/orchestration/user_interaction.py`) monitors for `cq.answered` events and routes answers back to raising agents per `clarification-protocol.md §4`.
+
+**Sprint review workflow (`/review`):**
+
+1. PM emits `review.pending` at sprint close trigger (if `sprint-review.enabled: true`). Sprint does NOT close until review is submitted.
+2. Dashboard detects `review.pending`; surfaces `/review` with the full artifact list for the sprint (from `review.pending` event payload).
+3. User marks each item: approved / needs-revision / rejected. For `needs-revision` or `rejected`: agent-tag dropdown (SA, SwA, PM, DO, DE, QA, CSCO) and comment textarea.
+4. Review toolbar shows live count. Submit enabled when all items decided. User submits → `POST /review/submit` → `review.submitted` event emitted.
+5. PM processes `review.submitted`:
+   - `rejected` items: excluded from sprint artifact set; artifact set back to `status: draft`; `artifact.rejected` event emitted.
+   - `needs-revision` items: if `agent_tag` present → `handoff.created` to tagged agent with comment as revision instruction; if no tag → PM classifies and routes to accountable agent per RACI matrix.
+   - `approved` items: sprint proceeds; `review.sprint-closed` event emitted; `sprint.close` follows.
+6. Revision items re-enter the normal skill invocation cycle. PM may trigger another sprint review if significant revisions were made (determined by PM based on revision scope).
+
+**File upload detail (`/uploads` and `/queries` attach):**
+
+- Files stored at `engagements/<id>/user-uploads/<upload_id>-<sanitised-filename>`. `upload_id` is UUID4.
+- No executable files accepted (MIME-type allow-list: PDF, images, Office docs, Markdown, plain text, JSON, YAML, XML, CSV).
+- Max file size: 50 MB (configurable in `engagements-config.yaml` under `uploads.max-file-size-mb`).
+- `UserUploadAdapter` (Stage 5d addition): implements `SourceAdapter` protocol; `query()` returns upload metadata list; agents call `read_artifact(upload_id)` to retrieve content as text (PDF → extracted text via `pdfminer`; images → path reference; others → decoded text).
+- Upload manifest: `engagements/<id>/user-uploads/manifest.yaml` (git-tracked); one entry per upload with id, filename, content-type, sha256, uploaded-at, referenced-by.
+
+**Implementation tasks (5.5b):**
+
+- [ ] `src/dashboard/interaction.py` — `InteractionHandler`: validates and writes CQ answers, uploads, review submissions to EventStore; enforces content rules (non-empty answers, MIME allow-list for uploads); path-restricted writes
+- [ ] `src/dashboard/uploads.py` — `UploadManager`: saves file to `user-uploads/`, computes SHA256, writes manifest entry, emits `upload.registered`; `get_upload(upload_id)` for retrieval; MIME-type validation
+- [ ] `src/dashboard/review.py` — `ReviewManager`: loads `review.pending` event; builds per-artifact review items; validates `ReviewItem` submission; emits `review.submitted`; computes review summary
+- [ ] `src/sources/user_upload.py` — `UserUploadAdapter`: `SourceAdapter` implementation; reads `user-uploads/manifest.yaml`; `query()` returns upload list; integrates with existing source adapter registry in `src/sources/base.py`
+- [ ] `src/events/` — add event models: `CQAnsweredEvent`, `UploadRegisteredEvent`, `ReviewPendingEvent`, `ReviewSubmittedEvent`, `ReviewCorrectionRoutedEvent`, `ReviewSprintClosedEvent`
+- [ ] `src/orchestration/user_interaction.py` — update: monitor `cq.answered` events from dashboard (not just CLI); route answers to raising agents; monitor `review.submitted` and trigger PM review-processing node
+- [ ] `src/orchestration/nodes.py` — update `sprint_close_node`: check `sprint-review.enabled` config; if true, emit `review.pending` and wait (do not close) until `review.submitted` received; `review_processing_node`: process ReviewItems, emit correction handoffs or `review.sprint-closed`
+- [ ] `src/dashboard/server.py` — add interaction routes: `POST /queries/<cq_id>/answer`, `POST /uploads`, `POST /review/submit`; update existing routes to render new views
+- [ ] `src/dashboard/templates/` — add: `queries.html`, `uploads.html`, `review.html`; update `base.html` nav: add Queries count badge (`<span class="badge">{{pending_cq_count}}</span>`); update `overview.html` for review-pending status
+- [ ] `src/dashboard/static/style.css` — add: badge styles, review toolbar (sticky bottom bar), file-attach inline widget, decision radio styling, comment toggle
+- [ ] `src/dashboard/static/review.js` — review toolbar state: counts decisions per category, enables submit when all items decided, toggles comment visibility; second and final JS block
+- [ ] `engagements-config.yaml` — add `sprint-review:` and `uploads:` sections with documented defaults
+- [ ] `docs/dashboard.md` — update usage guide: queries workflow, file upload, sprint review configuration, audit trail interpretation
+
+**Constraints (updated for 5.5b):**
+
+- Read-only views (5.5a) never write to any file. Interaction routes (5.5b) write only through `EventStore.record_event()` and `UploadManager` — never directly to work-repositories or agent-owned directories.
+- Dashboard never invokes agents, calls the LLM, or triggers workflow actions directly. User interaction events are consumed by the orchestration layer's monitoring loop, which triggers agent work.
+- Must work with a partially-complete engagement. Absent artifacts display as "not yet produced"; review view with no pending review shows last review outcome.
+- Startup under 5 seconds for engagements with ≤500 events, ≤100 artifacts.
+- No external network calls. PUML rendering uses local binary only.
+- JavaScript budget: two `<script>` blocks maximum — (1) SSE change-alert listener, (2) `review.js` review toolbar. No framework, no npm.
+- Upload MIME allow-list enforced at server level. No executable files stored. Path traversal prevention enforced in `UploadManager` and `file_server.py`.
+- `auto-approve-after-hours: 0` (never auto-approve) is the only safe default for safety-relevant engagements. Timeout auto-approve is opt-in.
 
 **Commit as `stage-5.5-dashboard`**
 
@@ -689,11 +1085,15 @@ The domain artifact schemas and cross-cutting framework docs need updating to al
 
 ## Current State & Immediate Next Actions
 
-**Stages 1 through 4.9 are complete** (4.8c/4.8d pending retroactive schema/doc updates — tracked above). Stage 5 (Python implementation) is next.
+**Stages 1–4.8f complete.** Remaining pre-Stage-5 work: Stage 4.8d (schema/framework doc ERP alignment), Stage 4.9 (ENG-001 reference model). Stage 5 (Python implementation) is the main next target.
 
-### Resume at: Stage 5 — Python Implementation Layer
+### Resume at: Stage 4.8d → Stage 4.9 → Stage 5
 
-Read `framework/agent-runtime-spec.md` and `framework/orchestration-topology.md` before authoring any `src/` file. Begin with Stage 5a (EventStore completion), then 5b (agent layer). Key implementation dependencies:
+**Stage 4.8d** — ERP v2.0 alignment for domain artifact schemas and framework cross-cutting docs. Updates four artifact schemas (BA, AA, DA, TA) and three framework docs (repository-conventions.md, discovery-protocol.md, agent-runtime-spec.md §6). Retroactive skill file patches are script-based.
+
+**Stage 4.9** — ENG-001 reference model: entity files, connection files, `_macros.puml`, four PUML diagrams, `diagrams/index.yaml`. Documents the SDLC system itself. Serves as integration test fixture.
+
+**Stage 5** — Python implementation. Read `framework/agent-runtime-spec.md` and `framework/orchestration-topology.md` before authoring any `src/` file. Begin with Stage 5a (EventStore completion), then 5b (agent layer). Key implementation dependencies:
 - `src/sources/target_repo.py` implements `TargetRepoManager` (multi-repo aware; see Stage 5d)
 - `src/agents/learning_store.py` wraps LangGraph `BaseStore` for the learning system (see Stage 4.6c + `framework/learning-protocol.md §12`)
 - `src/orchestration/graph_state.py` includes `target_repository_ids` and `primary_repository_id` (see Stage 5c)
@@ -712,6 +1112,8 @@ Read `framework/agent-runtime-spec.md` and `framework/orchestration-topology.md`
 - Change Record (Phase H) is produced by **SA** (not PM). PM produces intake record only.
 - Algedonic triggers in `algedonic-protocol.md` are the canonical list. Skill files reference them by ID (e.g., ALG-001); they do not redefine them.
 - **Diagram authoring:** agents write PUML source text directly via `write_artifact` — no intermediate spec format. Tools handle catalog I/O (`catalog_lookup`, `catalog_register`, `catalog_propose`, `validate_diagram`, `render_diagram`) and CLI invocation only. See `framework/diagram-conventions.md §1`.
+- **Stage 4.9 entities/connections/diagrams are living specifications, not a frozen design.** They will and should change during Stage 5 implementation as design decisions are refined. The model-first discipline applies in both directions: (a) forward — Stage 5 code divergences update the entity files first; (b) reverse — reverse-architecture skill output populates entity files which then drive Stage 5 implementation. Requirements (REQ, CST, PRI) are also subject to revision as implementation reveals constraints. The architecture repository always leads the code.
+- **Every engagement repository mutation must be event-sourced.** `ArtifactReadWriterPort.write()` emits `artifact.created` or `artifact.updated` (with `source_evidence` for reverse-arch inferred entities). User file uploads emit `upload.registered`. Reverse-architecture scan evidence emits `source.scanned`. User confirmation of inferred entities emits `entity.confirmed`. Events reference file paths; files hold content. This is the invariant that makes engagement state fully replayable from the EventStore alone. See §4.9h for full event taxonomy and payload contracts.
 
 ---
 
