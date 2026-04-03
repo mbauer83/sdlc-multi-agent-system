@@ -116,8 +116,8 @@ tests/
 | 2 | Project Manager master skill | Complete |
 | 3 | Primary implementation chain (SA → SwA → DevOps → Dev → QA) + discovery-protocol.md | Complete |
 | 4 | Framing layer (PO, Sales, CSCO) | Complete |
-| 4.5 | Cross-cutting framework extensions (diagram conventions, artifact references, standards discovery, agent profile condensation) | Partial |
-| 4.6 | Learning protocol (agent learnings from mistakes — generation, retrieval, synthesis, promotion) | Partial |
+| 4.5 | Cross-cutting framework extensions (diagram conventions, artifact references, standards discovery, agent profile condensation) | Complete |
+| 4.6 | Learning protocol (agent learnings from mistakes — generation, retrieval, synthesis, promotion) | Complete |
 | 5 | Python implementation layer (EventStore completion + PydanticAI agents + LangGraph orchestration + source adapters) | Pending |
 | 5.5 | Engagement dashboard (local web server + PUML rendering + filesystem monitoring) | Pending |
 | 6 | Integration testing on synthetic project | Pending |
