@@ -665,7 +665,6 @@ The skill step must specify: which diagram type(s) are required at this phase, w
 | `agents/implementing-developer/skills/phase-g.md` | Add Step 0.S: Mandatory coding-guidelines pre-read — **COMPLETE** |
 | `agents/devops-platform/skills/phase-g.md` | Add Step 0.S: Advisory coding-guidelines and platform-standards pre-read — **COMPLETE** |
 | All AGENT.md files (SA, SwA, DO, DE, PM, QA, PO, SM, CSCO) | Add `### Runtime Behavioral Stance` subsection to §11 + `## Artifact Discovery Priority` section — **COMPLETE** |
-| All AGENT.md files (all roles) | Add `## Artifact Discovery Priority` subsection: defines ordered list of repositories to scan, by role; architects prioritize `architecture-repository/` then `technology-repository/`; DE and DO must always check `technology-repository/coding-standards/` first |
 
 **New AGENT.md section requirement — `## Artifact Discovery Priority`:**
 Every AGENT.md must include a section specifying, in priority order, which repositories and document types the agent must scan during Discovery Scan Step 0. This section feeds the `read_artifact` tool's default search scope. Required for all roles; particularly critical for integrators and implementation roles. Content is role-specific:
@@ -678,7 +677,18 @@ Every AGENT.md must include a section specifying, in priority order, which repos
 - PO: project-repository, architecture-repository (requirements traceability)
 - CSCO: safety-repository (own), all other repositories (gate review read)
 
-**Commit as `stage-4.5-framework-extensions`**
+**Stage 4.5 partial completion (2026-04-03) — review-pass fixes:**
+- `framework/agent-runtime-spec.md` §2 Layer 2 updated: now specifies `### Runtime Behavioral Stance` subsection extraction only, not full §11; includes extraction contract, required form, and token budget. `AgentSpec.load_personality()` signature updated.
+- `framework/discovery-protocol.md` §8 (Diagram Catalog Lookup / Step 0.D) and §9 (Standards and Coding Guidelines Discovery / Step 0.S) authored. §7 reference table updated.
+- `framework/repository-conventions.md` §13 (Canonical Artifact Reference Format) authored: in-text Markdown reference, `references:` frontmatter list, handoff `artifact_refs:` field, `Inputs Required` table format, artifact-id assignment convention.
+- `framework/algedonic-protocol.md` ALG-C01 through ALG-C04 added (diagram catalog governance violations: duplicate ID, unauthorized write, broken cross-ontology link, `_macros.puml` out of sync).
+- `framework/agent-index.md` SM skill ID bug fixed: `SM-MARKET-RESEARCH` → `SM-PHASE-A-MR`; `SM-SWOT` → `SM-PHASE-A-SWOT`.
+
+**Still pending in Stage 4.5:**
+- `framework/diagram-conventions.md` — NOT YET AUTHORED (main blocker for retroactive diagram updates)
+- `framework/artifact-schemas/diagram-catalog.schema.md` — NOT YET AUTHORED
+
+**Commit as `stage-4.5-framework-extensions`** (once diagram-conventions.md is authored)
 
 ---
 

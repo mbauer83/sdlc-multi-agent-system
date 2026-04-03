@@ -226,6 +226,50 @@ Skills authored before this protocol was introduced are subject to the same requ
 | `clarification-protocol.md` | Full CQ format, routing, and lifecycle |
 | `repository-conventions.md §10` | External source query protocol |
 | `repository-conventions.md §11` | Enterprise vs engagement artifact lookup rules |
+| `repository-conventions.md §13` | Canonical Artifact Reference Format |
 | `sdlc-entry-points.md §2` | Entry point classification and warm-start ingestion |
 | `architecture-repository-design.md §4` | EventStore API and WorkflowState |
 | `algedonic-protocol.md` | ALG-018 (proceeded without required CQ) |
+| `diagram-conventions.md §5` | D1–D6 diagram authoring sequence (Steps D1–D4 catalog ops + D5 PUML authoring + D6 validation) |
+
+---
+
+## 8. Diagram Catalog Lookup (Step 0.D)
+
+**Applies to:** Any skill that produces or updates a diagram artifact.
+
+For skills producing diagram artifacts, the standard Discovery Scan (§2) must include an additional sub-step inserted **after** the five-layer scan (Step 0) and **before** CQ assessment:
+
+### Step 0.D — Diagram Catalog Lookup
+
+> 1. Identify the relevant ontological layers for the current task. Reference:
+>    - Business process or capability diagram → `elements/business/` and `processes/`
+>    - Data model diagram → `elements/data/` and `connections/er-relationships.yaml`
+>    - Application component or interaction diagram → `elements/application/` and `sequences/`
+>    - Technology architecture diagram → `elements/technology/` and `connections/archimate.yaml`
+>    - Motivation / architecture vision diagram → `elements/motivation/`
+> 2. Read the relevant sub-catalog YAML files from `architecture-repository/diagram-catalog/elements/<layer>/` — extract all entries whose name, type, or cross-reference fields match the current artifact domain. Use the `catalog_lookup(query, layer)` tool.
+> 3. Read the relevant `connections/` file(s) for known relationships between extracted elements.
+> 4. Annotate the working context: "Diagram catalog: N elements found relevant; IDs: [list]"
+> 5. When the artifact production step that includes the diagram is reached, execute the full diagram authoring sequence: **D1–D4** (catalog reuse/registration per `framework/diagram-conventions.md §5`) then **D5** (load PUML template via `read_framework_doc("framework/diagram-conventions.md §7.<type>")`, author PUML text, write via `write_artifact`, update `diagrams/index.yaml`) then **D6** (`validate_diagram` — fix and re-validate before emitting `artifact.produced`).
+
+**Catalog bootstrap (if catalog does not yet exist):** SA creates the empty directory structure during Preliminary / Phase A. If an enterprise catalog is configured, SA runs the enterprise catalog import scan first — querying `enterprise-repository/diagram-catalog/` for elements relevant to the engagement scope and importing them into the engagement catalog with engagement-local IDs and `extends:` back-references. No diagram work begins until the engagement catalog bootstrap is complete.
+
+**Write authority:** SA is the sole writer to all files under `diagram-catalog/`. Non-SA agents draft element proposals via `catalog_propose(element_spec)` (emits a `diagram.catalog-proposal` handoff to SA). Non-SA agents write `.puml` files to their own work-repository `diagrams/` directories; SA integrates at phase transition via the same handoff channel.
+
+---
+
+## 9. Standards and Coding Guidelines Discovery (Step 0.S)
+
+**Applies to:** SwA (Phases D, E, F, G), DE (Phase G), DO (Phases D, E, F, G).
+
+For these roles and phases, the standard Discovery Scan (§2) must include an additional sub-step inserted **after** the five-layer scan and **before** CQ assessment:
+
+### Step 0.S — Standards and Coding Guidelines Discovery
+
+> 1. Scan `technology-repository/coding-standards/` — if present, read all files; record findings as "Coding Standards: [list of docs found and their scope]". Use the `discover_standards` tool (returns contents of all files in that directory).
+> 2. Scan `enterprise-repository/standards/` — read applicable technology standards (language standards, framework standards, security standards). Focus on standards relevant to the current phase's technology domain.
+> 3. **If no coding guidelines found in either location:** Record as discovery gap "COD-GAP-001: No coding standards document found". If the gap is blocking the current task (e.g., DE is implementing a feature and has no style guide or security baseline): raise a CQ to PM/SwA requesting standards authorship before proceeding. If the gap is non-blocking (e.g., SwA is reviewing high-level TA): note the gap and continue.
+> 4. **All Phase G skill outputs** (implementation specs, PR reviews, deployment configurations) must cite the governing coding or platform standard by its document path. Example: "Follows `technology-repository/coding-standards/python-style.md §3.2`."
+
+**Rationale:** Coding conventions, security standards, and platform standards are never silently skipped by implementing agents. An agent that has never read the coding standards cannot enforce them in PR review or feature implementation. This step ensures the standards are always loaded into working context before any implementation-layer output is produced.

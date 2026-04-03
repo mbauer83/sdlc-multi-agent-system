@@ -98,8 +98,8 @@
 
 | Skill ID | File | Invoke When |
 |---|---|---|
-| SM-MARKET-RESEARCH | `skills/phase-a-market-research.md` | Engagement start (EP-0) or PM requests market context for Phase A; SM produces Market Analysis and business driver inputs |
-| SM-SWOT | `skills/phase-a-swot.md` | Phase A sprint starts; SM produces SWOT Analysis and competitive landscape inputs to Architecture Vision |
+| SM-PHASE-A-MR | `skills/phase-a-market-research.md` | Engagement start (EP-0) or PM requests market context for Phase A; SM produces Market Analysis and business driver inputs |
+| SM-PHASE-A-SWOT | `skills/phase-a-swot.md` | Phase A sprint starts; SM produces SWOT Analysis and competitive landscape inputs to Architecture Vision |
 | SM-REQ-FEEDBACK | `skills/requirements-management-feedback.md` | PO requests SM consulting input on market fit or commercial feasibility of proposed requirements |
 
 ### CSCO Skills

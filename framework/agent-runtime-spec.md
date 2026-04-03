@@ -30,13 +30,22 @@ Contains:
 - Its VSM position in one sentence
 - One non-negotiable behavioral constraint (e.g., "write only to X repository")
 
-### Layer 2 — Behavioral Stance (second `@agent.system_prompt`, ≈200–250 tokens)
+### Layer 2 — Runtime Behavioral Stance (second `@agent.system_prompt`, ≤350 tokens)
 
-**Source:** `agents/<role>/AGENT.md` §11 Personality & Behavioral Stance  
+**Source:** The `### Runtime Behavioral Stance` subsection within `agents/<role>/AGENT.md §11`.  
 **When loaded:** Once at agent construction time; the return value is fixed per agent class.  
-**PydanticAI binding:** `@agent.system_prompt` decorator on a function that returns the §11 content.
+**PydanticAI binding:** `@agent.system_prompt` decorator on a function that extracts and returns only the `### Runtime Behavioral Stance` subsection.
 
-Contains the personality directives and conflict engagement posture. Because personality does not vary by task, this is logically static but kept as a separate `@agent.system_prompt` callable for clarity.
+**Extraction contract:** `AgentSpec.load_personality(agent_id)` reads §11, locates the `### Runtime Behavioral Stance` heading, and extracts only the text under that heading (up to the next `###` or `##` heading). The rest of §11 — role-type taxonomy, inter-role tension maps, conflict engagement posture narrative — is **not** loaded at runtime. It is authoring documentation only.
+
+**Required form of the subsection:** Imperative first-person voice, exactly three elements:
+1. **Default bias** (1–2 sentences): what the agent defaults to when a trade-off is not resolved by skill instructions
+2. **Conflict posture** (1 sentence): how the agent responds when another agent disputes its output
+3. **Cross-cutting rule** (1 sentence): one behavioral rule applying across all skills and phases
+
+**Token budget:** soft target ≤250 tokens; hard cap ≤350 tokens. `AgentSpec.load_personality()` raises `PersonalityBudgetExceededError` above the hard cap.
+
+This is logically static but kept as a separate `@agent.system_prompt` callable for clarity — PydanticAI assembles it independently from the static Layer 1.
 
 ### Layer 3 — Active Skill Instructions (`@agent.instructions`, ≈400–700 tokens)
 
@@ -133,10 +142,10 @@ def build_agent(agent_id: str, model: str = "claude-sonnet-4-6") -> Agent[AgentD
         system_prompt=spec.system_prompt_identity,  # Layer 1 — static
     )
 
-    # Layer 2 — Behavioral stance (fixed per agent, but structured as a callable for clarity)
+    # Layer 2 — Runtime Behavioral Stance (subsection of §11 only; not the full §11)
     @agent.system_prompt
     def behavioral_stance(ctx: RunContext[AgentDeps]) -> str:
-        return spec.personality_section          # §11 from AGENT.md
+        return spec.load_personality(agent_id)   # ### Runtime Behavioral Stance subsection only
 
     # Layer 3 — Active skill instructions (fresh per run)
     @agent.instructions

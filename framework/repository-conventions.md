@@ -339,3 +339,57 @@ Only the following artifact types are eligible for promotion:
 | Safety Constraint Overlay (class-of-system applicability) | `enterprise-repository/standards/safety/` |
 | Architecture Principles | `enterprise-repository/metamodel/principles/` |
 | Capability Architecture (general) | `enterprise-repository/landscape/capability/` |
+
+---
+
+## 13. Canonical Artifact Reference Format
+
+Every handoff event, work-spec, skill output, or artifact that cites another artifact must use the following reference forms. This enables cross-artifact dependency resolution by the orchestration layer and dashboard. Agents must never reference artifacts by filename alone.
+
+### 13.1 In-Text Markdown Reference
+
+```
+[@<artifact-id> v<major>.<minor>](<relative-path-from-engagement-root>)
+```
+
+**Example:** `[@ARCH-VIS-001 v1.2](work-repositories/architecture-repository/architecture-vision/arch-vis-001-v1.2.md)`
+
+The artifact-id is the stable identifier; the version is the version at time of reference; the path is the relative path from the engagement root directory (`engagements/<id>/`). If the artifact has not yet been assigned a formal ID (e.g., it is a draft), use a provisional ID in the format `[@DRAFT-<artifact-type>-<seq>]` with no path until the ID is assigned.
+
+### 13.2 Frontmatter `references:` List
+
+Every artifact that cites other artifacts must include a YAML `references:` list in its frontmatter:
+
+```yaml
+references:
+  - ARCH-VIS-001
+  - SCO-A-1.0.0
+  - BA-001
+```
+
+This list is parsed by the orchestration layer and dashboard to build cross-artifact dependency graphs. It must contain the artifact-id (not the filename) of every artifact the current artifact depends on or cites.
+
+### 13.3 Handoff Event `artifact_refs:` Field
+
+When a handoff event is emitted, the payload must include an `artifact_refs:` field listing all artifact-ids that the receiving agent should prime during its Discovery Scan:
+
+```json
+{
+  "handoff_type": "review-and-sign-off",
+  "from_agent": "SA",
+  "to_agent": "CSCO",
+  "artifact_refs": ["ARCH-VIS-001", "AV-SAFETY-ENV-001"]
+}
+```
+
+The receiving agent uses `artifact_refs` to populate its Layer 1 Discovery Scan — these artifacts are read before any others in the engagement state layer.
+
+### 13.4 Skill `## Inputs Required` Table
+
+Each row in a skill's `## Inputs Required` table that names a prior artifact must include the artifact-id and the owning work-repository path:
+
+| Input | Artifact ID | Source Repository Path | Minimum State |
+|---|---|---|---|
+| Architecture Vision | `ARCH-VIS-001` | `work-repositories/architecture-repository/architecture-vision/` | Baselined at 1.0.0 |
+
+**Artifact-id assignment:** Artifact-ids are assigned at first draft by the owning agent following the pattern `<TYPE>-<SEQ>` where TYPE is a two-to-four letter abbreviation of the artifact type (e.g., `AV` for Architecture Vision, `BA` for Business Architecture, `SCO` for Safety Constraint Overlay) and SEQ is a zero-padded three-digit sequence within the engagement. The id is recorded in the artifact's frontmatter as `artifact-id:` at creation time and never changed thereafter, even when the artifact is versioned.

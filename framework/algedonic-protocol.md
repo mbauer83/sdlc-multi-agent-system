@@ -71,6 +71,10 @@ The following table enumerates specific triggering conditions, their classificat
 | `ALG-016` | A Clarification Request (`CQ`) to the user has been open for more than two sprint cycles with no response | KG | S2 | PM (consolidate CQs; escalate to user as priority interaction) |
 | `ALG-017` | A safety-domain knowledge gap is identified where an assumption cannot safely be made (e.g., unknown regulatory jurisdiction affecting a safety-critical system) | KG | S1 | User (via PM); CSCO (concurrent); halt affected phase work |
 | `ALG-018` | An agent has proceeded without raising a required CQ, producing an artifact that rests on undocumented assumptions | KG/GV | S2 | PM (invalidate affected sections; require CQ retroactively) |
+| `ALG-C01` | Diagram catalog inconsistency: duplicate `element_id` or name collision detected within an ontological sub-catalog | GV | S3 | SA (resolve immediately; regenerate `_macros.puml`; validate all affected diagrams) |
+| `ALG-C02` | A non-SA agent has written directly to `diagram-catalog/` without going through `catalog_propose` handoff | GV | S2 | PM (halt; SA to review and reconcile; non-SA agent to be re-briefed on write-authority rules) |
+| `ALG-C03` | Cross-ontology link broken: a `canonical_entity` or `linked_data_entity` field references a `DE-nnn` or `BOB-nnn` ID that does not exist in the relevant sub-catalog | GV | S3 | SA (locate missing element; create or correct cross-reference; re-validate affected diagrams) |
+| `ALG-C04` | `_macros.puml` is out of sync with the `elements/` sub-catalogs: a PUML diagram references a macro alias that is not defined in `_macros.puml`, or `_macros.puml` defines an alias for a non-existent element | GV | S3 | SA (regenerate `_macros.puml`; run `validate_diagram` on all affected diagrams before next render) |
 
 ---
 
