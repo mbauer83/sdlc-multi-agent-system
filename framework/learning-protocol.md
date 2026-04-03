@@ -87,14 +87,16 @@ Not injected at retrieval time — authoring context only.>
 ```yaml
 - learning-id: CSCO-L-001
   phase: [A]
-  artifact-type: architecture-vision
+  artifact-type: safety-constraint-overlay
   error-type: omission
   importance: S2
   applicability: domain-agnostic
-  correction-summary: "When AV describes system as 'internal', check whether it processes employee PII before accepting non-safety classification"
+  correction-summary: "When producing Phase A SCO baseline, check whether any AV system described as 'internal' processes employee PII — if so, add as a safety-critical data scope constraint"
   file: CSCO-L-001.md
   promoted: false
 ```
+
+**`artifact-type` assignment rule:** Use the PRIMARY OUTPUT artifact of the skill, not the artifact reviewed or consumed as input. In the example above, CSCO is producing the `safety-constraint-overlay` (Phase A SCO baseline) when the mistake occurred — the AV was the input artifact being reviewed. The correction text describes what to examine in the input AV, but the learning is tagged by CSCO's output so that `query_learnings(artifact_type="safety-constraint-overlay")` retrieves it at the start of the next CSCO gate review skill. Had it been tagged `architecture-vision`, it would never be retrieved by CSCO's Step 0.L.
 
 The `correction-summary` field is a one-sentence distillation of the Correction section, used for quick filtering without reading the full file. The orchestration layer (tool `query_learnings`) reads only the index for filtering; it reads the full file only for entries that pass the filter.
 
@@ -154,7 +156,7 @@ Identify which §3.1 or §3.2 trigger applies. If no trigger applies: do not gen
 
 Assign:
 - `phase` — the current ADM phase
-- `artifact-type` — the artifact class where the mistake occurred
+- `artifact-type` — the primary OUTPUT artifact of this skill (the artifact being produced when the mistake occurred). Not the input artifact reviewed or consumed. For procedural mistakes not tied to a specific output artifact, use `process`.
 - `error-type` — the category from §2.2
 - `importance` — from §3.4
 - `applicability` — assess whether the correction is domain-agnostic (applies regardless of industry/system type) or domain-specific (only relevant in a particular sector or system class). When uncertain: classify as domain-agnostic and let synthesis refine it.
