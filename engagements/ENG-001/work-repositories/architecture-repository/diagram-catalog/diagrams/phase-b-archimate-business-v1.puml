@@ -3,7 +3,7 @@
 ' artifact-type: diagram
 ' name: "Business Architecture — Agent Roles and SDLC Processes"
 ' diagram-type: archimate-business
-' version: 0.2.0
+' version: 0.3.0
 ' status: draft
 ' phase-produced: B
 ' owner-agent: SA
@@ -32,7 +32,7 @@
 '   - ACT-008
 '   - ACT-009
 '   - ACT-010
-'   - ACT-011
+'   - BCO-001
 '   - BPR-001
 '   - BPR-002
 '   - BPR-003
@@ -55,18 +55,40 @@
 '   - ACT-001---BPR-006
 '   - ACT-002---BPR-001
 '   - ACT-002---BPR-004
+'   - ACT-002---BPR-005
 '   - ACT-002---BPR-006
 '   - ACT-003---BPR-002
 '   - ACT-004---BPR-002
-'   - ACT-011---BPR-007
+'   - ACT-005---BPR-002
+'   - ACT-006---BPR-002
+'   - ACT-007---BPR-002
+'   - ACT-008---BPR-002
+'   - ACT-009---BPR-002
+'   - ACT-010---BPR-002
+'   - ACT-010---BPR-004
+'   - ACT-010---BPR-005
+'   - BCO-001---BPR-007
 '   - BPR-001---BSV-003
+'   - BPR-001---CAP-001
+'   - BPR-001---CAP-003
 '   - BPR-002---BSV-001
 '   - BPR-002---BSV-002
+'   - BPR-002---BSV-004
+'   - BPR-002---BSV-005
+'   - BPR-002---BSV-006
+'   - BPR-002---BSV-007
+'   - BPR-002---BSV-008
+'   - BPR-002---CAP-002
+'   - BPR-002---CAP-004
 '   - BPR-003---BSV-009
+'   - BPR-003---CAP-005
 '   - BPR-004---BSV-003
 '   - BPR-006---BSV-009
+'   - BPR-006---CAP-005
 '   - BPR-007---BSV-001
+'   - BPR-008---BSV-001
 '   - BPR-008---BSV-002
+'   - BPR-008---CAP-006
 ' ---
 @startuml phase-b-archimate-business-v1
 !include ../_macros.puml
@@ -112,10 +134,10 @@ rectangle "AI Agent Roles" <<BusinessGrouping>> as AGENTS {
 }
 
 ' ---------------------------------------------------------------------------
-' Architecture Governance  (BusinessCollaboration — SA Role + SwA Role + User)
+' Architecture Governance  (BusinessCollaboration — User as head + SA Role + SwA Role)
 ' ---------------------------------------------------------------------------
 rectangle "Architecture Governance" <<BusinessGrouping>> as GOVERN {
-  DECL_ACT_011
+  DECL_BCO_001
 }
 
 ' ---------------------------------------------------------------------------
@@ -150,27 +172,58 @@ rectangle "Business Services" <<BusinessGrouping>> as SVCS {
 ' ---------------------------------------------------------------------------
 ' Assignment connections (Role/Actor → BPR)
 ' ---------------------------------------------------------------------------
+' PM Agent
 ACT_002 -[#B8860B]-> BPR_001 : <<assignment>>
 ACT_002 -[#B8860B]-> BPR_004 : <<assignment>>
+ACT_002 -[#B8860B]-> BPR_005 : <<assignment>>
 ACT_002 -[#B8860B]-> BPR_006 : <<assignment>>
+' SA and SwA — skill execution
 ACT_003 -[#B8860B]-> BPR_002 : <<assignment>>
 ACT_004 -[#B8860B]-> BPR_002 : <<assignment>>
+' Specialist agents — skill execution
+ACT_005 -[#B8860B]-> BPR_002 : <<assignment>>
+ACT_006 -[#B8860B]-> BPR_002 : <<assignment>>
+ACT_007 -[#B8860B]-> BPR_002 : <<assignment>>
+ACT_008 -[#B8860B]-> BPR_002 : <<assignment>>
+ACT_009 -[#B8860B]-> BPR_002 : <<assignment>>
+' CSCO — skill execution, gate authority, algedonic authority
+ACT_010 -[#B8860B]-> BPR_002 : <<assignment>>
+ACT_010 -[#B8860B]-> BPR_004 : <<assignment>>
+ACT_010 -[#B8860B]-> BPR_005 : <<assignment>>
+' User — CQ responses, sprint review decisions
 ACT_001 -[#B8860B]-> BPR_003 : <<assignment>>
 ACT_001 -[#B8860B]-> BPR_006 : <<assignment>>
-ACT_011 -[#B8860B]-> BPR_007 : <<assignment>>
+' Architecture Board — enterprise promotion
+BCO_001 -[#B8860B]-> BPR_007 : <<assignment>>
 
 ' ---------------------------------------------------------------------------
 ' Realization connections (BPR → BSV)
-' Key realizations; full set in connections/archimate/realization/BPR-*---BSV-*.md
 ' ---------------------------------------------------------------------------
 BPR_001 ..[#B8860B].>> BSV_003 : <<realization>>
 BPR_002 ..[#B8860B].>> BSV_001 : <<realization>>
 BPR_002 ..[#B8860B].>> BSV_002 : <<realization>>
+BPR_002 ..[#B8860B].>> BSV_004 : <<realization>>
+BPR_002 ..[#B8860B].>> BSV_005 : <<realization>>
+BPR_002 ..[#B8860B].>> BSV_006 : <<realization>>
+BPR_002 ..[#B8860B].>> BSV_007 : <<realization>>
+BPR_002 ..[#B8860B].>> BSV_008 : <<realization>>
 BPR_003 ..[#B8860B].>> BSV_009 : <<realization>>
 BPR_004 ..[#B8860B].>> BSV_003 : <<realization>>
 BPR_006 ..[#B8860B].>> BSV_009 : <<realization>>
 BPR_007 ..[#B8860B].>> BSV_001 : <<realization>>
+BPR_008 ..[#B8860B].>> BSV_001 : <<realization>>
 BPR_008 ..[#B8860B].>> BSV_002 : <<realization>>
+
+' ---------------------------------------------------------------------------
+' Realization connections (BPR → CAP)
+' ---------------------------------------------------------------------------
+BPR_001 ..[#4682B4].>> CAP_001 : <<realization>>
+BPR_001 ..[#4682B4].>> CAP_003 : <<realization>>
+BPR_002 ..[#4682B4].>> CAP_002 : <<realization>>
+BPR_002 ..[#4682B4].>> CAP_004 : <<realization>>
+BPR_003 ..[#4682B4].>> CAP_005 : <<realization>>
+BPR_006 ..[#4682B4].>> CAP_005 : <<realization>>
+BPR_008 ..[#4682B4].>> CAP_006 : <<realization>>
 
 ' ---------------------------------------------------------------------------
 ' Notes
@@ -180,8 +233,10 @@ note as N1
   behavioral specifications. Application-layer
   implementations (ApplicationComponent) are shown
   in phase-c-archimate-application-v1.
-  BPR-002 (Skill Execution) also realizes
-  BSV-004..BSV-008 — see connections/ for full graph.
+  Architecture Board (BCO-001): User is head/final
+  authority; SA and SwA are participating members.
+  BPR→BSV color: dark goldenrod (business layer).
+  BPR→CAP color: steel blue (cross-layer, strategy).
 end note
 
 @enduml

@@ -71,3 +71,15 @@ Feature: Entity file verification
     When I verify the entity file
     Then the result is invalid
     And error code "E031" is reported
+
+  Scenario: Filename prefix mismatch causes an error
+    Given an entity file whose filename does not start with its artifact-id
+    When I verify the entity file
+    Then the result is invalid
+    And error code "E104" is reported
+
+  Scenario: Valid entity file with friendly-name in filename passes verification
+    Given a well-formed entity file with a friendly-name suffix in the filename
+    When I verify the entity file
+    Then the result is valid
+    And there are no errors

@@ -1,13 +1,27 @@
 ---
 doc-id: diagram-conventions
-version: 2.1.0
-status: Approved — Stage 4.8d
+version: 2.2.0
+status: Approved — Stage 4.9f
 governs: All diagram production across all agent roles
 ---
 
 # Diagram Conventions
 
 Specifies the production, rendering, and maintenance of PlantUML (PUML) diagrams. Diagrams are **views over the model**: they select and compose entities and connections from the architecture/technology repositories and render them according to the `§display` sections in those files. No separate element catalog exists — the model IS the catalog.
+
+### Diagram type roles and cross-verification
+
+No single diagram type has final authority over system behaviour. The five diagram families are **complementary and intentionally overlapping**:
+
+| Diagram type | Primary question answered | Key overlap |
+|---|---|---|
+| ArchiMate | What exists and how is it related structurally? | Shares entities with all other types |
+| ER | What are the data fields, types, and cardinalities? | Shares domain objects with ArchiMate and sequence diagrams |
+| Activity / BPMN | How does work flow through the system over time? | Overlaps with sequence diagrams (same scenario, different abstraction) |
+| Sequence | How do components interact in a specific runtime scenario? | Shares participants with ArchiMate and activity diagrams |
+| Use-case / user-story | What do stakeholders need and how do they interact? | Shares actors with ArchiMate business layer |
+
+Where two diagram types cover the same component, process, or scenario, they must be mutually consistent. Deliberate overlap is the cross-verification mechanism: an application component named `EventStore` in an ArchiMate diagram must appear under the same name as a participant in sequence diagrams, as a swim-lane lane in activity diagrams, and as a class in ER diagrams if it has persisted data. Inconsistency between diagram types is an architectural error — not a tolerance to be managed.
 
 ---
 
@@ -512,6 +526,14 @@ deactivate APP-001
 
 ### §7.activity-bpmn — Activity / BPMN-Overlay Process Diagram
 
+Activity diagrams serve two distinct purposes in the SDLC and must be clearly scoped to one:
+
+**Business-layer activity diagrams (Phase B — SA primary):** Model external workflows of the organisation the software serves. Participants (swimlane lanes) are business actors (`ACT-`), business roles (`BRL-`), external systems, or organisational units. These diagrams capture "what the organisation does" — approval flows, multi-party business processes, operational sequences — and provide traceability from business requirements to software scope.
+
+**Application-layer activity diagrams (Phase C — SwA primary):** Model process logic *within the software being built* — internal workflows, data-processing pipelines, state machines, multi-step request-handling sequences, background job flows, and any application-level BPMN that gives precision and granularity to application components and services. Participants are application components (`APP-`), application services (`ASV-`), data objects (`DOB-`), or user-facing actors. These are the authoritative behavioural specification for how the software must work internally — complementing the structural ArchiMate component diagram with the temporal, conditional flow it omits.
+
+Both types follow the same PlantUML template:
+
 ```plantuml
 @startuml
 !include _macros.puml
@@ -524,40 +546,68 @@ skinparam activity {
 }
 
 ' --- Swimlane labels from entity §display ###activity blocks ---
+' Business-layer example: actor/role lanes
 |ACT-001|
-' swimlane-label: "Solution Architect Agent"
+' swimlane-label: "User"
 start
 
-:Initiate Phase B;
+:Submit change request;
 
-|APP-001|
-' swimlane-label: "PM Agent"
-:Load phase skills;
-:Invoke SA agent;
+|BRL-001|
+' swimlane-label: "Change Manager"
+:Assess impact;
 
-|APP-002|
-' swimlane-label: "SA Agent"
-:Execute Discovery Scan;
-:Produce capabilities;
-
-if (Phase gate passed?) then (yes)
-  |APP-001|
-  :Emit phase.completed;
+if (Safety-relevant?) then (yes)
+  |CST-001|
+  :Escalate to CSCO;
 else (no)
-  |APP-002|
-  :Raise algedonic signal;
+  |BRL-001|
+  :Approve and schedule;
 endif
 
-|APP-001|
 stop
 
 @enduml
 ```
 
+```plantuml
+' --- Application-layer example: component/service lanes ---
+|APP-016|
+' swimlane-label: "LangGraph Orchestrator"
+start
+
+:Receive skill invocation request;
+
+|APP-004|
+' swimlane-label: "SkillLoader"
+:Load skill file for phase/agent;
+:Assemble 4-layer system prompt;
+
+|APP-007|
+' swimlane-label: "PM Agent"
+:Execute skill steps;
+:Write artifact via write_artifact();
+
+if (Artifact valid?) then (yes)
+  |APP-001|
+  ' swimlane-label: "EventStore"
+  :Emit artifact.created;
+else (no)
+  |APP-007|
+  :Raise algedonic signal;
+endif
+
+|APP-016|
+stop
+```
+
 **Rules:**
-- Swimlane pool labels (`|ACT-001|` etc.) use entity artifact-ids; the label text comes from `§display ###activity` `swimlane-label`.
+- Swimlane pool labels (`|ACT-001|`, `|APP-004|` etc.) use entity artifact-ids; the display label comes from `§display ###activity` `swimlane-label`.
+- Business-layer diagrams: swimlane participants are business actors, roles, collaborations, or external systems. Do not use application component IDs.
+- Application-layer diagrams: swimlane participants are application components, services, or user-facing actors. Avoid business-layer role IDs except where a user actor genuinely initiates a flow.
 - Only BPMN-compatible constructs: sequential tasks, exclusive/parallel gateways, start/stop, intermediate events.
 - Task names are verb-object phrases.
+- Decision diamond labels state the condition being tested, not the outcome.
 
 ---
 

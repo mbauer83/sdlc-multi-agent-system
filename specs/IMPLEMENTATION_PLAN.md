@@ -824,7 +824,7 @@ Enumerate specific connection files. Each is an `.md` file with frontmatter and 
   - APP-004→{APP-007..015} (all 9 agents); APP-006→APP-016; APP-016→APP-017; APP-020→ACT-001
   - APP-022→{APP-008, APP-009, APP-011}
 
-- [x] **`connections/archimate/assignment/`** ✅ 8 files: ACT-001/002/003/004/011 → BPR-001/002/003/004/006/007
+- [x] **`connections/archimate/assignment/`** ✅ 17 files: original 8 (ACT-001/002/003/004 + BCO-001 → BPR-001/002/003/004/006/007) + 9 new: ACT-005..010 → BPR-002; ACT-010 → BPR-004/005; ACT-002 → BPR-005. ACT-011 renamed BCO-001 throughout.
 
 - [x] **`connections/archimate/composition/`** ✅ 13 files: APP-016→{APP-007..009, APP-018}; APP-006→{APP-007..015} (all 9 agents)
 
@@ -838,9 +838,11 @@ Enumerate specific connection files. Each is an `.md` file with frontmatter and 
 
 Seven diagrams. Each has a stated **implementation purpose** — what Stage 5 decision or module it specifies. Diagrams are prescribed at the level of content and grouping; the SA authors the actual PUML.
 
-- [x] **`phase-b-archimate-business-v1.puml`** ✅ v0.2.0 — ArchiMate-semantically correct. Owner: SA. 35 entity IDs, 16 connection IDs (8 assignment + 8 realization). Six groups with `<<Grouping>>` stereotypes.
+- [x] **`phase-b-archimate-business-v1.puml`** ✅ v0.3.0 — fully connected. Owner: SA. 35 entity IDs, 39 connection IDs (17 assignment + 14 BPR→BSV realization + 7 BPR→CAP realization + 1 BCO-001→BPR-007). Six groups with `<<Grouping>>` stereotypes.
   *Purpose:* Defines agent role taxonomy and SDLC process model used in all Stage 5 agent module naming and EventStore event routing.
-  *Semantic corrections applied:* ACT-002..ACT-010 → `BusinessRole` (not BusinessActor); ACT-011 Architecture Board → `BusinessCollaboration`; ACT-001 User stays `BusinessActor`. Groups: "Human Participant" (ACT-001), "AI Agent Roles" (ACT-002..010), "Architecture Governance" (ACT-011), "Capabilities", "SDLC Processes", "Business Services". BPR→BSV realization arrows connect Business Services group (previously isolated island) to SDLC Processes.
+  *Semantic corrections applied:* ACT-002..ACT-010 → `BusinessRole`; ACT-011 → `BusinessCollaboration` renamed BCO-001 (correct prefix per §4 of artifact-registry-design.md); ACT-001 stays `BusinessActor`. BCO-001 alias corrected to `BCO_001` in `_macros.puml`.
+  *Connection additions:* All 6 unconnected specialist roles (ACT-005..010) now assigned to BPR-002; ACT-010 additionally assigned to BPR-004 (gate authority) and BPR-005 (algedonic authority); ACT-002 assigned to BPR-005 (algedonic handler); all 5 orphan BSVs (BSV-004..008) now realized by BPR-002; BPR-008 also realizes BSV-001; all 6 CAPs now realized by appropriate BPRs (cross-layer, rendered in steel blue). No entity remains unconnected.
+  *User is head/final authority of Architecture Board* (BCO-001 entity content updated).
 
 - [x] **`phase-c-archimate-application-v1.puml`** ✅ v0.2.0 — layer-boundary and grouping corrections. Owner: SwA. 27+5 entity IDs (27 application-layer + 4 BSV + 1 ACT cross-layer boundary), 32 connection IDs. `skinparam rankdir LR`.
   *Purpose:* Primary implementation map for Stage 5b — every box is a Python module; every serving connection is a function call boundary.
@@ -1268,23 +1270,20 @@ sprint-review:
 
 ## Current State & Immediate Next Actions
 
-**Stages 1–4.9e complete. ModelVerifier complete. Stage 4.9f partial (2/7 diagrams done and semantically corrected). Stage 4.9g–h and Stage 5 pending.**
+**Stages 1–4.9e complete. ModelVerifier complete. Stage 4.9f partial (2/7 diagrams done, phase-b fully connected). Stage 4.9g–h and Stage 5 pending.**
 
-### Completed this session (2026-04-04, continued)
+### Completed this session (2026-04-04, continued — session 2)
 
-- **Stage 4.9f diagram corrections** — Both produced diagrams corrected for ArchiMate semantic accuracy and PlantUML constraints (PB-001..PB-005 bugs all resolved). Key changes:
-  - ACT-002..ACT-010 → `BusinessRole` (moved to `model-entities/business/roles/`); ACT-011 → `BusinessCollaboration` (moved to `model-entities/business/collaborations/`). ACT-001 User stays `BusinessActor`.
-  - Phase-B: 4 groups renamed/reorganised; `<<Grouping>>` on all outer containers; 8 BPR→BSV realization arrows + 14 new connection files close the "Business Services island" problem.
-  - Phase-C: `<<Grouping>>` on all 5 outer containers; cross-layer boundary elements declared outside groups; 4 APP→BSV realization + APP_020→ACT_001 serving connections added.
-- **Canonical type registry** — `src/common/archimate_types.py`: single source of truth for all valid `artifact-type`, `element-type`, `relationship-type` values. Organised by ArchiMate layer (entities) and diagram language (connections, including non-ArchiMate: activity, sequence, er, usecase). `model_verifier.py` imports from it. `entity-conventions.md §3.3` has full type tables.
-- **Framework documentation updates** — `diagram-conventions.md`: §10.3/10.4 ordering fixed; new §11 ArchiMate semantic constraints (layer boundaries, active structure type rules, grouping stereotypes, BSV realization rule) with generic examples. `entity-conventions.md`: `business-collaboration` template added; stale `app-component` names corrected to `application-component`. `_archimate-stereotypes.puml`: `<<Grouping>>` added.
-- **PlantUML bugs documented** — `docs/puml-bug-reports.md`: PB-001..PB-005 with reproduction cases and workarounds.
+- **Entity filename convention** — New format `[TYPEABBR-###].[friendly-name].md` adopted. All 98 entity files renamed; BCO-001 (formerly ACT-011) renamed with correct prefix. `src/common/model_verifier.py` updated: `entity_id_from_path()` public utility added (single point for formal-ID extraction from filename, ignoring friendly-name suffix); `_check_artifact_id_entity()` now validates filename prefix (E104); `ModelRegistry.find_file_by_id()` added. `framework/artifact-registry-design.md §3.0` documents the convention. BDD test suite updated: 33 tests passing.
+- **BCO-001 (Architecture Board) correction** — BusinessCollaboration prefix corrected from `ACT` → `BCO` per artifact-registry-design.md §4. Entity file renamed, frontmatter `artifact-id` updated, alias `BCO_001` in `§display`. Connection `ACT-011---BPR-007.md` renamed to `BCO-001---BPR-007.md`. `_macros.puml` regenerated (`DECL_BCO_001` now correct). BCO-001 entity content updated: User is explicitly head/final authority of the Architecture Board; SA and SwA are participating members.
+- **Phase-B diagram — complete connectivity** — `phase-b-archimate-business-v1.puml` updated to v0.3.0: 9 new assignment connections (all specialist roles now assigned to BPR-002; CSCO additionally to BPR-004/005; PM to BPR-005); all 5 orphan BSVs realised by BPR-002; BPR-008 realises BSV-001; 7 new BPR→CAP realization connections (cross-layer, steel blue). 9 new assignment + 7 new BPR→CAP realization connection files created. Total: 17 assignment + 22 realization connection files. No entity in phase-b is now unconnected. ModelVerifier: 204 files, 0 errors.
+- **README + diagram-conventions.md** — Activity diagram description corrected to cover three scopes: (1) external business processes of the client organisation (Phase B), (2) process logic within the software being built (Phase C), (3) ENG-001 meta-level (framework orchestration, binding spec for `src/orchestration/`). `diagram-conventions.md §7.activity-bpmn` updated with separate business-layer and application-layer templates and rules. Version bumped to 2.2.0.
 
 ### Resume at: Stage 4.9f remaining 5 diagrams → 4.9g (Overview + ADRs) → Stage 5
 
-**Stage 4.9e** — ✅ Complete: 89 connection files (75 original + 14 BPR→BSV realization).
-**Stage 4.9f** — Partial: 2/7 diagrams done, semantically corrected, and verified (0 errors). Layer-aligned grouping stereotypes (<<BusinessGrouping>>, <<ApplicationGrouping>>, etc.) + neutral <<Grouping>> for heterogeneous use. Remaining: `phase-c-class-er-v1.puml`, `phase-b-activity-sprint-v1.puml`, `phase-g-sequence-skill-invocation-v1.puml`, `phase-c-sequence-cq-lifecycle-v1.puml`, `phase-c-sequence-sprint-review-v1.puml`.
-**`_macros.puml`** — ✅ Generated from entity §display ###archimate blocks (99 macros for all engagement entities).
+**Stage 4.9e** — ✅ Complete: 115 connection files (original 89 + 9 new assignment + 7 new BPR→CAP realization).
+**Stage 4.9f** — Partial: 2/7 diagrams done, semantically corrected, and fully connected (0 verifier errors). Remaining: `phase-c-class-er-v1.puml`, `phase-b-activity-sprint-v1.puml`, `phase-g-sequence-skill-invocation-v1.puml`, `phase-c-sequence-cq-lifecycle-v1.puml`, `phase-c-sequence-sprint-review-v1.puml`.
+**`_macros.puml`** — ✅ Regenerated: 99 macros, BCO_001 alias correct.
 
 **Stage 4.9** — ENG-001 reference model: entity files, connection files, `_macros.puml`, four PUML diagrams. Documents the SDLC system itself. Serves as integration test fixture. Entity ownership reflects Stage 4.8h model (SwA owns APP/DOB entities; SA owns motivation/strategy/business entities).
 

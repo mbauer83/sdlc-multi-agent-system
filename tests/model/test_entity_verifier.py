@@ -116,6 +116,24 @@ def entity_no_display_section(tmp_path: Path) -> Path:
     return write_entity(tmp_path / "APP-001.md", VALID_ENTITY.replace("<!-- §display -->", ""))
 
 
+@given(
+    "an entity file whose filename does not start with its artifact-id",
+    target_fixture="entity_file",
+)
+def entity_filename_mismatch(tmp_path: Path) -> Path:
+    # artifact-id is APP-001 but filename prefix is WRONG-001
+    return write_entity(tmp_path / "WRONG-001.md", VALID_ENTITY)
+
+
+@given(
+    "a well-formed entity file with a friendly-name suffix in the filename",
+    target_fixture="entity_file",
+)
+def entity_friendly_name_suffix(tmp_path: Path) -> Path:
+    # artifact-id APP-001, filename APP-001.event-store.md — must pass
+    return write_entity(tmp_path / "APP-001.event-store.md", VALID_ENTITY)
+
+
 # ---------------------------------------------------------------------------
 # When
 # ---------------------------------------------------------------------------

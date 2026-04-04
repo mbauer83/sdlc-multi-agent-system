@@ -57,7 +57,6 @@
 !define DECL_ACT_008 rectangle "PO Agent" <<BusinessRole>> as ACT_008
 !define DECL_ACT_009 rectangle "SM Agent" <<BusinessRole>> as ACT_009
 !define DECL_ACT_010 rectangle "CSCO Agent" <<BusinessRole>> as ACT_010
-!define DECL_ACT_011 rectangle "Architecture Board" <<BusinessCollaboration>> as ACT_011
 !define DECL_BPR_001 rectangle "Sprint Planning" <<BusinessProcess>> as BPR_001
 !define DECL_BPR_002 rectangle "Skill Execution" <<BusinessProcess>> as BPR_002
 !define DECL_BPR_003 rectangle "CQ Lifecycle" <<BusinessProcess>> as BPR_003
@@ -75,6 +74,7 @@
 !define DECL_BSV_007 rectangle "Quality Assurance Service" <<BusinessService>> as BSV_007
 !define DECL_BSV_008 rectangle "Platform Engineering Service" <<BusinessService>> as BSV_008
 !define DECL_BSV_009 rectangle "User Decisions Service" <<BusinessService>> as BSV_009
+!define DECL_BCO_001 rectangle "Architecture Board" <<BusinessCollaboration>> as BCO_001
 
 ' ---------------------------------------------------------------------------
 ' Application

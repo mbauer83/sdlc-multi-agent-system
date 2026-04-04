@@ -52,38 +52,38 @@ engagements/<id>/work-repositories/architecture-repository/
       meanings/         MEA-001.md
       values/           VAL-001.md  VAL-002.md
     strategy/
-      capabilities/     CAP-001.md  CAP-002.md  CAP-003.md  CAP-004.md
-      value-streams/    VS-001.md   VS-002.md
-      resources/        RES-001.md  RES-002.md
-      courses-of-action/ COA-001.md  COA-002.md
+      capabilities/     CAP-001.phase-execution.md  CAP-002.artifact-production.md  CAP-003.multi-agent-orchestration.md
+      value-streams/    VS-001.forward-sdlc.md   VS-002.brownfield-onboarding.md
+      resources/        RES-001.some-resource.md  RES-002.other-resource.md
+      courses-of-action/ COA-001.some-course.md  COA-002.other-course.md
     business/
-      actors/           ACT-001.md  ACT-002.md  ACT-003.md  ACT-004.md
-      roles/            ROL-001.md  ROL-002.md
-      processes/        BPR-001.md  BPR-002.md  BPR-003.md  BPR-004.md  BPR-005.md
-      functions/        BFN-001.md  BFN-002.md  BFN-003.md
-      services/         BSV-001.md  BSV-002.md  BSV-003.md
-      events/           BEV-001.md  BEV-002.md
-      objects/          BOB-001.md  BOB-002.md  BOB-003.md
-      interfaces/       BIF-001.md
-      collaborations/   BCO-001.md
-      products/         PRD-001.md
-      contracts/        CTR-001.md
-      representations/  RPR-001.md
+      actors/           ACT-001.user.md
+      roles/            ROL-001.some-role.md  ROL-002.other-role.md
+      processes/        BPR-001.sprint-planning.md  BPR-002.skill-execution.md  BPR-003.cq-lifecycle.md
+      functions/        BFN-001.some-function.md  BFN-002.other-function.md
+      services/         BSV-001.business-architecture-service.md  BSV-002.app-technology-architecture-service.md
+      events/           BEV-001.some-event.md  BEV-002.other-event.md
+      objects/          BOB-001.some-object.md  BOB-002.other-object.md
+      interfaces/       BIF-001.some-interface.md
+      collaborations/   BCO-001.architecture-board.md
+      products/         PRD-001.some-product.md
+      contracts/        CTR-001.some-contract.md
+      representations/  RPR-001.some-representation.md
     application/
-      components/       APP-001.md  APP-002.md  APP-003.md  APP-004.md  APP-005.md  APP-006.md
-      services/         ASV-001.md  ASV-002.md  ASV-003.md
-      interfaces/       AIF-001.md  AIF-002.md
-      functions/        AFN-001.md  AFN-002.md
-      events/           AEV-001.md
-      data-objects/     DOB-001.md  DOB-002.md  DOB-003.md  DOB-004.md  DOB-005.md
-      processes/        APR-001.md
-      collaborations/   ACO-001.md
+      components/       APP-001.event-store.md  APP-002.model-registry.md  APP-003.learning-store.md
+      services/         ASV-001.agent-invocation-service.md  ASV-002.artifact-io-service.md
+      interfaces/       AIF-001.event-store-port.md  AIF-002.llm-client-port.md
+      functions/        AFN-001.some-function.md  AFN-002.other-function.md
+      events/           AEV-001.some-event.md
+      data-objects/     DOB-001.workflow-event.md  DOB-002.engagement.md  DOB-003.learning-entry.md
+      processes/        APR-001.some-process.md
+      collaborations/   ACO-001.some-collaboration.md
     implementation/
-      work-packages/    WP-001.md   WP-002.md   WP-003.md
-      deliverables/     DEL-001.md  DEL-002.md
-      gaps/             GAP-001.md  GAP-002.md  GAP-003.md
-      plateaus/         PLT-001.md
-      events/           IEV-001.md
+      work-packages/    WP-001.some-package.md   WP-002.other-package.md
+      deliverables/     DEL-001.some-deliverable.md  DEL-002.other-deliverable.md
+      gaps/             GAP-001.some-gap.md  GAP-002.other-gap.md
+      plateaus/         PLT-001.some-plateau.md
+      events/           IEV-001.some-event.md
   connections/                          ← sibling to model-entities/
     archimate/
       realization/    APP-001---BSV-001.md   APP-002---BSV-001.md   APP-003---CAP-001.md
@@ -195,6 +195,23 @@ Not model entities; no `§display` section; not organised in `model-entities/` l
 
 All model-entity and model-connection files share a three-part structure: YAML frontmatter, a `§content` section, and a `§display` section. Section boundaries are HTML comment markers (`<!-- §<name> -->`), parseable with the regex `<!-- §(\w+) -->`. Within `§display`, `## <language-id>` H2 headings delimit per-language subsections. Absence of a language subsection means the entity/connection does not appear in that diagram language.
 
+### 3.0 Entity File Naming Convention
+
+Entity filenames follow the format:
+
+```
+TYPEABBR-NNN.friendly-name.md
+```
+
+where `TYPEABBR-NNN` is the **formal artifact-id** (e.g. `CAP-001`, `APP-007`) and `friendly-name` is a human-readable slug derived from the entity's `name` field (lowercase, hyphen-separated, no special characters). The friendly-name is purely informational — all code resolves entities by their formal artifact-id only, ignoring the friendly-name portion. The centralized `entity_id_from_path(path)` function in `src/common/model_verifier.py` must be used everywhere a formal ID is extracted from a filename.
+
+Examples:
+- `CAP-001.phase-execution.md` — artifact-id `CAP-001`
+- `APP-007.pm-agent.md` — artifact-id `APP-007`
+- `BCO-001.architecture-board.md` — artifact-id `BCO-001`
+
+**Connection files** use a different convention: the filename stem IS the artifact-id (e.g. `ACT-001---BPR-003.md`). Friendly names do not apply to connection files since their filename already carries semantic meaning through the source/target IDs.
+
 ### 3.1 Model Entity — Exemplar
 
 ```markdown
@@ -258,7 +275,7 @@ attributes:
 
 | Field | Rule |
 |---|---|
-| `artifact-id` | Format `^[A-Z]+-[0-9]{3}$`; prefix must match entity-type per §4 |
+| `artifact-id` | Format `^[A-Z]+-[0-9]{3}$`; prefix must match entity-type per §4; must equal the leading segment of the filename (before the first `.`) — see §3.0 |
 | `artifact-type` | Must be a value from §4 |
 | `version` | Valid semver |
 | `status` | `draft` \| `baselined` \| `deprecated` |

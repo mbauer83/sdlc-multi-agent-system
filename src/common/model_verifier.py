@@ -82,6 +82,29 @@ class VerificationResult:
 
 
 # ---------------------------------------------------------------------------
+# Public utility — formal entity-id extraction from filename
+# ---------------------------------------------------------------------------
+
+
+def entity_id_from_path(path: Path) -> str:
+    """Extract the formal artifact-id from an entity filename.
+
+    Entity filenames follow the convention ``TYPEABBR-NNN.friendly-name.md``
+    (or the legacy ``TYPEABBR-NNN.md``).  The formal ID is always the portion
+    of the stem before the first ``'.'``.  Code must use this function rather
+    than ``Path.stem`` directly so that friendly-name suffixes are ignored
+    transparently.
+
+    Examples::
+
+        entity_id_from_path(Path("CAP-001.phase-execution.md")) == "CAP-001"
+        entity_id_from_path(Path("APP-007.pm-agent.md"))        == "APP-007"
+        entity_id_from_path(Path("ACT-001.md"))                 == "ACT-001"
+    """
+    return path.stem.split(".")[0]
+
+
+# ---------------------------------------------------------------------------
 # Registry — lightweight scan of model-entities/ and connections/
 # ---------------------------------------------------------------------------
 
@@ -127,6 +150,21 @@ class ModelRegistry:
             except Exception:  # noqa: BLE001
                 pass
         return ids
+
+    def find_file_by_id(self, artifact_id: str) -> Path | None:
+        """Return the Path of an entity file whose formal artifact-id matches *artifact_id*.
+
+        Supports both the legacy ``TYPEABBR-NNN.md`` format and the new
+        ``TYPEABBR-NNN.friendly-name.md`` format.  The formal ID is always the
+        portion of the stem before the first ``'.'``.
+        """
+        root = self.repo_root / "model-entities"
+        if not root.exists():
+            return None
+        for f in root.rglob("*.md"):
+            if entity_id_from_path(f) == artifact_id:
+                return f
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -508,6 +546,20 @@ def _check_artifact_id_entity(fm: dict, result: VerificationResult, loc: str) ->
             f"artifact-id '{aid}' does not match pattern ^[A-Z]+-[0-9]{{3}}$",
             loc,
         ))
+        return  # filename check meaningless if ID itself is malformed
+
+    # Filename must start with the formal artifact-id (before the first '.').
+    # Both legacy "ACT-001.md" and new "ACT-001.friendly-name.md" are accepted.
+    file_id = entity_id_from_path(result.path)
+    if file_id != aid:
+        result.issues.append(Issue(
+            Severity.ERROR, "E104",
+            (
+                f"entity filename prefix '{file_id}' does not match artifact-id '{aid}'; "
+                f"filename must start with '{aid}' (e.g. '{aid}.friendly-name.md')"
+            ),
+            loc,
+        ))
 
 
 def _check_artifact_id_connection(
@@ -807,6 +859,7 @@ def _check_puml_syntax(path: Path, result: VerificationResult, loc: str) -> None
 # E101  Entity artifact-id does not match ^[A-Z]+-[0-9]{3}$
 # E102  artifact-type not in recognised type set
 # E103  safety-relevant is not a boolean
+# E104  Entity filename prefix does not match artifact-id
 # E201  Connection artifact-id does not match SOURCE---TARGET pattern
 # E202  Connection artifact-id does not match filename stem
 # E203  Connection artifact-type not recognised
