@@ -18,12 +18,40 @@ skinparam roundcorner 4
 skinparam backgroundColor #FAFAFA
 
 ' ---------------------------------------------------------------------------
-' Cross-cutting: Grouping (ArchiMate generic organizational container)
+' Grouping containers — one stereotype per ArchiMate layer.
+' Use the stereotype matching the layer of the contained elements.
+' Background: a lighter tint of the layer color so grouping containers
+' visually recede behind contained elements (which carry the full layer color).
+' NO inline #color overrides on grouping rectangles — the stereotype provides
+' the only permissible background.  See framework/diagram-conventions.md §11.3.
 ' ---------------------------------------------------------------------------
-skinparam rectangle<<Grouping>> {
-  BackgroundColor #F5F5F5
-  BorderColor #9E9E9E
-  BorderStyle dashed
+skinparam rectangle<<MotivationGrouping>> {
+  BackgroundColor #F7EEF9
+  BorderColor #7B3F9A
+}
+skinparam rectangle<<StrategyGrouping>> {
+  BackgroundColor #FAF0D9
+  BorderColor #8B6914
+}
+skinparam rectangle<<BusinessGrouping>> {
+  BackgroundColor #FFFDEC
+  BorderColor #B8860B
+}
+skinparam rectangle<<ApplicationGrouping>> {
+  BackgroundColor #E8F8FF
+  BorderColor #0078A0
+}
+skinparam rectangle<<TechnologyGrouping>> {
+  BackgroundColor #E8FFEE
+  BorderColor #2E7D32
+}
+skinparam rectangle<<PhysicalGrouping>> {
+  BackgroundColor #FFF4E8
+  BorderColor #BF360C
+}
+skinparam rectangle<<ImplementationGrouping>> {
+  BackgroundColor #FFF3E8
+  BorderColor #8D4E00
 }
 
 ' ---------------------------------------------------------------------------

@@ -105,7 +105,7 @@ rectangle "User" <<BusinessActor>> as ACT_001
 ' ---------------------------------------------------------------------------
 ' State & Storage  →  src/events/ + src/common/
 ' ---------------------------------------------------------------------------
-rectangle "State & Storage\nsrc/events/ + src/common/" <<Grouping>> as GRP_STATE #E3F2FD {
+rectangle "State & Storage\nsrc/events/ + src/common/" <<ApplicationGrouping>> as GRP_STATE {
   DECL_APP_001
   DECL_APP_002
   DECL_APP_003
@@ -114,7 +114,7 @@ rectangle "State & Storage\nsrc/events/ + src/common/" <<Grouping>> as GRP_STATE
 ' ---------------------------------------------------------------------------
 ' Agent Runtime  →  src/agents/ infrastructure
 ' ---------------------------------------------------------------------------
-rectangle "Agent Runtime\nsrc/agents/ (infrastructure)" <<Grouping>> as GRP_RUNTIME #E8EAF6 {
+rectangle "Agent Runtime\nsrc/agents/ (infrastructure)" <<ApplicationGrouping>> as GRP_RUNTIME {
   DECL_APP_004
   DECL_APP_005
   DECL_APP_006
@@ -127,7 +127,7 @@ rectangle "Agent Runtime\nsrc/agents/ (infrastructure)" <<Grouping>> as GRP_RUNT
 ' ---------------------------------------------------------------------------
 ' Agent Roster  →  src/agents/<role>.py
 ' ---------------------------------------------------------------------------
-rectangle "Agent Roster\nsrc/agents/<role>.py" <<Grouping>> as GRP_AGENTS #F3E5F5 {
+rectangle "Agent Roster\nsrc/agents/<role>.py" <<ApplicationGrouping>> as GRP_AGENTS {
   DECL_APP_007
   DECL_APP_008
   DECL_APP_009
@@ -142,7 +142,7 @@ rectangle "Agent Roster\nsrc/agents/<role>.py" <<Grouping>> as GRP_AGENTS #F3E5F
 ' ---------------------------------------------------------------------------
 ' Orchestration  →  src/orchestration/
 ' ---------------------------------------------------------------------------
-rectangle "Orchestration\nsrc/orchestration/" <<Grouping>> as GRP_ORCH #E8F5E9 {
+rectangle "Orchestration\nsrc/orchestration/" <<ApplicationGrouping>> as GRP_ORCH {
   DECL_APP_016
   DECL_APP_017
   DECL_APP_018
@@ -153,7 +153,7 @@ rectangle "Orchestration\nsrc/orchestration/" <<Grouping>> as GRP_ORCH #E8F5E9 {
 ' ---------------------------------------------------------------------------
 ' Dashboard & Interaction  →  src/dashboard/ + src/sources/
 ' ---------------------------------------------------------------------------
-rectangle "Dashboard & Interaction\nsrc/dashboard/ + src/sources/" <<Grouping>> as GRP_DASH #FFF8E1 {
+rectangle "Dashboard & Interaction\nsrc/dashboard/ + src/sources/" <<ApplicationGrouping>> as GRP_DASH {
   DECL_APP_020
   DECL_APP_021
   DECL_AIF_003

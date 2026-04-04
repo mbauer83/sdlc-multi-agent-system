@@ -807,22 +807,39 @@ rectangle "Subsystem A" <<Grouping>> as GRP_A #E8EAF6 {
 
 **Why:** An un-stereotyped rectangle has no ArchiMate meaning. Readers cannot determine whether it represents a `<<Grouping>>`, an `<<ApplicationCollaboration>>`, or a deployment unit.
 
-**Correct patterns:**
+**Use the layer-specific grouping stereotype** matching the ArchiMate layer of the contained elements. Each stereotype uses a lighter tint of the layer color; the contained elements use the full layer color. This keeps grouping containers visually subordinate while communicating layer membership.
+
+| Contained elements | Required stereotype |
+|---|---|
+| Motivation elements | `<<MotivationGrouping>>` |
+| Strategy elements | `<<StrategyGrouping>>` |
+| Business elements | `<<BusinessGrouping>>` |
+| Application elements | `<<ApplicationGrouping>>` |
+| Technology elements | `<<TechnologyGrouping>>` |
+| Physical elements | `<<PhysicalGrouping>>` |
+| Implementation elements | `<<ImplementationGrouping>>` |
+
 ```plantuml
-' Organizational grouping (no structural implication — just a visual container)
-rectangle "Subsystem A" <<Grouping>> as GRP_A #E3F2FD {
-  DECL_APP_001
+' CORRECT — stereotype signals layer; no inline color override
+rectangle "Subsystem A" <<ApplicationGrouping>> as GRP_A {
+  DECL_APP_001   ' <<ApplicationComponent>> — full application layer color
   DECL_APP_002
 }
 
-' Deployment unit (the group itself IS a named ApplicationComponent)
-rectangle "Subsystem A" <<ApplicationComponent>> as GRP_A #CCF2FF {
+' WRONG — inline color overrides the layer color semantics
+rectangle "Subsystem A" <<ApplicationGrouping>> as GRP_A #E8EAF6 {  ' forbidden
   DECL_APP_001
-  DECL_APP_002
+}
+
+' WRONG — generic <<Grouping>> gives no layer information
+rectangle "Subsystem A" <<Grouping>> as GRP_A {
+  DECL_APP_001
 }
 ```
 
-**Default:** Use `<<Grouping>>` unless the container itself represents a deployable or identifiable ArchiMate element.
+**Prohibition:** Never add an inline `#RRGGBB` color to a grouping rectangle. The stereotype supplies the only permissible background. If the stereotype is not available, add it to `_archimate-stereotypes.puml` — do not use an inline color as a shortcut. The `ModelVerifier` (future: rule E360) will flag inline colors on elements carrying a grouping stereotype.
+
+If a grouping rectangle contains elements from a secondary layer (e.g., a strategy-layer `Capability` group in a business-layer diagram), use the secondary layer's grouping stereotype for that specific container.
 
 ### 11.4 Business Services Must Connect to Processes
 

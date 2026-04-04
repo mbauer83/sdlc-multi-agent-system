@@ -179,6 +179,20 @@ Use UpperCamelCase to match ArchiMate 3 naming and skinparam selector syntax.
 | Physical | `Equipment`, `Facility`, `DistributionNetwork`, `Material` |
 | Implementation | `WorkPackage`, `Deliverable`, `ImplementationEvent`, `Plateau`, `Gap` |
 
+### Valid ArchiMate grouping stereotypes (diagram `<<Stereotype>>` on grouping rectangles)
+
+Use the stereotype matching the ArchiMate layer of the contained elements. No inline `#color` overrides permitted on grouping rectangles. Defined in `src/common/archimate_types.py` (`ARCHIMATE_GROUPING_STEREOTYPES`) and `_archimate-stereotypes.puml`.
+
+| Layer | Required grouping stereotype |
+|---|---|
+| Motivation | `<<MotivationGrouping>>` |
+| Strategy | `<<StrategyGrouping>>` |
+| Business | `<<BusinessGrouping>>` |
+| Application | `<<ApplicationGrouping>>` |
+| Technology | `<<TechnologyGrouping>>` |
+| Physical | `<<PhysicalGrouping>>` |
+| Implementation | `<<ImplementationGrouping>>` |
+
 ### Valid ArchiMate `relationship-type` values (§display ###archimate connection blocks)
 
 `Composition`, `Aggregation`, `Assignment`, `Realization`, `Serving`, `Access`, `Influence`, `Association`, `Specialization`, `Flow`, `Triggering`

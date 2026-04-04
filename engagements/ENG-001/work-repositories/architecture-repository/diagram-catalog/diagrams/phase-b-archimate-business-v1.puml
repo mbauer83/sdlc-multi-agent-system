@@ -80,7 +80,7 @@ skinparam padding 6
 ' ---------------------------------------------------------------------------
 ' Capabilities (strategy layer — the "what" the system must support)
 ' ---------------------------------------------------------------------------
-rectangle "Capabilities" <<Grouping>> as CAPS #F5DEB3 {
+rectangle "Capabilities" <<StrategyGrouping>> as CAPS {
   DECL_CAP_001
   DECL_CAP_002
   DECL_CAP_003
@@ -92,14 +92,14 @@ rectangle "Capabilities" <<Grouping>> as CAPS #F5DEB3 {
 ' ---------------------------------------------------------------------------
 ' Human participant
 ' ---------------------------------------------------------------------------
-rectangle "Human Participant" <<Grouping>> as HUMAN #FFFDE7 {
+rectangle "Human Participant" <<BusinessGrouping>> as HUMAN {
   DECL_ACT_001
 }
 
 ' ---------------------------------------------------------------------------
 ' AI Agent Roles  (BusinessRole — behavioral specifications)
 ' ---------------------------------------------------------------------------
-rectangle "AI Agent Roles" <<Grouping>> as AGENTS #E8F5E9 {
+rectangle "AI Agent Roles" <<BusinessGrouping>> as AGENTS {
   DECL_ACT_002
   DECL_ACT_003
   DECL_ACT_004
@@ -114,14 +114,14 @@ rectangle "AI Agent Roles" <<Grouping>> as AGENTS #E8F5E9 {
 ' ---------------------------------------------------------------------------
 ' Architecture Governance  (BusinessCollaboration — SA Role + SwA Role + User)
 ' ---------------------------------------------------------------------------
-rectangle "Architecture Governance" <<Grouping>> as GOVERN #F3E5F5 {
+rectangle "Architecture Governance" <<BusinessGrouping>> as GOVERN {
   DECL_ACT_011
 }
 
 ' ---------------------------------------------------------------------------
 ' SDLC Processes
 ' ---------------------------------------------------------------------------
-rectangle "SDLC Processes" <<Grouping>> as PROCS #FFFAC8 {
+rectangle "SDLC Processes" <<BusinessGrouping>> as PROCS {
   DECL_BPR_001
   DECL_BPR_002
   DECL_BPR_003
@@ -135,7 +135,7 @@ rectangle "SDLC Processes" <<Grouping>> as PROCS #FFFAC8 {
 ' ---------------------------------------------------------------------------
 ' Business Services (external view of capabilities)
 ' ---------------------------------------------------------------------------
-rectangle "Business Services" <<Grouping>> as SVCS #FFF3E0 {
+rectangle "Business Services" <<BusinessGrouping>> as SVCS {
   DECL_BSV_001
   DECL_BSV_002
   DECL_BSV_003

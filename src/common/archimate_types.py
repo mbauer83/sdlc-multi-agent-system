@@ -291,6 +291,32 @@ ALL_ARCHIMATE_ELEMENT_TYPES: frozenset[str] = frozenset().union(
 # Follows ArchiMate 3 UpperCamelCase naming convention.
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# ArchiMate grouping stereotype names
+# (the ``<<Stereotype>>`` applied to grouping rectangle containers)
+# One stereotype per ArchiMate layer; no generic <<Grouping>> permitted in diagrams.
+# Grouping containers must not have inline color overrides — the stereotype
+# provides the only permissible background.
+# ---------------------------------------------------------------------------
+
+ARCHIMATE_GROUPING_STEREOTYPES: frozenset[str] = frozenset(
+    {
+        "MotivationGrouping",
+        "StrategyGrouping",
+        "BusinessGrouping",
+        "ApplicationGrouping",
+        "TechnologyGrouping",
+        "PhysicalGrouping",
+        "ImplementationGrouping",
+    }
+)
+
+# ---------------------------------------------------------------------------
+# ArchiMate relationship-type values
+# (the ``relationship-type:`` field in §display ###archimate connection blocks)
+# Follows ArchiMate 3 UpperCamelCase naming convention.
+# ---------------------------------------------------------------------------
+
 ARCHIMATE_RELATIONSHIP_TYPES: frozenset[str] = frozenset(
     {
         "Composition",
