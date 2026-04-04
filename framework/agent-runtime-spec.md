@@ -104,22 +104,23 @@ All PydanticAI agents in this system share a common `AgentDeps` type. Defined in
 
 ```python
 from __future__ import annotations
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from src.events.event_store import EventStore
-from src.events.models.state import WorkflowState
+from src.models.engagement import Engagement
+from src.agents.protocols import EventStorePort
+from src.events.replay import WorkflowState
 
 @dataclass
 class AgentDeps:
-    engagement_id: str
-    event_store: EventStore
-    active_skill_id: str          # e.g. "SA-PHASE-A" — set by PM before invocation
-    workflow_state: WorkflowState  # current snapshot; refreshed before each run
-    engagement_base_path: Path    # engagements/<id>/
-    framework_path: Path          # framework/ directory
-    # Per-agent: additional deps injected by factory
-    extra: dict = field(default_factory=dict)
+    engagement: Engagement         # full engagement config (Engagement object, not just ID)
+    event_store: EventStorePort    # port — never the concrete EventStore (dependency inversion)
+    active_skill_id: str           # e.g. "SA-PHASE-A" — set by PM before invocation
+    workflow_state: WorkflowState  # current canonical state; rebuilt by replay before each run
+    engagement_base_path: Path     # engagements/<id>/
+    framework_path: Path           # framework/ directory
 ```
+
+`engagement` carries the full `Engagement` object (not just `engagement_id: str`) so tools can access config without re-loading from disk. `event_store` is typed as `EventStorePort` (a `typing.Protocol`) not the concrete `EventStore` — this is required by CST-001 (No Framework Lock-In): the application layer must never depend on the infrastructure implementation. No `extra: dict` escape hatch — dependencies are explicit or not injected (no magic).
 
 ---
 
@@ -162,14 +163,14 @@ After calling `build_agent(agent_id)`, each `src/agents/<role>.py` module adds r
 ### 5.2 Running an Agent
 
 ```python
-# Invoked by PM supervisor (src/orchestration/pm_supervisor.py):
+# Invoked by LangGraph node (src/orchestration/nodes.py):
 result = await sa_agent.run(
-    user_prompt,          # Task description from PM
+    user_prompt,          # Task description from PM decision
     deps=AgentDeps(
-        engagement_id="ENG-001",
-        event_store=store,
+        engagement=engagement,          # Engagement object loaded from config
+        event_store=event_store_port,   # EventStorePort injected into node
         active_skill_id="SA-PHASE-A",
-        workflow_state=store.current_state(),
+        workflow_state=workflow_state,  # WorkflowState from replay
         engagement_base_path=Path("engagements/ENG-001"),
         framework_path=Path("framework"),
     )

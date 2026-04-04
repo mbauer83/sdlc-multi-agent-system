@@ -663,12 +663,12 @@ Every file in this list requires review and likely modification. Do not attempt 
 
 #### 4.9a — ERP Directory Bootstrap
 
-- [ ] Create under `engagements/ENG-001/work-repositories/architecture-repository/`: `motivation/`, `strategy/`, `business/actors/`, `business/processes/`, `business/services/`, `application/components/`, `application/interfaces/`, `application/services/`, `application/data-objects/`, `implementation/`, `connections/archimate/realization/`, `connections/archimate/serving/`, `connections/archimate/assignment/`, `connections/archimate/composition/`, `connections/archimate/access/`, `connections/er/one-to-many/`, `connections/sequence/synchronous/`, `connections/activity/sequence-flow/`, `diagram-catalog/diagrams/`, `diagram-catalog/rendered/`, `decisions/`, `overview/`
-- [ ] Create `diagram-catalog/_archimate-stereotypes.puml` stub; `diagram-catalog/diagrams/index.yaml` empty list
+- [x] Create under `engagements/ENG-001/work-repositories/architecture-repository/`: `model-entities/motivation/{stakeholders,drivers,goals,requirements,constraints,principles}/`, `model-entities/strategy/{capabilities,value-streams}/`, `model-entities/business/{actors,processes,services}/`, `model-entities/application/{components,interfaces,services,data-objects}/`, `model-entities/implementation/`, `connections/archimate/{realization,serving,assignment,composition,access}/`, `connections/er/one-to-many/`, `connections/sequence/synchronous/`, `connections/activity/sequence-flow/`, `diagram-catalog/{diagrams,rendered,templates}/`, `decisions/`, `overview/`
+- [x] Create `diagram-catalog/_archimate-stereotypes.puml` stub with official ArchiMate 3 layer colors (Motivation: `#EDD6F0`; Strategy: `#F5DEB3`; Business: `#FFFAC8`; Application: `#CCF2FF`; Technology: `#CCFFCC`; Physical: `#FFE0B2`; Implementation: `#FFE4C4`). No `diagrams/index.yaml` — ERP v2.0 uses frontmatter only; ModelRegistry and DiagramCatalog are built from file scans at startup.
 
 #### 4.9b — Motivation and Strategy Entities (Phase A)
 
-- [ ] **Motivation** in `motivation/`:
+- [x] **Motivation** in `model-entities/motivation/`:
   - `STK-001.md` — `User / Engagement Owner` — directs the engagement; answers CQs; approves sprint output; primary consumer of all agent-produced artifacts
   - `STK-002.md` — `Architecture Board` — governs enterprise promotion; approves cross-engagement standards; only writers to `enterprise-repository/`
   - `DRV-001.md` — `SDLC Execution Cost` — manual execution of TOGAF ADM phases is expensive, error-prone, and rarely completed end-to-end
@@ -687,7 +687,7 @@ Every file in this list requires review and likely modification. Do not attempt 
   - `PRI-002.md` — `EventStore Primacy` — `workflow.db` is the sole canonical state; no agent holds private mutable state between invocations
   - `PRI-003.md` — `Model-First` — entity files exist before any diagram; diagram aliases must resolve to ModelRegistry entries
 
-- [ ] **Strategy** in `strategy/`:
+- [x] **Strategy** in `model-entities/strategy/`:
   - `CAP-001.md` — `Phase Execution` — execute any TOGAF ADM phase via a specialist agent invoked by PM
   - `CAP-002.md` — `Artifact Production` — produce schema-valid, versioned, ERP-compliant architecture artifacts
   - `CAP-003.md` — `Multi-Agent Orchestration` — coordinate specialist agents under PM supervision via LangGraph
@@ -701,7 +701,7 @@ Every file in this list requires review and likely modification. Do not attempt 
 
 Agent roles, core SDLC processes, and business services — the "what the system does" view, independent of Python.
 
-- [ ] **Actors** in `business/actors/` — `safety-relevant: false` on all; `phase-produced: B`:
+- [x] **Actors** in `model-entities/business/actors/` — `safety-relevant: false` on all; `phase-produced: B`:
   - `ACT-001.md` — `User` — human; initiates phases; answers CQs; uploads files; reviews and approves sprint output
   - `ACT-002.md` — `PM Agent` — VSM System 3; orchestrates all agents; sprint lifecycle; gate coordination; CQ batching; review trigger
   - `ACT-003.md` — `SA Agent` — VSM System 4; phases A/B/H + Phase C traceability review + EP-G Prelim/A and BA reconstruction; business-layer architecture authority
@@ -714,7 +714,7 @@ Agent roles, core SDLC processes, and business services — the "what the system
   - `ACT-010.md` — `CSCO Agent` — all phases (gate reviews); safety constraints; STAMP/STPA; incident response
   - `ACT-011.md` — `Architecture Board` — enterprise promotion reviews; enterprise-repository write authority
 
-- [ ] **Processes** in `business/processes/` — each `safety-relevant: false` except BPR-005:
+- [x] **Processes** in `model-entities/business/processes/` — each `safety-relevant: false` except BPR-005:
   - `BPR-001.md` — `Sprint Planning` — PM assigns work-packages to agents; emits `sprint.started`
   - `BPR-002.md` — `Skill Execution` — agent invoked with skill; reads artifacts; calls tools; produces output; emits events
   - `BPR-003.md` — `CQ Lifecycle` — agent raises CQ → PM batches → dashboard surfaces → user answers → agent resumes
@@ -724,7 +724,7 @@ Agent roles, core SDLC processes, and business services — the "what the system
   - `BPR-007.md` — `Enterprise Promotion` — entity promoted from engagement to enterprise repo; ID reference sweep; Architecture Board review
   - `BPR-008.md` — `Reverse Architecture` — EP-G entry; multi-source scan; entity inference; user confirmation; ERP model population
 
-- [ ] **Services** in `business/services/` — what each role offers to the system, consumed by other actors or processes:
+- [x] **Services** in `model-entities/business/services/` — what each role offers to the system, consumed by other actors or processes:
   - `BSV-001.md` — `Business Architecture` (SA) — produces AV, BA, Change Records (business layer); owns architecture-repository motivation/strategy/business layers; traceability review of SwA's Phase C output
   - `BSV-002.md` — `Application & Technology Architecture` (SwA) — produces AA, DA (Phase C), TA, ADRs, Architecture Contract; primary author of architecture-repository/application layer; owns technology-repository
   - `BSV-003.md` — `Project Coordination` (PM) — sprint lifecycle management; gate evaluation; CQ routing; review coordination
@@ -739,7 +739,7 @@ Agent roles, core SDLC processes, and business services — the "what the system
 
 Every APP-nnn maps to a distinct `src/` Python module. Every DOB-nnn maps to a Pydantic model (or TypedDict for LangGraph state). These are the binding specifications Stage 5 developers work from.
 
-- [ ] **Components** in `application/components/`:
+- [x] **Components** in `application/components/`:
 
   *State & Storage (src/events/, src/common/, src/sources/):*
   - `APP-001.md` — `EventStore` — `src/events/event_store.py`; ACID SQLite; two tables: `events` (append-only; never mutated) and `snapshots` (point-in-time `WorkflowState` serialisations); public API: `record_event(event) → None`, `replay() → WorkflowState` (full replay from event 0; used for integrity check and disaster recovery), `replay_from_latest_snapshot() → tuple[WorkflowState, int]` (fast path: deserialises latest snapshot + replays delta events since snapshot; returns `(state, resume_sequence)`), `create_snapshot(trigger: str) → str` (serialises current `WorkflowState` to JSON; inserts into `snapshots` table; returns `snapshot_id`), `check_snapshot_interval() → bool` (returns True if events since last snapshot ≥ `snapshot_interval`, default 100), `check_integrity()`, `query_events(**filter)`; canonical workflow state; never accessed directly via sqlite3
@@ -770,10 +770,10 @@ Every APP-nnn maps to a distinct `src/` Python module. Every DOB-nnn maps to a P
 
   *Dashboard & User Interaction (src/dashboard/):*
   - `APP-020.md` — `DashboardServer` — `src/dashboard/server.py`; FastAPI; all read-only view routes + POST interaction routes; SSE endpoint `/events/stream`; starts `watchdog` observer; mounts static files; single process; 127.0.0.1 only
-  - `APP-021.md` — `InteractionHandler` — `src/dashboard/interaction.py`; handles POST /queries/<cq_id>/answer, POST /uploads, POST /review/submit; validates inputs; calls `EventStore.record_event()` for all writes; enforces MIME allow-list; path-restricted; never touches work-repositories directly
+  - `APP-021.md` — `UserInputGateway` — `src/dashboard/interaction.py`; handles POST /queries/<cq_id>/answer, POST /uploads, POST /review/submit; validates inputs; calls `EventStore.record_event()` for all writes; enforces MIME allow-list; path-restricted; never touches work-repositories directly
   - `APP-022.md` — `TargetRepoManager` — `src/sources/target_repo.py`; reads `engagements-config.yaml`; `clone_or_update(repo_id)`; `get_clone_path(repo_id) → Path`; `check_access(repo_id, agent_role)`; `create_worktree(repo_id, branch) → Path`; `get_primary_id()`; backward-compatible with singular `target-repository`
 
-- [ ] **Interfaces** in `application/interfaces/` — ports in the ports-and-adapters model; each is a `typing.Protocol` defined in `src/agents/protocols.py` or `src/sources/base.py`:
+- [x] **Interfaces** in `application/interfaces/` — ports in the ports-and-adapters model; each is a `typing.Protocol` defined in `src/agents/protocols.py` or `src/sources/base.py`:
   - `AIF-001.md` — `EventStorePort` — `record_event(event: WorkflowEvent) → None`; `replay() → WorkflowState`; `replay_from_latest_snapshot() → tuple[WorkflowState, int]`; `create_snapshot(trigger: str) → str`; `check_snapshot_interval() → bool`; `query_events(**filter) → list[WorkflowEvent]`; implemented by APP-001; injected into all agents via AgentDeps
   - `AIF-002.md` — `LLMClientPort` — `complete(messages, tools, result_type) → Result`; implemented by PydanticAI `Agent` backed by Anthropic API; swappable for test doubles without LLM calls; defined in `src/agents/protocols.py`; this port is what CST-001 (No Framework Lock-In) depends on
   - `AIF-003.md` — `SourceAdapterPort` — `query(query: str) → str`; `source_id: str`; implemented by Confluence, Jira, Git, UserUpload adapters in `src/sources/`; registered in source adapter registry at session startup
@@ -781,7 +781,7 @@ Every APP-nnn maps to a distinct `src/` Python module. Every DOB-nnn maps to a P
   - `AIF-005.md` — `DiagramToolsPort` — `regenerate_macros(repo_path)`; `generate_er_content(entity_ids) → str`; `generate_er_relations(connection_ids) → str`; `validate_diagram(puml_path) → list[str]`; `render_diagram(puml_path) → Path`; invokes local `plantuml` CLI
   - `AIF-006.md` — `LearningStorePort` — `query(phase, artifact_type, domain, expand_related) → list[str]`; `record(entry: LearningEntry) → str`; implemented by APP-003 (`LearningStore`); swappable for in-memory fake in tests
 
-- [ ] **Data objects** in `application/data-objects/` — authoritative field-level specification for all Pydantic models and TypedDicts in `src/models/` and `src/orchestration/`:
+- [x] **Data objects** in `application/data-objects/` — authoritative field-level specification for all Pydantic models and TypedDicts in `src/models/` and `src/orchestration/`:
 
   *Persisted domain objects (EventStore-recorded or file-stored):*
   - `DOB-001.md` — `WorkflowEvent` — `src/events/models.py`; base model; fields: `event_id: str`, `event_type: str`, `agent: str | None`, `phase: str | None`, `sprint_id: str | None`, `skill_id: str | None`, `payload: dict`, `sequence: int`, `timestamp: datetime`; all EventStore-specific models inherit from this
@@ -800,7 +800,7 @@ Every APP-nnn maps to a distinct `src/` Python module. Every DOB-nnn maps to a P
   - `DOB-012.md` — `SDLCGraphState` — `src/orchestration/graph_state.py`; LangGraph `TypedDict` (not Pydantic); fields: `engagement_id: str`, `current_agent: str | None`, `current_skill: str | None`, `pm_decision: PMDecision | None`, `last_specialist_output: str | None`, `target_repository_ids: list[str]`, `primary_repository_id: str | None`, `review_pending: bool`, `algedonic_active: bool`
   - `DOB-013.md` — `ArtifactRecord` — `src/common/model_registry.py`; ModelRegistry's in-process representation of a scanned entity file; fields: `artifact_id: str`, `artifact_type: str`, `path: Path`, `version: str`, `status: str`, `owner_agent: str`, `safety_relevant: bool`, `produced_by_skill: str | None`, `domain: str | None`, `engagement: str`, `name: str`; never persisted; rebuilt at startup
 
-- [ ] **Application services** in `application/services/` — named service groupings that span multiple components; useful for the business diagram and for tracing capability-to-implementation:
+- [x] **Application services** in `application/services/` — named service groupings that span multiple components; useful for the business diagram and for tracing capability-to-implementation:
   - `ASV-001.md` — `Agent Invocation Service` — APP-005 + APP-004 + APP-006; accepts `(agent_id, skill_id, deps)` → 4-layer prompt assembly → PydanticAI execution → structured result; governed by `framework/agent-runtime-spec.md`
   - `ASV-002.md` — `Artifact I/O Service` — APP-002 + AIF-004; read/write/list on ERP entity files; path constraints enforced; ModelRegistry kept in sync; ERP format validated on every write
   - `ASV-003.md` — `Sprint Review Service` — APP-018 + APP-021 + APP-016 review_processing_node; full lifecycle from `review.pending` → dashboard presentation → user submission → correction routing → `sprint.close`
@@ -832,7 +832,7 @@ Enumerate specific connection files. Each is an `.md` file with frontmatter and 
   - `APP-001---APP-016.md` — EventStore serves LangGraph Orchestrator (state reads/writes in all nodes)
   - `APP-001---APP-017.md` — EventStore serves EngagementSession (replay on startup)
   - `APP-001---APP-018.md` — EventStore serves UserInteractionOrchestrator (event monitoring)
-  - `APP-001---APP-021.md` — EventStore serves InteractionHandler (writes CQ answers, uploads, reviews)
+  - `APP-001---APP-021.md` — EventStore serves UserInputGateway (writes CQ answers, uploads, reviews)
   - `APP-002---APP-004.md` — ModelRegistry serves SkillLoader (artifact lookup for skill routing)
   - `APP-002---APP-005.md` — ModelRegistry serves AgentFactory (AgentSpec frontmatter load)
   - `APP-003---APP-007.md` — LearningStore serves PM Agent (via `query_learnings` tool)
@@ -873,8 +873,8 @@ Enumerate specific connection files. Each is an `.md` file with frontmatter and 
   - `APP-016---DOB-012.md` — LangGraph Orchestrator reads/writes SDLCGraphState
   - `APP-017---DOB-002.md` — EngagementSession accesses Engagement (config)
   - `APP-007---DOB-011.md` — PM Agent writes PMDecision
-  - `APP-021---DOB-004.md` — InteractionHandler writes ClarificationRequest answers
-  - `APP-021---DOB-008.md` — InteractionHandler writes ReviewItems
+  - `APP-021---DOB-004.md` — UserInputGateway writes ClarificationRequest answers
+  - `APP-021---DOB-008.md` — UserInputGateway writes ReviewItems
 
 - [ ] **`connections/er/one-to-many/`** (entity relationships for ER diagram):
   - `DOB-002---DOB-001.md` — Engagement has many WorkflowEvents (`engagement_id` FK)
@@ -902,7 +902,7 @@ Seven diagrams. Each has a stated **implementation purpose** — what Stage 5 de
   - **Agent Runtime** (APP-004 SkillLoader, APP-005 AgentFactory, APP-006 AgentRegistry; AIF-002 LLMClientPort, AIF-004 ArtifactReadWriterPort, AIF-005 DiagramToolsPort) — `src/agents/` infrastructure
   - **Agent Roster** (APP-007 PM through APP-015 CSCO — 9 agents) — `src/agents/*.py`; served by Agent Runtime group
   - **Orchestration** (APP-016 LangGraph, APP-017 Session, APP-018 UIO, APP-019 Promotion; AIF-001 EventStorePort) — `src/orchestration/`
-  - **Dashboard & Interaction** (APP-020 DashboardServer, APP-021 InteractionHandler; AIF-003 SourceAdapterPort, APP-022 TargetRepoManager) — `src/dashboard/ + src/sources/`
+  - **Dashboard & Interaction** (APP-020 DashboardServer, APP-021 UserInputGateway; AIF-003 SourceAdapterPort, APP-022 TargetRepoManager) — `src/dashboard/ + src/sources/`
   *Key connections shown:* State & Storage → Agent Runtime (serving); Agent Runtime → Agent Roster (serving); Orchestration ↔ Agent Roster (composition + serving); Dashboard ↔ Orchestration (via EventStore serving both); External Access → Agent Roster (serving).
 
 - [ ] **`phase-c-class-er-v1.puml`**
@@ -923,14 +923,14 @@ Seven diagrams. Each has a stated **implementation purpose** — what Stage 5 de
 - [ ] **`phase-c-sequence-cq-lifecycle-v1.puml`**
   *Purpose:* Specifies `src/orchestration/user_interaction.py` and Dashboard `/queries` interaction for Stage 5b + 5.5b.
   *Participants:* Agent (any specialist), EventStore, UserInteractionOrchestrator, DashboardServer, User.
-  *Sequence:* Agent raises CQ → `EventStore.record_event(cq.raised)` → PM batches open CQs → UserInteractionOrchestrator detects `cq.raised` → DashboardServer serves `/queries` page (open CQs visible with count badge) → User types answer + optional file attach → POST /queries/<id>/answer → InteractionHandler validates → `EventStore.record_event(cq.answered)` → UserInteractionOrchestrator detects `cq.answered` → emits `cq.routed` to raising agent's node → agent resumes with answer in context.
+  *Sequence:* Agent raises CQ → `EventStore.record_event(cq.raised)` → PM batches open CQs → UserInteractionOrchestrator detects `cq.raised` → DashboardServer serves `/queries` page (open CQs visible with count badge) → User types answer + optional file attach → POST /queries/<id>/answer → UserInputGateway validates → `EventStore.record_event(cq.answered)` → UserInteractionOrchestrator detects `cq.answered` → emits `cq.routed` to raising agent's node → agent resumes with answer in context.
 
 - [ ] **`phase-c-sequence-sprint-review-v1.puml`**
   *Purpose:* Specifies Stage 5.5b `ReviewManager`, `sprint_close_node`, and `review_processing_node` for Stage 5c + 5.5b.
   *Participants:* PM_node, EventStore, UserInteractionOrchestrator, DashboardServer, User, review_processing_node.
-  *Sequence:* PM node decides close_sprint → checks `sprint-review.enabled` → `EventStore.record_event(review.pending)` (sprint NOT closed yet) → DashboardServer surfaces `/review` with artifact list → User marks each item (approved/needs-revision/rejected + agent_tag + comment) → POST /review/submit → InteractionHandler validates all items decided → `EventStore.record_event(review.submitted)` → UserInteractionOrchestrator signals `review_processing_node` → review_processing_node processes: rejected items → `artifact.rejected` events; needs-revision items → `handoff.created` to tagged agent (or PM routes if no tag); approved items → proceed → `review.sprint-closed` → `sprint.close`.
+  *Sequence:* PM node decides close_sprint → checks `sprint-review.enabled` → `EventStore.record_event(review.pending)` (sprint NOT closed yet) → DashboardServer surfaces `/review` with artifact list → User marks each item (approved/needs-revision/rejected + agent_tag + comment) → POST /review/submit → UserInputGateway validates all items decided → `EventStore.record_event(review.submitted)` → UserInteractionOrchestrator signals `review_processing_node` → review_processing_node processes: rejected items → `artifact.rejected` events; needs-revision items → `handoff.created` to tagged agent (or PM routes if no tag); approved items → proceed → `review.sprint-closed` → `sprint.close`.
 
-- [ ] **`diagrams/index.yaml`** — entry per diagram; `entry_type: local`; `entity_ids_used` and `connection_ids_used` lists populated from above
+- [ ] Each diagram `.puml` file carries frontmatter in its header comment block per `framework/diagram-conventions.md`; no `diagrams/index.yaml` — ERP v2.0 uses frontmatter only (DiagramCatalog built from file scans at startup).
 
 #### 4.9g — Overview Documents and Decisions
 
@@ -946,7 +946,7 @@ Seven diagrams. Each has a stated **implementation purpose** — what Stage 5 de
 
 **Every mutation to an engagement work-repository and every user-contributed input must produce an EventStore event.** This is the event-sourcing invariant: the engagement event-stream is the authoritative record of *what happened and when*, while the file system is the *current state projection* of that stream. Events reference file paths; files hold content. On replay, the system reconstructs full workflow state including which entities were inferred from which evidence, which files were uploaded by the user, and which entities the user confirmed.
 
-**All events in this taxonomy are emitted by tool implementations, not by skill instructions — no agent or skill file changes are required.** `ArtifactReadWriterPort.write()`, `scan_target_repo()`, and `InteractionHandler` each emit their respective events autonomously using context from `AgentDeps` (`active_skill_id`, `event_store`). Skill files call the same tool signatures they always have.
+**All events in this taxonomy are emitted by tool implementations, not by skill instructions — no agent or skill file changes are required.** `ArtifactReadWriterPort.write()`, `scan_target_repo()`, and `UserInputGateway` each emit their respective events autonomously using context from `AgentDeps` (`active_skill_id`, `event_store`). Skill files call the same tool signatures they always have.
 
 The following events govern reverse-architecture and user-input persistence. They must be added to `src/events/models.py` in Stage 5a alongside the existing base event types:
 
@@ -956,7 +956,7 @@ The following events govern reverse-architecture and user-input persistence. The
 | `artifact.updated` | `ArtifactReadWriterPort.write()` — existing file | `path`, `artifact_id`, `version`, `previous_version`, `produced_by_skill`, `changed_fields: list[str]` | Every version increment. `changed_fields` derived by diffing new frontmatter against previous file on disk. |
 | `source.scanned` | `scan_target_repo()` tool, end of scan | `scan_scope: list[str]`, `target_repo_id: str \| None`, `external_source_ids: list[str]`, `triggered_by_skill: str`, `file_count: int` | Audit record of EP-G discovery scan. Emitted by the tool; skill files call `scan_target_repo()` as before. |
 | `entity.confirmed` | `ArtifactReadWriterPort.write()` when `active_skill_id` ∈ `{SA-REV-*, SWA-REV-*}` | `artifact_id`, `confirmation_method: "user" \| "auto"` | Post-confirmation entity write in a reverse-arch context. `confirmation_method` = `"user"` if a `cq.answered` event exists for this skill invocation; `"auto"` otherwise. Minimal payload — fully derivable from tool context. |
-| `upload.registered` | `InteractionHandler` POST /uploads | `upload_id`, `file_path: str`, `mime_type: str`, `original_filename: str`, `referenced_by_cq: str \| None` | User file upload. File content at `engagements/<id>/user-uploads/<upload_id>/`; event is the reference. |
+| `upload.registered` | `UserInputGateway` POST /uploads | `upload_id`, `file_path: str`, `mime_type: str`, `original_filename: str`, `referenced_by_cq: str \| None` | User file upload. File content at `engagements/<id>/user-uploads/<upload_id>/`; event is the reference. |
 | `file.referenced` | `ArtifactReadWriterPort.write()` when `upload_refs` kwarg provided | `upload_id`, `artifact_id` | Links uploaded file to entity. Agent passes `upload_refs=[...]` explicitly when a CQ answer cited a file — the one optional kwarg on `write()`; omitted in all non-upload contexts. |
 
 **`source_evidence` auto-extraction:** The port implementation scans the `§content` block of every written entity file for the `[inferred: <source>]` annotation pattern already mandated by the reverse-arch skill steps. No new skill instruction is needed — the annotation is already there per existing requirements; the tool harvests it.
@@ -997,7 +997,7 @@ The following events govern reverse-architecture and user-input persistence. The
   | `artifact.updated` | `ArtifactReadWriterPort.write()` — existing file | update version in `baselined_artifacts` |
   | `source.scanned` | Reverse-arch skill Step 0 | no state change; audit only |
   | `entity.confirmed` | Reverse-arch skill Step 3 | flag entity as user-confirmed in artifact metadata |
-  | `upload.registered` | `InteractionHandler` POST /uploads | append to `registered_uploads: list[str]` |
+  | `upload.registered` | `UserInputGateway` POST /uploads | append to `registered_uploads: list[str]` |
   | `file.referenced` | `ArtifactReadWriterPort.write()` when `upload_refs` present | append to `upload_reference_map: dict[str, list[str]]` (upload_id → artifact_ids) |
 
   Key payload contracts:
@@ -1239,7 +1239,7 @@ sprint-review:
 
 **Implementation tasks (5.5b):**
 
-- [ ] `src/dashboard/interaction.py` — `InteractionHandler`: validates and writes CQ answers, uploads, review submissions to EventStore; enforces content rules (non-empty answers, MIME allow-list for uploads); path-restricted writes
+- [ ] `src/dashboard/interaction.py` — `UserInputGateway`: validates and writes CQ answers, uploads, review submissions to EventStore; enforces content rules (non-empty answers, MIME allow-list for uploads); path-restricted writes
 - [ ] `src/dashboard/uploads.py` — `UploadManager`: saves file to `user-uploads/`, computes SHA256, writes manifest entry, emits `upload.registered`; `get_upload(upload_id)` for retrieval; MIME-type validation
 - [ ] `src/dashboard/review.py` — `ReviewManager`: loads `review.pending` event; builds per-artifact review items; validates `ReviewItem` submission; emits `review.submitted`; computes review summary
 - [ ] `src/sources/user_upload.py` — `UserUploadAdapter`: `SourceAdapter` implementation; reads `user-uploads/manifest.yaml`; `query()` returns upload list; integrates with existing source adapter registry in `src/sources/base.py`
@@ -1321,11 +1321,21 @@ sprint-review:
 
 ## Current State & Immediate Next Actions
 
-**Stages 1–4.8h complete (2026-04-04).** All pre-Stage-4.9 framework work is done. Stage 4.9 (ENG-001 reference model) is now unblocked.
+**Stages 1–4.9d complete (2026-04-04).** Stage 4.9e–h pending.
 
-### Resume at: Stage 4.9 → Stage 5
+### Completed this session (2026-04-04)
 
-**Stage 4.9** — ENG-001 reference model: entity files, connection files, `_macros.puml`, four PUML diagrams. Documents the SDLC system itself. Serves as integration test fixture. Now unblocked — entity ownership and Phase C attribution reflect the Stage 4.8h refactored model (SwA owns APP/DOB entities; SA owns motivation/strategy/business entities).
+- **Stage 4.9a** — ERP directory structure bootstrapped under `engagements/ENG-001/work-repositories/architecture-repository/`; `_archimate-stereotypes.puml` stub with official ArchiMate 3 layer colors.
+- **Stage 4.9b** — 25 motivation and strategy entity files: STK-001/002, DRV-001/002, GOL-001–003, REQ-001–005, CST-001/002, PRI-001–003, CAP-001–006, VS-001/002.
+- **Stage 4.9c** — 28 business layer entity files: ACT-001–011 (actors), BPR-001–008 (processes), BSV-001–009 (services). BPR-005 (Algedonic Escalation) correctly marked `safety-relevant: true`.
+- **ERP v2.0 path fix** — entity files placed under `model-entities/<layer>/<type>/` per `artifact-registry-design.md §2.1`; no `index.yaml` files (frontmatter-based registry only). IMPL plan §4.9a/f corrected to match.
+- **Stage 4.9d** — 46 application layer entity files: APP-001–022 (components), AIF-001–006 (interfaces), DOB-001–013 (data objects), ASV-001–005 (services). All with full §content + §display ###archimate blocks; DOB entities additionally have ###er blocks. Binding Stage 5 implementation specifications.
+
+### Resume at: Stage 4.9e (Connection Files) → 4.9f (Diagrams) → 4.9g (Overview + ADRs) → Stage 5
+
+**Stage 4.9e** — Connection files (archimate/realization, serving, assignment, composition, access; er/one-to-many). ~50 connection files. Each is an `.md` with frontmatter + brief §content + §display ###archimate block.
+
+**Stage 4.9** — ENG-001 reference model: entity files, connection files, `_macros.puml`, four PUML diagrams. Documents the SDLC system itself. Serves as integration test fixture. Entity ownership reflects Stage 4.8h model (SwA owns APP/DOB entities; SA owns motivation/strategy/business entities).
 
 **Stage 5** — Python implementation. Read `framework/agent-runtime-spec.md` and `framework/orchestration-topology.md` before authoring any `src/` file. Begin with Stage 5a (EventStore completion), then 5b (agent layer). Key implementation dependencies:
 - `src/sources/target_repo.py` implements `TargetRepoManager` (multi-repo aware; see Stage 5d)

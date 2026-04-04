@@ -157,7 +157,7 @@ These three files are the canonical orientation documents. If they drift from re
 | 4.6d | Learning protocol 2026 alignment (LangGraph BaseStore, semantic tier, graph connectivity, cross-agent visibility) | Complete |
 | 4.7 | Multi-target-repository support (repository-map schema, multi-repo config, discovery Layer 4 update) | Complete |
 | 4.8 | Entity Registry Pattern v2.0 (ERP): artifact-registry-design, entity-conventions, diagram-conventions; 4.8a–c/e/f complete; 4.8d complete; 4.8g pending; 4.8h (SA/SwA role boundary refactor) complete — ArchiMate layer = role boundary; Phase H split (SA business layer CR, SwA application/technology CR); Phase C primary=SwA | Partial |
-| 4.9 | ENG-001 reference model and initial diagrams (ERP v2.0 usage example) — now unblocked | Pending |
+| 4.9 | ENG-001 reference model: 4.9a (dir bootstrap + `_archimate-stereotypes.puml`) complete; 4.9b (25 motivation/strategy entities) complete; 4.9c (28 business-layer entities: ACT/BPR/BSV) complete; 4.9d (46 application layer entities: APP/AIF/DOB/ASV) complete; 4.9e–h (connections, diagrams, overview) pending | Partial |
 | 5 | Python implementation layer (EventStore completion + PydanticAI agents + LangGraph orchestration + source adapters) | Pending |
 | 5.5 | Engagement dashboard (local web server + PUML rendering + filesystem monitoring) | Pending |
 | 6 | Integration testing on synthetic project | Pending |

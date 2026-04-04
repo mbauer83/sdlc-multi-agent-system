@@ -55,64 +55,40 @@ Any agent node can emit an `alg.raised` EventStore event. The LangGraph routing 
 
 ---
 
-## 3. LangGraph WorkflowState
+## 3. `SDLCGraphState` LangGraph TypedDict
 
-This is the LangGraph state schema — separate from the `src/events/models/state.WorkflowState` (which is the EventStore's computed state). The LangGraph state carries the information LangGraph needs to route between nodes; it does not replicate the EventStore.
+This is the LangGraph state schema (DOB-012) — separate from `WorkflowState` (DOB-009, in `src/events/replay.py`), which is the EventStore-persisted canonical engagement state. `SDLCGraphState` carries only what routing functions need to select the next node; it does not replicate EventStore data.
 
 ```python
 # src/orchestration/graph_state.py
 
-from typing import TypedDict, Annotated, Literal
-from langgraph.graph.message import add_messages
+from typing import TypedDict
+from .pm_decision import PMDecision
 
 class SDLCGraphState(TypedDict):
     # Engagement identity
     engagement_id: str
-    
-    # Current position in ADM workflow
-    current_phase: str          # "Prelim" | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H"
-    current_sprint_id: str | None
-    phase_visit_count: int      # read from EventStore; used for revisit detection
-    
-    # What triggered this node entry
-    trigger: Literal[
-        "initial",              # First time through this phase
-        "revisit",              # Phase re-entered due to Phase H change
-        "gate_rejection",       # Gate held; re-entry for resolution
-        "cq_resumed",           # Resumed after CQ answer received
-        "algedonic_resolved",   # Resumed after algedonic resolution
-    ]
-    
-    # Routing signals (set by current node; consumed by routing functions)
-    next_action: Literal[
-        "continue",             # Current node succeeded; advance normally
-        "gate_check",           # Request gate evaluation before advancing
-        "invoke_specialist",    # PM needs to invoke a specialist
-        "await_cq",             # Blocking CQ raised; suspend until answered
-        "algedonic",            # Algedonic signal raised; route to handler
-        "sprint_close",         # Solution Sprint complete; close and check phase exit
-        "phase_complete",       # Phase complete; advance to next phase
-        "engagement_complete",  # All phases done
-        "error",                # Unrecoverable error
-    ]
-    
-    # Specialist invocation parameters (set by PM before routing to specialist)
-    pending_specialist_id: str | None    # e.g. "SA"
-    pending_skill_id: str | None         # e.g. "SA-PHASE-A"
-    pending_task: str | None             # Task description for specialist
-    
-    # Results from most recent node execution
-    last_agent_output: str | None
-    last_gate_result: Literal["passed", "held", "escalated"] | None
-    
-    # Conversation / instruction thread (for PM's deliberative reasoning)
-    messages: Annotated[list, add_messages]
-    
-    # Error information
-    error_message: str | None
+
+    # Current execution context (set by nodes; read by routing functions)
+    current_agent: str | None        # agent role currently executing (e.g. "SA")
+    current_skill: str | None        # skill ID currently loaded (e.g. "SA-PHASE-A")
+
+    # PM decision — routing functions read next_action from here
+    pm_decision: PMDecision | None
+
+    # Output from most recent specialist invocation
+    last_specialist_output: str | None
+
+    # Multi-repo context (populated from Engagement config at session start)
+    target_repository_ids: list[str]
+    primary_repository_id: str | None
+
+    # Lifecycle flags (set/cleared by infrastructure nodes; checked by routing functions)
+    review_pending: bool             # True when sprint review awaits user submission
+    algedonic_active: bool           # True when an active S1/S2 algedonic signal exists
 ```
 
-**Note:** `SDLCGraphState` is deliberately thin. Rich state lives in EventStore. LangGraph state only carries what routing functions need. Agents reconstruct full context from EventStore via `event_store.current_state()` on each invocation.
+**Note:** Rich engagement state (current phase, open CQs, gate outcomes, baselined artifacts, phase visit counts) lives in `WorkflowState` (DOB-009), rebuilt from EventStore via `replay_from_latest_snapshot()` at session start and passed to agents via `AgentDeps.workflow_state`. Routing functions check `state["pm_decision"].next_action`, `state["algedonic_active"]`, and `state["review_pending"]` — they do not query EventStore directly.
 
 ---
 
@@ -122,19 +98,20 @@ class SDLCGraphState(TypedDict):
 
 | Node name | Executes | Routing function after |
 |---|---|---|
-| `pm_node` | PM supervisor decides next action | `route_from_pm` |
+| `pm_node` | PM supervisor decides next action; writes `pm_decision` to state | `route_from_pm` |
 | `sa_node` | `invoke_specialist("SA", ...)` | `route_after_specialist` |
 | `swa_node` | `invoke_specialist("SwA", ...)` | `route_after_specialist` |
 | `do_node` | `invoke_specialist("DO", ...)` | `route_after_specialist` |
 | `de_node` | `invoke_specialist("DE", ...)` | `route_after_specialist` |
 | `qa_node` | `invoke_specialist("QA", ...)` | `route_after_specialist` |
-| `po_node` | `invoke_specialist("PO", ...)` *(Stage 4)* | `route_after_specialist` |
-| `csco_node` | `invoke_specialist("CSCO", ...)` *(Stage 4)* | `route_after_specialist` |
-| `gate_check_node` | PM evaluates gate conditions | `route_after_gate` |
-| `cq_user_node` | Format and deliver CQ batch to user; await answer | `route_after_cq` |
-| `algedonic_handler_node` | PM routes algedonic signal; may halt or restructure | `route_after_algedonic` |
-| `sprint_close_node` | PM closes Solution Sprint; exports YAML audit | `route_after_sprint_close` |
-| `engagement_complete_node` | PM initiates enterprise promotion, closes engagement | → END |
+| `po_node` | `invoke_specialist("PO", ...)` | `route_after_specialist` |
+| `csco_node` | `invoke_specialist("CSCO", ...)` | `route_after_specialist` |
+| `gate_check_node` | PM evaluates gate; emits `phase.transitioned` on pass | `route_after_gate` |
+| `cq_user_node` | Sets `review_pending=False`; suspends on open CQs; emits `phase.suspended/resumed` | `route_after_cq` |
+| `algedonic_handler_node` | Routes algedonic; sets `algedonic_active`; may halt | `route_after_algedonic` |
+| `sprint_close_node` | Closes sprint; emits `sprint.close` + snapshot | `route_after_sprint_close` |
+| `review_processing_node` | Processes sprint review decisions; routes revisions; emits `review.sprint-closed` | `route_after_review` |
+| `engagement_complete_node` | Emits `engagement.completed` + snapshot; initiates promotion | → END |
 
 ### 4.2 Routing Functions
 
@@ -142,78 +119,71 @@ class SDLCGraphState(TypedDict):
 # src/orchestration/routing.py (schematic)
 
 def route_from_pm(state: SDLCGraphState) -> str:
-    """Central router: PM has decided what to do next."""
-    # First: check for open algedonics in EventStore
-    if _has_open_algedonics(state):
+    """Central router: PM has set pm_decision; route to the appropriate node."""
+    # Algedonic bypass: checked before acting on PM decision
+    if state["algedonic_active"]:
         return "algedonic_handler_node"
-    
-    action = state["next_action"]
-    match action:
+
+    decision = state["pm_decision"]
+    if decision is None:
+        return "pm_node"  # PM re-deliberates (should not occur in normal flow)
+
+    match decision.next_action:
         case "invoke_specialist":
-            return _specialist_node(state["pending_specialist_id"])
-        case "gate_check":
+            return _specialist_node(decision.specialist_id)
+        case "evaluate_gate":
             return "gate_check_node"
-        case "await_cq":
+        case "surface_cqs":
             return "cq_user_node"
-        case "sprint_close":
+        case "trigger_review":
+            return "review_processing_node"
+        case "close_sprint":
             return "sprint_close_node"
-        case "phase_complete":
-            return "pm_node"          # PM re-enters for next phase
-        case "engagement_complete":
+        case "complete_engagement":
             return "engagement_complete_node"
-        case "error":
-            return "algedonic_handler_node"
     return "pm_node"  # default: PM re-deliberates
 
 def route_after_specialist(state: SDLCGraphState) -> str:
-    """After any specialist run: check for algedonics, then return to PM."""
-    if _has_open_algedonics(state):
+    """After any specialist run: check algedonics, then return to PM."""
+    if state["algedonic_active"]:
         return "algedonic_handler_node"
-    if state["next_action"] == "await_cq":
-        return "cq_user_node"
+    if state["review_pending"]:
+        return "review_processing_node"
     return "pm_node"
 
 def route_after_gate(state: SDLCGraphState) -> str:
-    """After gate evaluation."""
-    match state["last_gate_result"]:
-        case "passed":
-            return "pm_node"          # PM advances to next phase
-        case "held":
-            return "pm_node"          # PM restructures sprint or raises CQ
-        case "escalated":
-            return "algedonic_handler_node"
+    """After gate evaluation — always return to PM (gate result is in EventStore)."""
+    if state["algedonic_active"]:
+        return "algedonic_handler_node"
+    return "pm_node"
 
 def route_after_cq(state: SDLCGraphState) -> str:
     """After CQ answer received from user."""
     return "pm_node"   # PM resumes suspended agent or advances
 
 def route_after_algedonic(state: SDLCGraphState) -> str:
-    """After algedonic signal handled."""
-    # May return to pm_node (resolved), or END (unresolvable halt)
-    if state["next_action"] == "engagement_complete":
+    """After algedonic signal handled. May halt (END) or resume (pm_node)."""
+    decision = state["pm_decision"]
+    if decision and decision.next_action == "complete_engagement":
         return "engagement_complete_node"
     return "pm_node"
 
 def route_after_sprint_close(state: SDLCGraphState) -> str:
-    """After Solution Sprint closed."""
-    return "pm_node"   # PM evaluates whether Phase G is complete
+    """After sprint closed: trigger review if enabled, else back to PM."""
+    if state["review_pending"]:
+        return "review_processing_node"
+    return "pm_node"
 
-def _specialist_node(agent_id: str) -> str:
+def route_after_review(state: SDLCGraphState) -> str:
+    """After sprint review processed: back to PM for next phase or sprint."""
+    return "pm_node"
+
+def _specialist_node(agent_id: str | None) -> str:
     return {
         "SA": "sa_node", "SwA": "swa_node", "DO": "do_node",
         "DE": "de_node", "QA": "qa_node",
-        "PO": "po_node", "CSCO": "csco_node",
-    }[agent_id]
-
-def _has_open_algedonics(state: SDLCGraphState) -> bool:
-    # Read from EventStore; algedonics bypass normal routing
-    from src.events import EventStore
-    store = EventStore(state["engagement_id"])
-    ws = store.current_state()
-    return any(
-        len(cycle.open_algedonics) > 0
-        for cycle in ws.active_cycles
-    )
+        "PO": "po_node", "SM": "sm_node", "CSCO": "csco_node",
+    }[agent_id or ""]
 ```
 
 ### 4.3 Graph Construction
@@ -224,10 +194,12 @@ def _has_open_algedonics(state: SDLCGraphState) -> bool:
 from langgraph.graph import StateGraph, START, END
 from .graph_state import SDLCGraphState
 from .nodes import (pm_node, sa_node, swa_node, do_node, de_node, qa_node,
-                    po_node, csco_node, gate_check_node, cq_user_node,
-                    algedonic_handler_node, sprint_close_node, engagement_complete_node)
+                    po_node, sm_node, csco_node, gate_check_node, cq_user_node,
+                    algedonic_handler_node, sprint_close_node,
+                    review_processing_node, engagement_complete_node)
 from .routing import (route_from_pm, route_after_specialist, route_after_gate,
-                      route_after_cq, route_after_algedonic, route_after_sprint_close)
+                      route_after_cq, route_after_algedonic,
+                      route_after_sprint_close, route_after_review)
 
 def build_sdlc_graph() -> CompiledGraph:
     graph = StateGraph(SDLCGraphState)
@@ -241,11 +213,13 @@ def build_sdlc_graph() -> CompiledGraph:
         ("de_node", de_node),
         ("qa_node", qa_node),
         ("po_node", po_node),
+        ("sm_node", sm_node),
         ("csco_node", csco_node),
         ("gate_check_node", gate_check_node),
         ("cq_user_node", cq_user_node),
         ("algedonic_handler_node", algedonic_handler_node),
         ("sprint_close_node", sprint_close_node),
+        ("review_processing_node", review_processing_node),
         ("engagement_complete_node", engagement_complete_node),
     ]:
         graph.add_node(name, fn)
@@ -256,15 +230,17 @@ def build_sdlc_graph() -> CompiledGraph:
     # PM routes to everything
     graph.add_conditional_edges("pm_node", route_from_pm)
 
-    # Specialists all return to PM
-    for node in ["sa_node", "swa_node", "do_node", "de_node", "qa_node", "po_node", "csco_node"]:
+    # Specialists all return via route_after_specialist
+    for node in ["sa_node", "swa_node", "do_node", "de_node", "qa_node",
+                 "po_node", "sm_node", "csco_node"]:
         graph.add_conditional_edges(node, route_after_specialist)
 
-    # Other nodes
+    # Infrastructure nodes
     graph.add_conditional_edges("gate_check_node", route_after_gate)
     graph.add_conditional_edges("cq_user_node", route_after_cq)
     graph.add_conditional_edges("algedonic_handler_node", route_after_algedonic)
     graph.add_conditional_edges("sprint_close_node", route_after_sprint_close)
+    graph.add_conditional_edges("review_processing_node", route_after_review)
     graph.add_edge("engagement_complete_node", END)
 
     return graph.compile()
@@ -274,7 +250,7 @@ def build_sdlc_graph() -> CompiledGraph:
 
 ## 5. PM Supervisor Node
 
-The PM node is the deliberative hub. It uses PydanticAI to reason about what to do next, then sets `next_action` and optionally `pending_specialist_id/skill_id/task` in the graph state.
+The PM node is the deliberative hub. It uses PydanticAI to reason about what to do next, then writes a `PMDecision` object into `pm_decision` in the graph state. Routing functions read `state["pm_decision"].next_action` to select the next node.
 
 ```python
 # src/orchestration/nodes.py (PM node schematic)
@@ -283,39 +259,37 @@ async def pm_node(state: SDLCGraphState) -> SDLCGraphState:
     """PM supervisor: reads EventStore state, decides next action."""
     from src.agents.project_manager import pm_agent
     from src.agents.deps import AgentDeps
-    from src.events import EventStore
-    
-    store = EventStore(state["engagement_id"])
+    from src.events.store import EventStorePort
+    from src.models.engagement import Engagement
+
+    store: EventStorePort = _get_event_store(state["engagement_id"])
+    engagement: Engagement = _get_engagement(state["engagement_id"])
     workflow_state = store.current_state()
-    
+
     deps = AgentDeps(
-        engagement_id=state["engagement_id"],
+        engagement=engagement,
         event_store=store,
         active_skill_id=_select_pm_skill(workflow_state),
         workflow_state=workflow_state,
-        engagement_base_path=...,
-        framework_path=...,
+        engagement_base_path=_engagement_base_path(state["engagement_id"]),
+        framework_path=_framework_path(),
     )
-    
+
     result = await pm_agent.run(
         _pm_decision_prompt(state, workflow_state),
         deps=deps,
     )
-    
-    # PM returns structured decision: next_action + optional specialist parameters
-    decision = result.data  # typed as PMDecision (Pydantic model)
+
+    # PM returns structured PMDecision; embed the whole object in state
+    decision: PMDecision = result.data
     return {
         **state,
-        "next_action": decision.next_action,
-        "pending_specialist_id": decision.specialist_id,
-        "pending_skill_id": decision.skill_id,
-        "pending_task": decision.task_description,
-        "last_agent_output": decision.reasoning,
-        "messages": [{"role": "assistant", "content": decision.reasoning}],
+        "pm_decision": decision,
+        "last_specialist_output": decision.reasoning,
     }
 ```
 
-The PM agent's `result_type` in Phase G/orchestration mode is a structured `PMDecision` Pydantic model:
+The PM agent's `result_type` is `PMDecision` (DOB-011). `next_action` values are the canonical routing keys consumed by `route_from_pm`:
 
 ```python
 # src/orchestration/pm_decision.py
@@ -324,14 +298,18 @@ from typing import Literal
 
 class PMDecision(BaseModel):
     next_action: Literal[
-        "invoke_specialist", "gate_check", "await_cq",
-        "sprint_close", "phase_complete", "engagement_complete", "error"
+        "invoke_specialist",   # route to specialist node; specialist_id + skill_id required
+        "evaluate_gate",       # route to gate_check_node; gate_id required
+        "surface_cqs",         # route to cq_user_node
+        "trigger_review",      # route to review_processing_node
+        "close_sprint",        # route to sprint_close_node
+        "complete_engagement", # route to engagement_complete_node
     ]
     specialist_id: str | None = None   # Required if next_action == "invoke_specialist"
     skill_id: str | None = None        # Required if next_action == "invoke_specialist"
-    task_description: str | None = None
+    task_description: str              # Always set; describes the work unit
     reasoning: str                     # PM's explanation for the decision
-    gate_id: str | None = None         # Required if next_action == "gate_check"
+    gate_id: str | None = None         # Required if next_action == "evaluate_gate"
 ```
 
 ---
@@ -356,7 +334,9 @@ LangGraph's own persistence (checkpointing via `MemorySaver` or `SqliteSaver`) i
 
 On engagement start, the SDLC graph entry is parameterised by the entry point from `engagements-config.yaml`:
 
-| Entry Point | Initial `current_phase` | Initial `trigger` | First PM action |
+Entry-point context is carried in `WorkflowState` (rebuilt from EventStore), not in `SDLCGraphState`. The PM node reads `workflow_state.current_phase` and `workflow_state.trigger` to select the appropriate opening skill.
+
+| Entry Point | `workflow_state.current_phase` | `workflow_state.trigger` | First PM action |
 |---|---|---|---|
 | EP-0 | Prelim | initial | Scoping interview skill |
 | EP-A | A | initial | Warm-start ingestion |
