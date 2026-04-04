@@ -414,7 +414,24 @@ An artifact in **draft** state (version 0.x.x) may be shared for early feedback 
 
 **Maximum: 2 revision iterations.** Escalation to PM is mandatory on iteration 3.
 
-### 9.2 Retrospective Feedback (sprint boundary)
+### 9.2 Sprint Review Cycle (user approval gate)
+
+The Sprint Review (BPR-006) is a distinct feedback loop governed by user authority, not the normal two-iteration cap:
+
+1. PM emits `review.pending`; dashboard surfaces all sprint artifacts.
+2. **User** reviews each artifact and marks it: `approved`, `needs-revision`, or `rejected` (with optional agent tag and comment).
+3. Needs-revision and rejected items are routed as handoffs to the tagged specialist agent(s).
+4. Agents revise and write the corrected artifacts.
+5. **Revised artifacts are re-presented to the user** for a fresh review cycle.
+6. Steps 2–5 repeat until the user marks **all** artifacts `approved`.
+7. Only when all items are approved does `sprint.close` proceed.
+
+**Key constraints:**
+- The sprint does **not** close while any item is `needs-revision` or `rejected`.
+- The user has authority to request indefinite rework cycles — there is no iteration cap for the sprint review.
+- The 2-iteration cap in §9.1 applies to inter-agent handoff loops only; it does not constrain user-driven review cycles.
+
+### 9.3 Retrospective Feedback (sprint boundary)
 
 At each sprint closeout, all agents submit a structured retrospective note to the PM. Notes are stored in `engagements/<id>/work-repositories/project-repository/knowledge-base/retrospectives/` for engagement-level learning. At engagement close, synthesised lessons learned are promoted to `enterprise-repository/knowledge-base/` for cross-engagement reuse. PM identifies skill file improvement candidates from retrospective notes; skill file changes require PM approval.
 

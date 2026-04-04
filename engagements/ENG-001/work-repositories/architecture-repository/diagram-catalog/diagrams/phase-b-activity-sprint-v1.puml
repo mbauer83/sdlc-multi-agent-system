@@ -3,7 +3,7 @@
 ' artifact-type: diagram
 ' diagram-type: activity-bpmn
 ' name: "Sprint Lifecycle — SDLC Agile ADM Sprint Flow"
-' version: 0.1.0
+' version: 0.2.0
 ' status: draft
 ' phase-produced: B
 ' owner-agent: SA
@@ -124,17 +124,24 @@ endif
 |PM Agent|
 :Process review decisions;
 
-if (Any items need\nrevision or rejected?) then (yes)
-  :Create handoff events\nto tagged specialist agents;
+repeat
+  if (Any items need\nrevision or rejected?) then (yes)
+    :Create handoff events\nto tagged specialist agents;
 
-  |Specialist Agents|
-  :Revise artifact per\nhandoff instructions;
-  :Write revised artifact\n(emit artifact.updated);
+    |Specialist Agents|
+    :Revise artifact per\nhandoff instructions;
+    :Write revised artifact\n(emit artifact.updated);
 
-  |PM Agent|
-  :Confirm revisions\ncomplete;
-else (no)
-endif
+    |User|
+    :Re-review revised\nartifacts on Dashboard;
+    :Approve / needs-further-revision\n/ rejected;
+
+    |PM Agent|
+    :Process updated\nreview decisions;
+  else (no)
+  endif
+repeat while (All artifacts\napproved by User?) is (no)
+-> yes (sprint approved);
 
 :Emit **sprint.close** event;
 :Create sprint-close snapshot;
