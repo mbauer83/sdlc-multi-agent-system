@@ -1,0 +1,158 @@
+' ---
+' artifact-id: phase-b-archimate-business-v1
+' artifact-type: diagram
+' name: "Business Architecture — Agent Roles and SDLC Processes"
+' diagram-type: archimate-business
+' version: 0.1.0
+' status: draft
+' phase-produced: B
+' owner-agent: SA
+' engagement: ENG-001
+' domain: core-platform
+' purpose: >
+'   Defines the agent role taxonomy and SDLC process model used in all Stage 5
+'   agent module naming and EventStore event-type routing. Every BPR process maps
+'   to one or more event types; every ACT actor maps to an agent module or user role.
+' entity-ids-used:
+'   - CAP-001
+'   - CAP-002
+'   - CAP-003
+'   - CAP-004
+'   - CAP-005
+'   - CAP-006
+'   - ACT-001
+'   - ACT-002
+'   - ACT-003
+'   - ACT-004
+'   - ACT-005
+'   - ACT-006
+'   - ACT-007
+'   - ACT-008
+'   - ACT-009
+'   - ACT-010
+'   - ACT-011
+'   - BPR-001
+'   - BPR-002
+'   - BPR-003
+'   - BPR-004
+'   - BPR-005
+'   - BPR-006
+'   - BPR-007
+'   - BPR-008
+'   - BSV-001
+'   - BSV-002
+'   - BSV-003
+'   - BSV-004
+'   - BSV-005
+'   - BSV-006
+'   - BSV-007
+'   - BSV-008
+'   - BSV-009
+' connection-ids-used:
+'   - ACT-001---BPR-003
+'   - ACT-001---BPR-006
+'   - ACT-002---BPR-001
+'   - ACT-002---BPR-004
+'   - ACT-002---BPR-006
+'   - ACT-003---BPR-002
+'   - ACT-004---BPR-002
+'   - ACT-011---BPR-007
+' ---
+@startuml phase-b-archimate-business-v1
+!include ../_macros.puml
+!include ../_archimate-stereotypes.puml
+
+skinparam groupInheritance 1
+skinparam nodesep 30
+skinparam ranksep 40
+skinparam padding 6
+
+' ---------------------------------------------------------------------------
+' Capabilities (top grouping — the "what" the system must do)
+' ---------------------------------------------------------------------------
+rectangle "Capabilities" as CAPS #F5DEB3 {
+  CAP_001
+  CAP_002
+  CAP_003
+  CAP_004
+  CAP_005
+  CAP_006
+}
+
+' ---------------------------------------------------------------------------
+' Human swim-lane
+' ---------------------------------------------------------------------------
+rectangle "Human Participants" as HUMAN #FFFDE7 {
+  ACT_001
+  ACT_011
+}
+
+' ---------------------------------------------------------------------------
+' Agent roster swim-lane
+' ---------------------------------------------------------------------------
+rectangle "AI Agents" as AGENTS #E8F5E9 {
+  ACT_002
+  ACT_003
+  ACT_004
+  ACT_005
+  ACT_006
+  ACT_007
+  ACT_008
+  ACT_009
+  ACT_010
+}
+
+' ---------------------------------------------------------------------------
+' SDLC Processes
+' ---------------------------------------------------------------------------
+rectangle "SDLC Processes" as PROCS #FFFAC8 {
+  BPR_001
+  BPR_002
+  BPR_003
+  BPR_004
+  BPR_005
+  BPR_006
+  BPR_007
+  BPR_008
+}
+
+' ---------------------------------------------------------------------------
+' Business Services (external view of capabilities)
+' ---------------------------------------------------------------------------
+rectangle "Business Services" as SVCS #FFFAC8 {
+  BSV_001
+  BSV_002
+  BSV_003
+  BSV_004
+  BSV_005
+  BSV_006
+  BSV_007
+  BSV_008
+  BSV_009
+}
+
+' ---------------------------------------------------------------------------
+' Assignment connections (ACT → BPR)  [source: connections/archimate/assignment/]
+' ---------------------------------------------------------------------------
+ACT_002 -[#B8860B]-> BPR_001 : <<assignment>>
+ACT_002 -[#B8860B]-> BPR_004 : <<assignment>>
+ACT_002 -[#B8860B]-> BPR_006 : <<assignment>>
+ACT_003 -[#B8860B]-> BPR_002 : <<assignment>>
+ACT_004 -[#B8860B]-> BPR_002 : <<assignment>>
+ACT_001 -[#B8860B]-> BPR_003 : <<assignment>>
+ACT_001 -[#B8860B]-> BPR_006 : <<assignment>>
+ACT_011 -[#B8860B]-> BPR_007 : <<assignment>>
+
+' ---------------------------------------------------------------------------
+' Notes: BSV–BPR realization and BSV–actor serving connections
+' are shown in Phase C diagrams where application-layer realizations
+' (ASV-001→BPR-002, ASV-004→BPR-003, ASV-003→BPR-006) are visible.
+' ---------------------------------------------------------------------------
+note as N1
+  BSV services are realized by
+  application-layer ASV services.
+  See phase-c-archimate-application-v1
+  for application-layer realization.
+end note
+
+@enduml

@@ -811,90 +811,39 @@ Every APP-nnn maps to a distinct `src/` Python module. Every DOB-nnn maps to a P
 
 Enumerate specific connection files. Each is an `.md` file with frontmatter and brief `§content`. `§display ###archimate` block where applicable.
 
-- [ ] **`connections/archimate/realization/`** (capability/process/service realized by component):
-  - `CAP-001---APP-016.md` — LangGraph Orchestrator realises Phase Execution capability
-  - `CAP-002---ASV-002.md` — Artifact I/O Service realises Artifact Production capability
-  - `CAP-003---ASV-001.md` — Agent Invocation Service realises Multi-Agent Orchestration
-  - `CAP-004---ASV-005.md` — Learning Service realises Knowledge Retention
-  - `CAP-005---ASV-004.md` — CQ Management Service realises User Interaction (query half)
-  - `CAP-005---ASV-003.md` — Sprint Review Service realises User Interaction (review half)
-  - `CAP-006---APP-008.md` — SA Agent realises Reverse Architecture (SA-REV-PRELIM-A, SA-REV-BA)
-  - `CAP-006---APP-009.md` — SwA Agent realises Reverse Architecture (SWA-REV-TA)
-  - `BPR-002---ASV-001.md` — Agent Invocation Service realises Skill Execution process
-  - `BPR-003---ASV-004.md` — CQ Management Service realises CQ Lifecycle process
-  - `BPR-006---ASV-003.md` — Sprint Review Service realises Sprint Review process
-  - `BSV-001---APP-008.md` — SA Agent realises Architecture Modelling service
-  - `BSV-002---APP-009.md` — SwA Agent realises Technology Architecture service
-  - `BSV-003---APP-007.md` — PM Agent realises Project Coordination service
-  - `BSV-009---APP-020.md` — DashboardServer realises User Decisions service
+- [x] **`connections/archimate/realization/`** ✅ 15 files. Note: filenames corrected to source=realizing element per artifact-registry-design.md §3.3 (plan had reversed convention with realized element first):
+  - `APP-016---CAP-001.md` (was CAP-001---APP-016 in plan) — LangGraph Orchestrator realises Phase Execution
+  - `ASV-002---CAP-002.md`, `ASV-001---CAP-003.md`, `ASV-005---CAP-004.md` — services realise capabilities
+  - `ASV-004---CAP-005.md`, `ASV-003---CAP-005.md` — CQ and Sprint Review services realise User Interaction
+  - `APP-008---CAP-006.md`, `APP-009---CAP-006.md` — SA/SwA agents realise Reverse Architecture
+  - `ASV-001---BPR-002.md`, `ASV-004---BPR-003.md`, `ASV-003---BPR-006.md` — services realise BPR processes
+  - `APP-008---BSV-001.md`, `APP-009---BSV-002.md`, `APP-007---BSV-003.md`, `APP-020---BSV-009.md` — agents realise BSV services
 
-- [ ] **`connections/archimate/serving/`** (component serves another component or actor):
-  - `APP-001---APP-016.md` — EventStore serves LangGraph Orchestrator (state reads/writes in all nodes)
-  - `APP-001---APP-017.md` — EventStore serves EngagementSession (replay on startup)
-  - `APP-001---APP-018.md` — EventStore serves UserInteractionOrchestrator (event monitoring)
-  - `APP-001---APP-021.md` — EventStore serves UserInputGateway (writes CQ answers, uploads, reviews)
-  - `APP-002---APP-004.md` — ModelRegistry serves SkillLoader (artifact lookup for skill routing)
-  - `APP-002---APP-005.md` — ModelRegistry serves AgentFactory (AgentSpec frontmatter load)
-  - `APP-003---APP-007.md` — LearningStore serves PM Agent (via `query_learnings` tool)
-  - `APP-003---APP-008.md` — LearningStore serves SA Agent
-  - `APP-003---APP-009.md` — LearningStore serves SwA Agent
-  - `APP-004---APP-007.md` — SkillLoader serves PM Agent (Layer 3 injection)
-  - `APP-004---APP-008.md` — SkillLoader serves SA Agent
-  - `APP-004---APP-009.md` — SkillLoader serves SwA Agent (and DO, DE, QA, PO, SM, CSCO — four more serving connections; one per remaining agent)
-  - `APP-005---APP-006.md` — AgentRegistry serves LangGraph Orchestrator (agent instance lookup in nodes)
-  - `APP-016---APP-017.md` — LangGraph Orchestrator serves EngagementSession (graph execution)
-  - `APP-020---ACT-001.md` — DashboardServer serves User (all views + interaction endpoints)
-  - `APP-022---APP-008.md` — TargetRepoManager serves SA Agent (read-only target-repo access)
-  - `APP-022---APP-009.md` — TargetRepoManager serves SwA Agent (read-only; SWA-REV-TA uses scan_target_repo)
-  - `APP-022---APP-011.md` — TargetRepoManager serves DE Agent (read-write; git worktree per sprint)
+- [x] **`connections/archimate/serving/`** ✅ 24 files. Corrections: `APP-006---APP-016.md` (plan erroneously listed APP-005---APP-006); 6 additional SkillLoader→agent connections for DO/DE/QA/PO/SM/CSCO (plan said "four more" but 6 agents remain):
+  - APP-001→{APP-016, APP-017, APP-018, APP-021}; APP-002→{APP-004, APP-005}; APP-003→{APP-007..009}
+  - APP-004→{APP-007..015} (all 9 agents); APP-006→APP-016; APP-016→APP-017; APP-020→ACT-001
+  - APP-022→{APP-008, APP-009, APP-011}
 
-- [ ] **`connections/archimate/assignment/`** (actor assigned to process):
-  - `ACT-002---BPR-001.md` — PM assigned to Sprint Planning
-  - `ACT-002---BPR-004.md` — PM assigned to Gate Evaluation
-  - `ACT-002---BPR-006.md` — PM assigned to Sprint Review
-  - `ACT-003---BPR-002.md` — SA assigned to Skill Execution (phases A/B/C/H)
-  - `ACT-004---BPR-002.md` — SwA assigned to Skill Execution (phases D/E/F/G)
-  - `ACT-001---BPR-003.md` — User assigned to CQ Lifecycle (answer step)
-  - `ACT-001---BPR-006.md` — User assigned to Sprint Review (marking step)
-  - `ACT-011---BPR-007.md` — Architecture Board assigned to Enterprise Promotion
+- [x] **`connections/archimate/assignment/`** ✅ 8 files: ACT-001/002/003/004/011 → BPR-001/002/003/004/006/007
 
-- [ ] **`connections/archimate/composition/`** (structural containment):
-  - `APP-016---APP-007.md` — LangGraph Orchestrator composes PM Agent node
-  - `APP-016---APP-008.md` — composes SA Agent node
-  - `APP-016---APP-009.md` — composes SwA Agent node
-  - `APP-016---APP-018.md` — composes UserInteractionOrchestrator node
-  - `APP-006---APP-007.md` — AgentRegistry contains PM Agent instance
-  - `APP-006---APP-008.md` — contains SA Agent instance (and one entry per remaining agent)
+- [x] **`connections/archimate/composition/`** ✅ 13 files: APP-016→{APP-007..009, APP-018}; APP-006→{APP-007..015} (all 9 agents)
 
-- [ ] **`connections/archimate/access/`** (component reads/writes data object):
-  - `APP-001---DOB-001.md` — EventStore reads/writes WorkflowEvent
-  - `APP-001---DOB-009.md` — EventStore produces WorkflowState (via replay)
-  - `APP-003---DOB-003.md` — LearningStore reads/writes LearningEntry
-  - `APP-016---DOB-012.md` — LangGraph Orchestrator reads/writes SDLCGraphState
-  - `APP-017---DOB-002.md` — EngagementSession accesses Engagement (config)
-  - `APP-007---DOB-011.md` — PM Agent writes PMDecision
-  - `APP-021---DOB-004.md` — UserInputGateway writes ClarificationRequest answers
-  - `APP-021---DOB-008.md` — UserInputGateway writes ReviewItems
+- [x] **`connections/archimate/access/`** ✅ 8 files: APP-001→{DOB-001, DOB-009}; APP-003→DOB-003; APP-016→DOB-012; APP-017→DOB-002; APP-007→DOB-011; APP-021→{DOB-004, DOB-008}
 
-- [ ] **`connections/er/one-to-many/`** (entity relationships for ER diagram):
-  - `DOB-002---DOB-001.md` — Engagement has many WorkflowEvents (`engagement_id` FK)
-  - `DOB-009---DOB-001.md` — WorkflowState is derived from many WorkflowEvents
-  - `DOB-004---DOB-001.md` — ClarificationRequest produces WorkflowEvents (cq.raised, cq.answered)
-  - `DOB-007---DOB-007.md` — GateOutcome contains many GateVotes (self-referential sub-model)
-  - `DOB-009---DOB-007.md` — WorkflowState contains many GateOutcomes (one per evaluated gate)
-  - `DOB-004---DOB-009.md` — WorkflowState contains many open ClarificationRequests
-  - `DOB-006---DOB-009.md` — WorkflowState contains many pending HandoffRecords
+- [x] **`connections/er/one-to-many/`** ✅ 7 files. Corrections: DOB-009---DOB-004 and DOB-009---DOB-006 (plan had reversed direction):
+  - `DOB-002---DOB-001.md`, `DOB-009---DOB-001.md`, `DOB-004---DOB-001.md`, `DOB-007---DOB-007.md`
+  - `DOB-009---DOB-007.md`, `DOB-009---DOB-004.md`, `DOB-009---DOB-006.md`
 
 #### 4.9f — Diagrams (Phase C outputs — binding implementation views)
 
 Seven diagrams. Each has a stated **implementation purpose** — what Stage 5 decision or module it specifies. Diagrams are prescribed at the level of content and grouping; the SA authors the actual PUML.
 
-- [ ] **`phase-b-archimate-business-v1.puml`**
+- [x] **`phase-b-archimate-business-v1.puml`** ✅ Created and verified (0 issues). Owner: SA. 35 entity IDs, 8 connection IDs (assignment connections). Five groups: Capabilities, Human Participants, AI Agents, SDLC Processes, Business Services.
   *Purpose:* Defines agent role taxonomy and SDLC process model used in all Stage 5 agent module naming and EventStore event routing.
   *Contents:* All ACT-nnn actors (two columns: human actors left, agent actors right); BPR-001 through BPR-008 processes (centre); BSV-001 through BSV-009 services (right column, aligned to their providing actor); assignment connections ACT→BPR; realization connections BSV→BPR; CAP-001 through CAP-006 capabilities shown as an aggregation grouping above the process column.
   *Grouping:* Two swim-lanes — "Human" (ACT-001, ACT-011) and "Agents" (ACT-002 through ACT-010).
 
-- [ ] **`phase-c-archimate-application-v1.puml`**
+- [x] **`phase-c-archimate-application-v1.puml`** ✅ Created and verified (0 issues). Owner: SwA. 27 entity IDs, 28 connection IDs. `left to right direction`. Five grouping rectangles with serving + composition arrows.
   *Purpose:* Primary implementation map for Stage 5b — every box is a Python module; every serving connection is a function call boundary.
   *Contents:* All APP-nnn and AIF-nnn entities. Serving, composition, and access connections.
   *Grouping — five ArchiMate grouping rectangles:*
@@ -1321,7 +1270,7 @@ sprint-review:
 
 ## Current State & Immediate Next Actions
 
-**Stages 1–4.9d complete (2026-04-04).** Stage 4.9e–h pending.
+**Stages 1–4.9e complete. ModelVerifier complete. Stage 4.9f partial (2/7 diagrams done). Stage 4.9g–h and Stage 5 pending.**
 
 ### Completed this session (2026-04-04)
 
@@ -1330,10 +1279,14 @@ sprint-review:
 - **Stage 4.9c** — 28 business layer entity files: ACT-001–011 (actors), BPR-001–008 (processes), BSV-001–009 (services). BPR-005 (Algedonic Escalation) correctly marked `safety-relevant: true`.
 - **ERP v2.0 path fix** — entity files placed under `model-entities/<layer>/<type>/` per `artifact-registry-design.md §2.1`; no `index.yaml` files (frontmatter-based registry only). IMPL plan §4.9a/f corrected to match.
 - **Stage 4.9d** — 46 application layer entity files: APP-001–022 (components), AIF-001–006 (interfaces), DOB-001–013 (data objects), ASV-001–005 (services). All with full §content + §display ###archimate blocks; DOB entities additionally have ###er blocks. Binding Stage 5 implementation specifications.
+- **Stage 4.9e** — 75 connection files across 6 connection types: 15 realization, 24 serving, 8 assignment, 13 composition, 8 access, 7 er-one-to-many. Verified 0 errors by ModelVerifier. Two plan corrections applied: (1) realization filenames fixed to source=realizing, target=realized per artifact-registry-design.md §3.3 (plan had reversed convention); (2) `APP-006---APP-016.md` (AgentRegistry serves LangGraph) corrected from plan's erroneous `APP-005---APP-006.md`; (3) 6 SkillLoader→agent serving connections created for DO/DE/QA/PO/SM/CSCO (plan said "four more" but 6 agents remain after PM/SA/SwA); (4) ER one-to-many connections DOB-009---DOB-004 and DOB-009---DOB-006 corrected from plan's reversed DOB-004---DOB-009 and DOB-006---DOB-009.
+- **ModelVerifier (pre-Stage 5)** — `src/common/model_verifier.py`: BDD-tested verifier for entity/connection/diagram files. 31 BDD scenarios in `tests/model/` with pytest-bdd. Verifies: frontmatter syntax, required fields, artifact-id format, enum values, safety-relevant type, §content/§display presence, source/target reference resolution, diagram PUML structure. `verify_all()` for batch scan. Designed for Stage 5 `write_artifact` integration. `pyproject.toml` created with uv for project packaging.
 
-### Resume at: Stage 4.9e (Connection Files) → 4.9f (Diagrams) → 4.9g (Overview + ADRs) → Stage 5
+### Resume at: Stage 4.9f remaining 5 diagrams → 4.9g (Overview + ADRs) → Stage 5
 
-**Stage 4.9e** — Connection files (archimate/realization, serving, assignment, composition, access; er/one-to-many). ~50 connection files. Each is an `.md` with frontmatter + brief §content + §display ###archimate block.
+**Stage 4.9e** — ✅ Complete: 75 connection files.
+**Stage 4.9f** — Partial: 2/7 diagrams done (`phase-b-archimate-business-v1.puml`, `phase-c-archimate-application-v1.puml`). Remaining: `phase-c-class-er-v1.puml`, `phase-b-activity-sprint-v1.puml`, `phase-g-sequence-skill-invocation-v1.puml`, `phase-c-sequence-cq-lifecycle-v1.puml`, `phase-c-sequence-sprint-review-v1.puml`.
+**`_macros.puml`** — ✅ Generated from entity §display ###archimate blocks (99 macros for all engagement entities).
 
 **Stage 4.9** — ENG-001 reference model: entity files, connection files, `_macros.puml`, four PUML diagrams. Documents the SDLC system itself. Serves as integration test fixture. Entity ownership reflects Stage 4.8h model (SwA owns APP/DOB entities; SA owns motivation/strategy/business entities).
 

@@ -264,6 +264,27 @@ The engagement dashboard (Stage 5.5) is a local FastAPI web server that provides
 
 ---
 
+## Implementation Status
+
+The framework and ENG-001 reference model are being built incrementally. Current state (2026-04-04):
+
+| Layer | Status |
+|---|---|
+| Framework specifications (all `framework/` files) | Complete |
+| Agent and skill files (all `agents/<role>/`) | Complete |
+| ENG-001 reference model — entities (99 files: motivation, strategy, business, application layers) | Complete |
+| ENG-001 reference model — connections (75 files: realization, serving, assignment, composition, access, ER) | Complete |
+| ENG-001 reference model — `_macros.puml` (auto-generated from entity `§display ###archimate` blocks) | Complete |
+| ENG-001 reference model — diagrams (2/7: business + application ArchiMate views; ER, activity, sequence pending) | Partial |
+| ENG-001 reference model — overview docs + ADRs | Pending |
+| `src/common/model_verifier.py` — BDD-tested verifier for entity/connection/diagram files (31 scenarios) | Complete |
+| `pyproject.toml` + uv project setup | Complete |
+| `src/` Python implementation (EventStore, agents, orchestration, dashboard) | Pending |
+
+See `specs/IMPLEMENTATION_PLAN.md` for the detailed stage-by-stage plan and current checklist.
+
+---
+
 ## Further Reading
 
 | Topic | Location |
