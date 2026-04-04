@@ -838,21 +838,19 @@ Enumerate specific connection files. Each is an `.md` file with frontmatter and 
 
 Seven diagrams. Each has a stated **implementation purpose** — what Stage 5 decision or module it specifies. Diagrams are prescribed at the level of content and grouping; the SA authors the actual PUML.
 
-- [x] **`phase-b-archimate-business-v1.puml`** ✅ Created and verified (0 issues). Owner: SA. 35 entity IDs, 8 connection IDs (assignment connections). Five groups: Capabilities, Human Participants, AI Agents, SDLC Processes, Business Services.
+- [x] **`phase-b-archimate-business-v1.puml`** ✅ v0.2.0 — ArchiMate-semantically correct. Owner: SA. 35 entity IDs, 16 connection IDs (8 assignment + 8 realization). Six groups with `<<Grouping>>` stereotypes.
   *Purpose:* Defines agent role taxonomy and SDLC process model used in all Stage 5 agent module naming and EventStore event routing.
-  *Contents:* All ACT-nnn actors (two columns: human actors left, agent actors right); BPR-001 through BPR-008 processes (centre); BSV-001 through BSV-009 services (right column, aligned to their providing actor); assignment connections ACT→BPR; realization connections BSV→BPR; CAP-001 through CAP-006 capabilities shown as an aggregation grouping above the process column.
-  *Grouping:* Two swim-lanes — "Human" (ACT-001, ACT-011) and "Agents" (ACT-002 through ACT-010).
+  *Semantic corrections applied:* ACT-002..ACT-010 → `BusinessRole` (not BusinessActor); ACT-011 Architecture Board → `BusinessCollaboration`; ACT-001 User stays `BusinessActor`. Groups: "Human Participant" (ACT-001), "AI Agent Roles" (ACT-002..010), "Architecture Governance" (ACT-011), "Capabilities", "SDLC Processes", "Business Services". BPR→BSV realization arrows connect Business Services group (previously isolated island) to SDLC Processes.
 
-- [x] **`phase-c-archimate-application-v1.puml`** ✅ Created and verified (0 issues). Owner: SwA. 27 entity IDs, 28 connection IDs. `left to right direction`. Five grouping rectangles with serving + composition arrows.
+- [x] **`phase-c-archimate-application-v1.puml`** ✅ v0.2.0 — layer-boundary and grouping corrections. Owner: SwA. 27+5 entity IDs (27 application-layer + 4 BSV + 1 ACT cross-layer boundary), 32 connection IDs. `skinparam rankdir LR`.
   *Purpose:* Primary implementation map for Stage 5b — every box is a Python module; every serving connection is a function call boundary.
-  *Contents:* All APP-nnn and AIF-nnn entities. Serving, composition, and access connections.
-  *Grouping — five ArchiMate grouping rectangles:*
+  *Corrections applied:* `<<Grouping>>` added to all 5 outer containers; cross-layer boundary elements (BSV_001/002/003/009, ACT_001) declared outside groups; 4 APP→BSV cross-layer realization arrows added; APP_020→ACT_001 serving connection added.
+  *Grouping — five `<<Grouping>>` rectangles:*
   - **State & Storage** (APP-001 EventStore, APP-002 ModelRegistry, APP-003 LearningStore) — `src/events/ + src/common/`
-  - **Agent Runtime** (APP-004 SkillLoader, APP-005 AgentFactory, APP-006 AgentRegistry; AIF-002 LLMClientPort, AIF-004 ArtifactReadWriterPort, AIF-005 DiagramToolsPort) — `src/agents/` infrastructure
-  - **Agent Roster** (APP-007 PM through APP-015 CSCO — 9 agents) — `src/agents/*.py`; served by Agent Runtime group
-  - **Orchestration** (APP-016 LangGraph, APP-017 Session, APP-018 UIO, APP-019 Promotion; AIF-001 EventStorePort) — `src/orchestration/`
-  - **Dashboard & Interaction** (APP-020 DashboardServer, APP-021 UserInputGateway; AIF-003 SourceAdapterPort, APP-022 TargetRepoManager) — `src/dashboard/ + src/sources/`
-  *Key connections shown:* State & Storage → Agent Runtime (serving); Agent Runtime → Agent Roster (serving); Orchestration ↔ Agent Roster (composition + serving); Dashboard ↔ Orchestration (via EventStore serving both); External Access → Agent Roster (serving).
+  - **Agent Runtime** (APP-004 SkillLoader, APP-005 AgentFactory, APP-006 AgentRegistry; AIF-002/004/005/006) — `src/agents/` infrastructure
+  - **Agent Roster** (APP-007 PM through APP-015 CSCO — 9 agents) — `src/agents/*.py`
+  - **Orchestration** (APP-016 LangGraph, APP-017 Session, APP-018 UIO, APP-019 Promotion; AIF-001) — `src/orchestration/`
+  - **Dashboard & Interaction** (APP-020 DashboardServer, APP-021 UserInputGateway; AIF-003, APP-022 TargetRepoManager) — `src/dashboard/ + src/sources/`
 
 - [ ] **`phase-c-class-er-v1.puml`**
   *Purpose:* Pydantic model specification for `src/models/` — field names in this diagram are the authoritative attribute names used in Stage 5 code.
@@ -1270,22 +1268,22 @@ sprint-review:
 
 ## Current State & Immediate Next Actions
 
-**Stages 1–4.9e complete. ModelVerifier complete. Stage 4.9f partial (2/7 diagrams done). Stage 4.9g–h and Stage 5 pending.**
+**Stages 1–4.9e complete. ModelVerifier complete. Stage 4.9f partial (2/7 diagrams done and semantically corrected). Stage 4.9g–h and Stage 5 pending.**
 
-### Completed this session (2026-04-04)
+### Completed this session (2026-04-04, continued)
 
-- **Stage 4.9a** — ERP directory structure bootstrapped under `engagements/ENG-001/work-repositories/architecture-repository/`; `_archimate-stereotypes.puml` stub with official ArchiMate 3 layer colors.
-- **Stage 4.9b** — 25 motivation and strategy entity files: STK-001/002, DRV-001/002, GOL-001–003, REQ-001–005, CST-001/002, PRI-001–003, CAP-001–006, VS-001/002.
-- **Stage 4.9c** — 28 business layer entity files: ACT-001–011 (actors), BPR-001–008 (processes), BSV-001–009 (services). BPR-005 (Algedonic Escalation) correctly marked `safety-relevant: true`.
-- **ERP v2.0 path fix** — entity files placed under `model-entities/<layer>/<type>/` per `artifact-registry-design.md §2.1`; no `index.yaml` files (frontmatter-based registry only). IMPL plan §4.9a/f corrected to match.
-- **Stage 4.9d** — 46 application layer entity files: APP-001–022 (components), AIF-001–006 (interfaces), DOB-001–013 (data objects), ASV-001–005 (services). All with full §content + §display ###archimate blocks; DOB entities additionally have ###er blocks. Binding Stage 5 implementation specifications.
-- **Stage 4.9e** — 75 connection files across 6 connection types: 15 realization, 24 serving, 8 assignment, 13 composition, 8 access, 7 er-one-to-many. Verified 0 errors by ModelVerifier. Two plan corrections applied: (1) realization filenames fixed to source=realizing, target=realized per artifact-registry-design.md §3.3 (plan had reversed convention); (2) `APP-006---APP-016.md` (AgentRegistry serves LangGraph) corrected from plan's erroneous `APP-005---APP-006.md`; (3) 6 SkillLoader→agent serving connections created for DO/DE/QA/PO/SM/CSCO (plan said "four more" but 6 agents remain after PM/SA/SwA); (4) ER one-to-many connections DOB-009---DOB-004 and DOB-009---DOB-006 corrected from plan's reversed DOB-004---DOB-009 and DOB-006---DOB-009.
-- **ModelVerifier (pre-Stage 5)** — `src/common/model_verifier.py`: BDD-tested verifier for entity/connection/diagram files. 31 BDD scenarios in `tests/model/` with pytest-bdd. Verifies: frontmatter syntax, required fields, artifact-id format, enum values, safety-relevant type, §content/§display presence, source/target reference resolution, diagram PUML structure. `verify_all()` for batch scan. Designed for Stage 5 `write_artifact` integration. `pyproject.toml` created with uv for project packaging.
+- **Stage 4.9f diagram corrections** — Both produced diagrams corrected for ArchiMate semantic accuracy and PlantUML constraints (PB-001..PB-005 bugs all resolved). Key changes:
+  - ACT-002..ACT-010 → `BusinessRole` (moved to `model-entities/business/roles/`); ACT-011 → `BusinessCollaboration` (moved to `model-entities/business/collaborations/`). ACT-001 User stays `BusinessActor`.
+  - Phase-B: 4 groups renamed/reorganised; `<<Grouping>>` on all outer containers; 8 BPR→BSV realization arrows + 14 new connection files close the "Business Services island" problem.
+  - Phase-C: `<<Grouping>>` on all 5 outer containers; cross-layer boundary elements declared outside groups; 4 APP→BSV realization + APP_020→ACT_001 serving connections added.
+- **Canonical type registry** — `src/common/archimate_types.py`: single source of truth for all valid `artifact-type`, `element-type`, `relationship-type` values. Organised by ArchiMate layer (entities) and diagram language (connections, including non-ArchiMate: activity, sequence, er, usecase). `model_verifier.py` imports from it. `entity-conventions.md §3.3` has full type tables.
+- **Framework documentation updates** — `diagram-conventions.md`: §10.3/10.4 ordering fixed; new §11 ArchiMate semantic constraints (layer boundaries, active structure type rules, grouping stereotypes, BSV realization rule) with generic examples. `entity-conventions.md`: `business-collaboration` template added; stale `app-component` names corrected to `application-component`. `_archimate-stereotypes.puml`: `<<Grouping>>` added.
+- **PlantUML bugs documented** — `docs/puml-bug-reports.md`: PB-001..PB-005 with reproduction cases and workarounds.
 
 ### Resume at: Stage 4.9f remaining 5 diagrams → 4.9g (Overview + ADRs) → Stage 5
 
-**Stage 4.9e** — ✅ Complete: 75 connection files.
-**Stage 4.9f** — Partial: 2/7 diagrams done (`phase-b-archimate-business-v1.puml`, `phase-c-archimate-application-v1.puml`). Remaining: `phase-c-class-er-v1.puml`, `phase-b-activity-sprint-v1.puml`, `phase-g-sequence-skill-invocation-v1.puml`, `phase-c-sequence-cq-lifecycle-v1.puml`, `phase-c-sequence-sprint-review-v1.puml`.
+**Stage 4.9e** — ✅ Complete: 75 connection files + 14 new BPR→BSV realization files added (89 total).
+**Stage 4.9f** — Partial: 2/7 diagrams done and corrected (`phase-b-archimate-business-v1.puml` v0.2.0, `phase-c-archimate-application-v1.puml` v0.2.0). Remaining: `phase-c-class-er-v1.puml`, `phase-b-activity-sprint-v1.puml`, `phase-g-sequence-skill-invocation-v1.puml`, `phase-c-sequence-cq-lifecycle-v1.puml`, `phase-c-sequence-sprint-review-v1.puml`.
 **`_macros.puml`** — ✅ Generated from entity §display ###archimate blocks (99 macros for all engagement entities).
 
 **Stage 4.9** — ENG-001 reference model: entity files, connection files, `_macros.puml`, four PUML diagrams. Documents the SDLC system itself. Serves as integration test fixture. Entity ownership reflects Stage 4.8h model (SwA owns APP/DOB entities; SA owns motivation/strategy/business entities).
