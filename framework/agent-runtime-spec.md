@@ -91,7 +91,7 @@ The Python routing layer selects a skill by evaluating `(agent_id, trigger_phase
 1. Load `framework/agent-index.md` (cache; reload on engagement state change).
 2. Filter skill entries where `agent == agent_id` AND `current_phase IN trigger-phases`.
 3. If exactly one match: that is the active skill.
-4. If multiple matches within the same phase (e.g., `SA-PHASE-C-APP` and `SA-PHASE-C-DATA`): the PM explicitly specifies `active_skill_id` in the invocation — see §5.
+4. If multiple matches within the same phase (e.g., `SwA-PHASE-C-APP` and `SwA-PHASE-C-DATA`): the PM explicitly specifies `active_skill_id` in the invocation — see §5.
 5. If no match: raise `SkillNotFoundError(agent_id, current_phase)`.
 
 The `trigger-conditions` frontmatter field is a human/LLM-readable description of trigger logic; it is **not** parsed by the Python routing layer. The `trigger-phases` list is the authoritative machine-readable routing key.

@@ -64,31 +64,37 @@ This document defines the responsibility assignment for every artifact and phase
 
 | Artifact | SM | PO | SA | SwA | DE | QA | DO | PM | CS |
 |---|---|---|---|---|---|---|---|---|---|
-| Business Architecture (`BA`) | — | ○ | ● | — | — | — | — | G | G |
-| Business Capability Map | — | ○ | ● | — | — | — | — | ~ | — |
-| Business Process Catalog | — | ○ | ● | — | — | — | — | ~ | — |
-| Value Stream Diagram | — | ○ | ● | — | — | — | — | ~ | — |
+| Business Architecture (`BA`) | — | ○ | ● | ○ | — | — | — | G | G |
+| Business Capability Map | — | ○ | ● | ○ | — | — | — | ~ | — |
+| Business Process Catalog | — | ○ | ● | ○ | — | — | — | ~ | — |
+| Value Stream Diagram | — | ○ | ● | ○ | — | — | — | ~ | — |
 | Business-level `SCO` update | — | — | ○ | — | — | — | — | — | ● |
+
+> SwA is consulting on Phase B to provide early feasibility input and flag any technology constraints that will affect Phase C application/data design.
 
 ### 3.4 Phase C — Application Architecture
 
 | Artifact | SM | PO | SA | SwA | DE | QA | DO | PM | CS |
 |---|---|---|---|---|---|---|---|---|---|
-| Application Architecture (`AA`) | — | — | ● | ○ | — | — | — | G | G |
-| Application Component Catalog | — | — | ● | ○ | — | — | — | ~ | — |
-| Interface Catalog | — | — | ● | ○ | — | — | — | ~ | — |
-| Application Interaction Matrix | — | — | ● | ○ | — | — | — | ~ | — |
-| Application-level `SCO` update | — | — | ○ | — | — | — | — | — | ● |
+| Application Architecture (`AA`) | — | — | ○ | ● | — | — | — | G | G |
+| Application Component Catalog | — | — | ○ | ● | — | — | — | ~ | — |
+| Interface Catalog | — | — | ○ | ● | — | — | — | ~ | — |
+| Application Interaction Matrix | — | — | ○ | ● | — | — | — | ~ | — |
+| Application-level `SCO` update | — | — | — | ○ | — | — | — | — | ● |
+
+> SA is consulting on Phase C to verify that application entities correctly realise the business layer (BA traceability review). SwA is the accountable author and casts the Phase C gate vote.
 
 ### 3.5 Phase C — Data Architecture
 
 | Artifact | SM | PO | SA | SwA | DE | QA | DO | PM | CS |
 |---|---|---|---|---|---|---|---|---|---|
-| Data Architecture (`DA`) | — | — | ● | ○ | — | — | — | G | G |
-| Data Entity Catalog | — | — | ● | ○ | — | — | — | ~ | — |
-| Logical Data Model | — | — | ● | ○ | — | — | — | ~ | — |
-| Data Classification Register | — | — | ● | — | — | — | — | ~ | ○ |
-| Data-level `SCO` update | — | — | ○ | — | — | — | — | — | ● |
+| Data Architecture (`DA`) | — | — | ○ | ● | — | — | — | G | G |
+| Data Entity Catalog | — | — | ○ | ● | — | — | — | ~ | — |
+| Logical Data Model | — | — | ○ | ● | — | — | — | ~ | — |
+| Data Classification Register | — | — | — | ● | — | — | — | ~ | ○ |
+| Data-level `SCO` update | — | — | — | ○ | — | — | — | — | ● |
+
+> SA is consulting on Phase C data to verify data entities trace to business objects (BA traceability review). SwA is the accountable author.
 
 ### 3.6 Phase D — Technology Architecture
 
@@ -140,10 +146,15 @@ This document defines the responsibility assignment for every artifact and phase
 
 | Artifact | SM | PO | SA | SwA | DE | QA | DO | PM | CS |
 |---|---|---|---|---|---|---|---|---|---|
-| Change Record (`CR`) | — | ○ | ● | ○ | — | — | — | G | G |
-| Updated Architecture Artifacts | — | — | ● | ○ | — | — | — | G | G |
+| Change Record — business/motivation/strategy layer | — | ○ | ● | ○ | — | — | — | G | G |
+| Change Record — application/technology layer | — | — | ○ | ● | — | — | — | G | G |
+| Updated motivation/strategy/business entities | — | — | ● | ○ | — | — | — | G | G |
+| Updated application-layer entities (APP, AIF, ASV, DOB) | — | — | ○ | ● | — | — | — | G | G |
+| Updated technology artifacts (TA, AC, ADRs) | — | — | — | ● | — | ○ | ○ | G | G |
 | Retrospective Note | ○ | ○ | ○ | ○ | ○ | ○ | ○ | ● | ○ |
 | Knowledge Base update | — | — | — | — | — | — | — | ● | — |
+
+**Phase H co-ownership note:** SA and SwA run parallel tracks. SA owns the business/motivation/strategy-layer Change Record; SwA owns the application/technology-layer Change Record. PM coordinates both tracks and waits for both gate votes before closing Phase H. SA always routes a `phase-h-application-technology-track` handoff to SwA regardless of whether application-layer impact is expected.
 
 ### 3.11 Requirements Management (Cross-Phase)
 
@@ -164,7 +175,7 @@ This table identifies who holds gate authority at each phase transition. **G** =
 | Prelim → A | ● | G | — | G | RACI confirmed by all agents required |
 | A → B | ● | G | — | G | Safety envelope + SoAW must be approved |
 | B → C | ● | G | — | G | Business-level SCO accepted |
-| C → D | ● | G | G | G | Both AA and DA must be baselined |
+| C → D | ● | ○ | G | G | Both AA and DA must be baselined; SwA casts gate vote; SA consulting acknowledgement required (not a gate vote — unresolved SA traceability veto escalates to PM) |
 | D → E | ● | ○ | G | G | All ADRs recorded |
 | E → F | ● | ○ | G | G | Risk Register reviewed by CS |
 | F → G | ● | ○ | G | G | Solution Sprint Plan approved |

@@ -47,6 +47,12 @@ All engagement state is accessed through tools — no direct filesystem reads. T
 **Step 1.2 — Filter artifact index by metadata:**
 `list_artifacts(phase_produced=<current_phase>, status=["baselined","draft"])` → returns metadata records (artifact-id, artifact-type, version, status, path, owner-agent) without loading bodies. Combine filters as needed: `artifact_type`, `safety_relevant`, `domain`. For each relevant result, call `read_artifact(id, mode="summary")` (frontmatter + first two §content sections, ≈200–400 tokens). Escalate to `mode="full"` only when task correctness requires the complete content — log the reason.
 
+**Role-specific scan priority (Step 1.2 filter order):**
+- **SA** — prioritise `owner-agent=SA` artifacts first (motivation, strategy, business layers in `architecture-repository/`); then read `owner-agent=SwA` application-layer artifacts when performing Phase C traceability review or Phase H cross-reference check. Filter: `list_artifacts(layer=["motivation","strategy","business"])`.
+- **SwA (Phase C)** — prioritise `architecture-repository/model-entities/application/` (own write scope); also scan business-layer artifacts for realisation input. Filter: `list_artifacts(layer=["application","business"])`. SA's business-layer artifacts are the primary inputs.
+- **SwA (Phase D onward)** — prioritise `technology-repository/` entities; read application-layer entities for TA constraint derivation. Filter: `list_artifacts(layer=["technology","application"])`.
+- **DE/DO** — scan `technology-repository/coding-standards/` first (Step 0.S); then filter by `layer="technology"`. Full procedure in §9.
+
 **Step 1.3 — Search artifact content by concept (when metadata filters are insufficient):**
 `search_artifacts(query="<natural language description of what is needed>", **filter)` → queries the ModelRegistry FTS5 index over artifact `§content` blocks; returns ranked `(ArtifactRecord, snippet)` pairs. Use this when the artifact type is uncertain, when looking for a concept that may appear across multiple artifact types, or when prior phases may have documented something relevant without a predictable metadata signature. The semantic tier (when available) enables similarity-based retrieval beyond keyword matching. Review snippets, then call `read_artifact(id, mode="summary")` for selected results.
 
@@ -335,7 +341,7 @@ Under ERP v2.0 there are no separate `elements/<layer>/` YAML catalog files. The
 
 **Catalog bootstrap (Phase A):** SA creates the `diagram-catalog/` directory structure and runs `regenerate_macros()`. There is no entity import step — enterprise entities are already visible via the unified ModelRegistry. No diagram work begins until bootstrap is complete.
 
-**Write authority:** SA is the sole writer to all files under `diagram-catalog/`. Non-SA agents that need a `§display ###<language>` subsection added to an entity emit a `diagram.display-spec-request` handoff to SA rather than writing it directly. Non-SA agents write `.puml` files to their own work-repository `diagrams/` directories if applicable; SA integrates at phase transition.
+**Write authority:** SA is the sole writer to all files under `architecture-repository/diagram-catalog/`. Non-SA agents that need a `§display ###<language>` subsection added to an entity emit a `diagram.display-spec-request` handoff to SA rather than writing it directly. Exception: SwA produces Phase C diagrams (archimate-application, ER) by submitting `.puml` files to SA via handoff; SA integrates them into `diagram-catalog/diagrams/` at phase-gate close. SwA writes diagrams directly to `technology-repository/diagram-catalog/` (their owned repository).
 
 ---
 

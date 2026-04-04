@@ -4,7 +4,7 @@ description: Current implementation stage, completed work, and what to resume ne
 type: project
 ---
 
-**Stages 1–4.7 complete + Stage 4.8 partially complete as of 2026-04-03.**
+**Stages 1–4.7 complete + Stage 4.8 substantially complete as of 2026-04-04.**
 
 ## Completed Stages
 
@@ -97,16 +97,41 @@ All three skills registered in SA/SwA AGENT.md §8 skill indexes and `framework/
 - Layer 3: full skill file up to complexity-class budget (≤600/1200/2000)
 - Layer 4: on-demand via `read_artifact` tool
 
-## Next: Stage 4.8d
+## Stage 4.8d — Complete (2026-04-03)
 
-Update domain artifact schemas and cross-cutting framework docs to align with ERP v2.0:
-- `framework/artifact-schemas/business-architecture.schema.md`
-- `framework/artifact-schemas/application-architecture.schema.md`
-- `framework/artifact-schemas/data-architecture.schema.md`
-- `framework/artifact-schemas/technology-architecture.schema.md`
-- `framework/repository-conventions.md` — §2.2 directory layout update
-- `framework/discovery-protocol.md` — Layer 1 ModelRegistry scan update
-- `framework/agent-runtime-spec.md §6` — tool specs update
-- Retroactive skill file patches (script-based)
+Domain artifact schemas and cross-cutting framework docs updated for ERP v2.0 (see IMPLEMENTATION_PLAN.md §4.8d for full detail).
 
-Then: Stage 4.9 (ENG-001 reference model), Stage 5 (Python implementation).
+## Stage 4.8h — Substantially Complete (2026-04-04)
+
+SA/SwA role boundary refactored. The ArchiMate layer boundary is now the role boundary:
+- **SA** owns Motivation, Strategy, Business layers (primary-phases: A, B, H). Phase C is consulting (traceability review).
+- **SwA** owns Application and Technology layers (primary-phases: C, D, E, F, G, H app/tech).
+- `architecture-repository/` co-owned: SA writes motivation/strategy/business/implementation; SwA writes application/ (Phase C entities: APP, IFC, ASV, DOB).
+
+**Completed in this stage:**
+- framework/raci-matrix.md: Phase B (SwA ○ added), Phase C (SA● → SwA●, SwA○ → SA○)
+- agents/solution-architect/AGENT.md v1.1.0: primary-phases [A,B,H], consulting C
+- agents/software-architect/AGENT.md v1.1.0: primary-phases [C,D,E,F,G], entry-points include EP-C
+- SA phase-c-application.md → SA-PHASE-C-APP-REVIEW (consulting traceability skill)
+- SA phase-c-data.md → SA-PHASE-C-DATA-REVIEW (consulting traceability skill)
+- NEW SwA phase-c-application.md (SwA-PHASE-C-APP — primary Phase C application skill)
+- NEW SwA phase-c-data.md (SwA-PHASE-C-DATA — primary Phase C data skill)
+- SwA phase-d.md inputs: AA/DA now self-produced (no SA handoff)
+- agents/csco/skills/gate-phase-c.md: SA → SwA as coordination partner
+- framework/artifact-schemas/application-architecture.schema.md v2.1.0: Owner → SwA
+- framework/artifact-schemas/data-architecture.schema.md v2.1.0: Owner → SwA
+- CLAUDE.md: agent phase table, architecture-repository ownership note
+- specs/IMPLEMENTATION_PLAN.md: agent roles table, repository ownership, ACT/APP/BSV descriptions, 4.8h checklist
+
+**Deferred (before Stage 5 Python):**
+- SA phase-h.md: scope to business/motivation/strategy layer only
+- SwA phase-h.md: expand to cover application/technology layer CR authoring
+- framework/agile-adm-cadence.md: Phase C primary agent
+- framework/agent-index.md: SA/SwA routing tables
+- framework/repository-conventions.md §2.2: Phase C path governance
+- framework/artifact-registry-design.md: application-layer entity type owner annotations
+- framework/discovery-protocol.md: SA/SwA scan priority order
+
+## Next: Stage 4.9
+
+ENG-001 reference model — now unblocked. Produce motivation/strategy/business entities (SA) and application/data entities (SwA) for ENG-001. Then Stage 5 Python implementation.

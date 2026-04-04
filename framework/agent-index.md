@@ -1,8 +1,8 @@
 # Agent & Skill Routing Index
 
-**Version:** 1.1.0  
-**Status:** Approved — Stage 4  
-**Last Updated:** 2026-04-03  
+**Version:** 1.2.0  
+**Status:** Approved — Stage 4.8h  
+**Last Updated:** 2026-04-04  
 **Purpose:** Low-token routing reference. Load this file (~500 tokens) to decide which agent and skill to invoke. Full specifications live in `agents/<role>/AGENT.md` and `agents/<role>/skills/<skill>.md` (load only when the full spec is needed for execution).
 
 ---
@@ -12,8 +12,8 @@
 | Agent ID | Role | Primary Phases | Invoke When |
 |---|---|---|---|
 | PM | Project Manager (Coordinator) | Prelim, A, E, F, G, H | Engagement start/close; any phase/sprint start; gate evaluation; CQ batching; algedonic routing; inter-agent deadlock |
-| SA | Solution Architect (Integrator) | A, B, C, H | Architecture Vision, Business Architecture, Application/Data Architecture production; Phase H Change Record; architecture traceability review |
-| SwA | Software Architect / PE (Integrator) | D, E, F, G | Technology Architecture; Gap Analysis; Transition Architecture; Architecture Contract; Phase G compliance review; technology-layer Phase H impact |
+| SA | Solution Architect (Integrator) | A, B, H (consulting: C, D–G) | Architecture Vision, Business Architecture, motivation/strategy/business entities; Phase H business-layer Change Record; Phase C traceability review (consulting) |
+| SwA | Software Architect / PE (Integrator) | C, D, E, F, G, H (consulting: A–B) | Application Architecture (APP/AIF/ASV), Data Architecture (DOB), Technology Architecture; Gap Analysis; Transition Architecture; Architecture Contract; Phase G compliance review; Phase H application/technology-layer Change Record |
 | DO | DevOps / Platform Engineer (Specialist) | D, E, F, G | Platform feasibility review of TA (Phase D); infrastructure planning (E/F); environment provisioning, pipeline execution, deployment records (G) |
 | DE | Implementing Developer (Specialist) | G | Phase G Solution Sprint feature implementation; PR submission against Architecture Contract |
 | QA | QA Engineer (Specialist) | G | Test strategy/planning (E/F); Phase G test execution; defect records; Compliance Assessment; Phase G gate vote; Phase H regression scope |
@@ -44,9 +44,9 @@
 |---|---|---|
 | SA-PHASE-A | `skills/phase-a.md` | Phase A sprint starts or EP-0/A/B warm-start; produce AV, Principles Register, Stakeholder Register, Safety Envelope draft |
 | SA-PHASE-B | `skills/phase-b.md` | Phase B sprint starts; AV baselined; produce full Business Architecture |
-| SA-PHASE-C-APP | `skills/phase-c-application.md` | Phase C sprint starts; BA baselined; produce Application Architecture |
-| SA-PHASE-C-DATA | `skills/phase-c-data.md` | Phase C sprint starts; BA baselined; produce Data Architecture (runs with SA-PHASE-C-APP, mutual reference) |
-| SA-PHASE-H | `skills/phase-h.md` | PM issues Phase H Change Record intake; SA assesses architecture impact and produces Change Record |
+| SA-PHASE-C-APP-REVIEW | `skills/phase-c-application.md` | SwA has produced AA draft requesting SA traceability review; SA performs business-layer traceability check (consulting — max 2 iterations) |
+| SA-PHASE-C-DATA-REVIEW | `skills/phase-c-data.md` | SwA has produced DA draft requesting SA traceability review; SA performs business-layer data traceability check (consulting — max 2 iterations) |
+| SA-PHASE-H | `skills/phase-h.md` | PM issues Phase H Change Record intake; SA assesses business/motivation/strategy impact and produces business-layer Change Record; always routes parallel handoff to SwA |
 | SA-REQ-MGMT | `skills/requirements-management.md` | Cross-phase at each phase boundary; maintain architecture column of Requirements Traceability Matrix |
 | SA-REV-PRELIM-A | `skills/reverse-architecture-bprelim-a.md` | EP-G warm-start: reconstruct motivation/strategy entities (STK, DRV, GOL, PRI, REQ, CST, CAP, VS) from user input, docs, target repos |
 | SA-REV-BA | `skills/reverse-architecture-ba.md` | EP-G warm-start (after SA-REV-PRELIM-A): reconstruct business layer entities (ACT, ROL, BPR, BFN, BSV, BOB) from codebase and user docs |
@@ -55,11 +55,13 @@
 
 | Skill ID | File | Invoke When |
 |---|---|---|
-| SwA-PHASE-D | `skills/phase-d.md` | Phase D sprint starts; AA and DA handoffs acknowledged; produce Technology Architecture |
+| SwA-PHASE-C-APP | `skills/phase-c-application.md` | Phase C sprint starts; BA handoff acknowledged; produce Application Architecture (APP, AIF, ASV entities) in `architecture-repository/model-entities/application/`; submit to SA for traceability review |
+| SwA-PHASE-C-DATA | `skills/phase-c-data.md` | Phase C sprint starts (concurrent with SwA-PHASE-C-APP); produce Data Architecture (DOB entities, ER connections); submit to SA for traceability review; cast C→D gate vote when both AA and DA baselined |
+| SwA-PHASE-D | `skills/phase-d.md` | Phase D sprint starts; AA and DA self-produced and baselined (Phase C); produce Technology Architecture |
 | SwA-PHASE-E | `skills/phase-e.md` | Phase E sprint starts; TA baselined; produce Gap Analysis Matrix and Implementation Candidate Catalog |
 | SwA-PHASE-F | `skills/phase-f.md` | Phase F sprint starts; produce Transition Architecture Diagrams; review PM's Implementation Plan for technical feasibility |
 | SwA-PHASE-G | `skills/phase-g-governance.md` | Phase F gate passed; each Solution Sprint starts; author Architecture Contract; review PRs; issue Compliance Notices |
-| SwA-PHASE-H | `skills/phase-h.md` | SA issues Change Record; SwA assesses technology-layer impact; update TA and AC as required |
+| SwA-PHASE-H | `skills/phase-h.md` | SA routes Phase H handoff to SwA; SwA is co-primary for application/technology layer — produces own Change Record; updates AA/DA entities and TA/AC as required; casts H gate vote (application/technology layer) |
 | SWA-REV-TA | `skills/reverse-architecture-ta.md` | EP-G warm-start: reconstruct technology layer (NOD, SSW, TSV, ART, TIF) from IaC, Dockerfiles, CI/CD; produce ADR stubs and Gap & Risk Assessment |
 
 ### DO Skills
@@ -129,12 +131,12 @@ Quick lookup: given a phase transition (`gate.evaluated` result=passed), which a
 | Prelim | PM | SA (if EP-0) |
 | A | PM, SA | PO, CSCO |
 | B | SA | PO, CSCO |
-| C | SA | SwA, PO, CSCO |
-| D | SwA, DO | SA, CSCO |
+| C | SwA (primary — AA/DA production) | SA (traceability review, consulting), PO, CSCO |
+| D | SwA, DO | SA (consulting), CSCO |
 | E | SwA, DO | SA, DE, QA, CSCO |
 | F | SwA, DO | DE, QA |
 | G (per Solution Sprint) | SwA, DO, DE, QA | PM (governance) |
-| H | SA | SwA, CSCO, QA |
+| H | SA (business layer), SwA (application/technology layer) | CSCO, QA, PM (coordination) |
 
 ---
 

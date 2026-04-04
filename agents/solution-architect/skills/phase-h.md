@@ -2,25 +2,27 @@
 skill-id: SA-PHASE-H
 agent: SA
 name: phase-h
-display-name: Phase H — Architecture Change Management
+display-name: Phase H — Architecture Change Management (Business/Motivation/Strategy Layer)
 invoke-when: >
   PM routes a change request to SA via handoff (CR-000 intake), or a phase.return-triggered
-  event identifies SA-owned architecture artifacts (AV, BA, AA, DA) as affected.
+  event identifies SA-owned architecture artifacts (AV, BA, motivation entities, strategy
+  entities, business entities) as affected. SA does not own the application/technology-layer
+  Change Record — that is SwA's parallel track.
 trigger-phases: [H]
 trigger-conditions:
   - handoff.created (handoff-type=change-record-intake, to=solution-architect)
-  - phase.return-triggered (affected-artifacts includes AV or BA or AA or DA)
+  - phase.return-triggered (affected-artifacts includes AV or BA or motivation/ or strategy/ or business/)
   - sprint.started (phase=H)
 entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-E, EP-F, EP-G, EP-H]
-primary-outputs: [Change Record, Updated Architecture Artifacts]
+primary-outputs: [Change Record (business/motivation/strategy layer), Updated Architecture Artifacts (motivation/strategy/business layers)]
 complexity-class: complex
-version: 1.0.0
+version: 1.1.0
 ---
 
-# Skill: Phase H — Architecture Change Management
+# Skill: Phase H — Architecture Change Management (Business/Motivation/Strategy Layer)
 
 **Agent:** Solution Architect  
-**Version:** 1.0.0  
+**Version:** 1.1.0  
 **Phase:** H — Architecture Change Management  
 **Skill Type:** Phase primary — artifact production  
 **Framework References:** `agile-adm-cadence.md §5.9 and §10`, `framework/artifact-schemas/change-record.schema.md`, `raci-matrix.md §3.10`, `clarification-protocol.md`, `algedonic-protocol.md`
@@ -32,11 +34,13 @@ version: 1.0.0
 | Input | Source | Minimum State | Notes |
 |---|---|---|---|
 | PM's intake record (Warm-Start Change Record `CR-000`) | Project Manager | Version 0.1.0; PM has performed initial intake and urgency classification | PM creates CR-000 from the change request before routing to SA; SA does not initiate the Change Record — SA completes it |
-| Affected architecture artifact summary headers | SA (self-read) from `architecture-repository/` | Current baselined versions | SA identifies and reads the summary headers of all potentially affected AV, BA, AA, DA artifacts |
+| Affected motivation/strategy/business artifact summary headers | SA (self-read) from `architecture-repository/model-entities/` | Current baselined versions | SA reads motivation/, strategy/, business/ layers only; application-layer entities are SwA's domain |
 | Current Architecture Principles Register (`PR`) | SA (self-read) | Current version | SA checks whether the proposed change violates any architecture principle |
 | Safety Constraint Overlay (`SCO`) — current version | CSCO | Current baselined version | Required before SA can determine whether a change is safety-relevant |
 | Requirements Register (`RR`) | Product Owner | Current version | Required if the change source is a requirement change — SA must assess RR impact |
 | `sprint.started` event for the Phase H sprint | PM | Emitted | Hard prerequisite; SA does not begin Phase H work without this event |
+
+**Phase H co-ownership note:** SA is ● for the business/motivation/strategy-layer Change Record. SwA runs a parallel Phase H track (skill: SwA-PHASE-H) and is ● for the application/technology-layer Change Record. Both tracks coordinate through PM. SA hands off to SwA when business-layer analysis determines that application or technology artifacts are affected.
 
 ---
 
@@ -56,7 +60,7 @@ version: 1.0.0
 |---|---|---|---|
 | Change scope unclear (the user's change request is ambiguous about whether it affects architecture or only implementation) | Yes — cannot classify without scope clarity | PM routes to User | §2.3 Change Impact Classification, §2.4 Affected Artifacts |
 | Safety relevance of the change (the change touches a component that was not previously classified as safety-relevant, and SCO does not address it) | Yes — CSCO must assess before SA completes CR | CSCO | §2.5 Safety Impact Analysis, §2.3 |
-| Impact on non-SA artifacts (e.g., change requires TA update — is SwA in scope?) | Partially — SA can flag likely TA impact; SwA confirms scope | SwA (via PM) | §2.4 Affected Artifacts, §2.7 Implementation Actions |
+| Impact on application/technology-layer artifacts (e.g., change affects APP/DOB/TA) — is SwA's application/technology CR also needed? | Partially — SA flags likely AA/DA/TA impact; SwA confirms scope and produces application/technology CR | SwA (via PM) | §2.4 Affected Artifacts, §2.7 Implementation Actions |
 | Baseline state of affected artifacts (if some artifacts are not yet baselined — EP-H entry where architecture is partially complete) | Yes — SA must raise this to PM; may require earlier EP before Phase H can proceed | PM | All CR sections |
 
 ### Clarification Triggers
@@ -90,17 +94,16 @@ Call `query_learnings(agent="SA", phase="H", artifact_type="change-record")` bef
 
 For each architecture artifact potentially affected by the change (as identified in CR-000):
 
-1. Read the summary header of the artifact from `architecture-repository/`.
+1. Read the summary header of the artifact from `architecture-repository/model-entities/` (motivation/, strategy/, business/ layers).
 2. Note: current version, phase of origin, `safety-relevant` flag, `csco-sign-off` status.
 3. Identify the sections of the artifact most relevant to the described change.
 4. Do NOT modify any artifact at this step — assessment only.
 
-**Scope of review by change type:**
-- Change described as affecting a business process → read BA BPC (§3.3), then check whether the process is referenced in AA (§3.4 matrix) and DA (§3.4 CRUD matrix). If yes, AA and DA are potentially affected.
-- Change described as affecting an application component → read AA (§3.2, §3.3), then check whether the component's interfaces reference DA entities. If yes, DA may be affected.
-- Change described as affecting a data entity → read DA (§3.2, §3.4), then check whether AA interfaces carry this entity (§3.3 IFC). If yes, AA is potentially affected.
-- Change described as affecting the scope or vision → read AV (§3.2, §3.5), then cascade: any AV change may affect BA, AA, DA.
-- Change described as affecting only technology → read TA (via SwA's handoff receipt); confirm whether any AA/DA constraint is violated. If no AA/DA constraint is violated, this is SwA-domain and SA is ○ (consulting).
+**SA scope of review — business/motivation/strategy layer only:**
+- Change described as affecting a business process → read BA business layer entities (BPR-nnn, BFN-nnn, BSV-nnn, ACT-nnn). If the process change ripples to application components or data entities, flag for SwA's parallel track (Step 6 handoff) — SA does not assess application-layer impact.
+- Change described as affecting business goals, drivers, or requirements → read motivation entities (GOL-nnn, DRV-nnn, REQ-nnn, CST-nnn, PRI-nnn). Cascade: GOL/DRV change may affect BA; if BA changes, notify SwA via handoff (Step 6).
+- Change described as affecting the scope or vision → read AV overview entities. Cascade: AV change may affect BA (SA's domain). If AV change affects application or technology layers, create handoff to SwA for their parallel CR track.
+- Change described as affecting only application components, data entities, or technology → SA's scope is limited to checking whether any BA/motivation constraint is violated. If no business-layer constraint is violated, this is SwA-domain; SA provides consulting acknowledgement only.
 
 ---
 
@@ -112,14 +115,17 @@ Based on Step 1 reading, produce a complete list of impacted artifacts for CR §
 |---|---|---|---|
 | [AV / BA / AA / DA / other] | [current] | [what must change] | [new version after update] |
 
-**Cascading impact rule:** Architecture artifacts have a directed dependency graph. Changes propagate downward:
-- AV change → may cascade to BA, AA, DA
-- BA change → may cascade to AA, DA
-- AA change → may cascade to DA (and vice versa — mutual reference)
-- DA change → may cascade to AA (mutual reference)
-- AA or DA change → cascades to TA (SwA must update TA; create handoff to SwA)
+**Cascading impact rule — SA's layer only:** SA manages the business/motivation/strategy dependency chain. Changes propagate downward within SA's domain, then hand off to SwA for application/technology layers:
 
-For each cascading impact, SA notes the impact but does not modify the affected artifact at this step. The Change Record authorises the modifications; SA executes them in Step 7.
+| From | SA action | SwA handoff required? |
+|---|---|---|
+| AV change | May cascade to BA (SA updates) | Yes — if AV change affects application scope or technology envelope |
+| BA change (BPR, BFN, BSV, ACT, BOB) | SA updates business entities | Yes — if BA change ripples to APP/DOB realisation connections |
+| Motivation change (GOL, DRV, REQ, CST, PRI) | SA updates motivation entities | Yes — if constraint or requirement change affects application or technology design |
+| Application-layer change (APP, DOB) | SA assesses only: does any BA constraint change? | SwA owns the application-layer CR; SA provides consulting acknowledgement |
+| Technology-layer change (TA, AC) | SA assesses only: does any principle/BA constraint change? | SwA owns the technology-layer CR; SA provides consulting acknowledgement |
+
+For each cascading impact within SA's domain, SA notes the impact but does not modify the affected artifact at this step. The Change Record authorises the modifications; SA executes them in Step 7.
 
 ---
 
@@ -138,10 +144,11 @@ Apply `agile-adm-cadence.md §10` change classification rules:
 
 **Safety-Critical determination:** If the change affects any:
 - BPR-nnn with `Safety-Relevant: Yes`
-- APP-nnn with `Safety-Relevant: Yes`
-- DE-nnn with classification `Safety-Critical` or `Safety-Relevant: Yes`
-- AV §3.7 Safety Envelope
+- GOL-nnn, REQ-nnn, CST-nnn related to a safety objective
+- AV safety envelope section
 - Any SCO constraint
+
+Note: APP-nnn and DOB-nnn safety relevance is assessed by SwA in the parallel application/technology Change Record.
 
 → classify as Safety-Critical, regardless of how minor the scope appears.
 
@@ -183,7 +190,7 @@ Complete all sections of the Change Record per `framework/artifact-schemas/chang
 
 **§2.3 Change Impact Classification:** From Step 3.
 
-**§2.4 Affected Artifacts:** From Step 2.
+**§2.4 Affected Artifacts:** From Step 2. Scope: business/motivation/strategy layer artifacts (AV, BA entities, motivation entities, strategy entities). Application/technology-layer artifacts are listed in SwA's parallel application/technology CR.
 
 **§2.5 Safety Impact Analysis:** From CSCO (Step 4). Write `Not applicable` only if the change has been confirmed by CSCO as non-safety-relevant — do not assume.
 
@@ -191,12 +198,12 @@ Complete all sections of the Change Record per `framework/artifact-schemas/chang
 - Decision authority by class: Minor (PM decides; SA records); Significant (SA + PM decide); Major (all affected artifact owners + CSCO decide); Safety-Critical (CSCO gates; SA + PM record).
 - Do NOT write `Approved` in §2.6 unilaterally. SA submits the CR; the appropriate authority approves.
 
-**§2.7 Implementation Actions:** For each artifact that must be updated:
+**§2.7 Implementation Actions:** For each artifact that must be updated within SA's domain:
 - One ACT-nnn per artifact
-- Owner: SA (for architecture artifacts); SwA (for TA); PM (for project-repository artifacts)
+- Owner: SA (for business/motivation/strategy artifacts); application/technology-layer actions listed in SwA's parallel CR; PM (for project-repository artifacts)
 - Target sprint: assign based on urgency (Immediate → current sprint; Next Sprint → next planned sprint; Planned → future sprint per PM scheduling)
 
-Write CR to `architecture-repository/change-records/cr-<id>-0.1.0.md`.
+Write SA's CR to `architecture-repository/change-records/cr-<id>-business-0.1.0.md`.
 
 ---
 
@@ -207,13 +214,18 @@ Once the CR has been reviewed and approved by the appropriate decision authority
 1. Update CR to version 1.0.0 (decision recorded; approved).
 2. Emit `artifact.baselined` for CR at version 1.0.0.
 3. Create handoff to PM: `handoff-type: phase-return-scope` — includes phase-return scope determination (Step 7 pre-requisite):
-   - Which phases must be revisited
+   - Which phases must be revisited (business/motivation/strategy layer)
    - Which artifacts are authorised for update
    - Urgency classification and sprint target
 
-4. Create handoff to SwA (if technology-layer changes are required): `handoff-type: architecture-change-impact` — SA's assessment of which AA/DA constraints the TA must update to reflect.
+4. Create handoff to SwA: `handoff-type: phase-h-application-technology-track` — triggers SwA to run the parallel application/technology-layer Phase H track (SwA-PHASE-H). The handoff must include:
+   - SA's business-layer CR at version 1.0.0 (reference by artifact-id)
+   - List of application/technology artifacts SA identified as potentially affected (Step 2 cascade table rows with "SwA handoff required: Yes")
+   - SA's consulting view on whether AA/DA entities need revision (not prescriptive — SwA determines application/technology scope)
+   - Change classification (from Step 3)
+   - This handoff is created regardless of whether SA identified any application-layer impact — SwA must always confirm whether the business-layer change affects their domain.
 
-5. Cast `gate.vote_cast` for Phase H gate (H formal):
+5. Cast `gate.vote_cast` for Phase H gate (H formal — business/motivation/strategy layer):
    - `result: approved` if all CR sections are complete, decision authority has approved, and phase-return scope is determined.
    - `result: veto` if SA identifies a safety-relevant item that has not received CSCO sign-off, or if the CR's decision record assigns approval authority below the correct level for the classification.
 
@@ -221,9 +233,9 @@ Once the CR has been reviewed and approved by the appropriate decision authority
 
 ### Step 7 — Update Affected Architecture Artifacts
 
-For each ACT-nnn in CR §2.7 assigned to SA:
+For each ACT-nnn in CR §2.7 assigned to SA (business/motivation/strategy-layer artifacts only):
 
-1. Open the affected artifact from `architecture-repository/`.
+1. Open the affected artifact from `architecture-repository/model-entities/` (motivation/, strategy/, or business/ subdirectory).
 2. Apply the change as specified in the CR action description.
 3. Increment the artifact version:
    - Minor fix / documentation: patch increment (e.g., 1.0.0 → 1.0.1)
@@ -231,16 +243,20 @@ For each ACT-nnn in CR §2.7 assigned to SA:
    - Structural change affecting multiple sections: minor or major increment per impact scope; consult with PM if major increment is warranted
 4. Write the updated artifact summary header change log entry.
 5. Emit `artifact.baselined` for the updated artifact.
-6. Create handoff event to notify consuming agents (SwA if AA/DA changed; CSCO if safety-relevant content changed).
+6. Create handoff event to notify consuming agents (SwA if business-layer changes affect application-layer realisation; CSCO if safety-relevant content changed).
+
+**Out of scope for SA in Step 7:** SA does not update application-layer entities (APP, DOB, ASV, AIF) or technology-layer artifacts in this step. Those are updated by SwA through the parallel application/technology CR track.
 
 **Phase-return scope execution:**
 
-| Change Class | Phase Return Required | SA Action |
+| Change Class | Phase Return Required (SA domain) | SA Action |
 |---|---|---|
 | Minor | None — H only | Update documentation; increment patch version |
-| Significant | Return to the phase that originally produced the affected artifact | Update affected artifact; re-submit for phase gate if gate criteria are impacted |
-| Major | Return to the earliest phase whose artifact is affected | May require AV revision → BA revision → AA/DA revision in sequence; coordinate with PM on sprint plan |
-| Safety-Critical | Determined by CSCO in §2.5 | Follow CSCO's determination; SA updates architecture artifacts; CSCO gates all updates |
+| Significant | Return to the phase that originally produced the affected business-layer artifact | Update affected artifact; re-submit for phase gate if gate criteria are impacted |
+| Major | Return to earliest phase whose business/motivation/strategy artifact is affected | May require AV revision → BA revision in sequence; coordinate with PM on sprint plan; notify SwA via handoff if cascade reaches Phase C |
+| Safety-Critical | Determined by CSCO in §2.5 | Follow CSCO's determination; SA updates business-layer artifacts; CSCO gates all updates |
+
+**Note on application/technology phase returns:** When a Major change requires Phase C or later revision, SA notifies SwA (via Step 6 handoff) and SwA's parallel CR track governs the application/technology phase return independently. PM coordinates the combined sprint plan.
 
 **For phase-revisit scenarios:** The returning phase is executed with `trigger: revisit` and `phase_visit_count > 1`. SA skill files handle revisits — the procedures are identical, but the existing artifacts are the starting point rather than a blank canvas. SA increments the artifact version rather than creating a new artifact file, unless the scope of change warrants a fresh document (in which case the old version is preserved and the new version cross-references it).
 
@@ -248,13 +264,17 @@ For each ACT-nnn in CR §2.7 assigned to SA:
 
 ## Feedback Loop
 
-### SA ↔ SwA Conflict on Technology Impact Scope
+### SA ↔ SwA Coordination on Application/Technology Impact Scope
 
-- **Iteration 1:** SA produces Change Record with affected artifact list; SwA reviews and may disagree on whether the TA is affected (SwA may believe the change is contained in AA/DA; or conversely, SwA may claim TA changes are needed that SA did not identify). SA reviews SwA's position against the architecture artifact constraints.
-- **Iteration 2:** SA and SwA exchange one further round of structured feedback (via handoff log entries).
-- **Termination:** Agreement on technology impact scope; CR §2.4 updated to reflect consensus.
+- **Iteration 1:** SA produces business-layer CR and sends Step 6 handoff to SwA. SwA may confirm the application/technology scope is unaffected (no parallel CR needed), or may identify application-layer impacts that require revision. SwA feeds their assessment back to SA for §2.4 cross-reference in SA's CR.
+- **Iteration 2 (if needed):** SA has questions about SwA's scope assessment; sends structured feedback request; SwA clarifies.
+- **Termination:** Both CRs have consistent §2.4 cross-references; SA's business-layer CR and SwA's application/technology CR are aligned.
 - **Max iterations:** 2.
-- **Escalation:** Raise `ALG-010` to PM after 2 iterations. PM adjudicates using RACI: if the conflict is about whether an AA/DA constraint is violated, SA's position governs (SA is ● for AA/DA). If the conflict is about whether a TA constraint exists, SwA's position governs (SwA is ● for TA). PM records the decision.
+- **Escalation:** Raise `ALG-010` to PM after 2 iterations. PM adjudicates using RACI: SA governs business-layer scope; SwA governs application/technology scope. PM records the decision.
+
+### Personality-Aware Conflict Engagement
+
+SA and SwA operate across a layer boundary in Phase H. When scope disputes arise (e.g., is a business-capability change a BA update or an APP update?), SA applies the ArchiMate layer boundary rule: **motivation/strategy/business entities are SA's domain; application/technology entities are SwA's domain.** SA does not assert ownership of application-layer Change Record content. If the boundary is genuinely ambiguous, SA requests PM adjudication rather than unilaterally expanding scope. Governed by `framework/agent-personalities.md §6`.
 
 ### SA ↔ CSCO Coordination on Safety Impact
 
@@ -293,9 +313,9 @@ On trigger: call `record_learning()` with `artifact-type="change-record"`, error
 
 | Output | Path | Version at Baseline | EventStore Event |
 |---|---|---|---|
-| Change Record (`CR`) | `architecture-repository/change-records/cr-<id>-<version>.md` | 1.0.0 after decision authority approves | `artifact.baselined` |
-| Updated architecture artifacts (as required by CR §2.7) | `architecture-repository/<domain>/<artifact>-<new-version>.md` | Per version increment rules in Step 7 | `artifact.baselined` (per updated artifact) |
-| Handoff to PM (phase-return scope) | `engagements/<id>/handoff-log/` | — | `handoff.created` |
-| Handoff to SwA (technology impact, if applicable) | `engagements/<id>/handoff-log/` | — | `handoff.created` |
-| Handoff to CSCO (safety impact assessment request) | `engagements/<id>/handoff-log/` | — | `handoff.created` |
-| Phase H gate vote | EventStore | — | `gate.vote_cast` |
+| Business/Motivation/Strategy Change Record (`CR`) | `architecture-repository/change-records/cr-<id>-business-<version>.md` | 1.0.0 after decision authority approves | `artifact.baselined` |
+| Updated business/motivation/strategy artifacts (as required by CR §2.7) | `architecture-repository/model-entities/{motivation,strategy,business}/<entity>-<new-version>.md` | Per version increment rules in Step 7 | `artifact.baselined` (per updated artifact) |
+| Handoff to PM (phase-return scope — business layer) | `engagements/<id>/handoff-log/` | — | `handoff.created` |
+| Handoff to SwA (parallel application/technology Phase H track — always created) | `engagements/<id>/handoff-log/` | — | `handoff.created` |
+| Handoff to CSCO (safety impact assessment request, if safety-relevant) | `engagements/<id>/handoff-log/` | — | `handoff.created` |
+| Phase H gate vote (business/motivation/strategy layer) | EventStore | — | `gate.vote_cast` |

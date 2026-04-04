@@ -205,10 +205,10 @@ name: "WorkflowEvent"
 version: 1.0.0
 status: baselined
 phase-produced: C
-owner-agent: SA
+owner-agent: SwA
 domain: core-platform
 safety-relevant: false
-produced-by-skill: SA-PHASE-C-DATA
+produced-by-skill: SwA-PHASE-C-DATA
 last-updated: 2026-04-03
 engagement: ENG-001
 ---
@@ -278,9 +278,9 @@ target: BSV-001
 version: 1.0.0
 status: baselined
 phase-produced: C
-owner-agent: SA
+owner-agent: SwA
 engagement: ENG-001
-last-updated: 2026-04-03
+last-updated: 2026-04-04
 ---
 
 <!-- §content -->
@@ -447,17 +447,20 @@ label: "<optional label>"
 
 ### 4.4 Application Layer — `architecture-repository/application/`
 
+**Owner agent for all application-layer entities: SwA (Software Architect / Principal Engineer).**  
+Phase C output. SA reads these entities for traceability review (consulting) but does not write them.
+
 | artifact-type | Prefix | Directory | ArchiMate Element | Owner |
 |---|---|---|---|---|
-| `app-component` | `APP` | `components/` | Application Component | SA |
-| `app-collaboration` | `ACO` | `collaborations/` | Application Collaboration | SA |
-| `app-interface` | `AIF` | `interfaces/` | Application Interface | SA |
-| `app-process` | `APR` | `processes/` | Application Process | SA |
-| `app-function` | `AFN` | `functions/` | Application Function | SA |
-| `app-interaction` | `AIA` | `interactions/` | Application Interaction | SA |
-| `app-event` | `AEV` | `events/` | Application Event | SA |
-| `app-service` | `ASV` | `services/` | Application Service | SA |
-| `data-object` | `DOB` | `data-objects/` | Data Object | SA |
+| `app-component` | `APP` | `components/` | Application Component | SwA |
+| `app-collaboration` | `ACO` | `collaborations/` | Application Collaboration | SwA |
+| `app-interface` | `AIF` | `interfaces/` | Application Interface | SwA |
+| `app-process` | `APR` | `processes/` | Application Process | SwA |
+| `app-function` | `AFN` | `functions/` | Application Function | SwA |
+| `app-interaction` | `AIA` | `interactions/` | Application Interaction | SwA |
+| `app-event` | `AEV` | `events/` | Application Event | SwA |
+| `app-service` | `ASV` | `services/` | Application Service | SwA |
+| `data-object` | `DOB` | `data-objects/` | Data Object | SwA |
 
 ### 4.5 Technology Layer — `technology-repository/technology/`
 

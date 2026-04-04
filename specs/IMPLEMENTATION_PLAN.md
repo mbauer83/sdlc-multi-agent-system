@@ -43,8 +43,8 @@ Nine agent roles are defined. No agent covers all phases — each has a primary 
 |---|---|---|
 | Sales & Marketing Manager | A | Req-Mgmt |
 | Product Owner | Prelim, A, B, H | C, E, Req-Mgmt |
-| Solution Architect | A, B, C, H | D, E, Req-Mgmt |
-| Software Architect / Principal Engineer | D, E, F, G, H | C, Req-Mgmt |
+| Solution Architect | A, B, H | C (traceability review), D, E, Req-Mgmt |
+| Software Architect / Principal Engineer | C, D, E, F, G, H (app/tech) | A |
 | DevOps / Platform Engineer | D, E, F, G | — |
 | Implementing Developer | G | E, F, Req-Mgmt feedback |
 | QA Engineer | E/F (test planning), G | H |
@@ -57,8 +57,8 @@ Work-repositories are role-owned, version-controlled, and path-governed. No agen
 
 | Repository | Owner | Contents |
 |---|---|---|
-| `architecture-repository/` | Solution Architect | Architecture Vision, Business Architecture, App/Data Architecture, principles, ADRs |
-| `technology-repository/` | Software Architect/PE | Technology Architecture, implementation plans, coding standards, solutions inventory |
+| `architecture-repository/` | SA (motivation/strategy/business layers) + SwA (application layer — Phase C) | Architecture Vision, Business Architecture, App/Data Architecture entities (SwA-primary), principles, ADRs |
+| `technology-repository/` | Software Architect/PE | Technology Architecture, implementation plans, coding standards, ADRs, solutions inventory |
 | `project-repository/` | Project Manager | Sprint plans, schedules, decision log, lessons learned, knowledge base |
 | `safety-repository/` | CSCO | STAMP/STPA analyses, safety constraints, compliance checklists, incident records |
 | `delivery-repository/` | Implementing Developer | Feature branches, PRs (draft and final), unit test reports |
@@ -508,7 +508,7 @@ The domain artifact schemas and cross-cutting framework docs updated to align wi
 
 ---
 
-### Stage 4.8h — SA/SwA Role Boundary Refactoring (Design Review + Rework — pre-Stage-4.9)
+### Stage 4.8h — SA/SwA Role Boundary Refactoring (Complete — 2026-04-04)
 
 > **Trigger:** During Stage 4.8d diagram-step alignment, it became clear that the current SA/SwA boundary places Phase C (Application + Data Architecture) under SA primary, while SwA also inevitably produces application-layer and data-layer diagrams (sequence, ER, activity) as part of Phase D/E. The two roles produce the same diagram types in adjacent phases, with no clean boundary — a structural conflict, not a convention gap.
 
@@ -611,24 +611,47 @@ Every file in this list requires review and likely modification. Do not attempt 
 - **Must complete before Stage 5**: Python agent construction (`src/agents/`) hard-codes phase trigger routing based on AGENT.md frontmatter. Getting the phase assignments wrong here means the orchestration graph routes phases to the wrong agents.
 - **Design decisions (§Open Design Decisions) must be resolved in a focused review session before any file changes begin.** The repository ownership decision (Option A–D) in particular has cascading effects on `repository-conventions.md`, all agent write-path constraints, and the Python `RegistryReadOnlyError` path enforcement.
 
+#### Design Decisions Resolved (2026-04-04)
+
+1. **Repository ownership:** Option D adopted — `architecture-repository/` co-owned; SA has write authority over `model-entities/motivation/`, `strategy/`, `business/`, `implementation/`; SwA has write authority over `model-entities/application/`. Technology-repository stays unchanged as SwA-owned for technology-layer entities and implementation artifacts.
+2. **Phase H split:** SA produces business/motivation/strategy layer Change Record; SwA produces parallel application/technology layer Change Record. Both coordinated via PM.
+3. **SwA display-name:** unchanged ("Software Architect / Principal Engineer").
+4. **CSCO Phase C gate:** coordinates with SwA (not SA) for AA and DA review.
+5. **Stage 4.9 entity assignments (ACT-003/004):** SA scope = "phases A/B/H + EP-G Prelim/A and BA reconstruction"; SwA scope = "phases C/D/E/F/G + EP-G TA and application-layer reconstruction" — update when Stage 4.9 authoring resumes.
+
 #### Checklist
 
-- [ ] Resolve Open Design Decisions (user/architect review session)
-- [ ] Update `framework/raci-matrix.md`
-- [ ] Update `framework/agile-adm-cadence.md`
-- [ ] Update artifact schemas (AA, DA, BA owner/consumed-by)
-- [ ] Rewrite `agents/solution-architect/AGENT.md`
-- [ ] Retire or convert `agents/solution-architect/skills/phase-c-application.md` and `phase-c-data.md`
-- [ ] Update remaining SA skill files
-- [ ] Rewrite `agents/software-architect/AGENT.md`
-- [ ] Author NEW `agents/software-architect/skills/phase-c-application.md`
-- [ ] Author NEW `agents/software-architect/skills/phase-c-data.md`
-- [ ] Update SwA Phase D/E skill files
-- [ ] Update `agents/csco/skills/gate-phase-c.md`
-- [ ] Update `framework/agent-index.md`
-- [ ] Update `framework/repository-conventions.md`, `artifact-registry-design.md`, `discovery-protocol.md`
-- [ ] Update `CLAUDE.md` and `specs/IMPLEMENTATION_PLAN.md` tables
+- [x] Resolve Open Design Decisions (2026-04-04)
+- [x] Update `framework/raci-matrix.md` — Phase B/C/D ownership
+- [ ] Update `framework/agile-adm-cadence.md` — Phase C primary agent (minor; deferred)
+- [x] Update artifact schemas (AA, DA owner field → SwA; BA consumed-by note added via RACI)
+- [x] Rewrite `agents/solution-architect/AGENT.md` v1.0.0 → v1.1.0
+- [x] Convert `agents/solution-architect/skills/phase-c-application.md` → SA-PHASE-C-APP-REVIEW (consulting traceability)
+- [x] Convert `agents/solution-architect/skills/phase-c-data.md` → SA-PHASE-C-DATA-REVIEW (consulting traceability)
+- [x] Update SA `skills/phase-h.md` v1.0.0 → v1.1.0 — scoped to business/motivation/strategy layer only; always routes Phase H handoff to SwA for parallel application/technology CR track
+- [x] Rewrite `agents/software-architect/AGENT.md` v1.0.0 → v1.1.0
+- [x] Author NEW `agents/software-architect/skills/phase-c-application.md` (SwA-PHASE-C-APP)
+- [x] Author NEW `agents/software-architect/skills/phase-c-data.md` (SwA-PHASE-C-DATA)
+- [x] Update SwA `skills/phase-d.md` — inputs section (AA/DA self-produced; no SA handoff)
+- [x] Update SwA `skills/phase-h.md` v1.0.0 → v1.1.0 — SwA is now co-primary; produces own application/technology-layer CR; adds Step 3c (CR production), Step 4a (AA/DA entity updates)
+- [x] Update `agents/csco/skills/gate-phase-c.md` — coordination partner SA → SwA
+- [x] Update `framework/agent-index.md` v1.1.0 → v1.2.0 — SA/SwA routing tables; Phase C primary=SwA; Phase H co-primary; Phase-to-Agent Activation Map
+- [x] Update `framework/repository-conventions.md §2.2` — Phase C entity paths and co-ownership (write-authority by layer annotation added)
+- [ ] Update `framework/artifact-registry-design.md` — owner annotations on application-layer entity types (deferred)
+- [ ] Update `framework/discovery-protocol.md` — SA/SwA Layer 1 scan priority order (deferred)
+- [x] Update `CLAUDE.md` — agent phase table; architecture-repository ownership note
+- [x] Update `specs/IMPLEMENTATION_PLAN.md` — agent roles table, repository ownership table
 - [ ] Commit as `stage-4-sa-swa-role-refactor`
+
+**All deferred items now complete (2026-04-04):**
+- [x] Phase H skill split (SA phase-h.md v1.1.0, SwA phase-h.md v1.1.0)
+- [x] `framework/agile-adm-cadence.md` — Phase C primary agent updated SA→SwA; §4.1 primary owners updated
+- [x] `framework/agent-index.md` v1.2.0 — SA/SwA routing tables, Phase C/H activation maps
+- [x] `framework/repository-conventions.md §2.2` — write-authority by layer annotations
+- [x] `framework/artifact-registry-design.md §4.4` — application-layer entity owner updated SA→SwA; DOB-001 and APP-001---BSV-001 exemplar `owner-agent` fields corrected
+- [x] `framework/discovery-protocol.md` — role-specific scan priority note in Step 1.2; diagram write-authority note updated for SwA Phase C diagrams
+- framework/artifact-registry-design.md owner annotations
+- framework/discovery-protocol.md scan priority
 
 ---
 
@@ -681,8 +704,8 @@ Agent roles, core SDLC processes, and business services — the "what the system
 - [ ] **Actors** in `business/actors/` — `safety-relevant: false` on all; `phase-produced: B`:
   - `ACT-001.md` — `User` — human; initiates phases; answers CQs; uploads files; reviews and approves sprint output
   - `ACT-002.md` — `PM Agent` — VSM System 3; orchestrates all agents; sprint lifecycle; gate coordination; CQ batching; review trigger
-  - `ACT-003.md` — `SA Agent` — VSM System 4; phases A/B/C/H + EP-G Prelim/A and BA reconstruction
-  - `ACT-004.md` — `SwA Agent` — phases D/E/F/G + EP-G TA reconstruction; technology authority
+  - `ACT-003.md` — `SA Agent` — VSM System 4; phases A/B/H + Phase C traceability review + EP-G Prelim/A and BA reconstruction; business-layer architecture authority
+  - `ACT-004.md` — `SwA Agent` — phases C (primary AA/DA)/D/E/F/G/H (app/tech) + EP-G TA and application-layer reconstruction; application and technology architecture authority
   - `ACT-005.md` — `DevOps Agent` — phases D/E/F/G; IaC, pipelines, deployments
   - `ACT-006.md` — `DE Agent` — phase G; code delivery; git worktree per sprint
   - `ACT-007.md` — `QA Agent` — phases E/F (test planning) + G (execution); compliance assessment co-production
@@ -702,8 +725,8 @@ Agent roles, core SDLC processes, and business services — the "what the system
   - `BPR-008.md` — `Reverse Architecture` — EP-G entry; multi-source scan; entity inference; user confirmation; ERP model population
 
 - [ ] **Services** in `business/services/` — what each role offers to the system, consumed by other actors or processes:
-  - `BSV-001.md` — `Architecture Modelling` (SA) — produces AV, BA, AA, DA, Change Records; owns architecture-repository
-  - `BSV-002.md` — `Technology Architecture` (SwA) — produces TA, ADRs, Architecture Contract; owns technology-repository
+  - `BSV-001.md` — `Business Architecture` (SA) — produces AV, BA, Change Records (business layer); owns architecture-repository motivation/strategy/business layers; traceability review of SwA's Phase C output
+  - `BSV-002.md` — `Application & Technology Architecture` (SwA) — produces AA, DA (Phase C), TA, ADRs, Architecture Contract; primary author of architecture-repository/application layer; owns technology-repository
   - `BSV-003.md` — `Project Coordination` (PM) — sprint lifecycle management; gate evaluation; CQ routing; review coordination
   - `BSV-004.md` — `Safety Governance` (CSCO) — gate vote authority on all phases; SCO updates; incident response
   - `BSV-005.md` — `Requirements Management` (PO) — maintains RR; stakeholder communication; phase A/B consulting
@@ -730,8 +753,8 @@ Every APP-nnn maps to a distinct `src/` Python module. Every DOB-nnn maps to a P
 
   *Agent Instances (src/agents/*.py — one module each):*
   - `APP-007.md` — `PM Agent` — `src/agents/project_manager.py`; `result_type=PMDecision`; `pm_tools` (invoke_specialist, batch_cqs, evaluate_gate, record_decision); all PM skills loadable
-  - `APP-008.md` — `SA Agent` — `src/agents/solution_architect.py`; `universal_tools` + `write_tools` (architecture-repository bound) + `target_repo_tools` (read-only); all SA skills including SA-REV-PRELIM-A and SA-REV-BA
-  - `APP-009.md` — `SwA Agent` — `src/agents/software_architect.py`; `universal_tools` + `write_tools` (technology-repository bound) + `target_repo_tools` (read-only); all SwA skills including SWA-REV-TA
+  - `APP-008.md` — `SA Agent` — `src/agents/solution_architect.py`; `universal_tools` + `write_tools` (architecture-repository bound to motivation/strategy/business/implementation layers) + `target_repo_tools` (read-only); all SA skills including SA-REV-PRELIM-A, SA-REV-BA, SA-PHASE-C-APP-REVIEW, SA-PHASE-C-DATA-REVIEW
+  - `APP-009.md` — `SwA Agent` — `src/agents/software_architect.py`; `universal_tools` + `write_tools` (architecture-repository/model-entities/application/ for Phase C; technology-repository for Phase D+) + `target_repo_tools` (read-only); all SwA skills including SwA-PHASE-C-APP, SwA-PHASE-C-DATA, SWA-REV-TA
   - `APP-010.md` — `DO Agent` — `src/agents/devops_platform.py`; `universal_tools` + `write_tools` (devops-repository bound) + `target_repo_tools` (read-write for DO) + `execute_pipeline()`
   - `APP-011.md` — `DE Agent` — `src/agents/implementing_developer.py`; `universal_tools` + `write_tools` (delivery-repository metadata bound) + `target_repo_tools` (read-write for DE; git worktree per sprint)
   - `APP-012.md` — `QA Agent` — `src/agents/qa_engineer.py`; `universal_tools` + `write_tools` (qa-repository bound) + `target_repo_tools` (read-only)
@@ -1298,15 +1321,11 @@ sprint-review:
 
 ## Current State & Immediate Next Actions
 
-**Stages 1–4.8f complete. Stage 4.8d in progress (near-complete).** Remaining pre-Stage-5 work: Stage 4.8d finalisation, Stage 4.8g (skill/agent alignment audit), **Stage 4.8h (SA/SwA role boundary refactoring — design review + rework)**, Stage 4.9 (ENG-001 reference model), Stage 5.
+**Stages 1–4.8h complete (2026-04-04).** All pre-Stage-4.9 framework work is done. Stage 4.9 (ENG-001 reference model) is now unblocked.
 
-### Resume at: Stage 4.8d → Stage 4.8g → **Stage 4.8h** → Stage 4.9 → Stage 5
+### Resume at: Stage 4.9 → Stage 5
 
-**Stage 4.8d** — ERP v2.0 alignment for domain artifact schemas and framework cross-cutting docs. Updates four artifact schemas (BA, AA, DA, TA) and three framework docs (repository-conventions.md, discovery-protocol.md, agent-runtime-spec.md §6). Retroactive skill file diagram step updates (SA phase-b/c, SwA phase-d/e). Near-complete.
-
-**Stage 4.8h** — SA/SwA role boundary refactoring. **Must precede Stage 4.9**: Stage 4.9 creates ENG-001 entity files that embed the current (incorrect) role model. See Stage 4.8h section above for full problem statement, proposed model, open design decisions, and complete rework checklist.
-
-**Stage 4.9** — ENG-001 reference model: entity files, connection files, `_macros.puml`, four PUML diagrams. Documents the SDLC system itself. Serves as integration test fixture. **Blocked on Stage 4.8h**: entity ownership annotations and Phase C attribution must reflect the refactored model.
+**Stage 4.9** — ENG-001 reference model: entity files, connection files, `_macros.puml`, four PUML diagrams. Documents the SDLC system itself. Serves as integration test fixture. Now unblocked — entity ownership and Phase C attribution reflect the Stage 4.8h refactored model (SwA owns APP/DOB entities; SA owns motivation/strategy/business entities).
 
 **Stage 5** — Python implementation. Read `framework/agent-runtime-spec.md` and `framework/orchestration-topology.md` before authoring any `src/` file. Begin with Stage 5a (EventStore completion), then 5b (agent layer). Key implementation dependencies:
 - `src/sources/target_repo.py` implements `TargetRepoManager` (multi-repo aware; see Stage 5d)

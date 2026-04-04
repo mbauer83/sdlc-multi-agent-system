@@ -31,16 +31,14 @@ version: 1.0.0
 
 | Input | Source | Minimum State | Notes |
 |---|---|---|---|
-| Application Architecture (`AA`) | Solution Architect | **Baselined** (v1.0.0+) | Full artifact required — every APP-nnn must be mappable to a technology component |
-| Data Architecture (`DA`) | Solution Architect | **Baselined** (v1.0.0+) | Every DE-nnn classification level requires a storage technology decision |
+| Application Architecture (`AA`) | SwA (self-produced, Phase C) | **Baselined** (v1.0.0+) | Full artifact required — every APP-nnn must be mappable to a technology component. AA is now SwA-produced; no SA handoff required. SwA performs a consistency check (not a feasibility review) at Phase D start. |
+| Data Architecture (`DA`) | SwA (self-produced, Phase C) | **Baselined** (v1.0.0+) | Every DOB-nnn classification level requires a storage technology decision. DA is SwA-produced. |
 | Architecture Principles Register (`PR`) | Solution Architect | Baselined | Technology selections must not violate principles; overrides require principle-override ADR |
 | Safety Constraint Overlay (`SCO`) — Phase C update | CSCO | Baselined | Technology choices affecting safety constraints must be cross-referenced; some choices may be blocked |
-| Handoff acknowledgement: AA | SwA | Acknowledged | Emit `handoff.acknowledged` before Phase D work begins |
-| Handoff acknowledgement: DA | SwA | Acknowledged | Emit `handoff.acknowledged` before Phase D work begins |
 | Enterprise Standards Information Base (SIB) | `enterprise-repository/standards/` | Draft acceptable | Consult if available; absence does not block work |
 | Sprint kickoff event | PM | `sprint.started` emitted | Do not begin work before PM emits this event |
 
-**Draft inputs are not acceptable.** If AA or DA are in draft state (v0.x.x), do not begin TA production. Raise ALG-008 (S2) immediately and notify PM.
+**Self-produced artifacts:** AA and DA are produced by SwA in Phase C. At Phase D start, SwA reads their own baselined artifacts from `architecture-repository/model-entities/application/`. No handoff acknowledgement step is needed. If, for any reason, AA or DA are in draft state (v0.x.x), do not begin TA production — raise ALG-008 (S2) to PM.
 
 ---
 

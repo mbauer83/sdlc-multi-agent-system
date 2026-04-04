@@ -4,15 +4,15 @@ agent: CSCO
 name: gate-phase-c
 display-name: Phase C Safety Gate Review — Application and Data Architecture
 invoke-when: >
-  SA produces both Application Architecture (AA) and Data Architecture (DA) at version
+  SwA produces both Application Architecture (AA) and Data Architecture (DA) at version
   1.0.0 (artifact.baselined emitted for both). CSCO reviews AA and DA for application-level
   and data-governance safety, performs STAMP Level 2 analysis, authors SCO Phase C update,
   and casts the C→D gate vote. Review is triggered by whichever of AA or DA baselines last;
   CSCO awaits both before casting the gate vote.
 trigger-phases: [C]
 trigger-conditions:
-  - artifact.baselined from SA (artifact_type=application-architecture) AND artifact.baselined from SA (artifact_type=data-architecture) — both required
-  - handoff.created from SA requesting CSCO safety review of AA and DA
+  - artifact.baselined from SwA (artifact_type=application-architecture) AND artifact.baselined from SwA (artifact_type=data-architecture) — both required
+  - handoff.created from SwA requesting CSCO safety review of AA and DA
   - cq.answered resolving a blocking Phase C CSCO safety CQ
 entry-points: [EP-0, EP-A, EP-B, EP-C]
 primary-outputs:

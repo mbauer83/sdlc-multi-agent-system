@@ -50,7 +50,7 @@ The Project Manager spans all three streams as coordinator and gate authority.
 
 An Architecture Sprint is a bounded work unit that produces one or more baselined Architecture Building Blocks and their enclosing deliverable artifacts.
 
-**Primary owners:** Solution Architect (Phases A–C, H), Software Architect/PE (Phases D–F, H)  
+**Primary owners:** Solution Architect (Phases A–B, H business layer), Software Architect/PE (Phases C–F, H application/technology layer)  
 **Supporting roles:** Product Owner (Phase A–B), CSCO (all — gate authority), Project Manager (coordination)  
 **Outputs:** Baselined deliverable artifacts; updated ABBs in the Architecture Repository; CSCO sign-off where required  
 **Completes when:** All artifact readiness criteria (§8) are met and the phase gate (§7) passes  
@@ -216,7 +216,8 @@ Each ADM phase is allocated to a primary stream. Secondary streams contribute pe
 
 Phase C runs two parallel Architecture Sub-Sprints (Application and Data) which converge at the Phase C gate.
 
-**Primary stream:** Architecture (SA)  
+**Primary stream:** Architecture (SwA — Application and Data Architecture production)  
+**Consulting stream:** Architecture (SA — business-layer traceability review, max 2 iterations per sub-sprint)  
 **Objective:** Define logical application components and data architecture  
 
 **Architecture Sprint C (Application) produces:**
@@ -472,8 +473,8 @@ The following table defines all artifacts in the system. Schema files are locate
 |---|---|---|---|---|---|---|
 | `AV` | Architecture Vision | A | Deliverable | Solution Architect | `architecture-vision.schema.md` | ABB |
 | `BA` | Business Architecture | B | Deliverable | Solution Architect | `business-architecture.schema.md` | ABB |
-| `AA` | Application Architecture | C | Deliverable | Solution Architect | `application-architecture.schema.md` | ABB |
-| `DA` | Data Architecture | C | Deliverable | Solution Architect | `data-architecture.schema.md` | ABB |
+| `AA` | Application Architecture | C | Deliverable | Software Architect/PE | `application-architecture.schema.md` | ABB |
+| `DA` | Data Architecture | C | Deliverable | Software Architect/PE | `data-architecture.schema.md` | ABB |
 | `TA` | Technology Architecture | D | Deliverable | Software Architect/PE | `technology-architecture.schema.md` | ABB→SBB |
 
 #### Planning Artifacts (bridge architecture to implementation)

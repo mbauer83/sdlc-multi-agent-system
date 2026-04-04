@@ -348,6 +348,7 @@ On trigger: call `record_learning()` with `artifact-type="business-architecture"
 | Output | Path | Version at Baseline | EventStore Event |
 |---|---|---|---|
 | Business Architecture (`BA`) | `architecture-repository/business-architecture/ba-<version>.md` | 1.0.0 at Phase B gate | `artifact.baselined` |
+| Handoff to SwA (BA baselined at 1.0.0; Phase C primary input — `handoff-type: phase-C-ba-input`) | `engagements/<id>/handoff-log/` | — | `handoff.created` |
 | Handoff to CSCO (Phase B SCO update input) | `engagements/<id>/handoff-log/` | — | `handoff.created` |
 | Handoff to PM (BA baselined; Phase B gate input) | `engagements/<id>/handoff-log/` | — | `handoff.created` |
 | Phase B gate vote | EventStore | — | `gate.vote_cast` |

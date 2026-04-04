@@ -1,29 +1,31 @@
 ---
-skill-id: SA-PHASE-C-DATA
+skill-id: SA-PHASE-C-DATA-REVIEW
 agent: SA
 name: phase-c-data
-display-name: Phase C — Data Architecture
+display-name: Phase C — Data Architecture Traceability Review
 invoke-when: >
-  Phase B gate has passed and the Phase C Architecture Sprint starts; produces the Data
-  Architecture (DA) concurrently with the Application Architecture (AA sub-track).
+  SwA has produced a Data Architecture draft (0.x.x) and requests SA traceability
+  review; or SwA has baselined DA at 1.0.0 and SA has not yet cast consulting acknowledgement.
+  This skill is consulting — SA is not the primary author of DA; SwA is.
 trigger-phases: [C]
 trigger-conditions:
-  - gate.evaluated (from_phase=B, result=passed)
-  - sprint.started (phase=C)
-  - artifact.baselined (artifact-type=business-architecture, version=1.0.0)
+  - handoff.created from SwA (handoff-type=phase-C-sa-traceability-review, artifact-type=data-architecture)
+  - artifact.baselined from SwA (artifact_type=data-architecture) — fallback trigger if no explicit review handoff
 entry-points: [EP-0, EP-A, EP-B, EP-C]
-primary-outputs: [Data Architecture, Data Entity Catalog, Logical Data Model, Data Classification Register]
-complexity-class: complex
-version: 1.0.0
+primary-outputs: [SA Traceability Feedback, SA Consulting Acknowledgement]
+complexity-class: standard
+version: 1.1.0
 ---
 
-# Skill: Phase C — Data Architecture
+# Skill: Phase C — Data Architecture Traceability Review
 
 **Agent:** Solution Architect  
-**Version:** 1.0.0  
-**Phase:** C — Information Systems Architecture (Data sub-track)  
-**Skill Type:** Phase primary — artifact production  
+**Version:** 1.1.0  
+**Phase:** C — Information Systems Architecture (Data sub-track, SA consulting role)  
+**Skill Type:** Phase consulting — traceability review  
 **Framework References:** `agile-adm-cadence.md §6.4`, `framework/artifact-schemas/data-architecture.schema.md`, `raci-matrix.md §3.5`, `clarification-protocol.md`, `algedonic-protocol.md`
+
+> **Role note (Stage 4.8h):** SA is no longer the primary author of Data Architecture. SwA produces DA; SA reviews it to verify correct derivation from the Business Architecture (BA). The primary skill for DA production is `agents/software-architect/skills/phase-c-data.md`.
 
 ---
 
@@ -31,12 +33,10 @@ version: 1.0.0
 
 | Input | Source | Minimum State | Notes |
 |---|---|---|---|
-| Business Architecture (`BA`) | SA (self-produced, Phase B) | Baselined at version 1.0.0 | Hard prerequisite — DA cannot begin without baselined BA; data entities are derived from BA processes and value streams |
-| Application Architecture (`AA`) | SA (self-produced, Phase C concurrent) | Draft (0.x.x) — mutual reference with DA | DA and AA are produced concurrently; DA entity IDs are referenced by AA Interface Catalog; AA component IDs are referenced by DA data flow diagrams |
-| Requirements Register (`RR`) | Product Owner | Current (Phase C iteration) | SA reads RR for data-specific requirements: retention, sensitivity classification, sovereignty, regulatory obligations |
-| Safety Constraint Overlay (`SCO`) — Phase B update | CSCO | Baselined | Identifies which data types or data operations are safety-relevant; sets initial Safety-Critical entity classification criteria |
-| Architecture Principles Register (`PR`) | SA (self-produced, Phase A) | Version 0.1.0 or higher | Technology-independence principle is critical; data model must be technology-independent |
-| `sprint.started` event | PM | Must be emitted for the Phase C Architecture Sprint | Hard prerequisite — same sprint as AA production |
+| Data Architecture (`DA`) draft | SwA (via handoff) | Draft (0.x.x) or 1.0.0 | Full artifact required for traceability review |
+| Business Architecture (`BA`) | SA (self-produced, Phase B) | Baselined at version 1.0.0 | Every DOB-nnn must trace to at least one BPR-nnn (CRUD operation) or BOB-nnn (business object) |
+| Architecture Principles Register (`PR`) | SA (self-produced, Phase A) | Version 0.1.0 or higher | Technology-independence principle: DA must be technology-independent (no database products, storage formats) |
+| Handoff record from SwA | SwA | `handoff.created` emitted | Triggers this skill; contains review scope and draft path |
 
 ---
 
@@ -44,32 +44,22 @@ version: 1.0.0
 
 ### Required Knowledge
 
-- Business processes and data operations from BA: every BPR-nnn entry is a source of data entity identification (what data the process creates, reads, updates, or deletes).
-- Application component responsibilities from AA: `Store`-type components imply data entities; `Service`-type components imply data creation/mutation operations.
-- Regulatory classification requirements: GDPR, HIPAA, PCI-DSS, financial regulations, etc. — the SA must know which regulations apply to identify PII, health data, financial data, and other protected categories. If the regulatory jurisdiction is unknown, a blocking CQ must be raised before data classification can be completed.
-- Data retention obligations: retention periods are often legally mandated (e.g., financial records: 7 years; medical records: jurisdiction-specific). Without this knowledge, retention rules in §3.7 cannot be correctly specified.
-- Cross-border data transfer constraints: where data will reside or transit affects data sovereignty requirements.
+- Full BA Business Architecture: all BPR-nnn (business processes and their CRUD operations), BOB-nnn (business objects), BSV-nnn (business services that deliver data) — these are the SA-produced entities that every DOB-nnn must derive from.
+- Architecture Principles Register: technology-independence principle is the key SA enforcement concern.
+- Any BA data-relevant decisions: ownership of business objects across ORG units; any business process that explicitly creates or destroys data.
 
 ### Known Unknowns
 
-| Unknown | Blocking | CQ Target | DA Section Affected |
+| Unknown | Blocking | CQ Target | Impact |
 |---|---|---|---|
-| Data retention requirements (legally mandated periods for specific data categories) | Yes, for §3.7 (Governance Rules — retention rules) | User (for business policy) or CSCO (for regulatory mandates) | §3.7 |
-| Data sovereignty constraints (jurisdictional restrictions on where data may be stored or processed) | Yes, for §3.6 (Classification Register — cross-border boundaries) and §3.7 | User | §3.6, §3.7 |
-| PII categories present in the system (specific personal data categories under GDPR or equivalent) | Yes, for entity classification (§3.2) of Restricted entities | User or CSCO | §3.2, §3.6 |
-| Health data classification requirements (jurisdiction-specific) | Yes, if health domain | User or CSCO | §3.2, §3.6, §3.7 |
-| Existing data model (if migrating from a legacy system — baseline state) | Partially blocking for §3.8 (Gap Analysis); non-blocking for §3.2–§3.7 | User | §3.8 |
-| Third-party data sharing obligations (contractual data sharing agreements with external parties) | Partially — can proceed; flag as assumption | User | §3.7 |
+| DOB-nnn classification requires regulatory jurisdiction (PII, health, financial) not resolved in Phase A | No — SA flags the gap; CSCO has primary authority on regulatory classification | CSCO | SA feedback note |
+| Business object ownership ambiguous between two BA ORG units | No — SA notes the ambiguity in feedback | SwA or PM | SA feedback item |
 
 ### Clarification Triggers
 
 SA raises a CQ when:
-
-1. **Unknown data retention requirements:** RR contains no retention constraints and the domain clearly has legally mandated retention periods (finance, health, legal, HR). Blocking CQ: "What data retention periods apply to [entity type]? Is there a data retention policy in effect?"
-2. **Unknown regulatory environment for data:** The regulatory jurisdiction was not resolved in Phase A and data entities of type PII, health, or financial are identified. This is a blocking CQ — entity classification cannot be completed without it. Escalate to CSCO concurrently (CSCO may have jurisdiction information from SCO Phase B work).
-3. **Unclear data sovereignty:** The system involves users or data in multiple jurisdictions and it is unknown whether cross-border data transfer applies. Blocking CQ for §3.6 trust boundary classification.
-4. **Unknown safety-critical data:** A data entity appears to be involved in a safety-relevant process (from BA) but the SCO does not yet classify it. SA marks the entity as `Safety-Relevant: TBD` and raises a handoff to CSCO requesting classification. This is non-blocking for other entities.
-5. **Ambiguous data ownership:** Two BA processes (owned by different ORG units) both appear to be the primary author of the same logical entity. SA raises a bounded CQ: "Is [entity] created by [Process A] or [Process B]? Or is one process creating a different version of the entity?"
+1. A DOB-nnn derives from a BA business object (BOB-nnn) that does not exist in the baselined BA — phantom derivation. SA raises a CQ to SwA: "What business object does [DOB-nnn name] represent? It is not in BA v1.0.0."
+2. The DA's logical data model contains relationship structures that contradict the BA's business process model (e.g., a process-owned entity appears to be shared across two exclusive business processes). SA raises a bounded CQ to SwA and PO.
 
 ---
 
@@ -83,258 +73,128 @@ Call `query_learnings(agent="SA", phase="C", artifact_type="data-architecture")`
 
 ### Pre-condition Check
 
-1. Confirm `sprint.started` has been emitted for the Phase C Architecture Sprint.
-2. Confirm BA is at version 1.0.0 (baselined). If not, SA must halt — do not produce DA from a draft BA.
-3. Confirm AA production has begun — at minimum, the Application Component Catalog (§3.2) draft must exist, as DA identifies data entities owned by APP-nnn components.
-4. Read SCO Phase B update — identify any data entities pre-classified as Safety-Critical by CSCO.
-5. Read RR current version — note all data-specific requirements (retention, sovereignty, classification, regulatory).
+1. Confirm the DA draft or baseline has been received via handoff from SwA.
+2. Confirm BA is at version 1.0.0.
+3. Read the DA artifact in full.
+4. Read the BA's Business Object Catalog (BOB-nnn) and Business Process Catalog (BPR-nnn) — these are the primary traceability targets.
 
 ---
 
-### Step 1 — Identify All Data Entities from BA Processes and AA Components
+### Step 1 — Business-Object Traceability Check
 
-**Entity identification sources (check all):**
+For each DOB-nnn in the Data Entity Catalog:
 
-1. **BA Business Process Catalog (BPR-nnn):** Every process that creates, reads, updates, or deletes data implies at least one data entity. For each BPR-nnn, ask: "What data does this process operate on?" Add a DE-nnn for each identifiable entity.
-2. **AA Application Component Catalog — Store-type components:** Each `Store` component manages a data entity group. Ensure a corresponding DE-nnn group exists for each Store.
-3. **AA Interface Catalog (IFC-nnn):** Interfaces that carry data imply the data entities being carried. Identify all entities referenced in interface descriptions.
-4. **BA Business Services Catalog (BSV-nnn):** Services that deliver data to stakeholders imply data entities delivered. Ensure those entities are in the catalog.
-5. **RR Non-Functional Requirements:** Requirements referencing specific data types (e.g., "Customer PII must be encrypted at rest") identify entity classification requirements.
-
-Produce an initial entity list before proceeding to Step 2. Each entity on the list gets a DE-nnn identifier at this stage — IDs are stable once assigned and cross-referenced in AA.
+1. Identify what BA entity it derives from: the `Owning Application` (APP-nnn) links back to BPR-nnn/BSV-nnn via the AA. Confirm the DOB corresponds to a real information concept present in the BA (via BOB-nnn, or as the information produced/consumed by a BPR-nnn).
+2. If a DOB-nnn has no traceable BA business entity: **Gap D1 — Phantom data entity** (data entity with no business anchor).
+3. Verify the DOB's classification is internally consistent with its BA context: a data entity involved exclusively in Public business processes should rarely be classified Restricted without explicit justification. Inconsistency: **Gap D2 — Classification inconsistency** (not a hard failure, but requires SwA rationale).
+4. Verify no technology-specific data model elements appear: no database column names, no SQL types, no file formats, no storage product names. If found: **Gap D3 — Technology-independence violation**.
 
 ---
 
-### Step 2 — Author Data Entity Catalog
+### Step 2 — CRUD Coverage Check
 
-Produce DA §3.2 with all DE-nnn entries.
+Review the Data/Business Function Matrix (CRUD):
 
-Per-entity attributes (per schema §3.2):
-- `Entity ID`: DE-nnn (sequential, engagement-unique; stable once assigned)
-- `Name`: singular noun ("Customer", "Payment Transaction", "Audit Log Entry")
-- `Description`: 1–2 sentences — what information this entity represents
-- `Classification`: Public / Internal / Confidential / Restricted / Safety-Critical
-- `Owning Application`: APP-nnn — the application component responsible for the authoritative copy of this entity
-- `Retention`: policy reference (e.g., "7 years — financial record regulatory requirement") or "TBD — CQ pending"
-- `Safety-Relevant`: Yes / No / TBD
-
-**Classification guidance:**
-- **Public:** Freely accessible data; no personal information.
-- **Internal:** Organisational use only; operational data with no personal information.
-- **Confidential:** Business-sensitive or personal data not reaching the Restricted threshold; role-based access required.
-- **Restricted:** PII (under GDPR or equivalent), financial account data, health records, credentials, legally privileged data. Named-individual access; specific regulatory obligations apply.
-- **Safety-Critical:** Data whose loss, corruption, or unauthorised modification could cause a safety constraint violation (from SCO). Examples: safety log records, control system state data, emergency shutdown signals.
-
-When in doubt between classification levels: assign the higher classification. Downgrading requires explicit CSCO or legal sign-off.
-
-**Diagram Step D — Class/ER Diagram (Canonical Data Model)**
-
-Execute D1–D4 per `framework/diagram-conventions.md §5`:
-- **D1:** Call `list_artifacts(artifact_type="data-object")` to retrieve all DOB-nnn entities defined in this step. Use `search_artifacts` to identify any cross-layer application data objects (from AA) that correspond to these data entities. Call `list_connections(artifact_type="er-one-to-many")` and related ER connection types to identify existing cardinality relationships.
-- **D2:** For each DOB-nnn that will appear in the diagram, verify its `§display ###er` subsection exists. Add missing subsections via `write_artifact`; run `regenerate_macros()`.
-- **D3:** Load template via `read_framework_doc("framework/diagram-conventions.md §7.class-er")`. Call `generate_er_content(entity_ids)` and `generate_er_relations(connection_ids)` to produce PUML class blocks and cardinality lines. Include required frontmatter comment block. Write to `architecture-repository/diagram-catalog/diagrams/c-er-canonical-data-model-v1.puml` via `write_artifact`.
-- **D4:** Call `validate_diagram`; fix errors; re-validate before proceeding.
-
+1. For each BPR-nnn in the BA, verify at least one DOB-nnn has a Create (`C`) or Read (`R`) operation attributed to that process. A business process with no data operations is unusual — if intentional, it should be noted in the DA.
+2. For each DOB-nnn, verify at least one BPR-nnn creates it (`C`). An entity with no creator: either it is imported externally (SA verifies there is an external integration entry for it) or it is an orphaned entity: **Gap D4 — No creator identified**.
+3. An entity classified Restricted or Safety-Critical with a Create operation attributed to a non-safety-relevant process: **Gap D5 — Governance concern** (flag to SwA; may require CSCO attention).
 
 ---
 
-### Step 3 — Author Logical Data Model
+### Step 3 — Compose Structured Feedback
 
-Produce DA §3.3: a Logical Data Model in ArchiMate **Information Structure Viewpoint** format.
+Produce a structured feedback note addressed to SwA:
 
-Requirements (per schema §3.3):
-- All DE-nnn entities from the Data Entity Catalog represented
-- Relationships between entities typed: Association / Composition / Aggregation / Specialisation
-- Cardinality on all relationships (1:1, 1:N, M:N)
-- Key attributes listed per entity (not exhaustive — 3–7 key attributes that characterise the entity's identity and primary content; full attribute lists are detailed design, not architecture)
+```
+SA Traceability Review — Data Architecture [DA version]
+Review Date: [date]
+Reviewer: SA
 
-Rendered as structured text using ArchiMate notation described textually:
-- Entity represented as: `[DE-nnn] EntityName: (key-attribute-1, key-attribute-2, ...)`
-- Relationship represented as: `[DE-nnn] ── Relationship-Type ──> [DE-nnn] (cardinality)`
+## Summary
+[1–2 sentences: overall assessment — pass / pass with minor gaps / significant gaps requiring revision]
 
-**Technology independence constraint (hard):** The logical data model describes entities and relationships — not tables, documents, columns, or database schemas. No database product names, file formats, storage mechanisms, or persistence specifics appear here. Those belong in Phase D.
+## Findings
 
----
+### D1 — Phantom data entities (if any)
+[DOB-nnn "name"]: No traceable BA business entity or business process found.
+Correction required: identify the BA anchor or remove the entity.
 
-### Step 4 — Build Data/Business Function Matrix (CRUD)
+### D2 — Classification inconsistencies (if any)
+[DOB-nnn "name"]: Classified [level] but involved only in [Public/Internal] business processes.
+Correction required: provide rationale or adjust classification.
 
-Produce DA §3.4: a CRUD matrix showing which business processes (BPR-nnn) create, read, update, or delete which data entities (DE-nnn).
+### D3 — Technology-independence violations (if any)
+[DOB-nnn or data model element]: Contains technology-specific notation "[example]".
+Correction required: replace with logical description.
 
-Matrix notation:
-- **C** = Create (process produces a new instance of this entity)
-- **R** = Read (process reads but does not modify)
-- **U** = Update (process modifies an existing entity instance)
-- **D** = Delete or Archive (process removes or retires an entity instance)
-- Combinations: CR, RU, CRUD, etc.
-- **—** = no relationship
+### D4 — No creator identified (if any)
+[DOB-nnn "name"]: No BPR-nnn Create operation in CRUD matrix. If externally sourced: note the external source.
+Action required: identify creator or add external integration note.
 
-Validation rules:
-- Every DE-nnn must have at least one **C** operation. An entity with no Creator is either imported from an external system (note the external source in the entity description) or is orphaned (flag as a DA gap).
-- An entity classified as `Safety-Critical` that is Created by a non-safety-relevant process (BPR `Safety-Relevant: No`) is a potential inconsistency — flag to CSCO for review.
-- An entity classified as `Restricted` that is Read by more than 5 distinct processes should trigger a review comment: "Wide read access to Restricted entity — governance rule required in §3.7."
+### D5 — Governance concerns (if any)
+[DOB-nnn "name"]: [Restricted/Safety-Critical] entity created by non-safety-relevant process [BPR-nnn].
+Action required: SwA to coordinate with CSCO; add rationale to DA.
 
----
+## No-Action Items
+[List acceptable findings — e.g., a data entity derived from a business scenario rather than a BA process is acceptable if the scenario is documented.]
 
-### Step 5 — Author Data Flow Diagrams
+## SA Consulting Acknowledgement Status
+[FEEDBACK REQUIRED — awaiting SwA revision] OR [ACKNOWLEDGED — no revision required]
+```
 
-Produce one Data Flow Diagram per major value stream (VS-nnn from BA).
-
-Per diagram requirements (per schema §3.5):
-- All DE-nnn entities involved in cross-component flows within this value stream
-- Direction of each flow (which component is source, which is destination)
-- Transformation or processing that occurs in transit (if any — e.g., "anonymisation applied before export")
-- **Trust boundaries explicitly marked:** where data moves from an internal component to an external system, from a lower-classification zone to a higher-classification zone, or across a network boundary that carries regulatory significance
-
-Trust boundary types to mark:
-- Internal-to-External: data leaving the internal network boundary to external actors or systems
-- Classification boundary: data crossing from a lower to a higher classification zone (e.g., Public data enriched with Restricted data)
-- Regulatory boundary: data crossing a jurisdiction boundary (e.g., EU→US data transfer)
-
-Rendered as structured text: list each flow step, the entity flowing, the source and destination component, the trust boundary crossed (if any), and the transformation applied.
+Emit `handoff.created` to SwA: `handoff-type=phase-C-sa-feedback`, artifact path = feedback note, review round = 1 (or 2).
 
 ---
 
-### Step 6 — Author Data Classification Register
+### Step 4 — Process SwA Revision (if applicable)
 
-Produce DA §3.6: a register of all data sensitivity boundaries identified in the data flow diagrams.
+On receipt of revised DA from SwA:
 
-For each boundary (DB-nnn):
-- `Boundary ID`: DB-nnn
-- `Type`: Internal/External / Classification-crossing / Regulatory
-- `Data Crossing Boundary`: DE-nnn list
-- `Classification`: classification of the data crossing (use the highest classification among the crossing entities)
-- `Protection Requirement`: Encryption / Anonymisation / Access control / Audit log / Consent record / Legal basis / (combinations)
-
-Every trust boundary marked in the Data Flow Diagrams (Step 5) must have a corresponding DB-nnn entry in this register. A boundary in a diagram without a register entry is an incomplete DA.
+1. Read revised DA.
+2. Verify each D1–D5 finding from the prior round has been addressed.
+3. If all material findings (D1, D3, D4) addressed: proceed to Step 5.
+4. If material findings remain: compose revised feedback (Step 3), mark review round = 2.
+5. **Maximum 2 rounds.** If D1, D3, or D4 gaps remain after round 2: raise `ALG-010` to PM. PM adjudicates. Do not proceed to SA Consulting Acknowledgement until PM resolves.
 
 ---
 
-### Step 7 — Author Data Governance Rules
+### Step 5 — SA Consulting Acknowledgement
 
-Produce DA §3.7: a catalog of data governance rules.
+When SA is satisfied (all material gaps resolved or PM-adjudicated):
 
-Required minimum rules (per schema §3.7):
-1. **Retention rules** — one rule per entity classification level (and per specific entity if regulatory mandate differs from the classification default). Must specify: entities in scope, retention period, deletion/archiving obligation, and enforcement point.
-2. **Access control rules** — one rule per entity classification level of `Confidential` and above. Must specify: who may access (role level, not individual name), under what conditions, and how access is controlled (enforcement point).
-3. **Audit logging rules** — for every entity classified `Safety-Critical` or `Restricted`. Must specify: which operations are logged (C/R/U/D), log retention period, and who has access to the logs.
-4. **Cross-border or regulatory transfer rules** — if any DB-nnn boundary is of type `Regulatory`. Must specify: the applicable regulation, the transfer mechanism (adequacy decision, contractual clauses, consent, etc.), and the enforcement point.
-
-If a required rule cannot be specified because a CQ is open (e.g., retention period unknown): write the rule structure with `[TBD — CQ: CQ-id pending]` in the specific field. The rule must be present; only the detail is TBD.
-
----
-
-### Step 8 — Author Data-Level Gap Analysis
-
-Produce DA §3.8:
-
-For each entity or entity domain:
-- `Entity / Domain`: DE-nnn or a domain group name
-- `Baseline State`: current state of this entity/domain (e.g., "Stored in legacy CRM — CSV export format" or "Does not exist — greenfield")
-- `Target State`: the target state per this DA
-- `Gap`: New (entity must be created) / Modified (entity exists but structure must change) / Deprecated (entity must be retired)
-- `Resolution`: Migrate / Cleanse / Create / Retire
-
-For a greenfield engagement: Baseline State = "Not applicable — greenfield". Gap = New for all entities.
-
-For an EP-G engagement where the existing data model is known: Baseline State = description of existing model; Gap = what must change.
-
----
-
-### Step 9 — Cross-Reference SCO Phase C Data Update; Flag Safety-Critical Entities
-
-Before baselining DA:
-
-1. For every DE-nnn marked `Safety-Relevant: Yes` or `Safety-Critical`, confirm a handoff to CSCO has been created requesting Phase C Data SCO update.
-2. Once CSCO produces the Phase C Data SCO update: read it. For each safety constraint that applies to a DE-nnn, update DA §3.9 (SCO cross-reference table):
-
-| Entity ID | Safety Constraint Reference (SCO section) |
-|---|---|
-| DE-nnn | SCO §n.n |
-
-3. Any entity still marked `Safety-Relevant: TBD` must be resolved before baseline. Raise a blocking handoff to CSCO if any TBD entries remain.
-4. Cross-check: every entity classified `Safety-Critical` must appear in the DA §3.9 SCO cross-reference table. An entity classified Safety-Critical with no SCO cross-reference is an incomplete DA and a potential ALG-001 condition.
-
----
-
-### Step 10 — Coordinate with AA for Mutual Reference Resolution
-
-Before baselineing either DA or AA, resolve all mutual reference placeholders:
-
-1. SA (wearing "DA author" hat): confirm that every DE-nnn referenced in AA Interface Catalog entries has a corresponding entry in the DA Entity Catalog.
-2. SA (wearing "AA author" hat): confirm that every `[DA-entity-TBD]` placeholder in the AA Interface Catalog has been replaced with a DE-nnn ID.
-3. Confirm: every `Store`-type APP-nnn component in the AA has a clear owning entity group in the DA Entity Catalog (`Owning Application: APP-nnn`).
-4. Confirm: the safety-relevance classification is consistent between AA and DA — if IFC-nnn is `Safety-Relevant: Yes`, the DE-nnn entities it carries should also be `Safety-Relevant: Yes` (or Safety-Critical). Flag any inconsistency to CSCO.
-
----
-
-### Step 11 — Baseline DA and Cast Phase C Gate Vote (Combined)
-
-1. Assemble all sections into `architecture-repository/data-architecture/da-1.0.0.md`.
-2. Complete summary header:
+1. Emit `handoff.created` to SwA and PM:
+   - `handoff-type: phase-C-sa-consulting-ack`
    - `artifact-type: data-architecture`
-   - `safety-relevant: true` if any DE-nnn is Safety-Relevant or Safety-Critical
-   - `csco-sign-off: true` only if safety-relevant entities are defined AND CSCO has signed off
-   - `pending-clarifications: [list open CQ-ids]`
-3. Emit `artifact.baselined` for DA at version 1.0.0.
-4. Create handoff to SwA: `handoff-type: phase-D-input` — DA is a secondary input to Technology Architecture (alongside AA). Include: Data Entity Catalog, Logical Data Model, Data Classification Register.
-5. Create handoff to PM: both AA and DA are now baselined; Phase C gate may proceed.
-
-**Cast Phase C gate vote (C→D) — ONLY after BOTH AA and DA are at version 1.0.0:**
-
-Emit `gate.vote_cast`:
-```
-gate_id: gate-C-D
-phase_from: C
-phase_to: D
-result: approved | veto
-rationale: [if veto: specific deficiency; if approved: confirmation that both AA and DA meet schema quality criteria]
-```
-
-**SA self-checklist for Phase C gate vote (combined AA + DA):**
-- [ ] Every DE-nnn is traceable to at least one BPR-nnn in the BA
-- [ ] Every DE-nnn has a classification and a retention rule (or `[TBD — CQ: id]` with PM acceptance)
-- [ ] All Safety-Critical entities are cross-referenced to the SCO (§3.9)
-- [ ] Data flows across all trust boundaries are documented in DFDs
-- [ ] DA is technology-independent — no database products, file formats, or storage mechanisms specified
-- [ ] CRUD matrix covers all in-scope BPR-nnn and DE-nnn
-- [ ] All `[AA-component-TBD]` mutual reference placeholders in DA are resolved
-- [ ] All `[DA-entity-TBD]` mutual reference placeholders in AA are resolved
-- [ ] CSCO sign-off present if Safety-Critical entities are defined
-- [ ] `pending-clarifications` is empty or all items are `assumption`-flagged with PM acceptance
-- [ ] AA is at version 1.0.0 (this gate vote covers both artifacts)
+   - `result: acknowledged`
+   - `version`: the DA version reviewed
+   - `open-items`: list D2/D5 items noted but not blocking
+2. **SA does not cast the Phase C gate vote.** The C→D gate vote covering both AA and DA is SwA's authority. SA's consulting acknowledgement (for both AA and DA) is input to the gate evaluation.
 
 ---
 
 ## Feedback Loop
 
-### CSCO Safety Review Loop (Data-Level)
+### SwA Revision Loop
 
-- **Iteration 1:** SA sends handoff of Safety-Relevant and Safety-Critical DE-nnn entries to CSCO. CSCO reviews; may add new Safety-Critical classifications or add data-level safety constraints.
-- **Iteration 2:** SA updates affected entity entries; CSCO confirms Phase C Data SCO update.
-- **Termination:** CSCO signs off; `csco-sign-off: true` in DA header.
+- **Iteration 1:** SA provides structured feedback; SwA revises DA; re-sends.
+- **Iteration 2:** SA reviews revision; if all material gaps resolved, acknowledges.
+- **Termination:** SA Consulting Acknowledgement emitted.
 - **Max iterations:** 2.
-- **Escalation:** Raise `ALG-010` if unresolved after 2 iterations. PM adjudicates. Do not baseline DA without CSCO sign-off on safety-relevant data entities.
+- **Escalation:** Raise `ALG-010` if after 2 iterations there remain D1, D3, or D4 findings. PM adjudicates.
 
-### SwA Feedback Loop (DA→TA Handoff Completeness)
+### Personality-Aware Conflict Engagement
 
-After DA is baselined and handed off to SwA for Phase D:
-
-- **Iteration 1:** SwA may return structured feedback on the DA handoff — specifically: entity classification constraints that conflict with the target storage technology, or missing data relationships required for TA schema design.
-- **Iteration 2:** SA addresses feedback; resubmits DA at incremented version (1.0.1); creates a new handoff event.
-- **Termination:** SwA acknowledges revised DA; proceeds with TA.
-- **Max iterations:** 2.
-- **Escalation:** Raise `ALG-010` if unresolved. PM adjudicates: if SwA's constraint is technology-domain, SwA's position governs (but the AA/DA must still record the logical requirement). If SwA's constraint would require a change to the logical data model (e.g., merging entities for performance), this is an architecture-layer decision and SA's position governs.
+Data architecture traceability to business objects is a business-layer concern: SA has primary authority to define what constitutes a valid business anchor for a data entity. If SwA disputes that a DOB-nnn needs a BA anchor (e.g., arguing it is a technical artifact), SA's obligation is to explain what business information the entity represents and why it should appear in the BA model. If the BOB catalog genuinely lacks the entity, that is a BA gap — SA must update the BA rather than demanding SwA trace to a non-existent entity. Conflicts on D2 (classification inconsistency) and D5 (governance concerns) default to CSCO authority when the disagreement persists beyond 1 iteration.
 
 ### Learning Generation
 
 | Trigger | Condition | Importance |
 |---|---|---|
-| `feedback-revision` | Iteration 1 feedback requires structural revision | S2 |
-| `gate-veto` | Gate vote cast Veto | S2 |
-| `algedonic` | Algedonic signal raised during this skill | S1 |
-| `incorrectly-raised-cq` | CQ raised but answer was derivable from available sources | S2 |
+| `feedback-revision` | Iteration 2 required for material D1/D3/D4 gaps | S2 |
+| `algedonic` | ALG-010 raised during this skill | S1 |
+| `incorrectly-raised-cq` | CQ raised but answer was derivable from BA | S2 |
 
-On trigger: call `record_learning()` with `artifact-type="data-architecture"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total). Governed by `framework/learning-protocol.md §3–4`.
+On trigger: call `record_learning()` with `artifact-type="data-architecture"`, error-type classified per `framework/learning-protocol.md §4`, correction in imperative first-person voice (≤300 chars/sentence, ≤3 sentences total).
 
 ---
 
@@ -342,19 +202,15 @@ On trigger: call `record_learning()` with `artifact-type="data-architecture"`, e
 
 | ID | Condition in This Skill | Severity | Action |
 |---|---|---|---|
-| ALG-001 | A data entity or data flow is identified that would violate a safety constraint in the SCO Phase B baseline (e.g., Safety-Critical data transmitted without audit logging across a trust boundary) | S1 | Halt production of the violating data flow specification; emit `alg.raised`; notify CSCO immediately and PM concurrently; do not include the violating flow in DFDs until resolved |
-| ALG-003 | During entity classification, SA identifies that the system must handle data subject to a regulatory obligation (GDPR, HIPAA, PCI-DSS, etc.) that was not identified in Phase A and for which no compliance framework is in place | S1 | Emit `alg.raised`; notify CSCO immediately and PM concurrently; halt classification of the affected entity type until CSCO assesses |
-| ALG-008 | SA detects that the DA draft (0.x.x) has been consumed by SwA as an authoritative input before Phase C gate | S2 | Emit `alg.raised`; notify PM; PM invalidates consuming artifact sections; SwA must wait for DA 1.0.0 |
-| ALG-010 | The two-iteration CSCO safety review loop on Phase C Data entities has been exhausted without resolution | S3 | Emit `alg.raised`; PM adjudicates; do not baseline DA |
-| ALG-010 | The two-iteration SwA feedback loop on DA→TA handoff has been exhausted without resolution | S3 | Emit `alg.raised`; PM adjudicates |
+| ALG-001 | A DOB-nnn classified Safety-Critical has no corresponding SCO reference visible in DA, despite a safety-relevant business process touching it | S1 | Flag to SwA and CSCO immediately; do not emit SA consulting acknowledgement until CSCO coordination is evidenced |
+| ALG-003 | SA identifies during review that the DA covers data subject to a regulatory obligation (GDPR, HIPAA, PCI-DSS) not yet addressed in SCO | S1 | Emit `alg.raised`; notify CSCO and PM; SA cannot acknowledge until CSCO assesses |
+| ALG-010 | Two review iterations exhausted with D1, D3, or D4 findings unresolved | S3 | Emit `alg.raised`; PM adjudicates |
 
 ---
 
 ## Outputs
 
-| Output | Path | Version at Baseline | EventStore Event |
-|---|---|---|---|
-| Data Architecture (`DA`) | `architecture-repository/data-architecture/da-<version>.md` | 1.0.0 at Phase C gate | `artifact.baselined` |
-| Handoff to SwA (DA → Phase D input) | `engagements/<id>/handoff-log/` | — | `handoff.created` |
-| Handoff to CSCO (Phase C data safety review) | `engagements/<id>/handoff-log/` | — | `handoff.created` |
-| Phase C gate vote (combined AA+DA) | EventStore | — | `gate.vote_cast` (emitted only when both AA and DA are at 1.0.0) |
+| Output | Path | EventStore Event |
+|---|---|---|
+| SA Structured Traceability Feedback (rounds 1–2) | `engagements/<id>/handoff-log/` | `handoff.created` |
+| SA Consulting Acknowledgement | `architecture-repository/overview/` + handoff to SwA and PM | `handoff.created` |

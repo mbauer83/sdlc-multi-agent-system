@@ -46,8 +46,8 @@ Nine specialist agents cover the full SDLC:
 |---|---|---|
 | Sales & Marketing Manager | System 4 (external intelligence) | Phase A |
 | Product Owner | System 3* (requirements authority) | Prelim, A, B, H |
-| Solution Architect | System 4 | A, B, C, H |
-| Software Architect / Principal Engineer | System 3 | D, E, F, G, H |
+| Solution Architect | System 4 | A, B, H (Phase C: traceability review, consulting) |
+| Software Architect / Principal Engineer | System 3 | C, D, E, F, G, H (application/technology layer) |
 | DevOps / Platform Engineer | System 1 | D, E, F, G |
 | Implementing Developer | System 1 | G |
 | QA Engineer | System 1 | E/F (planning), G (execution) |
@@ -62,7 +62,7 @@ Each agent's mandate, input/output contracts, entry-point behaviour, personality
 
 ## Skills and ADM Phase Alignment
 
-Each agent owns a set of skill files (`agents/<role>/skills/*.md`). A skill corresponds to a specific ADM phase or major capability — for example, the Solution Architect has skills for Phase A (Architecture Vision), Phase B (Business Architecture), Phase C (Application and Data Architecture), reverse architecture reconstruction (EP-G entry), and change management (Phase H).
+Each agent owns a set of skill files (`agents/<role>/skills/*.md`). A skill corresponds to a specific ADM phase or major capability. The **ArchiMate layer boundary is the role boundary**: the Solution Architect owns motivation, strategy, and business-layer artifacts (Phases A, B, and the business-layer track of Phase H); the Software Architect / PE owns application and technology-layer artifacts (Phase C application + data architecture, Phases D–G, and the application/technology track of Phase H). For example: the SA has skills for Phase A (Architecture Vision), Phase B (Business Architecture), Phase C traceability review (consulting — verifying that SwA's application entities correctly realise business-layer entities), reverse architecture reconstruction (EP-G), and business-layer change management (Phase H). The SwA has primary skills for Phase C (Application and Data Architecture production), Phase D (Technology Architecture), Phases E–G, and the application/technology Phase H track.
 
 Skills are the primary runtime delivery vehicle: when an agent is invoked, the orchestrator loads the relevant skill file and injects its instructions (steps, inputs, outputs, feedback loop, algedonic triggers) as the Layer 3 system prompt. Skills are authored at three complexity levels (`simple`, `standard`, `complex`) which govern their token budget. The skill loading and prompt assembly protocol is specified in `framework/agent-runtime-spec.md`.
 
@@ -86,7 +86,7 @@ Six additional entry points (EP-A through EP-H, excluding EP-0 and EP-G) handle 
 
 ### Change Management (Phase H)
 
-The Solution Architect produces Change Records; the Project Manager handles intake and routing. Phase H can trigger a return to any earlier phase. The algedonic channel provides an immediate escalation path when a change has safety implications.
+Phase H runs two parallel tracks coordinated by the Project Manager. The Solution Architect produces the business/motivation/strategy-layer Change Record and always routes a handoff to the Software Architect / PE to assess application and technology impact. The Software Architect / PE produces a separate application/technology-layer Change Record covering APP/DOB entity updates, TA revisions, and AC amendments. Both CRs cross-reference each other; the PM waits for both gate votes before closing Phase H. Phase H can trigger a return to any earlier phase. The algedonic channel provides an immediate escalation path when a change has safety implications.
 
 ### Enterprise Promotion
 
@@ -212,7 +212,7 @@ Each engagement maintains a set of role-owned work repositories under `engagemen
 
 | Repository | Owner |
 |---|---|
-| `architecture-repository/` | Solution Architect |
+| `architecture-repository/` | Co-owned: SA writes motivation/strategy/business/implementation layers; SwA writes application layer (`model-entities/application/`) in Phase C |
 | `technology-repository/` | Software Architect / PE |
 | `project-repository/` | Project Manager |
 | `safety-repository/` | CSCO |

@@ -60,7 +60,7 @@ engagements/<id>/                # Per-engagement working directory
   handoff-log/                   # Handoff event records
   algedonic-log/                 # Algedonic signal records
   work-repositories/
-    architecture-repository/     # Owner: Solution Architect (ERP v2.0 — entity files ARE the catalog)
+    architecture-repository/     # Co-owned: SA (motivation/strategy/business layers), SwA (application layer — Phase C)
       model-entities/            # ArchiMate entity files (one .md per instance; ModelRegistry built from frontmatter)
         motivation/              # Motivation entities: stakeholders, drivers, requirements, constraints, goals, principles
         strategy/                # Strategy entities: capabilities, value-streams
@@ -132,6 +132,18 @@ tests/
 
 19. **Every skill file's `## Feedback Loop` must include a `### Learning Generation` subsection.** Specifies: which §3.1/§3.2 trigger conditions apply to this skill, the default `error-type`, the `importance` floor, and the `applicability` default. Governs when and what the agent records after a feedback cycle. The `artifact-type` in every learning entry is the PRIMARY OUTPUT artifact of the skill (what's being produced), not any input artifact reviewed or consumed — this is what makes `query_learnings` retrieval work correctly. Governed by `framework/learning-protocol.md §8` and `framework/artifact-schemas/learning-entry.schema.md`. The Discovery Scan for every skill must include Step 0.L (Learnings Lookup) before Layer 1. Governed by `framework/discovery-protocol.md §2` and `§10`.
 
+## End-of-Session Checklist
+
+At the end of any work session — regardless of scope — update these three files before finishing:
+
+1. **`specs/IMPLEMENTATION_PLAN.md`** — tick completed checklist items, update the "Current State & Immediate Next Actions" section, add any new design decisions resolved.
+2. **`CLAUDE.md`** — update the Implementation Stages table status column; update any authoring rules or repository layout notes that changed.
+3. **`README.md`** — update the Agent Roles table, Work Repositories table, Skills description, and any workflow sections that reflect the current state of the system.
+
+These three files are the canonical orientation documents. If they drift from reality, the next session starts with a false picture of the system.
+
+---
+
 ## Implementation Stages (see `specs/IMPLEMENTATION_PLAN.md`)
 
 | Stage | Scope | Status |
@@ -144,8 +156,8 @@ tests/
 | 4.6 | Learning protocol (agent learnings from mistakes — generation, retrieval, synthesis, promotion) | Complete |
 | 4.6d | Learning protocol 2026 alignment (LangGraph BaseStore, semantic tier, graph connectivity, cross-agent visibility) | Complete |
 | 4.7 | Multi-target-repository support (repository-map schema, multi-repo config, discovery Layer 4 update) | Complete |
-| 4.8 | Entity Registry Pattern v2.0 (ERP): artifact-registry-design, entity-conventions, diagram-conventions; 4.8a–c/e/f complete; 4.8d complete; 4.8g pending; 4.8h (SA/SwA role boundary refactor — design review + rework) pending | Partial |
-| 4.9 | ENG-001 reference model and initial diagrams (ERP v2.0 usage example) — blocked on Stage 4.8h | Pending |
+| 4.8 | Entity Registry Pattern v2.0 (ERP): artifact-registry-design, entity-conventions, diagram-conventions; 4.8a–c/e/f complete; 4.8d complete; 4.8g pending; 4.8h (SA/SwA role boundary refactor) complete — ArchiMate layer = role boundary; Phase H split (SA business layer CR, SwA application/technology CR); Phase C primary=SwA | Partial |
+| 4.9 | ENG-001 reference model and initial diagrams (ERP v2.0 usage example) — now unblocked | Pending |
 | 5 | Python implementation layer (EventStore completion + PydanticAI agents + LangGraph orchestration + source adapters) | Pending |
 | 5.5 | Engagement dashboard (local web server + PUML rendering + filesystem monitoring) | Pending |
 | 6 | Integration testing on synthetic project | Pending |

@@ -1,8 +1,9 @@
 # Schema: Data Architecture (`DA`)
 
-**Version:** 2.0.0
+**Version:** 2.1.0
 **ADM Phase:** C (Data sub-track)
-**Owner:** Solution Architect
+**Owner:** Software Architect / Principal Engineer (SwA)
+**Reviewing agent:** Solution Architect (SA) — business-layer traceability review
 **Consumed by:** Application Architecture (AA — mutual reference), Technology Architecture (TA), Architecture Contract (AC), Safety Constraint Overlay (SCO update)
 
 ---

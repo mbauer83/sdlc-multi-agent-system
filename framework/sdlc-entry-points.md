@@ -164,16 +164,16 @@ The user provides a system design, application architecture, or data model.
 
 **Procedure:**
 1. PM marks Preliminary, Phase A, and Phase B as `externally-completed` (possibly partially).
-2. SA **reads the user's design documents** and produces Warm-Start Application Architecture (`AA-000`) and/or Data Architecture (`DA-000`):
+2. **SwA** reads the user's design documents and produces Warm-Start Application Architecture (`AA-000`) and/or Data Architecture (`DA-000`) in `architecture-repository/model-entities/application/`:
    - Maps user's components to `APP-nnn` identifiers
-   - Maps user's data entities to `DE-nnn` identifiers
+   - Maps user's data entities to `DOB-nnn` identifiers
    - Fills in the schemas as completely as possible from user's documents
    - Marks all gaps with `[UNKNOWN — CQ required]`
-3. SA produces a Warm-Start Business Architecture (`BA-000`) if the user has provided process/capability context; otherwise raises a CQ for missing business context.
-4. SA raises a full set of CQs for missing context before Phase D begins.
+3. **SA** produces a Warm-Start Business Architecture (`BA-000`) if the user has provided process/capability context; otherwise raises a CQ for missing business context. SA also performs a traceability review of SwA's AA-000 against BA-000 (consulting — same as normal Phase C flow).
+4. SA raises CQs for missing business context; SwA raises CQs for missing application/data design context.
 5. CSCO reviews the design for safety-relevant components; raises safety CQs.
 
-**Reverse tracing:** SA must verify that every component in the user's design is traceable to a business capability. Components that cannot be traced are flagged as orphaned and may indicate either a BA gap or a redundant component — the user must clarify.
+**Reverse tracing:** SA verifies that every component in SwA's AA-000 is traceable to a business capability in BA-000. Components that cannot be traced are flagged as orphaned — the user must clarify.
 
 ---
 
@@ -206,7 +206,7 @@ This is the most complex entry point because the system must reconstruct archite
    b. Produces a Warm-Start Technology Architecture (`TA-000`) reflecting what exists
    c. Infers application components and data entities where possible
    d. Raises CQs for anything that cannot be inferred from the code alone
-3. SA validates the reconstruction against any available design documents; produces Warm-Start AA and DA.
+3. **SwA** validates the reconstruction against any available design documents; produces Warm-Start AA and DA in `architecture-repository/model-entities/application/`. **SA** performs a traceability review of the Warm-Start AA/DA against any available BA context.
 4. CSCO performs a **Safety Retrospective Assessment**: reviews the existing implementation for violations of or gaps in safety constraints that should have been established in earlier phases.
 5. QA reviews existing test coverage and produces a Warm-Start Test Strategy gap assessment.
 6. PM determines the scope: is the engagement about governing existing implementation (Phase G governance), improving it (Phase H change management), or re-architecting (re-enter at Phase C or D)?

@@ -418,11 +418,11 @@ name: "PM Agent"
 version: 0.3.0
 status: draft
 phase-produced: C
-owner-agent: SA
+owner-agent: SwA
 domain: core-platform
 safety-relevant: false
-produced-by-skill: SA-PHASE-C-APP
-last-updated: 2026-04-03
+produced-by-skill: SwA-PHASE-C-APP
+last-updated: 2026-04-04
 engagement: ENG-001
 ---
 
@@ -467,11 +467,11 @@ name: "WorkflowEvent"
 version: 0.2.0
 status: draft
 phase-produced: C
-owner-agent: SA
+owner-agent: SwA
 domain: core-platform
 safety-relevant: false
-produced-by-skill: SA-PHASE-C-DATA
-last-updated: 2026-04-03
+produced-by-skill: SwA-PHASE-C-DATA
+last-updated: 2026-04-04
 engagement: ENG-001
 ---
 

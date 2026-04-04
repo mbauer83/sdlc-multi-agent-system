@@ -2,28 +2,30 @@
 skill-id: SwA-PHASE-H
 agent: SwA
 name: phase-h
-display-name: Phase H — Architecture Change Management (Technology Layer)
+display-name: Phase H — Architecture Change Management (Application & Technology Layers)
 invoke-when: >
-  SA routes a Change Record to SwA via handoff for technology-layer impact assessment; or a
-  phase.return-triggered event identifies TA or AC as affected artifacts.
+  SA routes a Phase H handoff to SwA (handoff-type=phase-h-application-technology-track)
+  following SA's business-layer CR; or a phase.return-triggered event identifies AA, DA,
+  TA, or AC as affected artifacts. SwA is co-primary for Phase H: SA owns the
+  business/motivation/strategy-layer CR; SwA owns the application/technology-layer CR.
 trigger-phases: [H]
 trigger-conditions:
-  - handoff.created (handoff-type=architecture-change-impact, to=software-architect)
-  - phase.return-triggered (affected-artifacts includes TA or AC)
+  - handoff.created (handoff-type=phase-h-application-technology-track, to=software-architect)
+  - phase.return-triggered (affected-artifacts includes AA or DA or TA or AC or application/ or technology/)
   - sprint.started (phase=H)
 entry-points: [EP-0, EP-A, EP-B, EP-C, EP-D, EP-E, EP-F, EP-G, EP-H]
-primary-outputs: [Technology Impact Assessment, Updated Technology Architecture, Updated Architecture Contract]
-complexity-class: standard
-version: 1.0.0
+primary-outputs: [Application/Technology Change Record, Updated Application Architecture Entities, Updated Technology Architecture, Updated Architecture Contract]
+complexity-class: complex
+version: 1.1.0
 ---
 
-# Skill: Phase H — Architecture Change Management (Technology Layer)
+# Skill: Phase H — Architecture Change Management (Application & Technology Layers)
 
 **Agent:** Software Architect / Principal Engineer  
-**Version:** 1.0.0  
+**Version:** 1.1.0  
 **Phase:** H — Architecture Change Management  
-**Skill Type:** Governance + Architecture revision  
-**Framework References:** `agile-adm-cadence.md §6.9`, `agile-adm-cadence.md §11`, `raci-matrix.md §3.10`, `framework/artifact-schemas/architecture-contract.schema.md`, `framework/artifact-schemas/technology-architecture.schema.md`, `algedonic-protocol.md`, `clarification-protocol.md`
+**Skill Type:** Phase co-primary — artifact production  
+**Framework References:** `agile-adm-cadence.md §6.9`, `agile-adm-cadence.md §11`, `raci-matrix.md §3.10`, `framework/artifact-schemas/architecture-contract.schema.md`, `framework/artifact-schemas/technology-architecture.schema.md`, `framework/artifact-schemas/application-architecture.schema.md`, `algedonic-protocol.md`, `clarification-protocol.md`
 
 ---
 
@@ -31,16 +33,18 @@ version: 1.0.0
 
 | Input | Source | Minimum State | Notes |
 |---|---|---|---|
-| Change Record (`CR`) | Solution Architect | Draft (CR-nnn v0.1.0+) — SA initiates; SwA receives via handoff | SA is ● for the CR; SwA is ○ (consulted). The SwA does not initiate the CR — it receives a handoff from SA |
-| Handoff acknowledgement: CR | SwA | Acknowledged | Emit `handoff.acknowledged` before Phase H assessment begins |
-| Affected TA artifact(s) | SwA | Baselined — may be revised in this phase | Identify which TA version is current and affected |
-| Affected AC artifact(s) | SwA | Baselined — may be revised in this phase | Identify all ACs whose compliance criteria may change |
+| SA's business/motivation/strategy-layer Change Record (`CR`) | Solution Architect | Draft (CR-nnn-business v0.1.0+) — SA initiates and routes via handoff | SA is ● for the business-layer CR; SwA reads it to understand the change context |
+| Handoff acknowledgement | SwA | Acknowledged | Emit `handoff.acknowledged` for SA's Phase H handoff before beginning |
+| Affected Application Architecture entities (AA) | SwA (self-read) | Baselined — from `architecture-repository/model-entities/application/` | Identify which APP/AIF/ASV entities are affected by the change |
+| Affected Data Architecture entities (DA) | SwA (self-read) | Baselined — from `architecture-repository/model-entities/application/data-objects/` | Identify which DOB entities are affected |
+| Affected TA artifact(s) | SwA (self-read) | Baselined — from `technology-repository/` | Identify which TA version is current and affected |
+| Affected AC artifact(s) | SwA (self-read) | Baselined — from `technology-repository/architecture-contract/` | Identify all ACs whose compliance criteria may change |
 | Architecture Principles Register (`PR`) | Solution Architect | Baselined | Required if the change would alter a principle-override ADR |
 | Safety Constraint Overlay (`SCO`) — current | CSCO | Baselined | Required for Safety-Critical change classification |
 | Phase G artifacts (if Phase G currently in progress) | All implementing agents | Current sprint state | Critical: assess in-flight impact immediately |
-| Change classification (from CR) | SA | As recorded in CR | Determines SwA response scope: Minor / Significant / Major / Safety-Critical |
+| Change classification (from SA's CR) | SA | As recorded in SA's CR | Determines SwA response scope: Minor / Significant / Major / Safety-Critical |
 
-**RACI note for Phase H:** SA is **●** for the Change Record. SwA is **○** (consulted). For Updated Architecture Artifacts, SA is **●** for logical-layer artifacts (AA, DA); SwA is **●** for technology-layer artifacts (TA, AC). The RACI table shows SA ● / SwA ○ for "Updated Architecture Artifacts" at the phase level — but at the artifact level, SwA owns TA and AC revisions.
+**Phase H co-ownership:** SA is **●** for the business/motivation/strategy-layer Change Record. SwA is **●** for the application/technology-layer Change Record. These are two parallel CRs coordinated by PM. SwA produces its own CR covering AA/DA/TA/AC impact; SwA is not merely consulting — it has full authorship authority for its domain.
 
 ---
 
@@ -48,8 +52,8 @@ version: 1.0.0
 
 ### Required Knowledge
 
-- The complete Change Record (CR) including: change description, affected business functions, change classification, SA's initial impact assessment, and CSCO safety determination (if Safety-Critical)
-- The current version of the TA (and all ACs in force) before assessing impact
+- SA's business-layer Change Record (CR) including: change description, affected business functions, change classification, and which application/technology artifacts SA flagged as potentially affected
+- The current versions of AA entities (APP, AIF, ASV, DOB) from `architecture-repository/model-entities/application/` and the TA and all ACs in force from `technology-repository/`
 - The change classification per `agile-adm-cadence.md §11`: Minor / Significant / Major / Safety-Critical
 - If Phase G is in progress: the current sprint's scope, the active AC, and which work packages have already been completed vs. are in-flight
 
@@ -85,23 +89,33 @@ Call `query_learnings(agent="SwA", phase="H", artifact_type="change-record")` be
 
 ---
 
-### Step 1 — Receive Change Record and Acknowledge
+### Step 1 — Receive SA Handoff and Acknowledge
 
-1.1 Receive `handoff.created` event from SA referencing the CR. Read the CR in full.
+1.1 Receive `handoff.created` event from SA (handoff-type: `phase-h-application-technology-track`) referencing SA's business-layer CR. Read SA's CR in full.
 
-1.2 Emit `handoff.acknowledged` for the CR handoff. Do not begin impact assessment until acknowledgement is recorded.
+1.2 Emit `handoff.acknowledged` for the handoff. Do not begin impact assessment until acknowledgement is recorded.
 
-1.3 Read the change classification in the CR:
-- **Minor**: technology layer unaffected → SwA provides technology confirmation to SA (Step 2); no TA/AC update required.
-- **Significant**: one or more TA artifacts affected; no safety-relevant components → SwA assesses technology-layer impact (Steps 2–5); updates TA and relevant ADRs if required.
-- **Major**: multiple phases or cross-cutting architecture decisions affected → Full impact assessment (Steps 2–5); coordinate with SA and PM; may trigger phase return to D or E.
-- **Safety-Critical**: any change to a safety-relevant component or constraint → immediately escalate to CSCO before any TA revision (Step 2a); all other work on affected components is halted.
+1.3 Read SA's change classification:
+- **Minor**: application/technology layer likely unaffected → SwA performs lightweight impact confirmation (Step 2); if confirmed unaffected, produce a short CR with `impact: none` status; no TA/AC update required.
+- **Significant**: one or more AA/DA/TA artifacts may be affected → SwA assesses full application/technology impact (Steps 2–5a); updates entities and artifacts as required.
+- **Major**: multiple phases or cross-cutting decisions affected → Full assessment (Steps 2–5a); coordinate with SA and PM; may trigger phase return to Phase C or D.
+- **Safety-Critical**: any change affecting a safety-relevant APP/DOB/TA component → immediately escalate to CSCO before any application/technology revision (Step 2a); all other work on affected components is halted.
 
 1.4 If Phase G is currently in progress, perform Step 3b (mid-sprint impact) immediately after acknowledgement, before any other step.
 
+**Revisit handling:** If this is not the first Phase H visit (`phase_visit_count > 1`), read previous Phase H records to understand cumulative change history. Assess the current change against the post-previous-change AA/DA/TA version.
+
 **Revisit handling:** If this is not the first Phase H visit for this engagement (`phase_visit_count > 1`), read the previous Phase H records to understand the cumulative change history. Ensure the current change is assessed against the post-previous-change TA version, not the original baseline.
 
-### Step 2 — Assess Technology-Layer Impact
+### Step 2 — Assess Application and Technology-Layer Impact
+
+2.0 **Application-layer assessment (AA/DA — Phase C output):** Read AA and DA entities from `architecture-repository/model-entities/application/`. For each APP-nnn, AIF-nnn, ASV-nnn, and DOB-nnn, assess:
+- Does the change require modification to component responsibilities (APP-nnn §content/Responsibility)?
+- Does the change add, remove, or rename any application service (ASV-nnn) or interface (AIF-nnn)?
+- Does the change affect the data model: new data entities, changed classifications, new relationships (DOB-nnn)?
+- Does any safety-relevant flag change?
+
+If AA/DA entities require modification, note them for the SwA CR §2.4 and for Step 4a below.
 
 2.1 For each TC-nnn component in the Technology Component Catalog, determine whether the change affects it:
 - Does the change modify a component's required functionality (requiring a different product selection)?
@@ -127,7 +141,7 @@ Call `query_learnings(agent="SwA", phase="H", artifact_type="change-record")` be
 - Affected AC sections (if Phase G in progress)
 - Recommended response: no TA update / minor TA revision / major TA revision with ADR updates / phase return required
 
-2.5 Deliver the Technology Impact Assessment to SA via handoff event. SA integrates it into the CR completion.
+2.5 Use the Technology Impact Assessment as working input to Step 3c (Application/Technology Change Record production). It is no longer delivered to SA as SwA's primary output — SA reads the completed SwA CR instead. The Technology Impact Assessment document may be optionally written to `technology-repository/` as a working note if useful, but the SwA CR is the authoritative output.
 
 ### Step 2a — Safety-Critical Change: Mandatory CSCO Coordination
 
@@ -143,14 +157,15 @@ Call `query_learnings(agent="SwA", phase="H", artifact_type="change-record")` be
 
 ### Step 3 — Prepare Technology Impact Assessment for SA
 
-3.1 The Technology Impact Assessment (produced in Step 2.4) is the SwA's contribution to SA's CR completion. Ensure it contains:
-- A clear statement of the technology-layer scope of the change
+3.1 The Technology Impact Assessment (produced in Step 2.4) feeds into Step 3c (SwA's CR). Ensure it contains:
+- A clear statement of the application/technology scope of the change
+- All affected AA/DA entities (Step 2.0) and their required changes
 - The minimum TA revision scope (what must change vs. what can remain unchanged)
 - Any new or revised ADR decisions required
 - If AC revision is required: which specific AC sections change and how
 
-3.2 Classify the technology-layer impact in the assessment using the same classification scheme as the CR (`agile-adm-cadence.md §11`):
-- If the CR is classified as Minor but the SwA finds a technology-layer impact that would require ADR revision → flag the discrepancy to SA as structured feedback; the CR classification may need to be upgraded.
+3.2 Classify the application/technology-layer impact using the same scheme as SA's CR (`agile-adm-cadence.md §11`):
+- If SA's CR is classified as Minor but SwA finds an application or technology-layer impact requiring ADR revision or AA entity updates → flag the discrepancy to SA as structured feedback; SA's CR classification may need to be upgraded.
 
 ### Step 3b — Mid-Sprint Impact Assessment (if Phase G in progress)
 
@@ -166,6 +181,31 @@ Call `query_learnings(agent="SwA", phase="H", artifact_type="change-record")` be
 - Do not close the current sprint until the impact assessment is complete and PM has directed whether to: (a) continue current sprint under the existing AC with a Phase H amendment; (b) pause in-flight work and re-issue the AC; or (c) roll back in-flight work and re-plan the sprint after AC revision.
 
 3b.4 If no in-flight work package is affected: note this in the Technology Impact Assessment; Phase G continues normally for unaffected work packages.
+
+### Step 3c — Produce Application/Technology Change Record
+
+After completing the Technology Impact Assessment (Steps 2–3), SwA produces its own Change Record for the application/technology layer. This is SwA's primary output for Phase H — not merely a technology impact document delivered to SA.
+
+3c.1 **Scope:** The SwA CR covers:
+- All affected AA entities (`APP-nnn`, `AIF-nnn`, `ASV-nnn` in `architecture-repository/model-entities/application/`)
+- All affected DA entities (`DOB-nnn` in `architecture-repository/model-entities/application/data-objects/`)
+- All affected TA artifacts and technology-layer entities (`technology-repository/`)
+- All affected ACs (`technology-repository/architecture-contract/`)
+
+3c.2 **CR structure:** Produce a CR file at `architecture-repository/change-records/cr-<id>-application-tech-0.1.0.md` using the same `change-record.schema.md` structure as SA's CR. Key fields:
+
+- `§2.2 Change Request`: reference SA's business-layer CR by artifact-id; describe the application/technology-layer interpretation of the change
+- `§2.3 Change Impact Classification`: inherit SA's classification unless SwA's assessment reveals a higher classification (in which case, notify SA and CSCO)
+- `§2.4 Affected Artifacts`: list APP/AIF/ASV/DOB/TA/AC artifacts with change required and new version
+- `§2.5 Safety Impact Analysis`: from CSCO (Step 2a), or `Not applicable` if confirmed non-safety-relevant
+- `§2.6 Decision Record`: for application/technology-layer changes, decision authority follows the same class rules; SwA is the accountable agent for application/technology artifacts
+- `§2.7 Implementation Actions`: one ACT-nnn per artifact; owner: SwA (for AA/DA entities and TA); DevOps (for infrastructure changes); QA (for test re-validation)
+
+3c.3 Create cross-reference: add a `related-cr:` field in SwA's CR referencing SA's business-layer CR artifact-id. SA's CR references SwA's CR in §2.4.
+
+3c.4 Emit `artifact.baselined` for SwA's CR at version 1.0.0 after decision authority approves.
+
+---
 
 ### Step 4 — Update TA (if Significant/Major/Safety-Critical change)
 
@@ -191,6 +231,24 @@ Call `query_learnings(agent="SwA", phase="H", artifact_type="change-record")` be
 
 4.9 Issue new handoffs to DevOps (if TC component changes affect environment provisioning) and CSCO (if safety-relevant SCO cross-reference changes).
 
+### Step 4a — Update Application Architecture Entities (if AA/DA affected)
+
+4a.1 For Minor changes with no application-layer impact: skip this step.
+
+4a.2 For Significant/Major/Safety-Critical changes with application-layer impact: open the affected AA/DA entity files from `architecture-repository/model-entities/application/`.
+
+4a.3 For each affected APP-nnn:
+- Update `§content/Responsibility` if the component's responsibilities change
+- Update `§content/Safety-Relevant` if safety classification changes
+- Update `§content/Status` if component is new, modified, or retiring
+- Increment entity version; re-emit `artifact.baselined`
+
+4a.4 For each affected AIF-nnn or ASV-nnn: update Protocol/Style, Data Entities, or Consumed By fields as required; re-emit `artifact.baselined`.
+
+4a.5 For each affected DOB-nnn: update Classification, Owning Application, Key Attributes, or Safety-Relevant; re-emit `artifact.baselined`. Notify CSCO via handoff if any Safety-Critical data entity changes.
+
+4a.6 After updating AA/DA entities: notify SA via handoff that application-layer entities have been revised and the Phase C CRUD matrix / data governance overview may need review.
+
 ### Step 5 — Update AC (if Compliance Criteria Change)
 
 5.1 If the TA revision changes the ABBs in force, authorised SBBs, or architecture constraints that are referenced in an active AC, the AC must be revised.
@@ -211,34 +269,42 @@ Call `query_learnings(agent="SwA", phase="H", artifact_type="change-record")` be
 
 5.5 For QA: if acceptance criteria change (AC §3.6), QA must assess whether tests already executed under the old criteria remain valid. SwA coordinates with QA on this.
 
-### Step 6 — Phase H Formal Gate Vote
+### Step 6 — Phase H Formal Gate Vote (Application/Technology Layer)
 
-6.1 For formal Phase H changes (Significant, Major, or Safety-Critical classification), cast a gate vote when the change cycle is complete.
+6.1 For formal Phase H changes (Significant, Major, or Safety-Critical classification), cast a gate vote when the application/technology change cycle is complete.
 
 6.2 Pre-vote checklist:
-- [ ] Technology Impact Assessment delivered to SA and integrated into CR
-- [ ] All affected TA sections revised and re-baselined (if required)
+- [ ] Application/Technology Change Record produced and approved (Step 3c)
+- [ ] All affected AA/DA entity files revised and re-baselined (if required — Step 4a)
+- [ ] All affected TA sections revised and re-baselined (if required — Step 4)
 - [ ] All new ADRs produced for changed decisions
-- [ ] All affected ACs revised and re-signed (if required)
+- [ ] All affected ACs revised and re-signed (if required — Step 5)
 - [ ] CSCO sign-off obtained for safety-relevant changes
-- [ ] In-flight sprint impact resolved (mid-sprint impact, if applicable)
+- [ ] In-flight sprint impact resolved (mid-sprint impact, if applicable — Step 3b)
 - [ ] Handoffs to DevOps (re-provisioning if required) and QA (test re-validation if required) completed
+- [ ] Handoff to SA confirming application/technology CR is complete (for SA to record in their business-layer CR cross-reference)
 
-6.3 Cast gate vote: emit `gate.vote_cast` with `gate: H-formal`, `vote: approved` (or `vote: blocked` with specific unresolved item list).
+6.3 Cast gate vote: emit `gate.vote_cast` with `gate: H-formal-application-tech`, `vote: approved` (or `vote: blocked` with specific unresolved item list).
+
+**Note:** SA casts a separate gate vote for the business/motivation/strategy layer. PM waits for both gate votes before closing Phase H.
 
 ---
 
 ## Feedback Loop
 
-### SA Change Record Completion Loop (SwA ↔ SA)
+### SwA CR ↔ SA CR Alignment Loop (SwA ↔ SA)
 
-**Purpose:** Ensure the Technology Impact Assessment fully informs the CR and any required TA updates are approved by SA before re-baselining.
+**Purpose:** Ensure the two parallel Phase H CRs (SA's business-layer + SwA's application/technology-layer) have consistent §2.4 cross-references and no scope gaps or overlaps.
 
-- **Iteration 1**: SwA delivers Technology Impact Assessment to SA. SA reviews and may identify additional logical-layer (AA/DA) impacts that affect the technology assessment. SwA revises the impact assessment if SA's feedback changes the scope.
-- **Iteration 2**: SA confirms impact assessment is complete. SwA proceeds to TA revision (if required).
-- **Termination**: SA confirms the CR is complete from the technology perspective; SwA has revised all affected TA sections.
-- **Maximum iterations**: 2. If SA's iteration-2 feedback still reveals unresolved impacts, escalate to PM as ALG-010 (S3). PM adjudicates which artifacts require revision and in what order.
-- **Escalation**: ALG-010 → PM adjudication; if the dispute requires user input (e.g., scope decision), PM batches as CQ.
+- **Iteration 1**: SwA produces application/technology CR (Step 3c) and sends completion handoff to SA. SA reviews the cross-references in §2.4 and may identify business-layer impacts SwA's CR implicitly introduces. SwA revises if SA's feedback changes the AA/DA scope.
+- **Iteration 2 (if needed)**: SA confirms alignment. SwA proceeds to TA/AA revision (if not already underway).
+- **Termination**: SA confirms both CRs are aligned on scope. Both CRs can be baselined.
+- **Maximum iterations**: 2. Escalate to PM as ALG-010 (S3) after iteration 2 without resolution. PM adjudicates using layer boundary: SA governs business-layer scope; SwA governs application/technology scope.
+- **Escalation**: ALG-010 → PM adjudication; if the dispute requires user input, PM batches as CQ.
+
+### Personality-Aware Conflict Engagement
+
+SwA and SA are co-primaries in Phase H with strictly separated domains. When scope boundary disputes arise, SwA applies the ArchiMate layer boundary rule: application and technology artifacts are SwA's domain; SwA does not defer to SA on APP/DOB/TA/AC scope decisions. If SA's iteration-1 feedback attempts to reduce SwA's application-layer scope in ways that would leave affected entities un-updated, SwA escalates to PM rather than complying. Governed by `framework/agent-personalities.md §6`.
 
 ### AC Revision Acknowledgement Loop (SwA ↔ Dev/DevOps/QA)
 
@@ -281,10 +347,12 @@ On trigger: call `record_learning()` with `artifact-type="change-record"`, error
 
 | Output | Path | Version at Revision | EventStore Event |
 |---|---|---|---|
-| Technology Impact Assessment | Delivered to SA via handoff (may be written to `technology-repository/` as a working note if retained) | — | `handoff.created` |
+| Application/Technology Change Record (SwA CR) | `architecture-repository/change-records/cr-<id>-application-tech-<version>.md` | 1.0.0 after decision authority approves | `artifact.baselined` |
+| Updated Application Architecture entities (if AA affected) | `architecture-repository/model-entities/application/{components,interfaces,services,data-objects}/` | Incremented from prior baseline | `artifact.baselined` (per entity) |
 | Updated Technology Architecture (`TA`) — if technology-layer impact | `technology-repository/technology-architecture/TA-<nnn>-<x.y.0>.md` | Incremented from prior baseline | `artifact.baselined` |
 | New / superseded ADR(s) | `technology-repository/adr-register/ADR-<nnn>-<version>.md` | 1.0.0 (new ADR) | — |
 | Updated Architecture Contract(s) — if AC compliance criteria change | `technology-repository/architecture-contract/AC-<nnn>-<x.y.0>.md` | Incremented from 1.0.0 | `artifact.baselined` |
-| H formal gate vote | EventStore | — | `gate.vote_cast` |
+| H formal gate vote (application/technology layer) | EventStore | — | `gate.vote_cast` |
+| Handoff to SA (CR alignment — always created) | `engagements/<id>/handoff-log/` | — | `handoff.created` |
 | Handoff to DevOps (re-provisioning input, if TC components changed) | `engagements/<id>/handoff-log/` | — | `handoff.created` |
-| Handoff to CSCO (if safety-relevant TA revision) | `engagements/<id>/handoff-log/` | — | `handoff.created` |
+| Handoff to CSCO (if safety-relevant AA/DA/TA revision) | `engagements/<id>/handoff-log/` | — | `handoff.created` |
