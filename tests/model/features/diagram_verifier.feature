@@ -73,6 +73,20 @@ Feature: Diagram file verification
     Then the result is invalid
     And error code "E305" is reported
 
+  Scenario: Baselined diagram referencing a draft entity causes E306
+    Given a ModelVerifier with a full registry
+    And a baselined diagram whose entity-ids-used includes a draft entity "APP-001"
+    When I verify the diagram file
+    Then the result is invalid
+    And error code "E306" is reported
+
+  Scenario: Draft diagram referencing a draft entity does not cause E306
+    Given a ModelVerifier with a full registry
+    And a draft diagram whose entity-ids-used includes a draft entity "APP-001"
+    When I verify the diagram file
+    Then the result is valid
+    And there are no errors
+
   Scenario: Batch verify_all finds errors across entity and connection files
     Given a ModelVerifier with no registry
     And an architecture repository with one valid entity and one invalid connection

@@ -9,19 +9,87 @@ governs: All diagram production across all agent roles
 
 Specifies the production, rendering, and maintenance of PlantUML (PUML) diagrams. Diagrams are **views over the model**: they select and compose entities and connections from the architecture/technology repositories and render them according to the `§display` sections in those files. No separate element catalog exists — the model IS the catalog.
 
-### Diagram type roles and cross-verification
+---
+
+## 0. Diagram Scoping and Viewpoint Composition
+
+Every diagram is a **view over the model** produced for a **specific stakeholder viewpoint**. Before authoring any diagram, answer three questions:
+
+1. **Who reads it?** The target audience determines which ArchiMate layer, which level of abstraction, and which detail density are appropriate.
+2. **What question does it answer?** A diagram that answers more than one question is almost always too large and will confuse every audience. Split it.
+3. **What phase/scope boundary does it respect?** Phase B diagrams show business-layer content; Phase C diagrams show application-layer content. Cross-layer elements appear only at boundaries (declared outside grouping rectangles) and only when required to show a realization or serving relationship.
+
+### 0.1 Diagram type roles and viewpoints
 
 No single diagram type has final authority over system behaviour. The five diagram families are **complementary and intentionally overlapping**:
 
-| Diagram type | Primary question answered | Key overlap |
-|---|---|---|
-| ArchiMate | What exists and how is it related structurally? | Shares entities with all other types |
-| ER | What are the data fields, types, and cardinalities? | Shares domain objects with ArchiMate and sequence diagrams |
-| Activity / BPMN | How does work flow through the system over time? | Overlaps with sequence diagrams (same scenario, different abstraction) |
-| Sequence | How do components interact in a specific runtime scenario? | Shares participants with ArchiMate and activity diagrams |
-| Use-case / user-story | What do stakeholders need and how do they interact? | Shares actors with ArchiMate business layer |
+| Diagram type | Primary question answered | Primary audience | Key overlap |
+|---|---|---|---|
+| ArchiMate | What exists and how is it structurally related? | Architects, tech leads | Shares entities with all other types |
+| ER | What are the data fields, types, and cardinalities? | Developers, DBAs | Shares domain objects with ArchiMate and sequence diagrams |
+| Activity / BPMN | How does work flow through the system over time? | Business analysts, process owners | Overlaps with sequence diagrams (same scenario, different abstraction) |
+| Sequence | How do components interact in a specific runtime scenario? | Developers, architects | Shares participants with ArchiMate and activity diagrams |
+| Use-case | What do stakeholders need and how do they interact? | Product owners, stakeholders | Shares actors with ArchiMate business layer |
 
-Where two diagram types cover the same component, process, or scenario, they must be mutually consistent. Deliberate overlap is the cross-verification mechanism: an application component named `EventStore` in an ArchiMate diagram must appear under the same name as a participant in sequence diagrams, as a swim-lane lane in activity diagrams, and as a class in ER diagrams if it has persisted data. Inconsistency between diagram types is an architectural error — not a tolerance to be managed.
+### 0.2 Scoping rules
+
+**Too broad:** A diagram that includes all entities in a layer (or multiple layers without a clear viewpoint) is unreadable and serves no audience. The ArchiMate overview diagram for a phase shows the structural skeleton; detail is delegated to activity, sequence, and ER diagrams scoped to specific processes or scenarios.
+
+**Too narrow:** A diagram that shows a single component in isolation, with no connections to neighbors or cross-layer realizations, adds no architectural value beyond what the entity file itself contains. A diagram must include enough context to make the shown relationships meaningful.
+
+**Scoping heuristic:**
+- Identify the **primary question** (one sentence).
+- Select only entities and connections needed to answer that question.
+- For any entity that appears, include its most important direct connections (1-hop). Omit distant connections (2+ hops) unless they are essential to the diagram's question.
+- If the diagram requires more than ~30 elements to remain readable, split into focused sub-diagrams with a note cross-referencing each other.
+
+### 0.3 Diagram output modes: update vs. new diagram vs. target/delta
+
+A sprint does not necessarily produce *new* diagrams. The correct output depends on the nature of the work:
+
+| Sprint scope | Diagram output |
+|---|---|
+| Greenfield phase (first pass through a phase) | New diagrams per the canonical set for that phase (table below) |
+| Extension or modification of an existing system | **Update existing baseline diagrams** to reflect the changed model; increment diagram version; may also add new diagrams for new viewpoints |
+| Deprecation of elements | Set `status: deprecated` on the entity or connection file — this is a **first-class lifecycle state**, not merely a pre-deletion flag. Deprecated elements are excluded from new diagrams but remain in the model for audit, traceability, and rollback. A diagram that showed a deprecated element should have it removed (diagram version incremented) or the diagram itself marked deprecated if it no longer represents any current or target state. **Every status change must emit an `artifact.updated` event** via `write_artifact`, with the payload recording the previous status, new status, and the rationale. |
+| Removal of elements from an existing system | Removal is a separate, later step: physically delete entity/connection files only after they have been deprecated *and* all diagrams and connections referencing them have been updated. If no sprint or governance decision has explicitly authorised removal, deprecation is sufficient — do not delete. Deletion must emit an `artifact.deleted` event (if supported by the EventStore version) or be recorded as an `artifact.updated` event with `status: deleted` in the payload. |
+| Scoped change request (Phase E/F/H, specific work-package) | **New target diagram** scoped to the work-package (WP-nnn), showing only the delta — *in addition to* updating the baseline; delta may include additions, modifications, and removals |
+| Revisit of a previously baselined phase | Update existing diagrams; preserve non-affected content; note revision rationale in diagram frontmatter |
+
+**Baseline vs. target diagrams:**
+- **Baseline diagram**: reflects the current approved state of the architecture (as-is or last-baselined to-be). Filename: `<phase>-<type>-<subject>-v<N>.puml`. Updated in place; version number incremented on each change.
+- **Target diagram**: reflects the intended state for a specific bounded scope — typically a work-package, plateau, or change request. Filename: `<phase>-<type>-<subject>-<wp-id>-target-v<N>.puml`. Exists alongside the baseline; archived or promoted to baseline at implementation close.
+- **Delta / change diagram**: highlights only what changes between baseline and target. Used in Phase H Change Records and Phase E gap analysis. Typically a clone of the baseline with additions coloured distinctly and removals marked deprecated.
+
+**Decision rule — update or create?**
+1. Call `list_artifacts(artifact_type="diagram")` and `search_artifacts(query)` to find any existing diagram covering the same viewpoint and scope.
+2. If a diagram exists for the same viewpoint: **update it** (read current PUML, apply changes, increment version).
+3. If the change is scoped to a work-package and the baseline must remain stable for parallel tracks: **create a target diagram** referencing the same entities with the added/changed elements clearly marked.
+4. If no existing diagram covers the viewpoint: **create a new diagram** per the canonical set below.
+
+**Event emission — mandatory for all model mutations:** Every change to an entity, connection, or diagram file — including status changes, deprecations, and removals — must be recorded via `write_artifact`, which emits `artifact.created`, `artifact.updated`, or (for logical deletion) `artifact.updated` with `status: deprecated` or `status: deleted` in the payload. No silent file edits. This is the invariant that makes engagement state fully replayable from the EventStore. Governed by `framework/architecture-repository-design.md §4.2` and `CLAUDE.md rule 22`.
+
+**Canonical minimum diagram set per ADM phase** (greenfield first pass):
+
+| Phase | Diagram | Type | Viewpoint / Audience |
+|---|---|---|---|
+| A (AV) | Motivation overlay | ArchiMate-motivation | Stakeholders, PM — why we're doing this |
+| B (BA) | Business architecture overview | ArchiMate-business | Architects, governance — role/process/service taxonomy |
+| B (BA) | Sprint lifecycle | Activity/BPMN | PM, PO — how sprints flow (roles as lanes) |
+| B (BA) | Value stream | Use-case | PO, stakeholders — what value is delivered and by whom |
+| C (AA) | Application component map | ArchiMate-application | Architects, developers — structural module map |
+| C (AA) | Domain data model | ER (class) | Developers, DBAs — persisted data structures |
+| C (AA) | CQ lifecycle | Sequence | Developers — how CQ resolution works at runtime |
+| C (AA) | Sprint review | Sequence | Architects, PM — how review decisions are processed |
+| G (IG) | Skill invocation | Sequence | Developers — how a single skill is invoked end-to-end |
+
+These are minima for a greenfield engagement. Any sprint — including those working on extensions or changes to existing systems — may produce any combination of: model entity/connection additions or modifications, updates to existing baseline diagrams (version increment), new work-package-scoped target diagrams, and additional diagrams for viewpoints not previously covered. The decision rule above (update vs. create) governs which output is appropriate in each case.
+
+### 0.4 Cross-diagram consistency
+
+Where two diagram types cover the same component, process, or scenario, they must be mutually consistent. Deliberate overlap is the cross-verification mechanism: an application component named `EventStore` in an ArchiMate diagram must appear under the same name as a participant in sequence diagrams, as a swim-lane lane in activity diagrams, and as a class in ER diagrams if it has persisted data. **Inconsistency between diagram types is an architectural error** — not a tolerance to be managed.
+
+Agents must run `list_artifacts(artifact_type="diagram")` before authoring a new diagram to check whether an existing diagram already covers the same viewpoint. A new diagram that duplicates an existing one without adding distinct scope is a model bloat error — update the existing diagram instead.
 
 ---
 
@@ -39,7 +107,7 @@ Agents author PlantUML source text directly. The model (entity and connection fi
 | Post-authoring validation | `validate_diagram` tool |
 | Rendering to SVG | `render_diagram` tool (invokes PlantUML CLI; run at sprint boundary) |
 
-**Constraint:** Every element alias used in a `.puml` file must correspond to an entity artifact-id that exists in the ModelRegistry and has the appropriate `§display ###<language>` subsection. Diagrams cannot introduce entities that the model does not contain.
+**Constraint:** Every element alias used in a `.puml` file must correspond to an entity artifact-id that exists in the ModelRegistry and has the appropriate `§display ###<language>` subsection. Diagrams cannot introduce entities that the model does not contain. **Status rules (enforced by `validate_diagram`):** a `draft` diagram may reference `draft` entities and connections — this is normal in-sprint authoring. A `baselined` diagram must reference only `baselined` entities and connections (E306/E307). Draft connections may in turn reference draft entities. The workflow is: author entities/connections/diagrams as `draft` during sprint work → call `baseline_artifact` at sprint gate pass on all artifacts in the correct dependency order (entities first, then connections, then diagrams) → the diagram may then be baselined. See §11.6 for enforcement details.
 
 ---
 
@@ -442,7 +510,7 @@ skinparam class {
 ' --- Generated from DOB entity §display ###er blocks ---
 ' (paste output of generate_er_content([DOB-001, DOB-002, DOB-003]) here)
 
-class "WorkflowEvent" as DOB-001 {
+class "WorkflowEvent" as DOB_001 {
   + id : UUID <<PK>>
   + engagement_id : String
   + event_type : String
@@ -451,13 +519,13 @@ class "WorkflowEvent" as DOB-001 {
   + payload : JSON
 }
 
-class "Engagement" as DOB-002 {
+class "Engagement" as DOB_002 {
   + id : UUID <<PK>>
   + name : String
   + entry_point : String
 }
 
-class "LearningEntry" as DOB-003 {
+class "LearningEntry" as DOB_003 {
   + id : UUID <<PK>>
   + agent_role : String
   + artifact_type : String
@@ -467,14 +535,14 @@ class "LearningEntry" as DOB-003 {
 ' --- Generated from er connection §display ###er blocks ---
 ' (paste output of generate_er_relations([DOB-001---DOB-002, DOB-001---DOB-003]) here)
 
-DOB-002 "1" -- "0..*" DOB-001 : has
-DOB-002 "1" -- "0..*" DOB-003 : records
+DOB_002 "1" -- "0..*" DOB_001 : has
+DOB_002 "1" -- "0..*" DOB_003 : records
 
 @enduml
 ```
 
 **Rules:**
-- Class aliases MUST be `DOB-nnn` artifact-ids.
+- Class aliases MUST use the **underscore form** (`DOB_nnn`), never the hyphenated artifact-id (`DOB-nnn`). PlantUML treats `-` as arithmetic in identifier contexts; hyphenated aliases cause parse errors in class body declarations and relationship lines. See §3 (Element Identity) and §10 (Alias Naming) for the general rule — it applies to all diagram languages including ER.
 - Every relationship must show cardinality on both ends (from `§display ###er` `source-cardinality`/`target-cardinality`).
 - PK/FK annotations derive from entity `§display ###er` `primary-key` and `attributes` fields.
 
@@ -608,6 +676,8 @@ stop
 - Only BPMN-compatible constructs: sequential tasks, exclusive/parallel gateways, start/stop, intermediate events.
 - Task names are verb-object phrases.
 - Decision diamond labels state the condition being tested, not the outcome.
+
+**Collective swimlane abstraction:** A swimlane may use a collective label (e.g. "External Systems", "Approval Workflow") when the diagram intentionally abstracts over which specific actor or role executes a step. This is a viewpoint choice for the diagram, not a change to any entity's identity. Each entity's `§display ###activity swimlane-label` must always reflect that entity's own name. The collective label appears only in the PUML `|…|` delimiter and in the diagram header comment that maps the lane to its represented entity-ids.
 
 ---
 
@@ -924,4 +994,62 @@ note as N_REAL
   (ApplicationService → BusinessService) is shown
   in the Phase C application architecture diagram.
 end note
+```
+
+### 11.6 Diagram Status and Element Status Consistency
+
+**Rule:** A `baselined` diagram must reference only `baselined` entities and connections. A `draft` diagram may reference `draft` entities and connections — this is normal in-sprint authoring. Draft connections may in turn reference draft entities. This forms a coherent draft-draft chain during active work.
+
+**Baselining dependency order:** Entities must be baselined before the connections that link them; connections must be baselined before the diagrams that reference them. At sprint gate pass, call `baseline_artifact` in this order: entities → connections → diagrams.
+
+**Enforcement (`validate_diagram` / `ModelVerifier`):**
+- E306: `baselined` diagram references a `draft` entity.
+- E307: `baselined` diagram references a `draft` connection.
+- These checks are skipped for `draft` diagrams (draft→draft is allowed).
+- Deprecated elements must be removed from all diagrams before or at the same time as their `deprecate_artifact` call; `validate_diagram` will flag any alias still pointing to a deprecated entity.
+
+### 11.5 Collaborative Behavior: Collaboration → Interaction → Business-Layer Target
+
+**Rule:** When multiple application (or business, or technology) elements *jointly* produce behavior that realizes a higher-level process or service, use the **Collaboration + Interaction** pattern — never individual element-to-process realization connections.
+
+**Why:** A single `ApplicationService → BusinessProcess` realization connection implies that service alone realizes the process. When the behavior requires multiple components/services working together in a structured sequence, that implication is architecturally false. The `ApplicationInteraction` element is specifically designed to represent structured collective behavior; the `ApplicationCollaboration` is the structural container of the participants. Realization must originate from the behavioral element (interaction), not the structural element (collaboration).
+
+**The mandatory three-element pattern:**
+
+| Element | ArchiMate type | Role |
+|---|---|---|
+| `ACO-NNN` | ApplicationCollaboration | *Structural* — aggregates the participating components/services |
+| `AIA-NNN` | ApplicationInteraction | *Behavioral* — the structured sequence the collaboration performs |
+| `ACO-NNN ---assignment---> AIA-NNN` | Assignment | "The collaboration is assigned to perform this interaction" |
+| `AIA-NNN ---realization---> BPR-NNN` | Realization | Cross-layer: application-layer interaction realizes business-layer process |
+
+**The same pattern applies at every ArchiMate layer:**
+- Business layer: `BCO` (BusinessCollaboration) + `BIA` (BusinessInteraction) → BusinessProcess/BusinessService
+- Application layer: `ACO` (ApplicationCollaboration) + `AIA` (ApplicationInteraction) → BusinessProcess/BusinessService
+- Technology layer: `TCO` (TechnologyCollaboration) + `TIA` (TechnologyInteraction) → ApplicationService/BusinessService
+
+**Cross-layer realization is valid in ArchiMate 3.1.** An application-layer behavioral element can realize a business-layer behavioral element. This is how application architecture justifies its relevance to business objectives. Do not restrict realization connections to within-layer pairs.
+
+**Prohibited patterns:**
+
+```
+❌  ASV-001 --realization--> BPR-002   (implies ASV-001 alone realizes the whole process)
+❌  ACO-001 --realization--> BPR-002   (collaboration is structural — realization is a behavioral relationship)
+✓   ACO-001 --aggregation--> ASV-001   (collaboration groups the participants)
+✓   ACO-001 --assignment-->  AIA-001   (collaboration is assigned to perform the interaction)
+✓   AIA-001 --realization--> BPR-002   (interaction realizes the business process)
+```
+
+**Example (ENG-001 Skill Execution):**
+```plantuml
+' Structural grouping: collaboration aggregates its service participants
+ACO_001 o-[#5C6BC0]- ASV_001 : <<aggregation>>
+ACO_001 o-[#5C6BC0]- ASV_002 : <<aggregation>>
+ACO_001 o-[#5C6BC0]- ASV_005 : <<aggregation>>
+
+' Active structure → behavior assignment
+ACO_001 -[#5C6BC0]-> AIA_001 : <<assignment>>
+
+' Cross-layer realization: application interaction → business process
+AIA_001 ..[#B8860B].>> BPR_002 : <<realization>>
 ```

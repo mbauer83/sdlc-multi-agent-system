@@ -243,6 +243,7 @@ def archimate_prefix_to_type() -> dict[str, str]:
         "RPR": "representation",
         "APP": "application-component",
         "ACO": "application-collaboration",
+        "AIA": "application-interaction",
         "APR": "application-process",
         "AFN": "application-function",
         "AEV": "application-event",

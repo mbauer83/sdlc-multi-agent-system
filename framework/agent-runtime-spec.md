@@ -219,11 +219,22 @@ All tools are defined in `src/agents/tools/`. Tool event emission is **tool-tran
 
 ### 6.2 Write Tools (scoped to owned repository)
 
-All agents use a single `write_artifact` interface. The implementation (`ArtifactReadWriterPort`) enforces the path constraint, validates ERP frontmatter and `§content`/`§display` structure on every write, and keeps ModelRegistry in sync synchronously. Writing outside the agent's owned repository path raises `RepositoryBoundaryError` and emits `ALG-007`.
+All agents use a single `write_artifact` interface for creation and updates. Status lifecycle transitions (baselining, deprecation, deletion) use dedicated tools so that event emission is unambiguous. The implementation (`ArtifactReadWriterPort`) enforces path constraints, validates ERP frontmatter and `§content`/`§display` structure on every write, and keeps ModelRegistry in sync synchronously. Writing outside the agent's owned repository path raises `RepositoryBoundaryError` and emits `ALG-007`.
+
+**Artifact status lifecycle — enforced by the port layer:**
+
+| Status | Meaning | Diagram visibility | Cross-agent reference |
+|---|---|---|---|
+| `draft` | Under active construction in the current sprint | Permitted in `draft` diagrams; **not permitted in `baselined` diagrams** (E306/E307) | Not permitted outside the producing sprint context |
+| `baselined` | Approved and stable; sprint-gate passed | Permitted | Permitted for all agents |
+| `deprecated` | No longer current; kept for audit | Must be removed from all diagrams | Not permitted in new connections or references |
 
 | Tool | Function signature | Description |
 |---|---|---|
-| `write_artifact` | `(path: str, content: str, *, upload_refs: list[str] \| None = None) → ArtifactRecord` | Writes entity/connection/overview/decision file. Validates ERP frontmatter + `§content`/`§display` structure. Auto-emits `artifact.created` (new file) or `artifact.updated` (existing file). Auto-extracts `source_evidence` from `[inferred: <source>]` annotations. Auto-emits `entity.confirmed` for reverse-arch skills. `upload_refs` links the written entity to user-uploaded files. |
+| `write_artifact` | `(path: str, content: str, *, upload_refs: list[str] \| None = None) → ArtifactRecord` | Creates or updates an entity/connection/diagram file. `status` must be `draft` — this tool does not perform status transitions. Auto-emits `artifact.created` (new file) or `artifact.updated` (existing file, no status change). Auto-extracts `source_evidence`. Auto-emits `entity.confirmed` for reverse-arch skills. |
+| `baseline_artifact` | `(artifact_id: str) → ArtifactRecord` | Transitions status from `draft` → `baselined`. Emits `artifact.baselined` with `sprint_id` from current AgentDeps. Raises `InvalidStatusTransition` if artifact is not currently `draft`. Only valid at sprint close or on explicit PM instruction. |
+| `deprecate_artifact` | `(artifact_id: str, rationale: str) → ArtifactRecord` | Transitions status from `baselined` → `deprecated`. `rationale` is required (raises `MissingDeprecationRationale` if absent). Emits `artifact.deprecated`. The agent must also update or deprecate all diagrams and connections that reference this artifact before calling this tool. |
+| `delete_artifact` | `(artifact_id: str, rationale: str) → None` | Physically removes the file. Only permitted when `status == deprecated` (`PrematureDeleteError` otherwise). Emits `artifact.deleted`. Removes artifact from ModelRegistry. |
 
 **Path constraints per agent** (enforced by `ArtifactReadWriterPort`):
 

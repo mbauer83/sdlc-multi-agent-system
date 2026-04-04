@@ -1,0 +1,151 @@
+' ---
+' artifact-id: phase-b-activity-sprint-v1
+' artifact-type: diagram
+' diagram-type: activity-bpmn
+' name: "Sprint Lifecycle — SDLC Agile ADM Sprint Flow"
+' version: 0.1.0
+' status: draft
+' phase-produced: B
+' owner-agent: SA
+' engagement: ENG-001
+' domain: core-platform
+' purpose: >
+'   Business-layer activity diagram showing the full SDLC sprint lifecycle:
+'   planning, specialist skill execution, clarification (CQ) handling,
+'   algedonic escalation, gate evaluation, sprint review, and sprint close.
+'   Swimlane participants are business-layer roles (ACT-). ACT-003 represents
+'   all specialist agent roles — any of ACT-003..ACT-010 may occupy this lane
+'   depending on which specialist is invoked for a given sprint.
+'   Primary audience: PM, PO, governance — shows "what the system does" at
+'   the business process level. Application-layer detail (how components
+'   interact) is in the Phase G sequence diagrams.
+' entity-ids-used:
+'   - ACT-001
+'   - ACT-002
+'   - ACT-003
+'   - BPR-001
+'   - BPR-002
+'   - BPR-003
+'   - BPR-004
+'   - BPR-005
+'   - BPR-006
+' ---
+@startuml phase-b-activity-sprint-v1
+
+skinparam activity {
+  BackgroundColor AliceBlue
+  BorderColor SteelBlue
+  DiamondBackgroundColor LightYellow
+  DiamondBorderColor DarkGoldenrod
+  ArrowColor SteelBlue
+  FontSize 11
+}
+skinparam swimlane {
+  BorderColor CadetBlue
+  TitleFontStyle bold
+}
+
+' ---------------------------------------------------------------------------
+' Swimlane participants — business-layer roles (ACT-)
+' swimlane-label source: §display ###activity blocks on each entity
+' ACT-001: "User"  |  ACT-002: "PM Agent"  |  ACT-003: "Specialist Agents"
+' ---------------------------------------------------------------------------
+
+|PM Agent|
+' artifact-id: ACT-002
+start
+:Read engagement profile\nand EventStore state;
+:Assess open CQs, pending\nhandoffs, gate outcomes;
+:Determine next specialist(s)\nto invoke (BPR-001);
+:Emit **sprint.started** event;
+
+repeat
+  :Invoke specialist agent\nwith assigned skill;
+
+  |Specialist Agents|
+  ' artifact-id: ACT-003 (representative — any of ACT-003..ACT-010)
+  :Retrieve prior learnings\n(Step 0.L via LearningStore);
+  :Execute Discovery Scan\n(5-layer, Step 0);
+  :Execute skill steps\n(BPR-002: Skill Execution);
+
+  if (Knowledge gap found?) then (yes)
+    :Raise Clarification\nRequest (CQ);
+
+    |User|
+    ' artifact-id: ACT-001
+    :Receive CQ on Dashboard;
+    :Provide answer\n(optionally upload file);
+
+    |Specialist Agents|
+    :Resume skill with\nanswer in context;
+  else (no)
+  endif
+
+  if (Safety or time-critical\ncondition detected?) then (yes)
+    :Emit **algedonic signal**\n(BPR-005);
+
+    |PM Agent|
+    :Route algedonic to\nCSCO and/or User\n(fast path — bypasses\nnormal sequencing);
+    :Await resolution\nbefore continuing;
+    |Specialist Agents|
+  else (no)
+  endif
+
+  :Write output artifact(s)\n(emit artifact.created/updated);
+  :Generate LearningEntry\nif feedback occurred;
+
+  |PM Agent|
+  :Receive **specialist.completed**;
+
+repeat while (More specialists\nneeded this sprint?) is (yes)
+-> no;
+
+' ---------------------------------------------------------------------------
+' Gate Evaluation (BPR-004)
+' ---------------------------------------------------------------------------
+:Collect gate votes\nfrom all agents + CSCO;
+
+if (Gate passed?) then (no — failed or deferred)
+  :Record gate outcome\n(**gate.evaluated**);
+  note right: Deferred → re-queue;\nFailed → algedonic escalation
+  stop
+else (yes)
+  :Emit **phase.transitioned**\n(if phase boundary crossed);
+  :Trigger Sprint Review\n(BPR-006);
+endif
+
+' ---------------------------------------------------------------------------
+' Sprint Review (BPR-006)
+' ---------------------------------------------------------------------------
+|User|
+:Receive sprint artifact\nlist on Dashboard;
+:Review each artifact:\napproved / needs-revision / rejected;
+
+|PM Agent|
+:Process review decisions;
+
+if (Any items need\nrevision or rejected?) then (yes)
+  :Create handoff events\nto tagged specialist agents;
+
+  |Specialist Agents|
+  :Revise artifact per\nhandoff instructions;
+  :Write revised artifact\n(emit artifact.updated);
+
+  |PM Agent|
+  :Confirm revisions\ncomplete;
+else (no)
+endif
+
+:Emit **sprint.close** event;
+:Create sprint-close snapshot;
+
+if (Engagement\ncomplete?) then (yes)
+  :Emit **engagement.completed**;
+  stop
+else (no)
+  :Begin next sprint;
+  note right: Loop back to\nsprint planning
+  stop
+endif
+
+@enduml

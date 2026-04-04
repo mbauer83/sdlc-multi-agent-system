@@ -106,6 +106,26 @@ def diagram_unknown_connection(tmp_path: Path) -> Path:
     return write_diagram(diag_dir / "phase-c-archimate-application-v1.puml", content)
 
 
+@given(
+    'a baselined diagram whose entity-ids-used includes a draft entity "APP-001"',
+    target_fixture="diagram_file",
+)
+def diagram_baselined_draft_entity(tmp_path: Path) -> Path:
+    content = VALID_ARCHIMATE_DIAGRAM.replace("' status: draft", "' status: baselined")
+    diag_dir = tmp_path / "diagram-catalog" / "diagrams"
+    return write_diagram(diag_dir / "phase-c-archimate-application-v1.puml", content)
+
+
+@given(
+    'a draft diagram whose entity-ids-used includes a draft entity "APP-001"',
+    target_fixture="diagram_file",
+)
+def diagram_draft_draft_entity(tmp_path: Path) -> Path:
+    # VALID_ARCHIMATE_DIAGRAM is already draft with APP-001 in entity-ids-used
+    diag_dir = tmp_path / "diagram-catalog" / "diagrams"
+    return write_diagram(diag_dir / "phase-c-archimate-application-v1.puml", VALID_ARCHIMATE_DIAGRAM)
+
+
 @given("an ArchiMate diagram that does not include _macros.puml", target_fixture="diagram_file")
 def diagram_no_macros(tmp_path: Path) -> Path:
     content = VALID_ARCHIMATE_DIAGRAM.replace(

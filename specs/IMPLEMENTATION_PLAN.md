@@ -901,8 +901,18 @@ The following events govern reverse-architecture and user-input persistence. The
 
 | Event type | Emitted by (tool layer) | Key payload fields | Purpose |
 |---|---|---|---|
-| `artifact.created` | `ArtifactReadWriterPort.write()` — new file | `path`, `artifact_id`, `version`, `produced_by_skill`, `source_evidence: list[str]` | Creation of any ERP entity/connection/diagram file. `source_evidence` **auto-extracted** from `[inferred: <source>]` annotations in written content — no agent parameter needed. |
-| `artifact.updated` | `ArtifactReadWriterPort.write()` — existing file | `path`, `artifact_id`, `version`, `previous_version`, `produced_by_skill`, `changed_fields: list[str]` | Every version increment. `changed_fields` derived by diffing new frontmatter against previous file on disk. |
+**Artifact status lifecycle.** Every entity, connection, and diagram file has a `status` field whose valid values are `draft | baselined | deprecated`. Status semantics are enforced by the port layer:
+- **`draft`**: under active construction in the current sprint. Cannot be referenced in connections by agents outside the producing sprint context. Cannot appear in any diagram file (draft or otherwise). Transitions to `baselined` at sprint close (gate-pass or PM explicit baseline call). Emits `artifact.created` on first write.
+- **`baselined`**: approved and stable. May appear in diagrams and be cross-referenced freely by all agents. Subsequent content edits emit `artifact.updated`; status change to `deprecated` emits `artifact.deprecated`.
+- **`deprecated`**: no longer current; excluded from new diagrams and new connections; all existing diagrams and connections referencing it must be updated or deprecated in turn. Remains in the model for audit and rollback. Physical deletion requires explicit `delete_artifact` call; emits `artifact.deleted`.
+
+| Event type | Emitted by (tool layer) | Key payload fields | Purpose |
+|---|---|---|---|
+| `artifact.created` | `ArtifactReadWriterPort.write()` — new file (status=draft) | `path`, `artifact_id`, `version`, `produced_by_skill`, `source_evidence: list[str]` | Creation of any ERP entity/connection/diagram file. `source_evidence` **auto-extracted** from `[inferred: <source>]` annotations. |
+| `artifact.updated` | `ArtifactReadWriterPort.write()` — existing file; no status transition | `path`, `artifact_id`, `version`, `previous_version`, `produced_by_skill`, `changed_fields: list[str]` | Content or version change within a stable status. `changed_fields` derived by diffing new frontmatter against previous file on disk. |
+| `artifact.baselined` | `ArtifactReadWriterPort.write()` — `status` transitions `draft` → `baselined` | `path`, `artifact_id`, `version`, `sprint_id`, `produced_by_skill` | Sprint-close or explicit PM baseline call. Auto-emitted in place of `artifact.updated` when the port detects this transition. Updates `WorkflowState.baselined_artifacts[artifact_id] = version`. |
+| `artifact.deprecated` | `ArtifactReadWriterPort.write()` — `status` transitions to `deprecated` | `path`, `artifact_id`, `previous_status`, `rationale: str`, `produced_by_skill` | First-class lifecycle event. `rationale` required — port raises `MissingDeprecationRationale` if absent. |
+| `artifact.deleted` | `ArtifactReadWriterPort.delete()` — physical file removal | `path`, `artifact_id`, `previously_deprecated_at: str`, `rationale: str`, `produced_by_skill` | Emitted on physical removal. Port enforces `status == deprecated` precondition (`PrematureDeleteError` otherwise). |
 | `source.scanned` | `scan_target_repo()` tool, end of scan | `scan_scope: list[str]`, `target_repo_id: str \| None`, `external_source_ids: list[str]`, `triggered_by_skill: str`, `file_count: int` | Audit record of EP-G discovery scan. Emitted by the tool; skill files call `scan_target_repo()` as before. |
 | `entity.confirmed` | `ArtifactReadWriterPort.write()` when `active_skill_id` ∈ `{SA-REV-*, SWA-REV-*}` | `artifact_id`, `confirmation_method: "user" \| "auto"` | Post-confirmation entity write in a reverse-arch context. `confirmation_method` = `"user"` if a `cq.answered` event exists for this skill invocation; `"auto"` otherwise. Minimal payload — fully derivable from tool context. |
 | `upload.registered` | `UserInputGateway` POST /uploads | `upload_id`, `file_path: str`, `mime_type: str`, `original_filename: str`, `referenced_by_cq: str \| None` | User file upload. File content at `engagements/<id>/user-uploads/<upload_id>/`; event is the reference. |
@@ -942,8 +952,11 @@ The following events govern reverse-architecture and user-input persistence. The
 
   | Event type | Produced by | `WorkflowState` update |
   |---|---|---|
-  | `artifact.created` | `ArtifactReadWriterPort.write()` — new file | append to `baselined_artifacts` |
-  | `artifact.updated` | `ArtifactReadWriterPort.write()` — existing file | update version in `baselined_artifacts` |
+  | `artifact.created` | `ArtifactReadWriterPort.write()` — new file (status=draft) | track in draft set; not yet in `baselined_artifacts` |
+  | `artifact.updated` | `ArtifactReadWriterPort.write()` — content change, no status transition | update version in `baselined_artifacts` if already baselined |
+  | `artifact.baselined` | `ArtifactReadWriterPort.write()` — `draft → baselined` | add/update `baselined_artifacts[artifact_id] = version` |
+  | `artifact.deprecated` | `ArtifactReadWriterPort.write()` — status → `deprecated` | remove from `baselined_artifacts`; add to `deprecated_artifacts` set |
+  | `artifact.deleted` | `ArtifactReadWriterPort.delete()` | remove from `deprecated_artifacts`; audit only |
   | `source.scanned` | Reverse-arch skill Step 0 | no state change; audit only |
   | `entity.confirmed` | Reverse-arch skill Step 3 | flag entity as user-confirmed in artifact metadata |
   | `upload.registered` | `UserInputGateway` POST /uploads | append to `registered_uploads: list[str]` |
@@ -1270,24 +1283,28 @@ sprint-review:
 
 ## Current State & Immediate Next Actions
 
-**Stages 1–4.9e complete. ModelVerifier complete. Stage 4.9f partial (2/7 diagrams done, phase-b fully connected). `src/common/model_query.py` (ModelRepository query engine) complete. Stage 4.9g–h and Stage 5 pending.**
+**Stages 1–4.9e complete. ModelVerifier complete (71 BDD tests). Stage 4.9f partial (4/7 diagrams done). `src/common/model_query.py` (ModelRepository query engine) complete. Stage 4.9g–h and Stage 5 pending.**
 
-### Completed this session (2026-04-04, continued — session 3)
+### Completed this session (2026-04-04, continued — session 4)
 
 - **`src/common/model_query.py`** — `ModelRepository`: full in-memory indexed registry for model-entities, connections, and diagrams. Provides `list_entities/connections/diagrams(**filter)`, `get_entity/connection/diagram(id)`, `find_connections_for(entity_id, direction)`, `find_neighbors(entity_id, max_hops)`, `search(query)` (keyword TF-IDF + synonym expansion), and the framework-aligned `list_artifacts(**filter)` / `read_artifact(id, mode)` / `search_artifacts(query)` API from `framework/discovery-protocol.md §1.2–§1.3`. `ArtifactSummary` lightweight record type. `SemanticSearchProvider` Protocol for future sqlite-vec integration. CLI: `python -m src.common.model_query <stats|entities|connections|diagrams|get|graph|search>`. 36 BDD tests passing.
-- **`src/common/domain_vocabulary.py`** — canonical SDLC domain vocabulary: bidirectional synonym map covering agent abbreviations (PM ↔ project manager), protocol/concept abbreviations (CQ ↔ clarification, ALG ↔ algedonic), ArchiMate artifact-id prefixes (BPR ↔ business process), and common domain concepts. `expand_tokens()` public API. `agent_abbreviations()` and `archimate_prefix_to_type()` lookup tables. Imported by `model_query.py`; designed for future use by `LearningStore.query_learnings` and any NLP pipeline operating on framework text.
+- **`src/common/domain_vocabulary.py`** — canonical SDLC domain vocabulary: bidirectional synonym map covering agent abbreviations (PM ↔ project manager), protocol/concept abbreviations (CQ ↔ clarification, ALG ↔ algedonic), ArchiMate artifact-id prefixes (BPR ↔ business process), and common domain concepts. `expand_tokens()` public API. `agent_abbreviations()` and `archimate_prefix_to_type()` lookup tables. `AIA` prefix added for ApplicationInteraction. Imported by `model_query.py`.
+
+- **`src/common/model_verifier.py` — E306/E307 draft-reference checks**: `ModelRegistry` now provides `entity_status(id)` and `connection_status(id)` — each uses a targeted single-file lookup when the full cache is cold (O(1) cache hit; O(n) walk only on cold miss), avoiding full scans for individual status checks. Bulk access via `entity_statuses()` / `connection_statuses()` triggers one lazy scan and caches results. E306 (baselined diagram references draft entity) and E307 (baselined diagram references draft connection) added to `_check_diagram_references`; both are suppressed for draft diagrams (draft→draft-element is allowed during in-sprint authoring). 2 new BDD scenarios; 71 tests passing.
+
+- **PlantUML alias hyphen-vs-underscore fix**: `phase-c-class-er-v1.puml` corrected: all PUML element aliases changed from `DOB-NNN` (hyphen) to `DOB_NNN` (underscore); PlantUML treats `-` as arithmetic in identifier contexts. `framework/diagram-conventions.md §7.er` template and rule updated to match (was incorrectly specifying hyphenated aliases).
 
 - **Entity filename convention** — New format `[TYPEABBR-###].[friendly-name].md` adopted. All 98 entity files renamed; BCO-001 (formerly ACT-011) renamed with correct prefix. `src/common/model_verifier.py` updated: `entity_id_from_path()` public utility added (single point for formal-ID extraction from filename, ignoring friendly-name suffix); `_check_artifact_id_entity()` now validates filename prefix (E104); `ModelRegistry.find_file_by_id()` added. `framework/artifact-registry-design.md §3.0` documents the convention. BDD test suite updated: 33 tests passing.
 - **BCO-001 (Architecture Board) correction** — BusinessCollaboration prefix corrected from `ACT` → `BCO` per artifact-registry-design.md §4. Entity file renamed, frontmatter `artifact-id` updated, alias `BCO_001` in `§display`. Connection `ACT-011---BPR-007.md` renamed to `BCO-001---BPR-007.md`. `_macros.puml` regenerated (`DECL_BCO_001` now correct). BCO-001 entity content updated: User is explicitly head/final authority of the Architecture Board; SA and SwA are participating members.
 - **Phase-B diagram — complete connectivity** — `phase-b-archimate-business-v1.puml` updated to v0.3.0: 9 new assignment connections (all specialist roles now assigned to BPR-002; CSCO additionally to BPR-004/005; PM to BPR-005); all 5 orphan BSVs realised by BPR-002; BPR-008 realises BSV-001; 7 new BPR→CAP realization connections (cross-layer, steel blue). 9 new assignment + 7 new BPR→CAP realization connection files created. Total: 17 assignment + 22 realization connection files. No entity in phase-b is now unconnected. ModelVerifier: 204 files, 0 errors.
 - **README + diagram-conventions.md** — Activity diagram description corrected to cover three scopes: (1) external business processes of the client organisation (Phase B), (2) process logic within the software being built (Phase C), (3) ENG-001 meta-level (framework orchestration, binding spec for `src/orchestration/`). `diagram-conventions.md §7.activity-bpmn` updated with separate business-layer and application-layer templates and rules. Version bumped to 2.2.0.
 
-### Resume at: Stage 4.9f remaining 5 diagrams → 4.9g (Overview + ADRs) → Stage 5
+### Resume at: Stage 4.9f remaining 3 diagrams → 4.9g (Overview + ADRs) → Stage 5
 
 **`src/common/model_query.py` pre-empts Stage 5b `src/common/model_registry.py` (in-memory tier only).** The production Stage 5b model registry adds: SQLite FTS5 full-text index, `watchdog` filesystem listener for incremental refresh, sqlite-vec embedding tier, and thread-safety (`threading.RLock`). `model_query.py`'s `ModelRepository` provides the in-memory query API that the Stage 5b tools delegate to; the interface (`list_artifacts`, `search_artifacts`, `read_artifact`) is already production-ready and will not change.
 
 **Stage 4.9e** — ✅ Complete: 115 connection files (original 89 + 9 new assignment + 7 new BPR→CAP realization).
-**Stage 4.9f** — Partial: 2/7 diagrams done, semantically corrected, and fully connected (0 verifier errors). Remaining: `phase-c-class-er-v1.puml`, `phase-b-activity-sprint-v1.puml`, `phase-g-sequence-skill-invocation-v1.puml`, `phase-c-sequence-cq-lifecycle-v1.puml`, `phase-c-sequence-sprint-review-v1.puml`.
+**Stage 4.9f** — Partial: 4/7 diagrams done, semantically corrected, fully connected, rendered to SVG (0 verifier errors). Remaining: `phase-g-sequence-skill-invocation-v1.puml`, `phase-c-sequence-cq-lifecycle-v1.puml`, `phase-c-sequence-sprint-review-v1.puml`.
 **`_macros.puml`** — ✅ Regenerated: 99 macros, BCO_001 alias correct.
 
 **Stage 4.9** — ENG-001 reference model: entity files, connection files, `_macros.puml`, four PUML diagrams. Documents the SDLC system itself. Serves as integration test fixture. Entity ownership reflects Stage 4.8h model (SwA owns APP/DOB entities; SA owns motivation/strategy/business entities).

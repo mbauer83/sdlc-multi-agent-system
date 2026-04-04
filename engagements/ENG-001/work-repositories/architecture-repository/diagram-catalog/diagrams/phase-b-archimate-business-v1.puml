@@ -3,7 +3,7 @@
 ' artifact-type: diagram
 ' name: "Business Architecture — Agent Roles and SDLC Processes"
 ' diagram-type: archimate-business
-' version: 0.3.0
+' version: 0.4.0
 ' status: draft
 ' phase-produced: B
 ' owner-agent: SA
@@ -58,7 +58,9 @@
 '   - ACT-002---BPR-005
 '   - ACT-002---BPR-006
 '   - ACT-003---BPR-002
+'   - ACT-003---BPR-008
 '   - ACT-004---BPR-002
+'   - ACT-004---BPR-008
 '   - ACT-005---BPR-002
 '   - ACT-006---BPR-002
 '   - ACT-007---BPR-002
@@ -85,6 +87,7 @@
 '   - BPR-004---BSV-003
 '   - BPR-006---BSV-009
 '   - BPR-006---CAP-005
+'   - BPR-005---BSV-004
 '   - BPR-007---BSV-001
 '   - BPR-008---BSV-001
 '   - BPR-008---BSV-002
@@ -177,9 +180,11 @@ ACT_002 -[#B8860B]-> BPR_001 : <<assignment>>
 ACT_002 -[#B8860B]-> BPR_004 : <<assignment>>
 ACT_002 -[#B8860B]-> BPR_005 : <<assignment>>
 ACT_002 -[#B8860B]-> BPR_006 : <<assignment>>
-' SA and SwA — skill execution
+' SA and SwA — skill execution + reverse architecture
 ACT_003 -[#B8860B]-> BPR_002 : <<assignment>>
+ACT_003 -[#B8860B]-> BPR_008 : <<assignment>>
 ACT_004 -[#B8860B]-> BPR_002 : <<assignment>>
+ACT_004 -[#B8860B]-> BPR_008 : <<assignment>>
 ' Specialist agents — skill execution
 ACT_005 -[#B8860B]-> BPR_002 : <<assignment>>
 ACT_006 -[#B8860B]-> BPR_002 : <<assignment>>
@@ -210,6 +215,7 @@ BPR_002 ..[#B8860B].>> BSV_008 : <<realization>>
 BPR_003 ..[#B8860B].>> BSV_009 : <<realization>>
 BPR_004 ..[#B8860B].>> BSV_003 : <<realization>>
 BPR_006 ..[#B8860B].>> BSV_009 : <<realization>>
+BPR_005 ..[#B8860B].>> BSV_004 : <<realization>>
 BPR_007 ..[#B8860B].>> BSV_001 : <<realization>>
 BPR_008 ..[#B8860B].>> BSV_001 : <<realization>>
 BPR_008 ..[#B8860B].>> BSV_002 : <<realization>>

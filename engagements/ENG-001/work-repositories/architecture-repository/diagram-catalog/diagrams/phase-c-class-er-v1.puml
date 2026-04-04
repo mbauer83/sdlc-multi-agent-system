@@ -1,0 +1,267 @@
+' ---
+' artifact-id: phase-c-class-er-v1
+' artifact-type: diagram
+' diagram-type: class-er
+' name: "Application Data Model — Persisted Domain Objects"
+' version: 0.1.0
+' status: draft
+' phase-produced: C
+' owner-agent: SwA
+' engagement: ENG-001
+' domain: core-platform
+' purpose: >
+'   Canonical ER model for all persisted and snapshot-persisted data objects
+'   in the SDLC system. Drives Pydantic model authoring in src/models/ and
+'   SQLite schema design in src/events/. Transient / in-memory objects
+'   (AgentDeps DOB-010, SDLCGraphState DOB-012, ArtifactRecord DOB-013)
+'   are excluded — they have no ER relationships and are not independently
+'   persisted. GateVote is an embedded sub-model within DOB-007 and is
+'   shown as a compound attribute, not a separate entity.
+' entity-ids-used:
+'   - DOB-001
+'   - DOB-002
+'   - DOB-003
+'   - DOB-004
+'   - DOB-005
+'   - DOB-006
+'   - DOB-007
+'   - DOB-008
+'   - DOB-009
+'   - DOB-011
+' connection-ids-used:
+'   - DOB-002---DOB-001
+'   - DOB-004---DOB-001
+'   - DOB-009---DOB-001
+'   - DOB-009---DOB-004
+'   - DOB-009---DOB-005
+'   - DOB-009---DOB-006
+'   - DOB-009---DOB-007
+' ---
+@startuml phase-c-class-er-v1
+
+skinparam class {
+  BackgroundColor LightCyan
+  BorderColor CadetBlue
+  ArrowColor SteelBlue
+  FontSize 11
+}
+skinparam note {
+  BackgroundColor LightYellow
+  BorderColor DarkGoldenrod
+}
+
+' ---------------------------------------------------------------------------
+' Core event log — central to all persistence
+' ---------------------------------------------------------------------------
+class "WorkflowEvent" as DOB_001 {
+  + event_id : str <<PK>>
+  + event_type : str
+  + agent : str | None
+  + phase : str | None
+  + sprint_id : str | None
+  + skill_id : str | None
+  + payload : dict
+  + sequence : int
+  + timestamp : datetime
+}
+
+' ---------------------------------------------------------------------------
+' Top-level aggregate
+' ---------------------------------------------------------------------------
+class "Engagement" as DOB_002 {
+  + engagement_id : str <<PK>>
+  + entry_point : str
+  + target_repositories : list[TargetRepo]
+  + primary_repo_id : str | None
+  + sprint_review : SprintReviewConfig
+  + uploads : UploadConfig
+}
+
+' ---------------------------------------------------------------------------
+' Workflow state — reconstructed from events (snapshot-persisted)
+' ---------------------------------------------------------------------------
+class "WorkflowState" as DOB_009 {
+  + current_phase : str
+  + current_sprint : str | None
+  + phase_visit_counts : dict[str, int]
+  + open_cqs : list[ClarificationRequest]
+  + pending_handoffs : list[HandoffRecord]
+  + baselined_artifacts : dict[str, str]
+  + gate_outcomes : dict[str, GateOutcome]
+  + last_algedonic : AlgedonicSignal | None
+  + registered_uploads : list[str]
+  + upload_reference_map : dict[str, list[str]]
+  + snapshot_sequence : int | None
+}
+
+note right of DOB_009
+  Rebuilt from EventStore via replay()
+  or replay_from_latest_snapshot().
+  Serialised to SQLite snapshots table.
+end note
+
+' ---------------------------------------------------------------------------
+' Clarification Requests
+' ---------------------------------------------------------------------------
+class "ClarificationRequest" as DOB_004 {
+  + cq_id : str <<PK>>
+  + raising_agent : str
+  + skill_id : str
+  + phase : str
+  + question_text : str
+  + blocking : bool
+  + blocks_task : str | None
+  + status : Literal[open,answered,withdrawn]
+  + answer_text : str | None
+  + upload_refs : list[str]
+  + raised_at : datetime
+  + answered_at : datetime | None
+}
+
+' ---------------------------------------------------------------------------
+' Algedonic Signals (safety-relevant)
+' ---------------------------------------------------------------------------
+class "AlgedonicSignal" as DOB_005 {
+  + alg_id : str <<PK>>
+  + trigger_id : str
+  + category : str
+  + severity : Literal[S1,S2,S3]
+  + escalation_target : str
+  + raised_by : str
+  + raised_at : datetime
+  + status : Literal[active,resolved,superseded]
+  + resolution_notes : str | None
+}
+
+' ---------------------------------------------------------------------------
+' Handoff Records
+' ---------------------------------------------------------------------------
+class "HandoffRecord" as DOB_006 {
+  + handoff_id : str <<PK>>
+  + from_agent : str
+  + to_agent : str
+  + artifact_id : str
+  + artifact_type : str
+  + version : str
+  + handoff_type : str
+  + payload : dict
+  + acknowledged : bool
+  + acknowledged_at : datetime | None
+}
+
+' ---------------------------------------------------------------------------
+' Gate Outcomes (with embedded GateVote sub-model)
+' ---------------------------------------------------------------------------
+class "GateOutcome" as DOB_007 {
+  + gate_id : str <<PK>>
+  + phase_from : str
+  + phase_to : str
+  + votes : list[GateVote]
+  + result : Literal[passed,failed,deferred]
+  + evaluated_at : datetime
+  + rationale : str
+  .. embedded sub-model ..
+  ~ GateVote.agent : str
+  ~ GateVote.result : Literal[approved,veto,abstain]
+  ~ GateVote.rationale : str | None
+}
+
+note right of DOB_007
+  GateVote is an embedded sub-model
+  within GateOutcome.votes — not a
+  separate persisted table.
+end note
+
+' ---------------------------------------------------------------------------
+' Sprint Review Decisions
+' ---------------------------------------------------------------------------
+class "ReviewItem" as DOB_008 {
+  + item_id : str <<PK>>
+  + artifact_id : str
+  + artifact_type : str
+  + decision : Literal[approved,needs-revision,rejected]
+  + agent_tag : str | None
+  + comment : str | None
+}
+
+note right of DOB_008
+  Created during sprint review (BPR-006).
+  Collected per-artifact in the review
+  submission payload; embedded in the
+  review.submitted event.
+end note
+
+' ---------------------------------------------------------------------------
+' Learning Entries (file-persisted via LearningStore)
+' ---------------------------------------------------------------------------
+class "LearningEntry" as DOB_003 {
+  + learning_id : str <<PK>>
+  + agent : str
+  + phase : str
+  + artifact_type : str
+  + trigger_event : str
+  + error_type : str
+  + importance : Literal[S1,S2,S3]
+  + applicability : str
+  + correction_text : str
+  + context_text : str | None
+  + related : list[str]
+  + synthesis_superseded : str | None
+  + promoted : bool
+  + generated_at_sprint : str
+  + generated_at_engagement : str
+}
+
+note right of DOB_003
+  Stored as files in LearningStore,
+  not in EventStore SQLite. Indexed
+  by LearningStore for semantic
+  retrieval at Step 0.L.
+end note
+
+' ---------------------------------------------------------------------------
+' PM Decisions (structured agent output)
+' ---------------------------------------------------------------------------
+class "PMDecision" as DOB_011 {
+  + next_action : Literal[invoke_specialist,\nevaluate_gate,surface_cqs,\ntrigger_review,close_sprint,\ncomplete_engagement]
+  + specialist_id : str | None
+  + skill_id : str | None
+  + task_description : str
+  + reasoning : str
+  + gate_id : str | None
+}
+
+note right of DOB_011
+  Structured output from PM agent
+  tool call. Drives routing_function
+  in LangGraph. Not independently
+  persisted — captured in EventStore
+  via decision.recorded payload.
+end note
+
+' ---------------------------------------------------------------------------
+' Relationships
+' ---------------------------------------------------------------------------
+
+' Engagement generates many WorkflowEvents
+DOB_002 "1" --> "0..*" DOB_001 : generates >
+
+' ClarificationRequest emits WorkflowEvents when raised/answered
+DOB_004 "1" --> "0..*" DOB_001 : emits >
+
+' WorkflowState replays all events (via snapshot + delta)
+DOB_009 "1" --> "0..*" DOB_001 : replays >
+
+' WorkflowState tracks open CQs
+DOB_009 "1" --> "0..*" DOB_004 : open_cqs >
+
+' WorkflowState tracks last algedonic signal (zero-or-one)
+DOB_009 "1" --> "0..1" DOB_005 : last_algedonic >
+
+' WorkflowState tracks pending handoffs
+DOB_009 "1" --> "0..*" DOB_006 : pending_handoffs >
+
+' WorkflowState records gate outcomes
+DOB_009 "1" --> "0..*" DOB_007 : gate_outcomes >
+
+@enduml

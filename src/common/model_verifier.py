@@ -124,18 +124,93 @@ class ModelRegistry:
 
     def __init__(self, repo_root: Path) -> None:
         self.repo_root = repo_root
-        self._entity_ids: set[str] | None = None
-        self._connection_ids: set[str] | None = None
+        # Single cache per domain — id→status populated together on first bulk access.
+        self._entity_meta: dict[str, str] | None = None      # entity artifact-id → status
+        self._connection_meta: dict[str, str] | None = None  # connection artifact-id → status
+
+    def _ensure_entity_meta(self) -> dict[str, str]:
+        """Lazy-load the full entity id→status map (one scan, cached for lifetime)."""
+        if self._entity_meta is None:
+            self._entity_meta = {}
+            root = self.repo_root / "model-entities"
+            if root.exists():
+                for f in root.rglob("*.md"):
+                    try:
+                        fm = _parse_frontmatter_from_path(f)
+                        if fm and "artifact-id" in fm:
+                            self._entity_meta[str(fm["artifact-id"])] = str(
+                                fm.get("status", "")
+                            )
+                    except Exception:  # noqa: BLE001
+                        pass
+        return self._entity_meta
 
     def entity_ids(self) -> set[str]:
-        if self._entity_ids is None:
-            self._entity_ids = self._scan(self.repo_root / "model-entities")
-        return self._entity_ids
+        """Return the set of all known entity artifact-ids."""
+        return set(self._ensure_entity_meta().keys())
+
+    def entity_status(self, artifact_id: str) -> str | None:
+        """Return the status of a single entity without forcing a full scan.
+
+        If the full cache is already warm, uses it (O(1)).  Otherwise locates the
+        entity file directly via ``find_file_by_id`` and reads only that file —
+        efficient for spot-checks on individual entities.
+        """
+        if self._entity_meta is not None:
+            return self._entity_meta.get(artifact_id)
+        # Cache not warm — targeted single-file lookup avoids scanning everything.
+        f = self.find_file_by_id(artifact_id)
+        if f is None:
+            return None
+        fm = _parse_frontmatter_from_path(f)
+        if fm is None:
+            return None
+        status = str(fm.get("status", ""))
+        return status or None
+
+    def entity_statuses(self) -> dict[str, str]:
+        """Return a full artifact-id → status mapping (bulk; triggers full scan)."""
+        return dict(self._ensure_entity_meta())
 
     def connection_ids(self) -> set[str]:
-        if self._connection_ids is None:
-            self._connection_ids = self._scan(self.repo_root / "connections")
-        return self._connection_ids
+        """Return the set of all known connection artifact-ids."""
+        return set(self._ensure_connection_meta().keys())
+
+    def connection_status(self, artifact_id: str) -> str | None:
+        """Return the status of a single connection without forcing a full scan.
+
+        If the full cache is already warm, uses it (O(1)).  Otherwise locates the
+        connection file directly and reads only that file — efficient for
+        spot-checks on individual connections.
+        """
+        if self._connection_meta is not None:
+            return self._connection_meta.get(artifact_id)
+        # Cache not warm — targeted single-file lookup.
+        root = self.repo_root / "connections"
+        if root.exists():
+            for f in root.rglob("*.md"):
+                if f.stem == artifact_id:
+                    fm = _parse_frontmatter_from_path(f)
+                    if fm:
+                        return str(fm.get("status", "")) or None
+        return None
+
+    def _ensure_connection_meta(self) -> dict[str, str]:
+        """Lazy-load the full connection id→status map (one scan, cached)."""
+        if self._connection_meta is None:
+            self._connection_meta = {}
+            root = self.repo_root / "connections"
+            if root.exists():
+                for f in root.rglob("*.md"):
+                    try:
+                        fm = _parse_frontmatter_from_path(f)
+                        if fm and "artifact-id" in fm:
+                            self._connection_meta[str(fm["artifact-id"])] = str(
+                                fm.get("status", "")
+                            )
+                    except Exception:  # noqa: BLE001
+                        pass
+        return self._connection_meta
 
     @staticmethod
     def _scan(root: Path) -> set[str]:
@@ -674,18 +749,43 @@ def _check_reference_resolution(
 def _check_diagram_references(
     fm: dict, registry: ModelRegistry, result: VerificationResult, loc: str
 ) -> None:
-    """Check entity-ids-used and connection-ids-used against the registry."""
+    """Check entity-ids-used and connection-ids-used against the registry.
+
+    Status rules (draft-reference checks):
+    - E306: a ``baselined`` diagram references a ``draft`` entity.
+    - E307: a ``baselined`` diagram references a ``draft`` connection.
+
+    These checks are only enforced when the diagram itself is ``baselined``.
+    A ``draft`` diagram may freely reference ``draft`` entities and connections —
+    this is normal in-sprint work.  Connections may also reference draft entities
+    (they are created alongside the entities they link).  Once a diagram is
+    baselined it represents a frozen snapshot, so all referenced entities and
+    connections must themselves be baselined.
+    """
+    diagram_status = str(fm.get("status", ""))
+    diagram_is_baselined = diagram_status == "baselined"
+
     if "entity-ids-used" in fm:
         entity_ids = fm["entity-ids-used"]
         if isinstance(entity_ids, list):
             known = registry.entity_ids()
             for eid in entity_ids:
-                if str(eid) not in known:
+                eid_str = str(eid)
+                if eid_str not in known:
                     result.issues.append(Issue(
                         Severity.ERROR, "E301",
                         f"entity-ids-used references unknown entity '{eid}'",
                         loc,
                     ))
+                elif diagram_is_baselined:
+                    status = registry.entity_status(eid_str)
+                    if status == "draft":
+                        result.issues.append(Issue(
+                            Severity.ERROR, "E306",
+                            f"baselined diagram references draft entity '{eid}' — "
+                            "all entities in a baselined diagram must be baselined",
+                            loc,
+                        ))
         elif entity_ids is not None:
             result.issues.append(Issue(
                 Severity.WARNING, "W303",
@@ -698,12 +798,22 @@ def _check_diagram_references(
         if isinstance(conn_ids, list):
             known = registry.connection_ids()
             for cid in conn_ids:
-                if str(cid) not in known:
+                cid_str = str(cid)
+                if cid_str not in known:
                     result.issues.append(Issue(
                         Severity.ERROR, "E302",
                         f"connection-ids-used references unknown connection '{cid}'",
                         loc,
                     ))
+                elif diagram_is_baselined:
+                    status = registry.connection_status(cid_str)
+                    if status == "draft":
+                        result.issues.append(Issue(
+                            Severity.ERROR, "E307",
+                            f"baselined diagram references draft connection '{cid}' — "
+                            "all connections in a baselined diagram must be baselined",
+                            loc,
+                        ))
         elif conn_ids is not None:
             result.issues.append(Issue(
                 Severity.WARNING, "W304",

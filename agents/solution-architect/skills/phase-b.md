@@ -141,10 +141,16 @@ When in doubt: mark as `Safety-Relevant: Yes`. The CSCO will review and may down
 
 Safety-relevant processes must be cross-referenced in the SCO Phase B update produced by CSCO.
 
+**Realization rule — collaborative business behavior (mandatory):** When multiple business roles or actors *jointly* perform a business process in a structured sequence, use the BusinessCollaboration + BusinessInteraction pattern (see `framework/diagram-conventions.md §11.5`):
+1. Create `BCO-nnn` (BusinessCollaboration in `model-entities/business/collaborations/`) grouping the participating roles/actors.
+2. Create `BIA-nnn` (BusinessInteraction in `model-entities/business/interactions/`) describing the structured sequence.
+3. Connect: `BCO-nnn --assignment--> BIA-nnn` and `BIA-nnn --realization--> BSV-nnn` or `BIA-nnn --realization--> BPR-nnn` as appropriate.
+Do NOT create individual `BPR-nnn --realization--> BSV-nnn` connections when the realization requires multiple actors collaborating in a structured flow.
+
 **Diagram Step D — Activity/BPMN Process Diagrams**
 
 Execute D1–D4 per `framework/diagram-conventions.md §5`:
-- **D1:** Call `list_artifacts(artifact_type="business-process", filter={"safety-relevant": true})` and `list_artifacts(artifact_type="business-actor")` to identify swimlane participants and safety-relevant processes. Include other key processes via `search_artifacts`.
+- **D1:** Call `list_artifacts(artifact_type="business-process", filter={"safety-relevant": true})`, `list_artifacts(artifact_type="business-interaction")`, and `list_artifacts(artifact_type="business-actor")` to identify swimlane participants and safety-relevant processes. Include other key processes via `search_artifacts`.
 - **D2:** For each BPR-nnn and ACT-nnn that will appear, verify `§display ###activity` subsections exist. Add missing subsections via `write_artifact`; run `regenerate_macros()`.
 - **D3:** Load template via `read_framework_doc("framework/diagram-conventions.md §7.activity-bpmn")`. For each process flagged `safety-relevant: true` and other key processes, author an Activity/BPMN diagram with swimlane pools keyed to entity artifact-ids. Include required frontmatter comment block. Write to `architecture-repository/diagram-catalog/diagrams/b-bpmn-<bpr-id>-v1.puml` via `write_artifact`.
 - **D4:** Call `validate_diagram`; fix errors; re-validate before proceeding.

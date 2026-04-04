@@ -113,7 +113,13 @@ For each component (APP-nnn entity file in `architecture-repository/model-entiti
 - `safety-relevant`: Yes / No / TBD (TBD if CSCO Phase B safety review is incomplete)
 - `status`: New / Existing / Modified / Retiring
 
-Cross-reference: every BPR-nnn must be realisable by at least one APP-nnn. After producing the initial component list, do a reverse check against the BA Business Process Catalog — any process with no corresponding component is an AA gap.
+Cross-reference: every BPR-nnn must be realisable by at least one APP-nnn or, for collaborative multi-service behavior, by an AIA-nnn (ApplicationInteraction). After producing the initial component list, do a reverse check against the BA Business Process Catalog — any process with no realizing element is an AA gap.
+
+**Realization rule — collaborative behavior (mandatory):** When multiple application services jointly realize a business process, use the Collaboration + Interaction pattern (see `framework/diagram-conventions.md §11.5`):
+1. Create `ACO-nnn` (ApplicationCollaboration in `model-entities/application/collaborations/`) aggregating the participating services.
+2. Create `AIA-nnn` (ApplicationInteraction in `model-entities/application/interactions/`) describing the structured sequence those services perform.
+3. Connect: `ACO-nnn --assignment--> AIA-nnn` and `AIA-nnn --realization--> BPR-nnn`.
+Do NOT create individual `ASV-nnn --realization--> BPR-nnn` connections when the realization requires multiple services acting together.
 
 Write each entity as an ERP-compliant `.md` file: `architecture-repository/model-entities/application/components/APP-nnn.md`.
 
