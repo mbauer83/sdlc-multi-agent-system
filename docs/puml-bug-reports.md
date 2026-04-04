@@ -149,6 +149,45 @@ skinparam rectangle<<ApplicationComponent>> {
 
 ---
 
+## PB-005 — `!define` macros expand in connection lines, not just declarations
+
+**Severity:** Silent misrender / syntax error — connection lines become invalid declarations.
+
+**Affected versions:** Confirmed 1.2025.2 and 1.2025.10.
+
+**Symptom (1.2025.10):** Diagram shows macro-expanded text in connection lines:
+```
+rectangle "SkillLoader" <<ApplicationComponent>> as APP_004 -[#5C6BC0]-> rectangle "PM Agent" <<ApplicationComponent>> as APP_007
+```
+Error SVG produced. In 1.2025.2, the diagram silently renders as an activity diagram with wrong content.
+
+**Root cause:** PlantUML `!define` is a pure text preprocessor macro — it replaces every occurrence of the macro name token in the source, including in connection syntax where only the alias should appear.
+
+**Minimal reproduction:**
+```plantuml
+@startuml
+!define APP_001 rectangle "EventStore" <<ApplicationComponent>> as APP_001
+!define APP_002 rectangle "ModelRegistry" <<ApplicationComponent>> as APP_002
+rectangle "G" { APP_001  APP_002 }
+APP_001 --> APP_002 : <<serving>>   ' both tokens expanded — syntax error
+@enduml
+```
+
+**Workaround:** Use a `DECL_` prefix on macro names so the macro name (used in group bodies to declare elements) differs from the alias (used in connection lines to reference elements):
+
+```plantuml
+!define DECL_APP_001 rectangle "EventStore" <<ApplicationComponent>> as APP_001
+!define DECL_APP_002 rectangle "ModelRegistry" <<ApplicationComponent>> as APP_002
+rectangle "G" { DECL_APP_001  DECL_APP_002 }
+APP_001 --> APP_002 : <<serving>>   ' APP_001/APP_002 are NOT macro names — no expansion
+```
+
+This is the convention enforced by `src/tools/generate_macros.py` and documented in `framework/diagram-conventions.md §3` and `§6`.
+
+**Upstream report filed:** Not yet. File at: https://plantuml.com/qa
+
+---
+
 ## Filing upstream bug reports
 
 1. Reproduce with a minimal `.puml` file (as above).

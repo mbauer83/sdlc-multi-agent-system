@@ -28,6 +28,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
+from src.common.archimate_types import ALL_ENTITY_TYPES, ALL_CONNECTION_TYPES
+
 import yaml
 
 
@@ -136,72 +138,10 @@ _CONN_ID_RE = re.compile(
     r"^[A-Z]+-[0-9]{3}(--[A-Z]+-[0-9]{3})*---[A-Z]+-[0-9]{3}(--[A-Z]+-[0-9]{3})*$"
 )
 
-_ENTITY_TYPES: frozenset[str] = frozenset(
-    {
-        # Motivation
-        "stakeholder",
-        "driver",
-        "requirement",
-        "architecture-constraint",
-        "goal",
-        "principle",
-        # Strategy
-        "capability",
-        "value-stream",
-        # Business layer
-        "business-process",
-        "business-function",
-        "business-service",
-        "business-actor",
-        "business-role",
-        "business-object",
-        # Application layer
-        "application-component",
-        "application-service",
-        "application-interface",
-        "data-object",
-        # Technology layer
-        "technology-node",
-        "system-software",
-        "technology-service",
-        "technology-interface",
-        # Implementation layer
-        "work-package",
-        "plateau",
-        "gap",
-    }
-)
-
-_CONNECTION_TYPES: frozenset[str] = frozenset(
-    {
-        # ArchiMate structural
-        "archimate-composition",
-        "archimate-aggregation",
-        "archimate-assignment",
-        "archimate-realization",
-        "archimate-serving",
-        "archimate-access",
-        "archimate-influence",
-        "archimate-association",
-        "archimate-specialization",
-        "archimate-flow",
-        "archimate-triggering",
-        # ER
-        "er-one-to-many",
-        "er-many-to-many",
-        "er-one-to-one",
-        # Sequence
-        "sequence-synchronous",
-        "sequence-asynchronous",
-        # Activity
-        "activity-sequence-flow",
-        "activity-decision",
-        # Use-case
-        "usecase-include",
-        "usecase-extend",
-        "usecase-association",
-    }
-)
+# Canonical type sets — imported from archimate_types.py (single source of truth).
+# Do not add types here; add them to src/common/archimate_types.py instead.
+_ENTITY_TYPES: frozenset[str] = ALL_ENTITY_TYPES
+_CONNECTION_TYPES: frozenset[str] = ALL_CONNECTION_TYPES
 
 _VALID_STATUSES: frozenset[str] = frozenset({"draft", "baselined", "deprecated"})
 _VALID_PHASES: frozenset[str] = frozenset({"Prelim", "A", "B", "C", "D", "E", "F", "G", "H"})

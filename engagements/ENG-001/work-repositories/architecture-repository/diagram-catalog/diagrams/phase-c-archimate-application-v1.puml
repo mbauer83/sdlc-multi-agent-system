@@ -3,7 +3,7 @@
 ' artifact-type: diagram
 ' name: "Application Architecture — Component Map"
 ' diagram-type: archimate-application
-' version: 0.1.0
+' version: 0.2.0
 ' status: draft
 ' phase-produced: C
 ' owner-agent: SwA
@@ -14,6 +14,8 @@
 '   interface (port). Every serving arrow is a function-call boundary. Every
 '   composition arrow marks a LangGraph node or registry entry. Use this diagram
 '   as the authoritative module dependency map when implementing src/.
+'   Cross-layer realization arrows (APP → BSV) show which application modules
+'   deliver which business services (defined in phase-b-archimate-business-v1).
 ' entity-ids-used:
 '   - APP-001
 '   - APP-002
@@ -72,6 +74,10 @@
 '   - APP-022---APP-008
 '   - APP-022---APP-009
 '   - APP-022---APP-011
+'   - APP-007---BSV-003
+'   - APP-008---BSV-001
+'   - APP-009---BSV-002
+'   - APP-020---BSV-009
 ' ---
 @startuml phase-c-archimate-application-v1
 !include ../_macros.puml
@@ -84,66 +90,78 @@ skinparam padding 8
 skinparam rankdir LR
 
 ' ---------------------------------------------------------------------------
+' Cross-layer boundary: Business Services realized by this diagram's components.
+' Declared outside application groups — these elements live in the business layer
+' (phase-b-archimate-business-v1) and appear here only as realization targets.
+' ---------------------------------------------------------------------------
+rectangle "Business Architecture Service" <<BusinessService>> as BSV_001
+rectangle "App & Technology Architecture Service" <<BusinessService>> as BSV_002
+rectangle "Project Coordination Service" <<BusinessService>> as BSV_003
+rectangle "User Decisions Service" <<BusinessService>> as BSV_009
+
+' Cross-layer boundary: Human actor served by the dashboard.
+rectangle "User" <<BusinessActor>> as ACT_001
+
+' ---------------------------------------------------------------------------
 ' State & Storage  →  src/events/ + src/common/
 ' ---------------------------------------------------------------------------
-rectangle "State & Storage\nsrc/events/ + src/common/" as GRP_STATE #E3F2FD {
-  APP_001
-  APP_002
-  APP_003
+rectangle "State & Storage\nsrc/events/ + src/common/" <<Grouping>> as GRP_STATE #E3F2FD {
+  DECL_APP_001
+  DECL_APP_002
+  DECL_APP_003
 }
 
 ' ---------------------------------------------------------------------------
 ' Agent Runtime  →  src/agents/ infrastructure
 ' ---------------------------------------------------------------------------
-rectangle "Agent Runtime\nsrc/agents/ (infrastructure)" as GRP_RUNTIME #E8EAF6 {
-  APP_004
-  APP_005
-  APP_006
-  AIF_002
-  AIF_004
-  AIF_005
-  AIF_006
+rectangle "Agent Runtime\nsrc/agents/ (infrastructure)" <<Grouping>> as GRP_RUNTIME #E8EAF6 {
+  DECL_APP_004
+  DECL_APP_005
+  DECL_APP_006
+  DECL_AIF_002
+  DECL_AIF_004
+  DECL_AIF_005
+  DECL_AIF_006
 }
 
 ' ---------------------------------------------------------------------------
 ' Agent Roster  →  src/agents/<role>.py
 ' ---------------------------------------------------------------------------
-rectangle "Agent Roster\nsrc/agents/<role>.py" as GRP_AGENTS #F3E5F5 {
-  APP_007
-  APP_008
-  APP_009
-  APP_010
-  APP_011
-  APP_012
-  APP_013
-  APP_014
-  APP_015
+rectangle "Agent Roster\nsrc/agents/<role>.py" <<Grouping>> as GRP_AGENTS #F3E5F5 {
+  DECL_APP_007
+  DECL_APP_008
+  DECL_APP_009
+  DECL_APP_010
+  DECL_APP_011
+  DECL_APP_012
+  DECL_APP_013
+  DECL_APP_014
+  DECL_APP_015
 }
 
 ' ---------------------------------------------------------------------------
 ' Orchestration  →  src/orchestration/
 ' ---------------------------------------------------------------------------
-rectangle "Orchestration\nsrc/orchestration/" as GRP_ORCH #E8F5E9 {
-  APP_016
-  APP_017
-  APP_018
-  APP_019
-  AIF_001
+rectangle "Orchestration\nsrc/orchestration/" <<Grouping>> as GRP_ORCH #E8F5E9 {
+  DECL_APP_016
+  DECL_APP_017
+  DECL_APP_018
+  DECL_APP_019
+  DECL_AIF_001
 }
 
 ' ---------------------------------------------------------------------------
 ' Dashboard & Interaction  →  src/dashboard/ + src/sources/
 ' ---------------------------------------------------------------------------
-rectangle "Dashboard & Interaction\nsrc/dashboard/ + src/sources/" as GRP_DASH #FFF8E1 {
-  APP_020
-  APP_021
-  AIF_003
-  APP_022
+rectangle "Dashboard & Interaction\nsrc/dashboard/ + src/sources/" <<Grouping>> as GRP_DASH #FFF8E1 {
+  DECL_APP_020
+  DECL_APP_021
+  DECL_AIF_003
+  DECL_APP_022
 }
 
 ' ---------------------------------------------------------------------------
 ' Serving: State & Storage → Orchestration and Interaction
-' [connections/archimate/serving/APP-001---APP-*]
 ' ---------------------------------------------------------------------------
 APP_001 -[#0078A0]-> APP_016 : <<serving>>
 APP_001 -[#0078A0]-> APP_017 : <<serving>>
@@ -152,7 +170,6 @@ APP_001 -[#0078A0]-> APP_021 : <<serving>>
 
 ' ---------------------------------------------------------------------------
 ' Serving: State & Storage → Agent Runtime
-' [connections/archimate/serving/APP-002---APP-*, APP-003---APP-*]
 ' ---------------------------------------------------------------------------
 APP_002 -[#0078A0]-> APP_004 : <<serving>>
 APP_002 -[#0078A0]-> APP_005 : <<serving>>
@@ -162,7 +179,6 @@ APP_003 -[#0078A0]-> APP_009 : <<serving>>
 
 ' ---------------------------------------------------------------------------
 ' Serving: Agent Runtime → Agent Roster (SkillLoader + AgentRegistry)
-' [connections/archimate/serving/APP-004---APP-*, APP-005---APP-006]
 ' ---------------------------------------------------------------------------
 APP_004 -[#5C6BC0]-> APP_007 : <<serving>>
 APP_004 -[#5C6BC0]-> APP_008 : <<serving>>
@@ -176,13 +192,11 @@ APP_004 -[#5C6BC0]-> APP_015 : <<serving>>
 
 ' ---------------------------------------------------------------------------
 ' Serving: AgentRegistry → LangGraph Orchestrator
-' [connections/archimate/serving/APP-006---APP-016]
 ' ---------------------------------------------------------------------------
 APP_006 -[#5C6BC0]-> APP_016 : <<serving>>
 
 ' ---------------------------------------------------------------------------
 ' Composition: LangGraph composes nodes; AgentRegistry contains agents
-' [connections/archimate/composition/APP-016---APP-*, APP-006---APP-*]
 ' ---------------------------------------------------------------------------
 APP_016 *-[#2E7D32]- APP_007 : <<composition>>
 APP_016 *-[#2E7D32]- APP_008 : <<composition>>
@@ -191,16 +205,28 @@ APP_016 *-[#2E7D32]- APP_018 : <<composition>>
 
 ' ---------------------------------------------------------------------------
 ' Serving: Orchestration → EngagementSession
-' [connections/archimate/serving/APP-016---APP-017]
 ' ---------------------------------------------------------------------------
 APP_016 -[#2E7D32]-> APP_017 : <<serving>>
 
 ' ---------------------------------------------------------------------------
 ' Serving: TargetRepoManager → Agents
-' [connections/archimate/serving/APP-022---APP-*]
 ' ---------------------------------------------------------------------------
 APP_022 -[#8D4E00]-> APP_008 : <<serving>> (read-only)
 APP_022 -[#8D4E00]-> APP_009 : <<serving>> (read-only)
 APP_022 -[#8D4E00]-> APP_011 : <<serving>> (read-write)
+
+' ---------------------------------------------------------------------------
+' Serving: DashboardServer → User  (cross-layer: application → business)
+' ---------------------------------------------------------------------------
+APP_020 -[#8D4E00]-> ACT_001 : <<serving>>
+
+' ---------------------------------------------------------------------------
+' Realization: Application components → Business Services (cross-layer)
+' Full realization chain: APP → BSV realized by BPR in phase-b diagram.
+' ---------------------------------------------------------------------------
+APP_007 ..[#B8860B].>> BSV_003 : <<realization>>
+APP_008 ..[#B8860B].>> BSV_001 : <<realization>>
+APP_009 ..[#B8860B].>> BSV_002 : <<realization>>
+APP_020 ..[#B8860B].>> BSV_009 : <<realization>>
 
 @enduml

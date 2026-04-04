@@ -18,6 +18,15 @@ skinparam roundcorner 4
 skinparam backgroundColor #FAFAFA
 
 ' ---------------------------------------------------------------------------
+' Cross-cutting: Grouping (ArchiMate generic organizational container)
+' ---------------------------------------------------------------------------
+skinparam rectangle<<Grouping>> {
+  BackgroundColor #F5F5F5
+  BorderColor #9E9E9E
+  BorderStyle dashed
+}
+
+' ---------------------------------------------------------------------------
 ' Motivation aspect  (#EDD6F0 — light lavender purple)
 ' All motivation element types share this background.
 ' ---------------------------------------------------------------------------

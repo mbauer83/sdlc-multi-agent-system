@@ -3,7 +3,7 @@
 ' artifact-type: diagram
 ' name: "Business Architecture — Agent Roles and SDLC Processes"
 ' diagram-type: archimate-business
-' version: 0.1.0
+' version: 0.2.0
 ' status: draft
 ' phase-produced: B
 ' owner-agent: SA
@@ -12,7 +12,9 @@
 ' purpose: >
 '   Defines the agent role taxonomy and SDLC process model used in all Stage 5
 '   agent module naming and EventStore event-type routing. Every BPR process maps
-'   to one or more event types; every ACT actor maps to an agent module or user role.
+'   to one or more event types; every ACT role maps to an agent module or user role.
+'   BusinessRole elements (ACT-002..ACT-010) represent behavioral specifications;
+'   their application-layer implementations appear in phase-c-archimate-application-v1.
 ' entity-ids-used:
 '   - CAP-001
 '   - CAP-002
@@ -57,6 +59,14 @@
 '   - ACT-003---BPR-002
 '   - ACT-004---BPR-002
 '   - ACT-011---BPR-007
+'   - BPR-001---BSV-003
+'   - BPR-002---BSV-001
+'   - BPR-002---BSV-002
+'   - BPR-003---BSV-009
+'   - BPR-004---BSV-003
+'   - BPR-006---BSV-009
+'   - BPR-007---BSV-001
+'   - BPR-008---BSV-002
 ' ---
 @startuml phase-b-archimate-business-v1
 !include ../_macros.puml
@@ -68,71 +78,77 @@ skinparam ranksep 40
 skinparam padding 6
 
 ' ---------------------------------------------------------------------------
-' Capabilities (top grouping — the "what" the system must do)
+' Capabilities (strategy layer — the "what" the system must support)
 ' ---------------------------------------------------------------------------
-rectangle "Capabilities" as CAPS #F5DEB3 {
-  CAP_001
-  CAP_002
-  CAP_003
-  CAP_004
-  CAP_005
-  CAP_006
+rectangle "Capabilities" <<Grouping>> as CAPS #F5DEB3 {
+  DECL_CAP_001
+  DECL_CAP_002
+  DECL_CAP_003
+  DECL_CAP_004
+  DECL_CAP_005
+  DECL_CAP_006
 }
 
 ' ---------------------------------------------------------------------------
-' Human swim-lane
+' Human participant
 ' ---------------------------------------------------------------------------
-rectangle "Human Participants" as HUMAN #FFFDE7 {
-  ACT_001
-  ACT_011
+rectangle "Human Participant" <<Grouping>> as HUMAN #FFFDE7 {
+  DECL_ACT_001
 }
 
 ' ---------------------------------------------------------------------------
-' Agent roster swim-lane
+' AI Agent Roles  (BusinessRole — behavioral specifications)
 ' ---------------------------------------------------------------------------
-rectangle "AI Agents" as AGENTS #E8F5E9 {
-  ACT_002
-  ACT_003
-  ACT_004
-  ACT_005
-  ACT_006
-  ACT_007
-  ACT_008
-  ACT_009
-  ACT_010
+rectangle "AI Agent Roles" <<Grouping>> as AGENTS #E8F5E9 {
+  DECL_ACT_002
+  DECL_ACT_003
+  DECL_ACT_004
+  DECL_ACT_005
+  DECL_ACT_006
+  DECL_ACT_007
+  DECL_ACT_008
+  DECL_ACT_009
+  DECL_ACT_010
+}
+
+' ---------------------------------------------------------------------------
+' Architecture Governance  (BusinessCollaboration — SA Role + SwA Role + User)
+' ---------------------------------------------------------------------------
+rectangle "Architecture Governance" <<Grouping>> as GOVERN #F3E5F5 {
+  DECL_ACT_011
 }
 
 ' ---------------------------------------------------------------------------
 ' SDLC Processes
 ' ---------------------------------------------------------------------------
-rectangle "SDLC Processes" as PROCS #FFFAC8 {
-  BPR_001
-  BPR_002
-  BPR_003
-  BPR_004
-  BPR_005
-  BPR_006
-  BPR_007
-  BPR_008
+rectangle "SDLC Processes" <<Grouping>> as PROCS #FFFAC8 {
+  DECL_BPR_001
+  DECL_BPR_002
+  DECL_BPR_003
+  DECL_BPR_004
+  DECL_BPR_005
+  DECL_BPR_006
+  DECL_BPR_007
+  DECL_BPR_008
 }
 
 ' ---------------------------------------------------------------------------
 ' Business Services (external view of capabilities)
 ' ---------------------------------------------------------------------------
-rectangle "Business Services" as SVCS #FFFAC8 {
-  BSV_001
-  BSV_002
-  BSV_003
-  BSV_004
-  BSV_005
-  BSV_006
-  BSV_007
-  BSV_008
-  BSV_009
+rectangle "Business Services" <<Grouping>> as SVCS #FFF3E0 {
+  DECL_BSV_001
+  DECL_BSV_002
+  DECL_BSV_003
+  DECL_BSV_004
+  DECL_BSV_005
+  DECL_BSV_006
+  DECL_BSV_007
+  DECL_BSV_008
+  DECL_BSV_009
 }
 
 ' ---------------------------------------------------------------------------
-' Assignment connections (ACT → BPR)  [source: connections/archimate/assignment/]
+' Assignment connections (Role/Actor → BPR)
 ' ---------------------------------------------------------------------------
 ACT_002 -[#B8860B]-> BPR_001 : <<assignment>>
 ACT_002 -[#B8860B]-> BPR_004 : <<assignment>>
@@ -144,15 +160,28 @@ ACT_001 -[#B8860B]-> BPR_006 : <<assignment>>
 ACT_011 -[#B8860B]-> BPR_007 : <<assignment>>
 
 ' ---------------------------------------------------------------------------
-' Notes: BSV–BPR realization and BSV–actor serving connections
-' are shown in Phase C diagrams where application-layer realizations
-' (ASV-001→BPR-002, ASV-004→BPR-003, ASV-003→BPR-006) are visible.
+' Realization connections (BPR → BSV)
+' Key realizations; full set in connections/archimate/realization/BPR-*---BSV-*.md
+' ---------------------------------------------------------------------------
+BPR_001 ..[#B8860B].>> BSV_003 : <<realization>>
+BPR_002 ..[#B8860B].>> BSV_001 : <<realization>>
+BPR_002 ..[#B8860B].>> BSV_002 : <<realization>>
+BPR_003 ..[#B8860B].>> BSV_009 : <<realization>>
+BPR_004 ..[#B8860B].>> BSV_003 : <<realization>>
+BPR_006 ..[#B8860B].>> BSV_009 : <<realization>>
+BPR_007 ..[#B8860B].>> BSV_001 : <<realization>>
+BPR_008 ..[#B8860B].>> BSV_002 : <<realization>>
+
+' ---------------------------------------------------------------------------
+' Notes
 ' ---------------------------------------------------------------------------
 note as N1
-  BSV services are realized by
-  application-layer ASV services.
-  See phase-c-archimate-application-v1
-  for application-layer realization.
+  BusinessRole elements (AI Agent Roles) define
+  behavioral specifications. Application-layer
+  implementations (ApplicationComponent) are shown
+  in phase-c-archimate-application-v1.
+  BPR-002 (Skill Execution) also realizes
+  BSV-004..BSV-008 — see connections/ for full graph.
 end note
 
 @enduml

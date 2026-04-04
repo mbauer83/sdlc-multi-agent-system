@@ -89,7 +89,7 @@ last-updated: <YYYY-MM-DD>
 | Field | Validation Rule |
 |---|---|
 | `artifact-id` | Entities: `^[A-Z]+-[0-9]{3}$`; prefix must match entity-type per §4 of artifact-registry-design.md. Connections: `SOURCE(--SOURCE)*---TARGET(--TARGET)*`; must match filename stem. |
-| `artifact-type` | Must be a value from artifact-registry-design.md §4 (entities) or §5 (connections) |
+| `artifact-type` | Must be a value from the canonical registry in `src/common/archimate_types.py` (`ALL_ENTITY_TYPES` for entities; `ALL_CONNECTION_TYPES` for connections). See §4 of this file for the full table. |
 | `version` | Valid semver |
 | `status` | One of: `draft`, `baselined`, `deprecated` |
 | `phase-produced` | One of: `Prelim`, `A`, `B`, `C`, `D`, `E`, `F`, `G`, `H` |
@@ -130,6 +130,58 @@ The `## <Entity Name>` heading must match the `name` frontmatter field exactly. 
 ```
 
 Connections have no `## ` heading structure in §content — the body is free-form prose (or empty).
+
+---
+
+## 3.3 Canonical Type Registry
+
+**Authoritative source:** `src/common/archimate_types.py`
+
+The verifier imports `ALL_ENTITY_TYPES` and `ALL_CONNECTION_TYPES` directly from that module. The tables below are authoritative documentation that must be kept in sync with the code. If they diverge, the code wins — update this file to match.
+
+### Valid `artifact-type` values for entity files
+
+Entity types are organised by ArchiMate layer/aspect. ArchiMate subsumes all entity types — there are no separate entity ontologies for activity, sequence, or class diagram languages.
+
+| Layer | Valid `artifact-type` values |
+|---|---|
+| Motivation | `stakeholder`, `driver`, `assessment`, `goal`, `outcome`, `principle`, `requirement`, `architecture-constraint`, `meaning`, `value` |
+| Strategy | `capability`, `value-stream`, `resource`, `course-of-action` |
+| Business | `business-actor`, `business-role`, `business-collaboration`, `business-interface`, `business-process`, `business-function`, `business-interaction`, `business-event`, `business-service`, `business-object`, `contract`, `representation`, `product` |
+| Application | `application-component`, `application-collaboration`, `application-interface`, `application-function`, `application-interaction`, `application-process`, `application-event`, `application-service`, `data-object` |
+| Technology | `technology-node`, `device`, `system-software`, `technology-collaboration`, `technology-interface`, `path`, `communication-network`, `technology-function`, `technology-process`, `technology-interaction`, `technology-event`, `technology-service`, `artifact` |
+| Physical | `equipment`, `facility`, `distribution-network`, `material` |
+| Implementation | `work-package`, `deliverable`, `implementation-event`, `plateau`, `gap` |
+
+### Valid `artifact-type` values for connection files
+
+Connections are typed by diagram language. ArchiMate connections use structural relationship types. Non-ArchiMate diagrams (activity, sequence, use-case) have their own connection type vocabularies.
+
+| Diagram language | Valid `artifact-type` values |
+|---|---|
+| `archimate` | `archimate-composition`, `archimate-aggregation`, `archimate-assignment`, `archimate-realization`, `archimate-serving`, `archimate-access`, `archimate-influence`, `archimate-association`, `archimate-specialization`, `archimate-flow`, `archimate-triggering` |
+| `er` | `er-one-to-many`, `er-many-to-many`, `er-one-to-one` |
+| `sequence` | `sequence-synchronous`, `sequence-asynchronous` |
+| `activity` | `activity-sequence-flow`, `activity-decision` |
+| `usecase` | `usecase-include`, `usecase-extend`, `usecase-association` |
+
+### Valid ArchiMate `element-type` values (§display ###archimate blocks)
+
+Use UpperCamelCase to match ArchiMate 3 naming and skinparam selector syntax.
+
+| Layer | Valid `element-type` values |
+|---|---|
+| Motivation | `Stakeholder`, `Driver`, `Assessment`, `Goal`, `Outcome`, `Principle`, `Requirement`, `Constraint`, `Meaning`, `Value` |
+| Strategy | `Capability`, `ValueStream`, `Resource`, `CourseOfAction` |
+| Business | `BusinessActor`, `BusinessRole`, **`BusinessCollaboration`**, `BusinessInterface`, `BusinessProcess`, `BusinessFunction`, `BusinessInteraction`, `BusinessEvent`, `BusinessService`, `BusinessObject`, `Contract`, `Representation`, `Product` |
+| Application | `ApplicationComponent`, `ApplicationCollaboration`, `ApplicationInterface`, `ApplicationFunction`, `ApplicationInteraction`, `ApplicationProcess`, `ApplicationEvent`, `ApplicationService`, `DataObject` |
+| Technology | `Node`, `Device`, `SystemSoftware`, `TechnologyCollaboration`, `TechnologyInterface`, `Path`, `CommunicationNetwork`, `TechnologyFunction`, `TechnologyProcess`, `TechnologyInteraction`, `TechnologyEvent`, `TechnologyService`, `Artifact` |
+| Physical | `Equipment`, `Facility`, `DistributionNetwork`, `Material` |
+| Implementation | `WorkPackage`, `Deliverable`, `ImplementationEvent`, `Plateau`, `Gap` |
+
+### Valid ArchiMate `relationship-type` values (§display ###archimate connection blocks)
+
+`Composition`, `Aggregation`, `Assignment`, `Realization`, `Serving`, `Access`, `Influence`, `Association`, `Specialization`, `Flow`, `Triggering`
 
 ---
 
@@ -273,6 +325,12 @@ See `framework/artifact-registry-design.md §3.6` for the full field specificati
 | Assigned To | \<ACT-NNN or "TBD"\> |
 | Permissions | \<brief summary\> |
 
+**`business-collaboration`**
+| Attribute | Value |
+|---|---|
+| Collaborating Roles | \<ACT-NNN, ACT-NNN, ... (roles/actors forming the collaboration)\> |
+| External | Yes \| No |
+
 **`business-object`**
 | Attribute | Value |
 |---|---|
@@ -281,20 +339,20 @@ See `framework/artifact-registry-design.md §3.6` for the full field specificati
 
 ### Application Layer
 
-**`app-component`**
+**`application-component`**
 | Attribute | Value |
 |---|---|
 | Type | Service \| Store \| Gateway \| UI \| Integration |
 | Responsibility | \<one-sentence\> |
 | Status | New \| Existing \| Modified \| Retiring |
 
-**`app-service`**
+**`application-service`**
 | Attribute | Value |
 |---|---|
 | API Style | REST \| gRPC \| GraphQL \| Event \| Internal |
 | Synchrony | Sync \| Async |
 
-**`app-interface`**
+**`application-interface`**
 | Attribute | Value |
 |---|---|
 | Protocol | \<HTTP, gRPC, AMQP, etc.\> |
