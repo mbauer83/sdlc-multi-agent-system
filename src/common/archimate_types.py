@@ -301,6 +301,7 @@ ALL_ARCHIMATE_ELEMENT_TYPES: frozenset[str] = frozenset().union(
 
 ARCHIMATE_GROUPING_STEREOTYPES: frozenset[str] = frozenset(
     {
+        # Layer-specific (use when all contained elements belong to one layer)
         "MotivationGrouping",
         "StrategyGrouping",
         "BusinessGrouping",
@@ -308,6 +309,8 @@ ARCHIMATE_GROUPING_STEREOTYPES: frozenset[str] = frozenset(
         "TechnologyGrouping",
         "PhysicalGrouping",
         "ImplementationGrouping",
+        # Neutral (use for heterogeneous or purely organisational groupings)
+        "Grouping",
     }
 )
 

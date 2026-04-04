@@ -183,7 +183,14 @@ Use UpperCamelCase to match ArchiMate 3 naming and skinparam selector syntax.
 
 Use the stereotype matching the ArchiMate layer of the contained elements. No inline `#color` overrides permitted on grouping rectangles. Defined in `src/common/archimate_types.py` (`ARCHIMATE_GROUPING_STEREOTYPES`) and `_archimate-stereotypes.puml`.
 
-| Layer | Required grouping stereotype |
+| Situation | Grouping stereotype |
+|---|---|
+| All contained elements from one layer | Layer-specific stereotype (see below) |
+| Heterogeneous or purely organisational | `<<Grouping>>` (neutral white) |
+
+Layer-specific stereotypes:
+
+| Contained layer | Stereotype |
 |---|---|
 | Motivation | `<<MotivationGrouping>>` |
 | Strategy | `<<StrategyGrouping>>` |

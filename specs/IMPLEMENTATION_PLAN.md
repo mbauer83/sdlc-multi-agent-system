@@ -1282,8 +1282,8 @@ sprint-review:
 
 ### Resume at: Stage 4.9f remaining 5 diagrams → 4.9g (Overview + ADRs) → Stage 5
 
-**Stage 4.9e** — ✅ Complete: 75 connection files + 14 new BPR→BSV realization files added (89 total).
-**Stage 4.9f** — Partial: 2/7 diagrams done and corrected (`phase-b-archimate-business-v1.puml` v0.2.0, `phase-c-archimate-application-v1.puml` v0.2.0). Remaining: `phase-c-class-er-v1.puml`, `phase-b-activity-sprint-v1.puml`, `phase-g-sequence-skill-invocation-v1.puml`, `phase-c-sequence-cq-lifecycle-v1.puml`, `phase-c-sequence-sprint-review-v1.puml`.
+**Stage 4.9e** — ✅ Complete: 89 connection files (75 original + 14 BPR→BSV realization).
+**Stage 4.9f** — Partial: 2/7 diagrams done, semantically corrected, and verified (0 errors). Layer-aligned grouping stereotypes (<<BusinessGrouping>>, <<ApplicationGrouping>>, etc.) + neutral <<Grouping>> for heterogeneous use. Remaining: `phase-c-class-er-v1.puml`, `phase-b-activity-sprint-v1.puml`, `phase-g-sequence-skill-invocation-v1.puml`, `phase-c-sequence-cq-lifecycle-v1.puml`, `phase-c-sequence-sprint-review-v1.puml`.
 **`_macros.puml`** — ✅ Generated from entity §display ###archimate blocks (99 macros for all engagement entities).
 
 **Stage 4.9** — ENG-001 reference model: entity files, connection files, `_macros.puml`, four PUML diagrams. Documents the SDLC system itself. Serves as integration test fixture. Entity ownership reflects Stage 4.8h model (SwA owns APP/DOB entities; SA owns motivation/strategy/business entities).

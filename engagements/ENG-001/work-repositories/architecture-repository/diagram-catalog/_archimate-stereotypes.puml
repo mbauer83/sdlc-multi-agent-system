@@ -18,13 +18,20 @@ skinparam roundcorner 4
 skinparam backgroundColor #FAFAFA
 
 ' ---------------------------------------------------------------------------
-' Grouping containers — one stereotype per ArchiMate layer.
-' Use the stereotype matching the layer of the contained elements.
-' Background: a lighter tint of the layer color so grouping containers
-' visually recede behind contained elements (which carry the full layer color).
-' NO inline #color overrides on grouping rectangles — the stereotype provides
-' the only permissible background.  See framework/diagram-conventions.md §11.3.
+' Grouping containers.
+' Use the layer-specific stereotype when all contained elements belong to one
+' ArchiMate layer.  Use <<Grouping>> (neutral white) when the container holds
+' elements from multiple layers, or when the grouping is purely organisational
+' and layer affiliation is irrelevant to the diagram's message.
+' Background: layer stereotypes use a lighter tint of the layer color so
+' containers visually recede behind elements (full layer color).
+' NO inline #color overrides on grouping rectangles.
+' See framework/diagram-conventions.md §11.3.
 ' ---------------------------------------------------------------------------
+skinparam rectangle<<Grouping>> {
+  BackgroundColor #FFFFFF
+  BorderColor #9E9E9E
+}
 skinparam rectangle<<MotivationGrouping>> {
   BackgroundColor #F7EEF9
   BorderColor #7B3F9A

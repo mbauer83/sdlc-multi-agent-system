@@ -136,13 +136,14 @@ tests/
 
 ## End-of-Session Checklist
 
-At the end of any work session — regardless of scope — update these three files before finishing:
+At the end of any work session — regardless of scope — complete all of the following before finishing:
 
 1. **`specs/IMPLEMENTATION_PLAN.md`** — tick completed checklist items, update the "Current State & Immediate Next Actions" section, add any new design decisions resolved.
 2. **`CLAUDE.md`** — update the Implementation Stages table status column; update any authoring rules or repository layout notes that changed.
-3. **`README.md`** — update the Agent Roles table, Work Repositories table, Skills description, and any workflow sections that reflect the current state of the system.
+3. **`README.md`** — update the Agent Roles table, Work Repositories table, Skills description, implementation status section, and any workflow sections that reflect the current state of the system.
+4. **Model and diagram verification** — run `ModelVerifier.verify_all()` and confirm 0 errors. Re-render any modified diagrams with `java -jar tools/plantuml.jar -tsvg -o rendered/ diagrams/*.puml`. Commit both the corrected source and the updated SVGs.
 
-These three files are the canonical orientation documents. If they drift from reality, the next session starts with a false picture of the system.
+These files are the canonical orientation documents. If they drift from reality, the next session starts with a false picture of the system.
 
 ---
 
@@ -159,7 +160,7 @@ These three files are the canonical orientation documents. If they drift from re
 | 4.6d | Learning protocol 2026 alignment (LangGraph BaseStore, semantic tier, graph connectivity, cross-agent visibility) | Complete |
 | 4.7 | Multi-target-repository support (repository-map schema, multi-repo config, discovery Layer 4 update) | Complete |
 | 4.8 | Entity Registry Pattern v2.0 (ERP): artifact-registry-design, entity-conventions, diagram-conventions; 4.8a–c/e/f complete; 4.8d complete; 4.8g pending; 4.8h (SA/SwA role boundary refactor) complete — ArchiMate layer = role boundary; Phase H split (SA business layer CR, SwA application/technology CR); Phase C primary=SwA | Partial |
-| 4.9 | ENG-001 reference model: 4.9a–e complete; 4.9f partial — 2/7 diagrams produced and semantically corrected (BusinessRole/BusinessCollaboration, <<Grouping>> containers, BPR→BSV realization chain, APP→BSV cross-layer connections, 14 new connection files); canonical type registry `src/common/archimate_types.py`; entity-conventions §3.3 type tables; diagram-conventions §10/§11 rules; PlantUML bug docs PB-001..PB-005; 4.9g–h (overview, ADRs, event-sourcing taxonomy) pending | Partial |
+| 4.9 | ENG-001 reference model: 4.9a–e complete; 4.9f partial — 2/7 diagrams produced, semantically corrected, and verified (BusinessRole/BusinessCollaboration, layer-aligned grouping stereotypes with neutral <<Grouping>> for heterogeneous use, BPR→BSV realization chain, APP→BSV cross-layer connections, 89 total connection files); canonical type registry + grouping stereotype registry; diagram-conventions §10/§11 rules; PlantUML bug docs PB-001..PB-005; 4.9g–h pending | Partial |
 | 5 | Python implementation layer (EventStore completion + PydanticAI agents + LangGraph orchestration + source adapters); `pyproject.toml` + uv project setup complete; `src/common/model_verifier.py` complete (31 BDD tests passing); `src/common/archimate_types.py` canonical type registry complete | Partial |
 | 5.5 | Engagement dashboard (local web server + PUML rendering + filesystem monitoring) | Pending |
 | 6 | Integration testing on synthetic project | Pending |

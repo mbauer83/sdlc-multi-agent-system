@@ -220,7 +220,7 @@ Each engagement maintains a set of role-owned work repositories under `engagemen
 | `qa-repository/` | QA Engineer |
 | `devops-repository/` | DevOps / Platform Engineer |
 
-Architecture entities follow the **Entity Registry Pattern v2.0**: one `.md` file per entity, organised by ArchiMate layer, with machine-readable YAML frontmatter. The `ModelRegistry` is built from these files at startup. Diagrams are PlantUML files authored by agents directly; the full catalog of diagram types, templates, and authoring conventions is in `framework/diagram-conventions.md`.
+Architecture entities follow the **Entity Registry Pattern v2.0**: one `.md` file per entity, organised by ArchiMate layer (e.g. `model-entities/business/roles/`, `model-entities/business/collaborations/`, `model-entities/application/components/`), with machine-readable YAML frontmatter. The `ModelRegistry` is built from these files at startup. Diagrams are PlantUML files authored by agents directly; the full catalog of diagram types, templates, and authoring conventions is in `framework/diagram-conventions.md`. The canonical registry of valid entity types, connection types, ArchiMate element types, and grouping stereotypes lives in `src/common/archimate_types.py` and is the single source of truth for both documentation and the `ModelVerifier`.
 
 #### Diagram types produced
 
@@ -272,14 +272,19 @@ The framework and ENG-001 reference model are being built incrementally. Current
 |---|---|
 | Framework specifications (all `framework/` files) | Complete |
 | Agent and skill files (all `agents/<role>/`) | Complete |
-| ENG-001 reference model — entities (99 files: motivation, strategy, business, application layers) | Complete |
-| ENG-001 reference model — connections (75 files: realization, serving, assignment, composition, access, ER) | Complete |
-| ENG-001 reference model — `_macros.puml` (auto-generated from entity `§display ###archimate` blocks) | Complete |
-| ENG-001 reference model — diagrams (2/7: business + application ArchiMate views; ER, activity, sequence pending) | Partial |
+| ENG-001 reference model — entities (99 files across motivation, strategy, business, application layers; entity types ArchiMate-correct: BusinessRole for agent roles, BusinessCollaboration for Architecture Board) | Complete |
+| ENG-001 reference model — connections (89 files: realization, serving, assignment, composition, access, ER; includes 14 BPR→BSV business-layer realization files) | Complete |
+| ENG-001 reference model — `_macros.puml` (99 macros, auto-generated from entity `§display ###archimate` blocks via `src/tools/generate_macros.py`) | Complete |
+| ENG-001 reference model — diagrams (2/7 produced and semantically verified: `phase-b-archimate-business-v1`, `phase-c-archimate-application-v1`; ER, activity, and sequence diagrams pending) | Partial |
 | ENG-001 reference model — overview docs + ADRs | Pending |
-| `src/common/model_verifier.py` — BDD-tested verifier for entity/connection/diagram files (31 scenarios) | Complete |
+| `src/common/model_verifier.py` — BDD-tested verifier for entity/connection/diagram files (31 scenarios passing) | Complete |
+| `src/common/archimate_types.py` — canonical type registry for all entity, connection, element, and grouping stereotype types; single source of truth imported by verifier and referenced in documentation | Complete |
+| `src/tools/generate_macros.py` — regenerates `_macros.puml` from entity `§display ###archimate` blocks | Complete |
 | `pyproject.toml` + uv project setup | Complete |
+| `docs/puml-bug-reports.md` — confirmed PlantUML 1.2025.x bugs (PB-001..PB-005) with reproduction cases and workarounds | Complete |
 | `src/` Python implementation (EventStore, agents, orchestration, dashboard) | Pending |
+
+**ArchiMate diagram conventions** (`framework/diagram-conventions.md`): §10 covers PlantUML compatibility constraints (PB-001..PB-005 workarounds, DECL_ two-token macro convention); §11 covers ArchiMate semantic constraints (layer boundary rule, active structure type rules, layer-aligned grouping stereotypes with prohibition on inline color overrides).
 
 See `specs/IMPLEMENTATION_PLAN.md` for the detailed stage-by-stage plan and current checklist.
 
