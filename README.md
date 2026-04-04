@@ -284,8 +284,10 @@ The framework and ENG-001 reference model are being built incrementally. Current
 | ENG-001 reference model — `_macros.puml` (99 macros, auto-generated from entity `§display ###archimate` blocks via `src/tools/generate_macros.py`) | Complete |
 | ENG-001 reference model — diagrams (2/7 produced and semantically verified: `phase-b-archimate-business-v1`, `phase-c-archimate-application-v1`; ER, activity, and sequence diagrams pending) | Partial |
 | ENG-001 reference model — overview docs + ADRs | Pending |
-| `src/common/model_verifier.py` — BDD-tested verifier for entity/connection/diagram files (31 scenarios passing) | Complete |
+| `src/common/model_verifier.py` — BDD-tested verifier for entity/connection/diagram files (33 scenarios passing) | Complete |
 | `src/common/archimate_types.py` — canonical type registry for all entity, connection, element, and grouping stereotype types; single source of truth imported by verifier and referenced in documentation | Complete |
+| `src/common/model_query.py` — `ModelRepository`: rich query engine for model-entities, connections, and diagrams; `list_artifacts(**filter)` / `search_artifacts(query)` / `read_artifact(id, mode)` framework-aligned API; keyword+synonym search with `SemanticSearchProvider` hook; graph traversal (`find_connections_for`, `find_neighbors`); CLI (`python -m src.common.model_query`); 36 BDD tests | Complete |
+| `src/common/domain_vocabulary.py` — canonical SDLC/ArchiMate domain synonym map; `expand_tokens()` for bidirectional abbreviation expansion; `agent_abbreviations()` and `archimate_prefix_to_type()` lookup tables; shared by `model_query.py`, `LearningStore`, future NLP pipelines | Complete |
 | `src/tools/generate_macros.py` — regenerates `_macros.puml` from entity `§display ###archimate` blocks | Complete |
 | `pyproject.toml` + uv project setup | Complete |
 | `docs/puml-bug-reports.md` — confirmed PlantUML 1.2025.x bugs (PB-001..PB-005) with reproduction cases and workarounds | Complete |
