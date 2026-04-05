@@ -184,7 +184,7 @@ Not model entities; no `§display` section; not organised in `model-entities/` l
 | `architecture-contract` | `architecture-repository/ac-<v>.md` | Binding governance document |
 | `coding-standard` | `technology-repository/coding-standards/` | Technical standard reference |
 | `test-strategy` | `qa-repository/` | QA strategy document |
-| `diagram` | `diagram-catalog/diagrams/*.puml` | PUML diagram file; frontmatter in header comment block (§2.4) |
+| `diagram` | `diagram-catalog/diagrams/*.{puml,md}` | Diagram-catalog produced artifact: `.puml` viewpoint diagram (frontmatter in PUML header) or `.md` matrix diagram (YAML frontmatter block) |
 | `diagram-template` | `diagram-catalog/templates/*.puml` | Blank per-type stub; frontmatter in header comment block (§2.4) |
 | `learning-entry` | `agents/<role>/learnings/<ROLE>-L-NNN.md` | Agent learning record; stored at framework/agent level, not per-engagement |
 | `repository-map` | `architecture-repository/` | Multi-repo engagement map |

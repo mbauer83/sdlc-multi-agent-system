@@ -315,10 +315,13 @@ Multi-repo aware. `repo_id=None` defaults to primary repo in multi-repo engageme
 | `execute_pipeline` | DO only | Trigger deployment pipeline run; returns outcome. |
 | `create_worktree` | DE, DO | Create an isolated git worktree for agent code changes per sprint. |
 
-### 6.4 Diagram Tools (SA, SwA)
+### 6.4 Diagram and Matrix Tools (SA, SwA)
+
+Use diagram tools for viewpoint visualisations (`.puml`) and matrix tools for dense many-to-many mappings (`.md` tables). Prefer matrix output when the goal is coverage/traceability across many IDs and visual topology is not required.
 
 | Tool | Function signature | Description |
 |---|---|---|
+| `model_create_matrix` | `(name, purpose, matrix_markdown, phase_produced, owner_agent, artifact_id, ...) → dict` | Writes a matrix artifact in `diagram-catalog/diagrams/*.md`. Accepts ID-authored markdown and can infer/link `entity-ids-used` for navigation and verification. |
 | `regenerate_macros` | `(repo_path: str) → None` | Scans all entity `§display ###archimate` blocks via ModelRegistry; rewrites `_macros.puml`. Called automatically by `write_artifact` when an entity's archimate display spec changes. |
 | `generate_er_content` | `(entity_ids: list[str]) → str` | Reads each entity's `§display ###er` block; returns PUML class declarations for paste into ER diagram. |
 | `generate_er_relations` | `(connection_ids: list[str]) → str` | Reads each er-connection's `§display ###er` block; returns cardinality lines. |

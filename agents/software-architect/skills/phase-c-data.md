@@ -31,11 +31,18 @@ version: 1.0.0
 
 ## Runtime Tooling Hint
 
+
+Representation choice (balanced and mandatory):
+- Use `.puml` diagrams when flow, topology, sequence, trust boundaries, or interaction context is the primary concern.
+- Use matrix artifacts (`model_create_matrix`) for dense many-to-many mappings, coverage, and traceability where node-link readability degrades.
+- Do not replace contextual architecture views with matrices alone: keep a reasonable set of diagrams that preserves end-to-end context for the domain slice.
+- Practical threshold: if a single node-link view would exceed about 25 elements or become edge-dense, keep/author at least one contextual diagram and shift dense cross-reference detail to a matrix.
+
 Tool-use statements here are intent-level guidance. Concrete tool signatures are runtime-bound.
 
 - Discovery/query/search/filter: `model_query_*` family.
 - Validation: `model_verify_file`, `model_verify_all`.
-- Deterministic creation/update of entities, connections, and diagrams: `model_create_entity`, `model_create_connection`, `model_create_diagram` (use `dry_run` first).
+- Deterministic creation/update of entities, connections, and diagrams: `model_create_entity`, `model_create_connection`, `model_create_diagram`, `model_create_matrix` (use `dry_run` first).
 - `invoke-when` and `trigger-conditions` are intent hints; runtime gating and phase-state enforcement belong to orchestration code.
 - Preserve strict output and validation procedure; out-of-profile invocations should stop at pre-condition checks and escalate via CQ/algedonic flow.
 
@@ -169,6 +176,11 @@ Requirements (per schema §3.3):
 ### Step 4 — Build Data/Business Function Matrix (CRUD)
 
 Produce DA §3.4: CRUD matrix — BPR-nnn (rows) × DOB-nnn (columns):
+
+Authoring method:
+- Create the CRUD matrix as a matrix artifact via `model_create_matrix` in `diagram-catalog/diagrams/*.md`.
+- Keep BPR/DOB IDs in the canonical row/column definitions; use auto-linking for readable, navigable cells.
+- Reserve PUML diagrams for data-flow topology; keep CRUD coverage in matrix form.
 
 - **C** = Create; **R** = Read; **U** = Update; **D** = Delete or Archive; combinations (CR, RU, CRUD); **—** = no relationship
 

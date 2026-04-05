@@ -48,7 +48,7 @@ enterprise-repository/           # Organisation-wide architecture data (long-liv
   diagram-catalog/               # Enterprise diagrams; entity files live in model-entities/ above
     _macros.puml                 # Auto-generated from entity §display ###archimate blocks
     _archimate-stereotypes.puml  # ArchiMate skinparam + stereotype library
-    diagrams/                    # Enterprise-level .puml files (frontmatter in PUML header comment block)
+    diagrams/                    # Enterprise-level architecture views (.puml diagrams + matrix .md files)
     templates/                   # Blank per-type diagram stubs agents copy and adapt
     rendered/                    # SVG outputs; committed at sprint boundary
 
@@ -71,7 +71,7 @@ engagements/<id>/                # Per-engagement working directory
       diagram-catalog/           # Diagrams over the model
         _macros.puml             # Auto-generated from entity §display ###archimate blocks
         _archimate-stereotypes.puml
-        diagrams/                # Engagement .puml files (frontmatter in PUML header comment block)
+        diagrams/                # Engagement architecture views (.puml diagrams + matrix .md files)
         templates/               # Blank per-type diagram stubs agents copy and adapt
         rendered/                # SVG outputs; committed at sprint boundary
       decisions/                 # Architecture Decision Records
@@ -141,6 +141,7 @@ tests/
 26. **Separate reusable skill intent from workflow-executable control logic.** Skill files should remain strict about outputs, quality checks, and domain procedure, but phase-gate execution logic (state transitions, dependency gating, retries, suspension/resume criteria) is owned by orchestration code and PM routing policies. Keep `invoke-when` / `trigger-conditions` as intent-level routing hints and documentation, not as the sole executable gate contract. Governed by `framework/agent-runtime-spec.md` and `framework/orchestration-topology.md`.
 
 27. **Business operational decomposition diagrams use nested parent containers by default.** For staged business behavior in operational ArchiMate diagrams, the parent `BPR-NNN` / `BIA-NNN` element is the container and stage behaviors are nested within it, connected by internal `flow`/`triggering` lines. Do not model outer grouping wrappers with duplicated parent nodes. Keep parent→stage `archimate-composition` files in `connections/archimate/composition/` as model truth even when external composition arrows are omitted in the operational diagram. Governed by `framework/diagram-conventions.md §7.archimate-business-operational` and `§11.9.1a`.
+28. **Representation choice must remain balanced: diagrams for context, matrices for dense mapping.** Matrix artifacts are first-class in `diagram-catalog/diagrams/*.md`, but they do not replace contextual diagrams. Use diagrams when topology, flow, sequence, or architectural narrative is required; use matrices when high-cardinality coverage and traceability are primary. Governed by `framework/diagram-conventions.md` and `framework/agent-runtime-spec.md`.
 
 ## End-of-Session Checklist
 
@@ -163,7 +164,7 @@ These files are the canonical orientation documents. If they drift from reality,
 | 2 | Project Manager master skill | Complete |
 | 3 | Primary implementation chain (SA → SwA → DevOps → Dev → QA) + discovery-protocol.md | Complete |
 | 4 | Framing layer (PO, Sales, CSCO) | Complete |
-| 4.5 | Cross-cutting framework extensions (diagram conventions, artifact references, standards discovery, agent profile condensation) | Complete |
+| 4.5 | Cross-cutting framework extensions (diagram conventions incl. balanced diagram-vs-matrix guidance, artifact references, standards discovery, agent profile condensation) | Complete |
 | 4.6 | Learning protocol (agent learnings from mistakes — generation, retrieval, synthesis, promotion) | Complete |
 | 4.6d | Learning protocol 2026 alignment (LangGraph BaseStore, semantic tier, graph connectivity, cross-agent visibility) | Complete |
 | 4.7 | Multi-target-repository support (repository-map schema, multi-repo config, discovery Layer 4 update) | Complete |

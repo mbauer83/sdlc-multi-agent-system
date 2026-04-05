@@ -220,7 +220,7 @@ Each engagement maintains a set of role-owned work repositories under `engagemen
 | `qa-repository/` | QA Engineer |
 | `devops-repository/` | DevOps / Platform Engineer |
 
-Architecture entities follow the **Entity Registry Pattern v2.0**: one `.md` file per entity, organised by ArchiMate layer (e.g. `model-entities/business/roles/`, `model-entities/business/collaborations/`, `model-entities/application/components/`), with machine-readable YAML frontmatter. The `ModelRegistry` is built from these files at startup. Diagrams are PlantUML files authored by agents directly; the full catalog of diagram types, templates, and authoring conventions is in `framework/diagram-conventions.md`. The canonical registry of valid entity types, connection types, ArchiMate element types, and grouping stereotypes lives in `src/common/archimate_types.py` and is the single source of truth for both documentation and the `ModelVerifier`.
+Architecture entities follow the **Entity Registry Pattern v2.0**: one `.md` file per entity, organised by ArchiMate layer (e.g. `model-entities/business/roles/`, `model-entities/business/collaborations/`, `model-entities/application/components/`), with machine-readable YAML frontmatter. The `ModelRegistry` is built from these files at startup. Architecture views in `diagram-catalog/diagrams/` include both PlantUML diagram files (`*.puml`) and matrix view files (`*.md`) authored by agents using the same model IDs and references. The full catalog of diagram/matrix conventions and authoring rules is in `framework/diagram-conventions.md`. The canonical registry of valid entity types, connection types, ArchiMate element types, and grouping stereotypes lives in `src/common/archimate_types.py` and is the single source of truth for both documentation and the `ModelVerifier`.
 
 **Validated and semantically discoverable:** `src/common/model_verifier.py` (`ModelVerifier`) validates every entity, connection, and diagram file against ERP v2.0 rules — referential integrity, status lifecycle (E306/E307: baselined diagrams cannot reference draft elements), PlantUML syntax, required frontmatter fields, and ArchiMate type correctness. `src/common/model_query.py` (`ModelRepository`) provides keyword and synonym search, graph traversal, and the framework-aligned `list_artifacts` / `search_artifacts` / `read_artifact` query API used by all agents during Discovery Scan Step 0. Together these tools enable agents to efficiently query only what they need (targeted `entity_status()` lookup without full scans; `find_neighbors()` for local graph traversal) while the batch `verify_all()` ensures the entire model stays coherent. The same `ModelRegistry` interface is shared between the verifier and the query engine — no duplication.
 
@@ -229,6 +229,8 @@ In runtime use, these capabilities are exposed through MCP tool families (model 
 This repository also provides an additional reusable MCP server, `sdlc-registry`, which exposes the agent and skill catalog defined here for discovery and runtime loading in other Claude Code or MCP-compatible setups. It is complementary to the model server (`sdlc-mcp-model`): registry MCP serves reusable role/skill metadata, while model MCP serves architecture model query and validation operations.
 
 #### Diagram types produced
+
+Matrix view artifacts (`diagram-catalog/diagrams/*.md`) are also first-class architecture views for dense mappings and coverage checks (for example skill I/O traceability matrices). Representation choice is intentional and balanced: use diagrams where structural/behavioral context matters, and use matrices where high-cardinality traceability is the primary concern. Matrix outputs do not replace contextual diagrams when topology or flow understanding would be lost.
 
 Agents produce five families of PlantUML diagram. **No single diagram type has final authority over system behaviour** — the types are complementary and intentionally overlapping. An application component that appears in an ArchiMate diagram, a sequence diagram, an activity diagram, and an ER diagram must be mutually consistent across all four; deliberate overlap is the cross-verification mechanism that catches mismatches between structural, behavioural, and data specifications. The decision of which diagram type to use for a given aspect is a workflow concern, not a tooling constraint — the rules below guide applicability; some aspects warrant multiple diagram types by design.
 
@@ -279,7 +281,7 @@ The engagement dashboard (Stage 5.5) is a local FastAPI web server that provides
 
 ## Implementation Status
 
-The framework and ENG-001 reference model are being built incrementally. Current state (2026-04-04):
+The framework and ENG-001 reference model are being built incrementally. Current state (2026-04-06):
 
 | Layer | Status |
 |---|---|
@@ -288,13 +290,14 @@ The framework and ENG-001 reference model are being built incrementally. Current
 | ENG-001 reference model — entities (99 files across motivation, strategy, business, application layers; entity types ArchiMate-correct: BusinessRole for agent roles, BusinessCollaboration for Architecture Board) | Complete |
 | ENG-001 reference model — connections (89 files: realization, serving, assignment, composition, access, ER; includes 14 BPR→BSV business-layer realization files) | Complete |
 | ENG-001 reference model — `_macros.puml` (99 macros, auto-generated from entity `§display ###archimate` blocks via `src/tools/generate_macros.py`) | Complete |
-| ENG-001 reference model — diagrams (2/7 produced and semantically verified: `phase-b-archimate-business-v1`, `phase-c-archimate-application-v1`; ER, activity, and sequence diagrams pending) | Partial |
+| ENG-001 reference model — diagrams (4/7 produced and semantically verified; sequence diagrams pending) | Partial |
 | ENG-001 reference model — overview docs + ADRs | Pending |
 | `src/common/model_verifier.py` — BDD-tested verifier for entity/connection/diagram files (71 scenarios); E306/E307 draft-reference checks with targeted `entity_status()`/`connection_status()` lookups; `entity_id_from_path()` formal-id extraction | Complete |
 | `src/common/archimate_types.py` — canonical type registry for all entity, connection, element, and grouping stereotype types; single source of truth imported by verifier and referenced in documentation | Complete |
 | `src/common/model_query.py` — `ModelRepository`: rich query engine for model-entities, connections, and diagrams; `list_artifacts(**filter)` / `search_artifacts(query)` / `read_artifact(id, mode)` framework-aligned API; keyword+synonym search with `SemanticSearchProvider` hook; graph traversal (`find_connections_for`, `find_neighbors`); CLI (`python -m src.common.model_query`); 36 BDD tests | Complete |
 | `src/common/domain_vocabulary.py` — canonical SDLC/ArchiMate domain synonym map; `expand_tokens()` for bidirectional abbreviation expansion; `agent_abbreviations()` and `archimate_prefix_to_type()` lookup tables; shared by `model_query.py`, `LearningStore`, future NLP pipelines | Complete |
 | MCP servers — `sdlc-mcp-model` (model query/construct/validate tool surface) and `sdlc-mcp-registry` (reusable agent/skill discovery surface) | Complete |
+| Representation selection governance — balanced diagram-vs-matrix policy documented in framework and normalized across role skill runtime-tooling hints | Complete |
 | `src/tools/generate_macros.py` — regenerates `_macros.puml` from entity `§display ###archimate` blocks | Complete |
 | `pyproject.toml` + uv project setup | Complete |
 | `docs/puml-bug-reports.md` — confirmed PlantUML 1.2025.x bugs (PB-001..PB-005) with reproduction cases and workarounds | Complete |

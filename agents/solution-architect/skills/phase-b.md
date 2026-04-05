@@ -28,11 +28,18 @@ version: 1.0.0
 
 ## Runtime Tooling Hint
 
+
+Representation choice (balanced and mandatory):
+- Use `.puml` diagrams when flow, topology, sequence, trust boundaries, or interaction context is the primary concern.
+- Use matrix artifacts (`model_create_matrix`) for dense many-to-many mappings, coverage, and traceability where node-link readability degrades.
+- Do not replace contextual architecture views with matrices alone: keep a reasonable set of diagrams that preserves end-to-end context for the domain slice.
+- Practical threshold: if a single node-link view would exceed about 25 elements or become edge-dense, keep/author at least one contextual diagram and shift dense cross-reference detail to a matrix.
+
 This skill describes tool-use intent. Runtime binding is code-owned.
 
 - Discovery/search/filter/query: use model query tools (`model_query_*`) or compatible aliases.
 - Validation: use model verifier tools (`model_verify_file`, `model_verify_all`).
-- Building entities/connections/diagrams: use deterministic model write tools (`model_create_entity`, `model_create_connection`, `model_create_diagram`) with `dry_run` before writes.
+- Building entities/connections/diagrams: use deterministic model write tools (`model_create_entity`, `model_create_connection`, `model_create_diagram`, `model_create_matrix`) with `dry_run` before writes.
 - `invoke-when` and `trigger-conditions` remain intent-level guidance; runtime gate/state enforcement is owned by orchestration and PM routing.
 - Keep BA output structure strict and schema-aligned even when invoked from different entry profiles.
 
@@ -274,6 +281,11 @@ Execute D1–D4 per `framework/diagram-conventions.md §5`:
 ### Step 4 — Build Business Function/Process Matrix
 
 Produce the matrix (per schema §3.4) mapping each CAP-nnn to each BPR-nnn:
+
+Tooling pattern (required for large mappings):
+- Author the mapping as ID-first markdown and write it via `model_create_matrix` to `architecture-repository/diagram-catalog/diagrams/`.
+- Keep IDs in cells for deterministic parsing; enable auto-linking so output remains human-readable and navigable.
+- Do not replace this matrix with a single dense node-link diagram.
 
 - **●** = primary realisation (this process is the primary means by which this capability is realised)
 - **○** = contributing (this process contributes to the capability but is not the primary realisation)

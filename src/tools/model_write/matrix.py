@@ -4,6 +4,7 @@ from pathlib import Path
 import os
 import re
 from typing import Callable
+import yaml
 
 from src.common.model_verifier import ModelRegistry, ModelVerifier
 from src.common.model_write import format_matrix_markdown
@@ -32,6 +33,51 @@ def _infer_entity_ids_from_matrix(markdown: str) -> list[str]:
     return found
 
 
+def _read_frontmatter(path: Path) -> dict[str, object]:
+    try:
+        content = path.read_text(encoding="utf-8")
+    except OSError:
+        return {}
+    if not content.startswith("---\n"):
+        return {}
+    end = content.find("\n---\n", 4)
+    if end == -1:
+        return {}
+    try:
+        parsed = yaml.safe_load(content[4:end])
+    except yaml.YAMLError:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _display_name_from_entity_file(path: Path, artifact_id: str) -> str:
+    fm = _read_frontmatter(path)
+    name = str(fm.get("name", "")).strip()
+    if not name:
+        return artifact_id
+
+    # For skill concept objects, prefer the synchronized "Display Name" property.
+    try:
+        content = path.read_text(encoding="utf-8")
+        m = re.search(r"^\| Display Name \|\s*(.+?)\s*\|\s*$", content, flags=re.MULTILINE)
+        if m:
+            return m.group(1).strip()
+    except OSError:
+        pass
+
+    prefixes = (
+        "Skill: ",
+        "Input Concept: ",
+        "Output Concept: ",
+        "Input: ",
+        "Output: ",
+    )
+    for pref in prefixes:
+        if name.startswith(pref):
+            return name[len(pref) :].strip()
+    return name
+
+
 def _linkify_matrix_ids(
     *,
     repo_root: Path,
@@ -43,6 +89,7 @@ def _linkify_matrix_ids(
 
     diagrams_dir = repo_root / "diagram-catalog" / "diagrams"
     id_to_relpath: dict[str, str] = {}
+    id_to_link_text: dict[str, str] = {}
 
     for entity_id in candidate_entity_ids:
         p = registry.find_file_by_id(entity_id)
@@ -50,6 +97,7 @@ def _linkify_matrix_ids(
             continue
         rel = os.path.relpath(str(p), start=str(diagrams_dir)).replace("\\", "/")
         id_to_relpath[entity_id] = rel
+        id_to_link_text[entity_id] = _display_name_from_entity_file(p, entity_id)
 
     if not id_to_relpath:
         return matrix_markdown, 0
@@ -62,8 +110,9 @@ def _linkify_matrix_ids(
         target = id_to_relpath.get(artifact_id)
         if target is None:
             return artifact_id
+        link_text = id_to_link_text.get(artifact_id, artifact_id)
         replaced += 1
-        return f"[{artifact_id}]({target})"
+        return f"[{link_text}]({target})"
 
     out_lines: list[str] = []
     for line in matrix_markdown.splitlines():

@@ -145,7 +145,7 @@ rectangle "Diagram-Type Taxonomy" <<BusinessGrouping>> as GRP_DIAG {
   DECL_BOB_135
 }
 
-rectangle "Conceptual Inputs/Outputs" <<BusinessGrouping>> as GRP_IO {
+rectangle "Input/Output Generalizations" <<BusinessGrouping>> as GRP_IO {
   DECL_BOB_140
   DECL_BOB_141
   DECL_BOB_142
@@ -232,7 +232,7 @@ BPR_008 -[#808080]-> BOB_135 : <<access>>
 note as N1
   Framework Concept Map:
   ADM phase taxonomy, sprint taxonomy, diagram taxonomy,
-  conceptual input/output artifacts, and skill/personality
+  input/output generalizations, and skill/personality
   concept definitions with process-level access anchors.
   Operational object map remains in b-archimate-business-concept-v1.
 end note

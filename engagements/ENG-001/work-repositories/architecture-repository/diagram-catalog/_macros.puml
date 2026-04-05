@@ -143,11 +143,11 @@
 !define DECL_BOB_133 rectangle "Use Case Diagram Type" <<BusinessObject>> as BOB_133
 !define DECL_BOB_134 rectangle "Sequence Diagram Type" <<BusinessObject>> as BOB_134
 !define DECL_BOB_135 rectangle "ER Class Diagram Type" <<BusinessObject>> as BOB_135
-!define DECL_BOB_140 rectangle "Conceptual Input" <<BusinessObject>> as BOB_140
-!define DECL_BOB_141 rectangle "Conceptual Output" <<BusinessObject>> as BOB_141
+!define DECL_BOB_140 rectangle "Input Generalization" <<BusinessObject>> as BOB_140
+!define DECL_BOB_141 rectangle "Output Generalization" <<BusinessObject>> as BOB_141
 !define DECL_BOB_142 rectangle "Input Artifact Set" <<BusinessObject>> as BOB_142
 !define DECL_BOB_143 rectangle "Output Artifact Set" <<BusinessObject>> as BOB_143
-!define DECL_BOB_144 rectangle "Architecture Contract Concept" <<BusinessObject>> as BOB_144
+!define DECL_BOB_144 rectangle "Architecture Contract Generalization" <<BusinessObject>> as BOB_144
 !define DECL_BOB_145 rectangle "Requirements Register Concept" <<BusinessObject>> as BOB_145
 !define DECL_BOB_150 rectangle "Skill Definition" <<BusinessObject>> as BOB_150
 !define DECL_BOB_151 rectangle "Runtime Behavioral Stance" <<BusinessObject>> as BOB_151

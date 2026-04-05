@@ -106,6 +106,7 @@ Agents author PlantUML source text directly. The model (entity and connection fi
 |---|---|
 | Author/maintain entity and connection files with correct `§display` sections | SA (architecture-repository); SwA (technology-repository) |
 | Author PUML diagram files from entity/connection `§display` specs | SA using D1–D5 protocol below |
+| Author dense cross-reference matrices (`.md`) for high-cardinality mappings | SA/SwA via `model_create_matrix` (ID-authored markdown; auto-link to entity files) |
 | Generate/regenerate `_macros.puml` from entity `§display ###archimate` blocks | `regenerate_macros()` tool (called by `write_artifact` when entity display specs change) |
 | Post-authoring validation | `validate_diagram` tool |
 | Rendering to SVG | `render_diagram` tool (invokes PlantUML CLI; run at sprint boundary) |
@@ -124,8 +125,9 @@ Agents author PlantUML source text directly. The model (entity and connection fi
   _archimate-stereotypes.puml     # Shared ArchiMate skinparam + stereotype library (SA-maintained)
 
   diagrams/
-    <phase>-<type>-<subject>[-<domain>]-v<N>.puml   # All produced engagement diagrams
-    ...                                               # Each begins with PUML header comment frontmatter (see §9)
+    <phase>-<type>-<subject>[-<domain>]-v<N>.puml   # Viewpoint diagrams
+    <phase>-matrix-<subject>[-<domain>]-v<N>.md     # Cross-reference matrices (dense mappings)
+    ...                                              # Each file carries frontmatter (PUML header for .puml; YAML block for .md)
 
   templates/
     <type>-template.puml          # Per-type stubs demonstrating structure and ArchiMate conventions
@@ -196,6 +198,17 @@ SA nominates engagement entities and diagrams that are sufficiently general for 
 ## 5. Diagram Production Protocol (D1–D5)
 
 Every skill step that produces or updates a diagram executes this protocol.
+
+### D0 — Choose Representation (Diagram vs Matrix)
+
+Before D1, choose the artifact form intentionally:
+
+- Use a `.puml` diagram when spatial/topological relationships, sequence, flow, or grouping structure are the primary communication need.
+- Use a matrix `.md` when the objective is coverage, traceability, dependency mapping, or many-to-many relationship inspection across large ID sets.
+- Default rule for dense mappings: if the same artifact would exceed ~25 nodes or become edge-dense enough to harm readability, produce a matrix first and add/keep only the minimal supporting diagrams needed for topology.
+- Coverage guardrail: matrices must not become a substitute for architectural context. Keep a reasonable set of diagrams per domain slice so end-to-end behavior, boundaries, and interaction structure remain visible.
+
+For matrix authoring, use `model_create_matrix` with ID-based markdown and enabled auto-linking so cells resolve to model entities.
 
 ### D1 — Query Model Entities
 

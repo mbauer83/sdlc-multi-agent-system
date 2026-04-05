@@ -1285,6 +1285,15 @@ sprint-review:
 
 **Stages 1–4.9e complete. ModelVerifier complete (71 BDD tests). Stage 4.9f partial (4/7 diagrams done). `src/common/model_query.py` complete. Business modeling guidelines (Stage 4.9g pre-work) added to framework. ENG-001 business-layer model rework pending.**
 
+### Completed this session (2026-04-06 — session 7)
+
+- **Diagram-vs-matrix representation policy is now explicit, balanced, and uniform across framework + skills:**
+  - `framework/agent-runtime-spec.md` now documents matrix creation alongside diagram creation in the runtime tool-capability map.
+  - `framework/diagram-conventions.md` now includes an explicit representation-choice step: use diagrams for topology/flow/context and matrices for high-cardinality mapping/coverage views.
+  - A coverage guardrail now explicitly prevents matrix-only replacement of contextual diagrams when structural or behavioral understanding would be lost.
+  - `framework/artifact-registry-design.md` now treats `diagram-catalog/diagrams/*.md` matrix artifacts as first-class, discoverable architecture-view artifacts alongside `.puml`.
+  - Runtime tooling hints were aligned across all role skill files (48 updates) with the same mandatory balanced-selection guidance.
+
 ### Completed this session (2026-04-06 — session 6)
 
 - **Nested operational decomposition convention standardized across framework + SA skills:**

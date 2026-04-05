@@ -29,11 +29,18 @@ version: 1.0.0
 
 ## Runtime Tooling Hint
 
+
+Representation choice (balanced and mandatory):
+- Use `.puml` diagrams when flow, topology, sequence, trust boundaries, or interaction context is the primary concern.
+- Use matrix artifacts (`model_create_matrix`) for dense many-to-many mappings, coverage, and traceability where node-link readability degrades.
+- Do not replace contextual architecture views with matrices alone: keep a reasonable set of diagrams that preserves end-to-end context for the domain slice.
+- Practical threshold: if a single node-link view would exceed about 25 elements or become edge-dense, keep/author at least one contextual diagram and shift dense cross-reference detail to a matrix.
+
 Tool references in this skill are intent guidance; runtime APIs are bound in code.
 
 - Discovery/filter/search/query: use `model_query_*` tools.
 - Validation: use `model_verify_file` and `model_verify_all`.
-- Deterministic entity/connection/diagram writing: use `model_create_entity`, `model_create_connection`, `model_create_diagram` with `dry_run` before writes.
+- Deterministic entity/connection/diagram writing: use `model_create_entity`, `model_create_connection`, `model_create_diagram`, `model_create_matrix` with `dry_run` before writes.
 - Frontmatter conditions remain intent-level and reusable; executable phase/dependency checks are orchestration responsibilities.
 - Keep output contract strict; when runtime state conflicts with assumptions, stop and escalate via CQ/algedonic handling rather than soft-continuing.
 
@@ -205,6 +212,8 @@ Execute D1–D4 per `framework/diagram-conventions.md §5`:
 ### Step 6 — Build Technology/Application Matrix
 
 6.1 Produce a matrix cross-referencing all TC-nnn components (columns) against all APP-nnn application components (rows) per `technology-architecture.schema.md §3.3`.
+
+6.1a Implementation detail: build this as a matrix artifact via `model_create_matrix` (`diagram-catalog/diagrams/*.md`) rather than a dense node-link diagram. Keep APP/TC IDs canonical and auto-link cells to entity files.
 
 6.2 Use notation: ● = primary host/support; ○ = auxiliary support; — = no relationship.
 
