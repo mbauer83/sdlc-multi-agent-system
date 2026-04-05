@@ -156,20 +156,28 @@ If SM has provided a Market Analysis, cross-reference and incorporate market-dri
 
 ---
 
-### Step 4 — Author Capability Overview
+### Step 4 — Sketch Value Streams and Author Capability Overview
 
-Produce AV §3.5 (Capability Overview) using the **ArchiMate Strategy Viewpoint** structure.
+**Value stream sketch (Step 4a — precedes capability overview):** Identify 1–3 primary value streams at a strategic level. Create VS-nnn entity stubs (via `write_artifact`) with `status: draft`, naming each VS, its triggering stakeholder, and its end-state value delivered. Stage detail is intentionally incomplete at Phase A — Phase B will refine the stages. This early sketch ensures Phase B has a starting point and anchors the capability overview to stakeholder-facing value.
+
+For each VS-nnn stub:
+- `name`: noun phrase ("Software Delivery", "Brownfield Onboarding")
+- `triggering-stakeholder`: STK-nnn
+- `value-delivered`: one sentence
+- `stages`: note "to be detailed in Phase B" — or sketch 2–3 top-level stage names if obvious
+
+**Capability overview (Step 4b):** Produce AV §3.5 using the **ArchiMate Strategy Viewpoint** structure. Capability clusters at this stage serve as a supporting enterprise architecture cross-reference, not the primary Phase B entry point — business services and value streams drive Phase B.
 
 **Constraint:** 3–7 capability clusters at this stage. This is a strategic overview — detail is deferred to Phase B.
 
 For each capability cluster:
 - Assign a name (noun phrase, not a verb phrase; e.g., "Customer Engagement" not "Engage Customers")
 - Write a one-sentence description of what the cluster encompasses
-- State the primary value delivered (to which stakeholder, delivering what)
+- State the primary value delivered (to which stakeholder, delivering what) — cross-reference to VS-nnn stub if applicable
 - Classify current state: Existing / Planned / Gap
 - Classify strategic importance: Core / Supporting / Commodity
 
-**Traceability check:** Every capability cluster must be traceable to at least one DRV-nnn business driver. If a capability cannot be traced to a driver, either the driver is missing (add it in §3.4) or the capability is out of scope (do not include it).
+**Traceability check:** Every capability cluster must be traceable to at least one DRV-nnn business driver and at least one VS-nnn stub. Capability with no VS anchor is either out of scope or indicates a missing value stream.
 
 ---
 

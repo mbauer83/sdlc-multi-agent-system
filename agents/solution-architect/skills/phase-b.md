@@ -83,41 +83,79 @@ Call `query_learnings(agent="SA", phase="B", artifact_type="business-architectur
 
 1. Confirm `sprint.started` has been emitted for the Phase B Architecture Sprint.
 2. Confirm AV is at version 1.0.0 (baselined).
-3. Read AV §3.5 (Capability Overview) — this is the primary input to Step 1.
-4. Read SCO Phase A baseline — note all safety constraints that apply at the business process level.
-5. Read current RR — note all business-level requirements (Functional and Constraint types).
+3. Read AV §3.5 (Capability Overview) and §3.3 (Stakeholder Register) — primary inputs.
+4. Read SCO Phase A baseline — note safety constraints applicable at the business process level.
+5. Read current RR — note all business-level requirements.
+
+Discovery: call `list_artifacts(artifact_type="value-stream")` and `list_artifacts(artifact_type="capability")` to find any existing VS or CAP entities from a prior pass through this phase; use as starting points rather than recreating from scratch.
 
 ---
 
-### Step 1 — Decompose Capability Clusters into Business Capability Map
+### Step 0.VS — Define Value Stream Stages *(Outside-In Entry Point)*
 
-Starting from AV §3.5 capability clusters, produce the two-level Business Capability Map:
+**This step precedes capability decomposition.** Business architecture is built outside-in: start from what stakeholders receive (value streams and the services they deliver), then work inward toward processes, functions, and roles. See `framework/diagram-conventions.md §11.9.1`.
 
-**Level 1 — Capability Domains:** One per AV capability cluster (preserve names for traceability). Add additional domains only if RR or Business Scenarios identify capabilities not represented in AV §3.5; if added, flag as a gap to be reflected in an AV revision (or accepted as a scope refinement with PM approval).
+For each value stream identified in AV §3.5 or the Stakeholder Register:
 
-**Level 2 — Capabilities (CAP-nnn):** For each Level-1 domain, enumerate specific, named capabilities. Naming rule: noun phrase describing what the business *has the ability to do*, e.g., "Customer Identity Verification", not "Verify Customer Identity".
+1. Check via `list_artifacts(artifact_type="value-stream")` whether VS entities already exist. Read each via `read_artifact(id, mode="full")` to see whether stages are already documented in `§content`.
+2. For each VS-nnn, document 3–7 named stages in the entity `§content` section. Each stage must state:
+   - **Stage name** (noun phrase, e.g., "Customer Onboarding")
+   - **Consuming stakeholder** (STK-nnn or description)
+   - **Value delivered** at this stage (one sentence)
+   - **Key business services** (BSV-nnn to be defined in Step 2) — link by ID once created
+3. If no VS entities exist: create VS-nnn entities via `write_artifact`, one per identified value stream.
+4. If stages are already documented: verify they are stakeholder-value-focused, **not ADM-phase-focused**. Revise any stage definitions that describe internal process steps rather than stakeholder-facing value delivery.
 
-Attributes per capability (per schema §3.2):
-- `Capability ID`: CAP-nnn (sequential, engagement-unique)
-- `Name`: noun phrase
-- `Domain`: Level-1 domain name
-- `Description`: one sentence — what the capability enables; no "how"
-- `Strategic Classification`: Core / Supporting / Commodity
-- `Maturity Level`: Current (exists and operates) / Developing (exists but immature) / Target (does not yet exist)
-- `Gap`: Yes (target not met) / No (current meets target)
+**CQ trigger:** If the engagement scope cannot support even one identifiable value stream with a concrete consuming stakeholder, raise a blocking CQ to PO before proceeding.
 
-**Traceability constraint:** Every CAP-nnn must be traceable to at least one AV DRV-nnn business driver. Record the traceability explicitly in the BA document. Any capability not traceable to a driver is either an out-of-scope item (remove it) or a missing driver (add DRV-nnn to AV §3.4 and note the AV revision as an action item for SA).
+---
 
-ArchiMate viewpoint: **Capability Map Viewpoint** (structured as a matrix or tree; rendered in text form as a nested list or table).
+### Step 1 — Identify and Scope Business Services per VS Stage
 
-**Diagram Step D — ArchiMate Business Architecture Overview**
+**Primary step of Phase B.** For each VS stage defined in Step 0.VS, enumerate the business services (BSV-nnn) that constitute the value delivered at that stage. Business services are the **stable external contracts** — what the stakeholder can depend on regardless of internal process implementation.
 
-Execute D1–D4 per `framework/diagram-conventions.md §5`:
-- **D1:** Call `list_artifacts(artifact_type="capability")`, `list_artifacts(artifact_type="business-actor")`, `list_artifacts(artifact_type="business-process")`, and `list_artifacts(artifact_type="business-service")` to identify entities matching the capability domains defined above. Use `search_artifacts(query)` for cross-layer or uncertain types.
-- **D2:** For each entity that will appear in the diagram, verify its `§display ###archimate` subsection exists. Add missing subsections via `write_artifact` before proceeding; run `regenerate_macros()`.
-- **D3:** Load template via `read_framework_doc("framework/diagram-conventions.md §7.archimate-business")`. Author ArchiMate business-layer diagram using capability domain structure; entity artifact-ids as PUML aliases. Include required frontmatter comment block. Write to `architecture-repository/diagram-catalog/diagrams/b-archimate-business-capability-v1.puml` via `write_artifact`.
-- **D4:** Call `validate_diagram`; fix errors; re-validate before proceeding.
+Check via `list_artifacts(artifact_type="business-service")` for existing BSV entities. Read each to assess whether VS stage linkage is documented.
 
+For each BSV-nnn:
+- `Service ID`: BSV-nnn
+- `Name`: noun phrase as the consuming stakeholder would name it
+- `VS Stage(s)`: which stage(s) of which VS-nnn deliver this service
+- `Consumer`: STK-nnn — who receives this service
+- `Description`: externally visible behavior (no internal "how")
+- `Safety-Relevant`: Yes / No
+
+**Completeness rule:** Every VS stage must have at least one BSV. A stage with no associated service is either mislabeled (it describes an internal step, not stakeholder-facing value) or a model gap requiring a CQ to PO.
+
+**Traceability back to AV:** Every BSV must ultimately trace to at least one AV DRV-nnn driver. Record this traceability explicitly. A service untraceable to any driver is either out of scope or points to a missing driver in AV.
+
+---
+
+### Step 1.1 — Capability Cross-Reference *(Supporting EA step — not the entry point)*
+
+Capability mapping provides enterprise architecture context for the business layer. It should not drive the business architecture — that is driven by value streams and services (Steps 0.VS and 1). Perform this step **after** BSV entities are modeled, to cross-reference which capabilities enable each service.
+
+From AV §3.5, verify existing CAP-nnn entities via `list_artifacts(artifact_type="capability")`. For each CAP-nnn, record which BSV-nnn(s) it supports (association) and which BFN-nnn(s) realize it (realization connection). If AV §3.5 capability clusters do not cover domains implied by the BSV set, note as AV gaps (SA action item); do not block BA progress.
+
+Capability map is documented as a supporting table in the BA narrative — it is not the primary ArchiMate diagram.
+
+---
+
+### Step 1.5 — Build Business Concept Map (Objects, Interfaces, Events)
+
+**Perform this step before authoring processes.** Business objects and events are the structural glue that makes processes coherent — modeling them first prevents process definitions that operate on undefined concepts.
+
+**1.5a — Business Objects (BOB-nnn):** Identify the key business objects that persist across VS stages or are produced/consumed by multiple processes. Check via `list_artifacts(artifact_type="business-object")` for any already modeled. Each BOB-nnn requires:
+- A globally stable name (e.g., "Architecture Artifact", "Sprint Plan", "Gate Outcome")
+- A description of its lifecycle — which VS stage creates it, which stages consume or transform it
+- A corresponding DOB-nnn at the application layer (create or reference): record the BOB↔DOB mapping as an `archimate-association` connection
+
+**1.5b — Business Interfaces (BIF-nnn):** Identify any formal access points through which external stakeholders interact with the system's business services — named entry/exit points used by more than one stakeholder or process. Many engagements will have few or no BIF entities; do not manufacture them.
+
+**1.5c — Business Events (BEV-nnn):** Identify events that trigger transitions between processes or between VS stages. Events are stimuli — they do not perform work themselves; they initiate a BPR. Each BEV-nnn requires:
+- A name in past-tense or noun-event form ("Sprint Started", "Gate Passed", "CQ Raised")
+- The process(es) it triggers (BPR-nnn) — record as `archimate-triggering` connection files
+
+**Concept map completeness check:** Every BOB-nnn must connect to at least one BPR/BIA (via access or association). Every BEV-nnn must connect to at least one BPR (via triggering). Isolated objects or events are model gaps.
 
 ---
 
@@ -150,10 +188,48 @@ Do NOT create individual `BPR-nnn --realization--> BSV-nnn` connections when the
 **Diagram Step D — Activity/BPMN Process Diagrams**
 
 Execute D1–D4 per `framework/diagram-conventions.md §5`:
-- **D1:** Call `list_artifacts(artifact_type="business-process", filter={"safety-relevant": true})`, `list_artifacts(artifact_type="business-interaction")`, and `list_artifacts(artifact_type="business-actor")` to identify swimlane participants and safety-relevant processes. Include other key processes via `search_artifacts`.
-- **D2:** For each BPR-nnn and ACT-nnn that will appear, verify `§display ###activity` subsections exist. Add missing subsections via `write_artifact`; run `regenerate_macros()`.
-- **D3:** Load template via `read_framework_doc("framework/diagram-conventions.md §7.activity-bpmn")`. For each process flagged `safety-relevant: true` and other key processes, author an Activity/BPMN diagram with swimlane pools keyed to entity artifact-ids. Include required frontmatter comment block. Write to `architecture-repository/diagram-catalog/diagrams/b-bpmn-<bpr-id>-v1.puml` via `write_artifact`.
+- **D1:** Call `list_artifacts(artifact_type="business-process", filter={"safety-relevant": true})`, `list_artifacts(artifact_type="business-interaction")`, and `list_artifacts(artifact_type="business-actor")` to identify swimlane participants and safety-relevant processes. Also call `list_artifacts(artifact_type="business-event")` to identify triggering events for each process.
+- **D2:** For each BPR-nnn, BIA-nnn, and ACT-nnn that will appear, verify `§display ###activity` subsections exist. Add missing subsections via `write_artifact`; run `regenerate_macros()`.
+- **D3:** Load template via `read_framework_doc("framework/diagram-conventions.md §7.activity-bpmn")`. For each process or interaction with non-trivial branching or multi-party flow, author an Activity/BPMN diagram. Swimlane pools keyed to entity artifact-ids. Write to `architecture-repository/diagram-catalog/diagrams/b-bpmn-<bpr-id>-v1.puml` via `write_artifact`.
 - **D4:** Call `validate_diagram`; fix errors; re-validate before proceeding.
+
+---
+
+### Step 2.5 — Decompose Business Functions
+
+**Business functions** (BFN-nnn) are stable organizational groupings — continuous capabilities that own clusters of related processes. They are not the same as processes (which are time-bounded and sequential). Functions provide the structural container to which roles and actors are assigned in the structural viewpoint.
+
+Check via `list_artifacts(artifact_type="business-function")` for any existing BFN entities.
+
+For each BFN-nnn define:
+- `Name`: noun phrase for the stable organizational function (e.g., "Project Governance Function")
+- `Description`: what this function is continuously responsible for
+- `Realizes`: BSV-nnn(s) and CAP-nnn(s) — create `archimate-realization` connection files
+- `Assigned roles/actors`: ACT-nnn and BCO-nnn — create `archimate-assignment` connection files
+
+**Function-to-process relationship:** A BFN groups related BPRs. This relationship is documented in the BA narrative; it does not require separate ArchiMate connection files (the structural diagram shows the grouping visually).
+
+**Coverage rule:** Every BPR-nnn must belong to exactly one BFN. Every BFN must have at least one assigned ACT or BCO. Every BFN must realize at least one BSV or CAP. Verify via `list_connections(source=<bfn-id>)` and `list_connections(target=<bfn-id>)` after creating connection files.
+
+**Diagram Step D — Business Architecture ArchiMate Diagrams**
+
+Produce the dual-viewpoint ArchiMate diagrams per `framework/diagram-conventions.md §11.9.4` and §7 templates. Decide whether a single combined diagram suffices (≤ ~25 elements total) or separate structural and operational diagrams are needed; document the decision in diagram frontmatter.
+
+Execute D1–D4 per `framework/diagram-conventions.md §5` for each diagram:
+
+**Structural viewpoint** (`b-archimate-business-structural-v1.puml`):
+- **D1:** `list_artifacts` for BFN, ACT, BCO, BSV, CAP; `list_connections` to verify assignment and realization coverage.
+- **D2:** Verify `§display ###archimate` on all entities. Add missing via `write_artifact`; `regenerate_macros()`.
+- **D3:** Load `read_framework_doc("framework/diagram-conventions.md §7.archimate-business")`. Group by function; roles/actors inside or adjacent to their function grouping; services outside. Include capabilities. Write via `write_artifact`.
+- **D4:** `validate_diagram`; cross-check that every BFN shown has at least one role and one service connection visible.
+
+**Operational viewpoint** (`b-archimate-business-operational-v1.puml`) — or combined if scale permits:
+- **D1:** `list_artifacts` for BPR, BIA, BEV, ACT, BCO, BSV; `list_connections` for assignment, realization, triggering.
+- **D2:** Verify `§display ###archimate` on all entities. Add missing; `regenerate_macros()`.
+- **D3:** Load `read_framework_doc("framework/diagram-conventions.md §7.archimate-business-operational")`. Group by process cluster or VS stage; events connected to the processes they trigger. Write via `write_artifact`.
+- **D4:** `validate_diagram`; cross-check that every BPR shown has at least one role and one realizing service visible.
+
+Multiple diagrams per viewpoint are acceptable and encouraged when scope is large: produce one operational diagram per major VS stage or process cluster rather than one monolithic diagram.
 
 
 ---
@@ -298,11 +374,15 @@ Before baselining the BA:
    - `result: veto` with rationale if any item is not satisfied.
 
 **SA self-checklist for Phase B gate vote:**
-- [ ] Every CAP-nnn is traceable to at least one DRV-nnn from AV
+- [ ] Every VS-nnn has ≥ 3 named stages in `§content`, each stage names ≥ 1 BSV
+- [ ] Every BSV-nnn has ≥ 1 realizing BPR, BFN, or BIA
+- [ ] Every BPR-nnn has ≥ 1 assigned ACT or BCO; every BPR is served by ≥ 1 ASV or annotated as manual
+- [ ] Every BFN-nnn has ≥ 1 assigned ACT or BCO and realizes ≥ 1 BSV or CAP
+- [ ] Every BOB-nnn is accessed by ≥ 1 BPR or BIA; every BEV-nnn triggers ≥ 1 BPR
+- [ ] Cross-layer traceability: every BSV has a downward connection to ≥ 1 application-layer element; every BPR has ≥ 1 serving ASV (or manual annotation) — verified via `list_connections(target=<id>)`
 - [ ] Every safety-relevant process is flagged and a handoff to CSCO has been created
-- [ ] Every value stream is complete end-to-end (trigger → outcome)
-- [ ] Every external stakeholder has at least one GL-nnn entry in the Motivation Architecture
 - [ ] CSCO has signed off on the Phase B SCO update (`csco-sign-off: true`)
+- [ ] At least one structural and one operational ArchiMate diagram produced (or one combined diagram for small systems) and validated
 - [ ] `pending-clarifications` is empty or all items are `assumption`-flagged with PM acceptance
 
 ---

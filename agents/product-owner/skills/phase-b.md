@@ -105,8 +105,8 @@ Read the BA draft from `architecture-repository/business-architecture/`. If the 
 Key BA sections to read for PO's consulting role:
 
 - **Business Capability Map (§3.2):** List of all CAP-nnn capabilities. For each capability, note its name, description, classification (Core/Supporting/Commodity), and linkage to AV capability clusters.
-- **Business Process Catalog (§3.3):** List of all PRO-nnn processes. For each process, note which capabilities it enables and which stakeholders participate.
-- **Value Stream Map (§3.4):** Value streams identify how the system delivers value end-to-end. Cross-reference against the PO's Value Scenarios (from Business Scenarios artifact) — each value stream should correspond to at least one value scenario.
+- **Business Process Catalog (§3.3):** List of all BPR-nnn processes. For each process, note which business services it realizes and which stakeholders/roles are assigned to it.
+- **Value Stream Map (§3.4):** Value streams identify how the system delivers stakeholder-facing value. Each VS-nnn must have named stages. Cross-reference each stage against the PO's Value Scenarios — every stage should correspond to at least one value scenario and at least one BSV. Flag stages with no BSV as BA gaps to SA.
 - **Motivation Architecture (§3.7):** Goals, principles, and drivers. Confirm that every DRV-nnn business driver from the AV is reflected in the BA's motivation architecture. Gaps mean a driver has been dropped from the architecture — flag to SA.
 - **Business Services Catalog (§3.8):** Services the business provides. Cross-reference against functional requirements in the RR — each Must-priority functional requirement should be addressable by at least one business service.
 
@@ -117,7 +117,7 @@ Key BA sections to read for PO's consulting role:
 For each requirement in the RR (all Active requirements):
 
 1. Identify which BA element(s) address the requirement:
-   - **Functional requirements:** Map to capabilities (CAP-nnn) and/or processes (PRO-nnn) that implement the function.
+   - **Functional requirements:** Map to business services (BSV-nnn) and/or processes (BPR-nnn) that implement the function. Capability (CAP-nnn) mappings are supporting cross-references, not primary anchors.
    - **Non-Functional requirements:** Map to capabilities or processes where the quality attribute must be enforced. If a non-functional requirement applies system-wide, map it to all capabilities (mark as `system-wide` in the RTM).
    - **Constraint requirements:** Map to the capability or process that is constrained. If a constraint applies globally (e.g., EU data residency), map it to all data-handling capabilities.
    - **Safety requirements:** Map to the capability, process, or interface where the safety constraint applies.

@@ -1283,7 +1283,40 @@ sprint-review:
 
 ## Current State & Immediate Next Actions
 
-**Stages 1–4.9e complete. ModelVerifier complete (71 BDD tests). Stage 4.9f partial (4/7 diagrams done). `src/common/model_query.py` (ModelRepository query engine) complete. Stage 4.9g–h and Stage 5 pending.**
+**Stages 1–4.9e complete. ModelVerifier complete (71 BDD tests). Stage 4.9f partial (4/7 diagrams done). `src/common/model_query.py` complete. Business modeling guidelines (Stage 4.9g pre-work) added to framework. ENG-001 business-layer model rework pending.**
+
+### Completed this session (2026-04-05 — session 5)
+
+- **`framework/diagram-conventions.md` v2.3.0** — Major additions:
+  - `§0.1` Phase B canonical diagram set updated: "Business architecture overview" split into **structural viewpoint** (BFN-centric: functions, roles, services, capabilities) and **operational viewpoint** (BPR-centric: processes, events, roles, services). Both are minima for greenfield Phase B; a single combined diagram is acceptable for small systems.
+  - `§7.archimate-business` template updated: now shows the structural viewpoint (BFN groups with role/actor assignments, services outside groupings, capabilities in strategy layer). Includes single-vs-dual diagram guidance.
+  - `§7.archimate-business-operational` template added: operational viewpoint (processes, business events, collaborations/interactions, services — no functions).
+  - `§11.9 Business Layer Architecture Modeling Pattern` added — the authoritative specification for business-layer modeling across all engagements:
+    - §11.9.1 Outside-In Principle (mandatory progression): VS stages → services/objects/interfaces → processes/interactions/events → functions → roles → BPMN sub-behavior
+    - §11.9.2 Value Stream Stage Requirements (not ADM phases; 3–7 stakeholder-facing stages; each links to ≥1 BSV)
+    - §11.9.3 Business Concept Map (BOB + BIF coherent graph; BEV as structural glue; BOB↔DOB mapping)
+    - §11.9.4 Diagram Count and Scope (multiple diagrams normal; structural always includes roles; operational always includes roles/actors; distinguishing principle is organizing concept)
+    - §11.9.5 Application-to-Business-Layer Connection Patterns (priority table: ASV→serving→BPR primary; full pattern options)
+    - §11.9.6 Sprint Coverage Completeness Check (per-element-type minimum connection requirements)
+    - §11.9.7 Cross-Layer Traceability and Mutual Validation (upward + downward traceability; completeness check in D1 step via list_connections; diagram cross-validation)
+
+- **`agents/solution-architect/skills/phase-b.md`** — Restructured procedure around outside-in principle:
+  - `Step 0.VS` added before Step 1: Value Stream Stage Definition — create/verify VS-nnn entities with stakeholder-facing stages; CQ trigger if no VS identifiable
+  - `Step 1` replaced: now "Identify and Scope Business Services per VS Stage" — BSV-first, not capability-first; every BSV links to a VS stage
+  - `Step 1.1` added: Capability Cross-Reference — demoted to a supporting EA step performed after BSV modeling, not the entry point
+  - `Step 1.5` added: Business Concept Map — BOB (objects), BIF (interfaces), BEV (events) authored before processes; triggering connections required
+  - `Step 2.5` added: Business Function Decomposition — BFN entities; assignment + realization connections; coverage rule; dual-viewpoint diagram steps using prescribed `list_artifacts`/`list_connections`/`validate_diagram` tools
+  - Gate checklist updated: VS stages, BSV/BPR/BFN coverage, cross-layer traceability checks, dual-viewpoint diagram requirement
+
+- **`agents/solution-architect/skills/phase-a.md`** — Step 4 updated: Value Stream sketch (VS-nnn stubs) now precedes capability overview; VS↔CAP traceability added.
+
+- **`agents/software-architect/skills/phase-c-application.md`** — Step 1 cross-layer guidance corrected:
+  - Entry point corrected to BSV/BPR/BFN (not CAP-first)
+  - `ASV --serving--> BPR` established as primary cross-layer pattern (was incorrectly described as prohibited)
+  - Full priority table added per §11.9.5
+  - Collaborative behavior rule clarified: ACO+AIA is for structured multi-service sequences; single-service `ASV→serving→BPR` is correct and standard
+
+- **`agents/product-owner/skills/phase-b.md`** — Minor corrections: BPR-nnn prefix fixed (was PRO-nnn); value stream stage requirement noted; BSV as primary requirement anchor (CAP as supporting cross-reference).
 
 ### Completed this session (2026-04-04, continued — session 4)
 
@@ -1299,7 +1332,18 @@ sprint-review:
 - **Phase-B diagram — complete connectivity** — `phase-b-archimate-business-v1.puml` updated to v0.3.0: 9 new assignment connections (all specialist roles now assigned to BPR-002; CSCO additionally to BPR-004/005; PM to BPR-005); all 5 orphan BSVs realised by BPR-002; BPR-008 realises BSV-001; 7 new BPR→CAP realization connections (cross-layer, steel blue). 9 new assignment + 7 new BPR→CAP realization connection files created. Total: 17 assignment + 22 realization connection files. No entity in phase-b is now unconnected. ModelVerifier: 204 files, 0 errors.
 - **README + diagram-conventions.md** — Activity diagram description corrected to cover three scopes: (1) external business processes of the client organisation (Phase B), (2) process logic within the software being built (Phase C), (3) ENG-001 meta-level (framework orchestration, binding spec for `src/orchestration/`). `diagram-conventions.md §7.activity-bpmn` updated with separate business-layer and application-layer templates and rules. Version bumped to 2.2.0.
 
-### Resume at: Stage 4.9f remaining 3 diagrams → 4.9g (Overview + ADRs) → Stage 5
+### Resume at: ENG-001 business-layer model rework → Stage 4.9f remaining diagrams → Stage 5
+
+**ENG-001 business-layer rework required before resuming Stage 4.9f diagrams** (§11.9 guidelines now in place):
+1. Update `VS-001` and `VS-002` with proper stakeholder-facing stages (not ADM phases)
+2. Create `BFN-001..007` entity files (business functions) in `model-entities/business/functions/`
+3. Create `BEV-001..006` entity files (business events) in `model-entities/business/events/`
+4. Create `BOB-001..006` entity files (business objects) in `model-entities/business/objects/`
+5. Create `BIA-001..002` entity files (business interactions) in `model-entities/business/interactions/`
+6. Create connection files: ACT→BFN assignment; BFN→BSV/CAP realization; BEV→BPR triggering (`connections/archimate/triggering/`); ASV→BPR serving
+7. Rewrite `phase-b-archimate-business-v1.puml` as structural viewpoint; create `phase-b-archimate-business-operational-v1.puml`
+8. Update `phase-c-archimate-application-v1.puml` to add ASV→BPR serving connections
+9. Regenerate `_macros.puml`; run `ModelVerifier.verify_all()`; render SVGs
 
 **`src/common/model_query.py` pre-empts Stage 5b `src/common/model_registry.py` (in-memory tier only).** The production Stage 5b model registry adds: SQLite FTS5 full-text index, `watchdog` filesystem listener for incremental refresh, sqlite-vec embedding tier, and thread-safety (`threading.RLock`). `model_query.py`'s `ModelRepository` provides the in-memory query API that the Stage 5b tools delegate to; the interface (`list_artifacts`, `search_artifacts`, `read_artifact`) is already production-ready and will not change.
 

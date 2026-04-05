@@ -74,10 +74,11 @@ A sprint does not necessarily produce *new* diagrams. The correct output depends
 | Phase | Diagram | Type | Viewpoint / Audience |
 |---|---|---|---|
 | A (AV) | Motivation overlay | ArchiMate-motivation | Stakeholders, PM — why we're doing this |
-| B (BA) | Business architecture overview | ArchiMate-business | Architects, governance — role/process/service taxonomy |
+| B (BA) | Business structural architecture | ArchiMate-business | SA, PM — functions, roles assigned to functions, capabilities, services per function |
+| B (BA) | Business operational architecture | ArchiMate-business | PM, PO — processes, events, roles, services; VS stage context; no functions shown |
 | B (BA) | Sprint lifecycle | Activity/BPMN | PM, PO — how sprints flow (roles as lanes) |
-| B (BA) | Value stream | Use-case | PO, stakeholders — what value is delivered and by whom |
-| C (AA) | Application component map | ArchiMate-application | Architects, developers — structural module map |
+| B (BA) | Value stream | Use-case | PO, stakeholders — VS stages as use-cases; triggering and consuming actors shown |
+| C (AA) | Application component map | ArchiMate-application | Architects, developers — structural module map; ASV→BPR serving connections shown |
 | C (AA) | Domain data model | ER (class) | Developers, DBAs — persisted data structures |
 | C (AA) | CQ lifecycle | Sequence | Developers — how CQ resolution works at runtime |
 | C (AA) | Sprint review | Sequence | Architects, PM — how review decisions are processed |
@@ -349,41 +350,144 @@ GOL-001 --> CST-001 : association
 
 ---
 
-### §7.archimate-business — Business Architecture Capability/Service Map
+### §7.archimate-business — Business Architecture Structural Viewpoint
+
+Shows the stable organizational structure: functions, roles assigned to functions, capabilities realized by functions, and services delivered. **Never show individual processes in this viewpoint** — processes belong in the operational viewpoint.
 
 ```plantuml
 @startuml
 !include _macros.puml
 !include _archimate-stereotypes.puml
 
+' --- Strategy: Value Streams (what drives the organization) ---
+rectangle "Value Streams" <<StrategyGrouping>> as GRP_VS {
+  DECL_VS_001
+  DECL_VS_002
+}
+
 ' --- Strategy: Capabilities ---
-CAP_001
-CAP_002
-CAP_003
+rectangle "Capabilities" <<StrategyGrouping>> as GRP_CAP {
+  DECL_CAP_001
+  DECL_CAP_002
+  DECL_CAP_003
+}
 
-' --- Business Actors ---
-ACT_001
-ACT_002
+' --- Business Functions (stable organizational groupings) ---
+rectangle "Architecture & Design" <<BusinessGrouping>> as GRP_ARCH {
+  DECL_BFN_001
+  DECL_BFN_002
+  DECL_ACT_003
+  DECL_ACT_004
+}
 
-' --- Business Functions ---
-BFN_001
-BFN_002
+rectangle "Project Governance" <<BusinessGrouping>> as GRP_GOV {
+  DECL_BFN_003
+  DECL_ACT_001
+  DECL_ACT_002
+}
 
-' --- Business Services ---
-BSV_001
-BSV_002
+' --- Business Services (externally visible outputs per function) ---
+rectangle "Business Services" <<BusinessGrouping>> as GRP_SVC {
+  DECL_BSV_001
+  DECL_BSV_002
+  DECL_BSV_003
+}
 
 ' --- Relationships ---
-ACT-001 --> BFN-001 : assignment
-BFN-001 --> BSV-001 : realization
-CAP-001 --> BFN-001 : realization
-ACT-002 --> BSV-001 : serving
+' Roles assigned to functions (behavioral specification)
+ACT_003 -[#B8860B]-> BFN_001 : <<assignment>>
+ACT_004 -[#B8860B]-> BFN_002 : <<assignment>>
+ACT_002 -[#B8860B]-> BFN_003 : <<assignment>>
+ACT_001 -[#B8860B]-> BFN_003 : <<assignment>>
+
+' Functions realize capabilities (stable organizational ability)
+BFN_001 ..[#4682B4].>> CAP_001 : <<realization>>
+BFN_002 ..[#4682B4].>> CAP_002 : <<realization>>
+
+' Functions realize services (externally delivered output)
+BFN_001 ..[#B8860B].>> BSV_001 : <<realization>>
+BFN_002 ..[#B8860B].>> BSV_002 : <<realization>>
+BFN_003 ..[#B8860B].>> BSV_003 : <<realization>>
 
 @enduml
 ```
 
 **Rules:**
-- Capabilities (CAP), actors (ACT), functions (BFN), services (BSV) use their artifact-id aliases.
+- Each grouping rectangle represents a function cluster or organizational domain.
+- Roles/actors and collaborations appear **inside or adjacent to** the function groupings they primarily serve — structural viewpoints always include roles/actors to show who fills each function.
+- Business services appear **outside** function groupings — they are the externally visible output.
+- Cross-layer connection from application layer is shown in the Phase C diagram; add a note cross-referencing it.
+- Relationship labels match ArchiMate relationship types from connection `§display ###archimate`.
+- **Single vs. dual diagram:** For small systems (≤ ~5 functions, ≤ ~8 processes, ≤ ~25 total elements), a single diagram may show both structural (functions, roles) and operational (processes, events) aspects together. For larger or more complex systems, split into separate structural and operational diagrams. The decision is a viewpoint judgment — document it in the diagram `purpose` frontmatter field.
+
+---
+
+### §7.archimate-business-operational — Business Architecture Operational Viewpoint
+
+Shows how roles/collaborations execute processes to deliver services, with business events as structural glue. Functions (BFN) are typically omitted from a pure operational view, but may be included as light grouping context when the diagram is combining both viewpoints. This view answers "who does what to deliver which service and what triggers each step."
+
+```plantuml
+@startuml
+!include _macros.puml
+!include _archimate-stereotypes.puml
+
+' --- Actors & Roles (participants in the processes) ---
+rectangle "Participants" <<BusinessGrouping>> as GRP_ACTORS {
+  DECL_ACT_001
+  DECL_ACT_002
+  DECL_ACT_003
+  DECL_BCO_001
+}
+
+' --- Business Events (triggers between processes) ---
+rectangle "Business Events" <<BusinessGrouping>> as GRP_EVENTS {
+  DECL_BEV_001
+  DECL_BEV_002
+  DECL_BEV_003
+}
+
+' --- Business Processes (execution sequences) ---
+rectangle "Processes" <<BusinessGrouping>> as GRP_PROCS {
+  DECL_BPR_001
+  DECL_BPR_002
+  DECL_BPR_003
+}
+
+' --- Business Interactions (collaborative behaviors) ---
+rectangle "Interactions" <<BusinessGrouping>> as GRP_IA {
+  DECL_BIA_001
+}
+
+' --- Business Services (delivered outputs) ---
+rectangle "Business Services" <<BusinessGrouping>> as GRP_SVC {
+  DECL_BSV_001
+  DECL_BSV_002
+  DECL_BSV_003
+}
+
+' --- Assignments (role/collaboration → process/interaction) ---
+ACT_002 -[#B8860B]-> BPR_001 : <<assignment>>
+ACT_003 -[#B8860B]-> BPR_002 : <<assignment>>
+BCO_001 -[#B8860B]-> BIA_001 : <<assignment>>
+
+' --- Triggering (event → process) ---
+BEV_001 -[#B8860B]-> BPR_002 : <<triggering>>
+BEV_002 -[#B8860B]-> BPR_001 : <<triggering>>
+
+' --- Realization (process/interaction → service) ---
+BPR_001 ..[#B8860B].>> BSV_003 : <<realization>>
+BPR_002 ..[#B8860B].>> BSV_001 : <<realization>>
+BIA_001 ..[#B8860B].>> BSV_002 : <<realization>>
+
+@enduml
+```
+
+**Rules:**
+- Functions (BFN) are typically omitted from a pure operational viewpoint; include them only when the diagram intentionally combines structural and operational aspects.
+- Business events (BEV) are shown as triggering connections into the processes they initiate.
+- Where multiple roles collaborate in a structured sequence, use BCO (BusinessCollaboration) + BIA (BusinessInteraction) per §11.5.
+- Value stream stage context may be shown as a note or grouping label annotation to orient the reader without adding VS entities as elements.
+- Multiple operational diagrams are normal and expected — scope each to one process cluster, one VS stage, or one cross-role flow. A single monolithic operational diagram is almost always too large to be useful.
 - Relationship labels match ArchiMate relationship types from connection `§display ###archimate`.
 
 ---
@@ -1053,3 +1157,194 @@ ACO_001 -[#5C6BC0]-> AIA_001 : <<assignment>>
 ' Cross-layer realization: application interaction → business process
 AIA_001 ..[#B8860B].>> BPR_002 : <<realization>>
 ```
+
+---
+
+### 11.7 Capability Realization: Valid Realizing Elements
+
+**Rule:** A `Capability` (`CAP-NNN`) may only be realized by **behavioral** ArchiMate elements — elements that represent activity, behavior, or performance. Structural elements (actors, roles, collaborations) cannot directly realize a capability. Capabilities are typically realized by **more than one** behavioral element — a single realizer implies the capability is delivered by exactly one process or service, which is architecturally unusual for anything beyond the most atomic capability.
+
+**Why:** A Capability represents *what* the organization can do — a stable, high-level abstraction. It says nothing about *how* that ability is enacted. The "how" is captured by behavioral elements. Because both processes (internal behavior) and services (externally visible behavior) are behavioral, both are equally valid realizers. Resources and roles contribute to capabilities via `Assignment`, not `Realization`. A well-modeled capability typically has at least one business-layer behavioral realizer (BPR/BFN/BSV) *and* at least one application-layer realizer (ASV/AIA), reflecting that the capability is enacted by human-facing processes backed by software services. A model with only one realizer is a signal to check whether coverage is complete.
+
+**Valid realizing element types:**
+
+| Realizing element | ArchiMate type | Notes |
+|---|---|---|
+| `BPR-NNN` | Business Process | Internal, step-by-step enactment — most common realizer |
+| `BFN-NNN` | Business Function | Stable organizational function — preferred when behavior is continuous rather than sequential |
+| `BSV-NNN` | Business Service | External, value-exposing behavior — valid when the capability is framed as a service to another actor |
+| `BIA-NNN` | Business Interaction | Use when the capability requires two or more collaborating actors |
+| `ASV-NNN` | Application Service | Valid cross-layer realizer — preferred over APR (see §11.8) |
+| `AIA-NNN` | Application Interaction | Use with ACO when multiple app elements jointly realize the capability (see §11.5) |
+
+**Prohibited:**
+```
+❌  ACT-001 --realization--> CAP-001   (Business Actor is structural — use Assignment instead)
+❌  ROL-001 --realization--> CAP-001   (Business Role is structural — use Assignment instead)
+❌  ACO-001 --realization--> CAP-001   (Application Collaboration is structural — see §11.5)
+❌  APP-001 --realization--> CAP-001   (Application Component is structural — use ASV or AIA)
+```
+
+**Canonical pattern (process realizes capability):**
+```plantuml
+' Business process (behavioral) realizes capability (strategic)
+BPR_001 ..[#B8860B].>> CAP_001 : <<realization>>
+
+' Business function alternative (continuous behavior)
+BFN_001 ..[#B8860B].>> CAP_001 : <<realization>>
+
+' Cross-layer: application service realizes capability (valid and common)
+ASV_001 ..[#0078A0].>> CAP_001 : <<realization>>
+
+' Resource supports capability (contribution, not realization)
+RES_001 -[#607D8B]-> CAP_001 : <<association>>
+```
+
+---
+
+### 11.8 Services vs. Processes: Internal/External Behavior and Cross-Layer Serving
+
+**Conceptual distinction (within a single ArchiMate layer):**
+
+| Element type | ArchiMate metaphor | Represents |
+|---|---|---|
+| Process (`BPR`, `APR`, `TPR`) | "The How" | *Internal* behavior — the ordered sequence of steps executed to produce an outcome |
+| Service (`BSV`, `ASV`, `TSV`) | "The What" | *External* behavior — the value or functionality exposed to the environment (the interface contract) |
+
+**Within-layer rule:** A Process (or Function or Interaction) **realizes** a Service of the same layer. The service is the stable external contract; the process is the internal implementation.
+
+```plantuml
+BPR_001 ..[#B8860B].>> BSV_001 : <<realization>>   ' process realizes service (same layer)
+APR_001 ..[#0078A0].>> ASV_001 : <<realization>>   ' app process realizes app service (same layer)
+```
+
+**Cross-layer serving/realization table:**
+
+| Lower-layer element | Relationship | Upper-layer element | Notes |
+|---|---|---|---|
+| `ASV-NNN` (Application Service) | `Serving` | `BPR-NNN` (Business Process) | The app service provides capability to the business process |
+| `ASV-NNN` (Application Service) | `Realization` | `BSV-NNN` (Business Service) | The app service fulfills the business service contract |
+| `APR-NNN` (Application Process) | `Realization` | `ASV-NNN` (Application Service) | Preferred within-layer route; keeps layers decoupled |
+| `TSV-NNN` (Technology Service) | `Serving` | `APP-NNN` (Application Component) | Infrastructure serves the application |
+| `TSV-NNN` (Technology Service) | `Serving` | `ASV-NNN` (Application Service) | Infrastructure serves the application service |
+
+**The service-proxy decoupling principle:**
+
+Prefer routing cross-layer behavior through services rather than processes:
+
+```
+Preferred:   APR-NNN --realization--> ASV-NNN --serving--> BPR-NNN
+Acceptable:  ASV-NNN --realization--> BSV-NNN
+Avoid:       APR-NNN --serving--> BPR-NNN   (skips the service abstraction layer)
+```
+
+**Why prefer the service-proxy route?** If the internal application process changes (e.g., refactored, replaced), the business process model is unaffected — the service contract remains stable. Direct process-to-process connections create tight coupling between layers that makes incremental refactoring fragile.
+
+**Exception:** When the architectural purpose of a diagram is specifically to show the internal cross-layer dependency (e.g., in a gap analysis or feasibility assessment), a direct process-to-process serving connection is acceptable if annotated with a note explaining why the service abstraction is intentionally omitted.
+
+**Summary — valid realizing chains:**
+
+| If you have a... | It is typically realized/served by... |
+|---|---|
+| `CAP-NNN` (Capability) | `BPR-NNN`, `BFN-NNN`, `BSV-NNN`, or `ASV-NNN` / `AIA-NNN` (cross-layer) |
+| `BSV-NNN` (Business Service) | `BPR-NNN` (within-layer) or `ASV-NNN` (cross-layer) |
+| `BPR-NNN` (Business Process) | Assigned to `ACT-NNN`/`ROL-NNN`; served by `ASV-NNN` (cross-layer) |
+| `ASV-NNN` (Application Service) | `APR-NNN` or `APP-NNN` (within-layer realization) |
+| `APP-NNN` (Application Component) | Served by `TSV-NNN` (technology layer) |
+
+---
+
+## 11.9 Business Layer Architecture Modeling Pattern
+
+### 11.9.1 The Outside-In Principle (mandatory progression)
+
+Business architecture is built **from the outside in**: from what stakeholders receive, to what behavior delivers it, to what structure enacts that behavior. This order is non-negotiable — modeling internal structure first, before the services and value it must deliver, produces an inward-looking model that misses scope and confuses diagrams.
+
+The mandatory modeling progression for any sprint that produces or revises business-layer content:
+
+| Step | What to model | ArchiMate elements | Question answered |
+|---|---|---|---|
+| 1 | **Value streams and their stages** | `VS-NNN` with stages in `§content` | What value flows are we supporting? Who receives value at each stage? |
+| 2 | **Business services, interfaces, and key objects/concepts** | `BSV-NNN`, `BIF-NNN`, `BOB-NNN` | What does the stakeholder receive? What concepts persist across stages? |
+| 3 | **Business processes, interactions, and events** | `BPR-NNN`, `BIA-NNN`, `BEV-NNN` | How is the service produced step by step? What triggers each step? |
+| 4 | **Business functions** | `BFN-NNN` | What are the stable organizational groupings that own process clusters? |
+| 5 | **Roles and collaborations** | `ACT-NNN`, `BCO-NNN` | Who is assigned to each function and process? |
+| 6 | **Detailed sub-behavior** | BPMN / Activity diagrams | What is the granular flow inside complex processes or interactions? |
+
+Skipping ahead (e.g., defining roles before services, or defining processes before identifying which services they realize) produces models that are internally coherent but externally irrelevant.
+
+### 11.9.2 Value Stream Stage Requirements
+
+Value stream entities (`VS-NNN`) must have named stages in their `§content` section. Stages are **not** ADM phases — they describe what value the organization delivers to stakeholders, not how the architecture process is organized.
+
+Each stage must specify:
+- A name (noun phrase)
+- The consuming stakeholder (STK-NNN or role description)
+- The value delivered at this stage
+- The key business service(s) (BSV-NNN) that constitute the delivered value
+
+Minimum 3–7 stages per value stream. A VS entity with no stages documented is a model gap that must be resolved before Phase B gate.
+
+### 11.9.3 Business Concept Map
+
+The set of business objects (`BOB-NNN`) and business interfaces (`BIF-NNN`) for an engagement must form a **globally coherent concept map**: every object is traceable to at least one VS stage and is read or written by at least one BPR, BIA, or BSV. Business events (`BEV-NNN`) that trigger process transitions are identified at this step, not later.
+
+When more than 6 BOB entities exist, a dedicated business concept map diagram is required. For fewer, the concept relationships are documented as a table in the BA narrative.
+
+BOB entities at the business layer correspond to DOB (data objects) at the application layer. These mappings must be captured as `archimate-association` connection files linking BOB and DOB entities.
+
+### 11.9.4 Diagram Count and Scope
+
+Multiple diagrams for separate aspects and viewpoints are normal and expected at any layer. The canonical minimum set for Phase B (§0.1 table) is a floor, not a ceiling. Common additional diagrams include:
+
+- One value-stream use-case diagram per VS (showing stages as use cases, actors as initiators/consumers)
+- One structural ArchiMate diagram per major function cluster when the system is large
+- One operational ArchiMate diagram per VS stage or process cluster when flows are complex
+- One BPMN/Activity diagram per process that has non-trivial branching or multi-party interaction
+
+**Single vs. dual ArchiMate diagrams:** For small systems (≤ ~5 functions, ≤ ~8 processes, ≤ ~25 total elements), a single ArchiMate diagram may show both structural (functions, roles) and operational (processes, events, services) aspects together, provided the structural hierarchy is still legible. For larger systems, use separate structural and operational diagrams. The decision is a viewpoint judgment — document it in the diagram `purpose` frontmatter field.
+
+The structural viewpoint always includes roles/actors and collaborations alongside functions — it shows who fills each function as well as what the function delivers. The operational viewpoint always includes roles/actors alongside processes — it shows who executes each process and what events drive it. What distinguishes them is the **primary organizing concept**: functions-first (structural) vs. processes/events-first (operational).
+
+### 11.9.5 Application-to-Business-Layer Connection Patterns
+
+The primary way of relating the application layer to the business layer — beyond BOB↔DOB concept mapping — is through serving and realization connections. In priority order:
+
+| Relationship | Use case | ArchiMate relation |
+|---|---|---|
+| `ASV-NNN --serving--> BPR-NNN` | **Primary.** An application service supports execution of a business process. | Serving |
+| `ASV-NNN --serving--> BFN-NNN` | An application service supports a stable business function. | Serving |
+| `ASV-NNN --realization--> BSV-NNN` | Application service fulfills the full external contract of a business service. | Realization |
+| `APP-NNN --realization--> BSV-NNN` | Simple case: one component is the sole complete implementor of a business service. Use sparingly. | Realization |
+| `APP-NNN --serving--> BFN-NNN` | Structural overview: component supports a function without naming the specific process. | Serving |
+| `APR-NNN --realization--> BPR-NNN` | Operational mirror view: explicitly showing application processes mirroring business processes (annotate with purpose). | Realization |
+
+Every BPR and BFN in scope must have at least one application-layer serving or realization connection to it. A business process with no application-layer connection is either a deliberate manual/human-only process (annotate it as such) or a model coverage gap.
+
+### 11.9.6 Sprint Coverage Completeness Check
+
+Before casting a Phase B gate vote, verify:
+
+| Element | Required minimum |
+|---|---|
+| `VS-NNN` | ≥ 3 named stages in `§content`; each stage names ≥ 1 BSV |
+| `BSV-NNN` | ≥ 1 realizing BPR, BFN, or BIA; linked to ≥ 1 VS stage |
+| `BPR-NNN` | ≥ 1 assigned ACT or BCO; ≥ 1 serving ASV (or annotated as manual) |
+| `BFN-NNN` | ≥ 1 assigned ACT or BCO; realizes ≥ 1 BSV or CAP |
+| `CAP-NNN` | Realized by ≥ 1 BFN, BPR, or ASV |
+| `BEV-NNN` | Triggers ≥ 1 BPR |
+| `BOB-NNN` | Accessed (read/write) by ≥ 1 BPR or BIA |
+
+Any uncovered element is a BA defect. Fix the model, raise a CQ, or PM explicitly accepts the gap as a documented assumption before baselining.
+
+### 11.9.7 Cross-Layer Traceability and Mutual Validation
+
+Models and diagrams at different layers cross-validate each other through inter-layer connections. A model that is complete at one layer but has broken or missing connections to adjacent layers is architecturally incomplete — it cannot be reasoned about holistically, and gaps in traceability are gaps in accountability.
+
+**Upward traceability (application → business → strategy):** Every application component or service must ultimately serve or realize a business process, function, or service. Every business process or function must realize a business service or capability. Every capability must trace to at least one business driver or value stream. A model element that cannot be traced upward to a stakeholder need or value stream is a candidate for removal or scope clarification.
+
+**Downward traceability (strategy → business → application):** Every capability must have at least one business-layer realizer. Every business service must have at least one application-layer realizer or serving element. Every business process must be served by at least one application service. A model element that cannot be traced downward to an application-layer implementation is an unimplemented aspiration — flag it as a gap in Phase E.
+
+**Completeness check during diagram authoring (D1 step):** When querying entities via `list_artifacts` / `search_artifacts`, also query connections with `list_connections(target=<entity-id>)` and `list_connections(source=<entity-id>)` to verify that both upward and downward connections exist. Any entity returned with zero connections in either direction is a model coverage issue to resolve before writing the diagram.
+
+**Diagram cross-validation:** Where the same entity appears in diagrams at adjacent layers, its name, type, and relationships must be consistent. Inconsistency between a business-layer diagram and an application-layer diagram for the same entity or connection is an architectural error — not a tolerance (see §0.4).

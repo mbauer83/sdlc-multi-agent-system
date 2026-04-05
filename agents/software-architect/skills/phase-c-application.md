@@ -94,7 +94,7 @@ Call `query_learnings(agent="SwA", phase="C", artifact_type="application-archite
 
 ### Step 1 — Decompose Business Capabilities and Processes into Application Components
 
-Starting from BA CAP-nnn, BPR-nnn, and BSV-nnn entries, decompose the business function space into logical application components (ABBs).
+Starting from BA BSV-nnn, BPR-nnn, and BFN-nnn entries (business services, processes, and functions — established outside-in in Phase B), decompose the business service space into logical application components (ABBs).
 
 **Decomposition principle:** One application component is the smallest logical unit that:
 - Encapsulates a single, cohesive set of responsibilities
@@ -113,13 +113,20 @@ For each component (APP-nnn entity file in `architecture-repository/model-entiti
 - `safety-relevant`: Yes / No / TBD (TBD if CSCO Phase B safety review is incomplete)
 - `status`: New / Existing / Modified / Retiring
 
-Cross-reference: every BPR-nnn must be realisable by at least one APP-nnn or, for collaborative multi-service behavior, by an AIA-nnn (ApplicationInteraction). After producing the initial component list, do a reverse check against the BA Business Process Catalog — any process with no realizing element is an AA gap.
+Cross-reference: every BPR-nnn and BFN-nnn must be served by at least one application-layer element. After producing the initial component list, do a reverse check against the BA — any process or function with no serving application element is an AA gap. Use `list_connections(target=<bpr-id>)` to check existing coverage.
 
-**Realization rule — collaborative behavior (mandatory):** When multiple application services jointly realize a business process, use the Collaboration + Interaction pattern (see `framework/diagram-conventions.md §11.5`):
-1. Create `ACO-nnn` (ApplicationCollaboration in `model-entities/application/collaborations/`) aggregating the participating services.
-2. Create `AIA-nnn` (ApplicationInteraction in `model-entities/application/interactions/`) describing the structured sequence those services perform.
+**Cross-layer connection rules** (see `framework/diagram-conventions.md §11.9.5`):
+
+- `ASV-nnn --serving--> BPR-nnn` — **Primary.** An application service supports execution of a business process. Create `archimate-serving` connection files for every in-scope BPR that has a known application realizer.
+- `ASV-nnn --serving--> BFN-nnn` — An application service supports a stable business function (structural view).
+- `ASV-nnn --realization--> BSV-nnn` — Application service fulfills the full external contract of a business service.
+- `APP-nnn --realization--> BSV-nnn` — Simple case: one component is the sole complete implementor of a business service; use when no named ASV is needed.
+
+**Collaborative behavior rule (mandatory when multiple services act together):** When the realization of a BPR requires multiple application services working in a structured sequence, use the Collaboration + Interaction pattern (`framework/diagram-conventions.md §11.5`):
+1. Create `ACO-nnn` (ApplicationCollaboration) aggregating the participating services.
+2. Create `AIA-nnn` (ApplicationInteraction) describing the structured sequence.
 3. Connect: `ACO-nnn --assignment--> AIA-nnn` and `AIA-nnn --realization--> BPR-nnn`.
-Do NOT create individual `ASV-nnn --realization--> BPR-nnn` connections when the realization requires multiple services acting together.
+Do NOT use individual `ASV-nnn --serving--> BPR-nnn` connections when a structured collaborative sequence is the architectural point being made — use ACO+AIA instead to make the collaboration explicit.
 
 Write each entity as an ERP-compliant `.md` file: `architecture-repository/model-entities/application/components/APP-nnn.md`.
 
