@@ -54,6 +54,46 @@ Layer = Literal[
 ]
 
 
+MountScope = Literal["engagement", "enterprise"]
+
+
+@dataclass(frozen=True)
+class RepoMount:
+    """One mounted ERP v2.0 repository root.
+
+    The unified registry for an engagement indexes both engagement-scope and
+    enterprise-scope repository roots (framework/artifact-registry-design.md §6.1).
+    """
+
+    root: Path
+    scope: MountScope
+    # Engagement label to expose via the record.engagement field.
+    # Enterprise mount always uses "enterprise".
+    engagement_label: str
+
+
+class DuplicateArtifactIdError(ValueError):
+    pass
+
+
+def _infer_engagement_label(root: Path, *, scope: MountScope) -> str:
+    if scope == "enterprise":
+        return "enterprise"
+    # Engagement: try to infer from path .../engagements/<ID>/work-repositories/...
+    parts = root.resolve().parts
+    if "engagements" in parts:
+        idx = parts.index("engagements")
+        if idx + 1 < len(parts):
+            return parts[idx + 1]
+    return ""
+
+
+def _infer_mount(root: Path) -> RepoMount:
+    resolved = root.resolve()
+    scope: MountScope = "enterprise" if resolved.name == "enterprise-repository" else "engagement"
+    return RepoMount(root=resolved, scope=scope, engagement_label=_infer_engagement_label(resolved, scope=scope))
+
+
 @dataclass(frozen=True)
 class EntityRecord:
     """Full data record for one model-entity file."""
@@ -334,10 +374,24 @@ class ModelRepository:
 
     def __init__(
         self,
-        repo_root: Path,
+        repo_root: Path | list[Path] | list[RepoMount],
         semantic_provider: SemanticSearchProvider | None = None,
     ) -> None:
-        self.repo_root = repo_root
+        # Back-compat: accept a single Path as before.
+        if isinstance(repo_root, Path):
+            mounts: list[RepoMount] = [_infer_mount(repo_root)]
+        else:
+            mounts = [m if isinstance(m, RepoMount) else _infer_mount(m) for m in repo_root]
+
+        # Hard guarantee: within a unified session registry, one artifact-id must
+        # not exist in more than one mounted repository.
+        roots = [m.root for m in mounts]
+        if len(set(map(str, roots))) != len(roots):
+            raise ValueError("Duplicate repo root in ModelRepository mounts")
+
+        self.repo_mounts = mounts
+        # Preserve old attribute name for callers.
+        self.repo_root = mounts[0].root
         self._semantic = semantic_provider
         self._entities: dict[str, EntityRecord] | None = None
         self._connections: dict[str, ConnectionRecord] | None = None
@@ -362,26 +416,42 @@ class ModelRepository:
         self._connections = {}
         self._diagrams = {}
 
-        entities_root = self.repo_root / "model-entities"
-        if entities_root.exists():
-            for f in sorted(entities_root.rglob("*.md")):
-                rec = _parse_entity(f, entities_root)
-                if rec is not None:
-                    self._entities[rec.artifact_id] = rec
+        for mount in self.repo_mounts:
+            entities_root = mount.root / "model-entities"
+            if entities_root.exists():
+                for f in sorted(entities_root.rglob("*.md")):
+                    rec = _parse_entity(f, entities_root, mount)
+                    if rec is not None:
+                        if rec.artifact_id in self._entities:  # type: ignore[operator]
+                            other = self._entities[rec.artifact_id].path  # type: ignore[index]
+                            raise DuplicateArtifactIdError(
+                                f"Duplicate entity artifact-id '{rec.artifact_id}' in {f} and {other}"
+                            )
+                        self._entities[rec.artifact_id] = rec  # type: ignore[index]
 
-        connections_root = self.repo_root / "connections"
-        if connections_root.exists():
-            for f in sorted(connections_root.rglob("*.md")):
-                rec = _parse_connection(f, connections_root)
-                if rec is not None:
-                    self._connections[rec.artifact_id] = rec
+            connections_root = mount.root / "connections"
+            if connections_root.exists():
+                for f in sorted(connections_root.rglob("*.md")):
+                    rec = _parse_connection(f, connections_root, mount)
+                    if rec is not None:
+                        if rec.artifact_id in self._connections:  # type: ignore[operator]
+                            other = self._connections[rec.artifact_id].path  # type: ignore[index]
+                            raise DuplicateArtifactIdError(
+                                f"Duplicate connection artifact-id '{rec.artifact_id}' in {f} and {other}"
+                            )
+                        self._connections[rec.artifact_id] = rec  # type: ignore[index]
 
-        diagrams_root = self.repo_root / "diagram-catalog" / "diagrams"
-        if diagrams_root.exists():
-            for f in sorted(diagrams_root.rglob("*.puml")):
-                rec = _parse_diagram(f)
-                if rec is not None:
-                    self._diagrams[rec.artifact_id] = rec
+            diagrams_root = mount.root / "diagram-catalog" / "diagrams"
+            if diagrams_root.exists():
+                for f in sorted(diagrams_root.rglob("*.puml")):
+                    rec = _parse_diagram(f, mount)
+                    if rec is not None:
+                        if rec.artifact_id in self._diagrams:  # type: ignore[operator]
+                            other = self._diagrams[rec.artifact_id].path  # type: ignore[index]
+                            raise DuplicateArtifactIdError(
+                                f"Duplicate diagram artifact-id '{rec.artifact_id}' in {f} and {other}"
+                            )
+                        self._diagrams[rec.artifact_id] = rec  # type: ignore[index]
 
     # ------------------------------------------------------------------
     # Direct lookup
@@ -688,6 +758,7 @@ class ModelRepository:
             entity_types=list(types) if types else None,
             include_connections=include_connections,
             include_diagrams=include_diagrams,
+            engagement=engagement,
         )
 
     # ------------------------------------------------------------------
@@ -810,6 +881,7 @@ class ModelRepository:
         layers: list[str] | None = None,
         include_connections: bool = True,
         include_diagrams: bool = True,
+        engagement: str | None = None,
     ) -> SearchResult:
         """Score all indexed records against *query* and return the top *limit* hits.
 
@@ -838,6 +910,8 @@ class ModelRepository:
                 continue
             if layers and rec.layer not in layers:
                 continue
+            if engagement is not None and rec.engagement != engagement:
+                continue
             score = _score_entity(rec, query_lc, tokens)
             if score > 0:
                 hits.append(SearchHit(score=score, record_type="entity", record=rec))
@@ -845,6 +919,8 @@ class ModelRepository:
         # --- connections ---
         if include_connections:
             for rec in self._connections.values():  # type: ignore[union-attr]
+                if engagement is not None and rec.engagement != engagement:
+                    continue
                 score = _score_connection(rec, query_lc, tokens)
                 if score > 0:
                     hits.append(SearchHit(score=score, record_type="connection", record=rec))
@@ -852,6 +928,8 @@ class ModelRepository:
         # --- diagrams ---
         if include_diagrams:
             for rec in self._diagrams.values():  # type: ignore[union-attr]
+                if engagement is not None and rec.engagement != engagement:
+                    continue
                 score = _score_diagram(rec, query_lc, tokens)
                 if score > 0:
                     hits.append(SearchHit(score=score, record_type="diagram", record=rec))
@@ -977,7 +1055,7 @@ def _derive_conn_lang_type(path: Path, root: Path) -> tuple[str, str]:
         return "unknown", "unknown"
 
 
-def _parse_entity(path: Path, entities_root: Path) -> EntityRecord | None:
+def _parse_entity(path: Path, entities_root: Path, mount: RepoMount) -> EntityRecord | None:
     try:
         content = path.read_text(encoding="utf-8")
     except OSError:
@@ -995,7 +1073,13 @@ def _parse_entity(path: Path, entities_root: Path) -> EntityRecord | None:
     owner_agent = str(fm.get("owner-agent", ""))
     safety_relevant_raw = fm.get("safety-relevant", False)
     safety_relevant = bool(safety_relevant_raw) if isinstance(safety_relevant_raw, bool) else False
-    engagement = str(fm.get("engagement", ""))
+    # Enterprise entities commonly omit the engagement field (stripped on promotion).
+    # We derive it from the mount so discovery can filter by engagement="enterprise"
+    # as specified in framework/discovery-protocol.md §Layer 2.
+    if mount.scope == "enterprise":
+        engagement = "enterprise"
+    else:
+        engagement = str(fm.get("engagement", mount.engagement_label))
     layer, sublayer = _derive_layer(path, entities_root)
 
     extra = {k: v for k, v in fm.items() if k not in _STANDARD_ENTITY_FIELDS}
@@ -1026,7 +1110,7 @@ def _parse_entity(path: Path, entities_root: Path) -> EntityRecord | None:
     )
 
 
-def _parse_connection(path: Path, connections_root: Path) -> ConnectionRecord | None:
+def _parse_connection(path: Path, connections_root: Path, mount: RepoMount) -> ConnectionRecord | None:
     try:
         content = path.read_text(encoding="utf-8")
     except OSError:
@@ -1045,7 +1129,10 @@ def _parse_connection(path: Path, connections_root: Path) -> ConnectionRecord | 
     status = str(fm.get("status", "draft"))
     phase_produced = str(fm.get("phase-produced", ""))
     owner_agent = str(fm.get("owner-agent", ""))
-    engagement = str(fm.get("engagement", ""))
+    if mount.scope == "enterprise":
+        engagement = "enterprise"
+    else:
+        engagement = str(fm.get("engagement", mount.engagement_label))
     conn_lang, conn_type = _derive_conn_lang_type(path, connections_root)
 
     extra = {k: v for k, v in fm.items() if k not in _STANDARD_CONNECTION_FIELDS}
@@ -1069,7 +1156,7 @@ def _parse_connection(path: Path, connections_root: Path) -> ConnectionRecord | 
     )
 
 
-def _parse_diagram(path: Path) -> DiagramRecord | None:
+def _parse_diagram(path: Path, mount: RepoMount) -> DiagramRecord | None:
     try:
         content = path.read_text(encoding="utf-8")
     except OSError:
@@ -1086,7 +1173,10 @@ def _parse_diagram(path: Path) -> DiagramRecord | None:
     status = str(fm.get("status", "draft"))
     phase_produced = str(fm.get("phase-produced", ""))
     owner_agent = str(fm.get("owner-agent", ""))
-    engagement = str(fm.get("engagement", ""))
+    if mount.scope == "enterprise":
+        engagement = "enterprise"
+    else:
+        engagement = str(fm.get("engagement", mount.engagement_label))
     eids_raw = fm.get("entity-ids-used") or []
     cids_raw = fm.get("connection-ids-used") or []
     entity_ids_used = [str(x) for x in eids_raw] if isinstance(eids_raw, list) else []

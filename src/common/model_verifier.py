@@ -122,25 +122,72 @@ class ModelRegistry:
     ``connection_ids()``) is kept identical so the verifier can accept either.
     """
 
-    def __init__(self, repo_root: Path) -> None:
-        self.repo_root = repo_root
-        # Single cache per domain — id→status populated together on first bulk access.
-        self._entity_meta: dict[str, str] | None = None      # entity artifact-id → status
-        self._connection_meta: dict[str, str] | None = None  # connection artifact-id → status
+    def __init__(self, repo_root: Path | list[Path]) -> None:
+        """Create a registry over one or more ERP v2.0 repository roots.
 
-    def _ensure_entity_meta(self) -> dict[str, str]:
-        """Lazy-load the full entity id→status map (one scan, cached for lifetime)."""
+        Per framework/artifact-registry-design.md §6.1, an EngagementSession's
+        unified registry includes both engagement-scope and enterprise-scope
+        repository roots.
+        """
+
+        roots = [repo_root] if isinstance(repo_root, Path) else list(repo_root)
+        self.repo_roots = [r.resolve() for r in roots]
+
+        # Cache: populated together on first bulk access.
+        # id -> (status, scope)
+        self._entity_meta: dict[str, tuple[str, str]] | None = None
+        self._connection_meta: dict[str, tuple[str, str]] | None = None
+
+    @staticmethod
+    def _scope_for_root(root: Path) -> str:
+        return "enterprise" if root.name == "enterprise-repository" else "engagement"
+
+    def scope_for_path(self, path: Path) -> Literal["enterprise", "engagement", "unknown"]:
+        p = path.resolve()
+        for root in self.repo_roots:
+            try:
+                _ = p.relative_to(root)
+            except ValueError:
+                continue
+            return "enterprise" if self._scope_for_root(root) == "enterprise" else "engagement"
+        return "unknown"
+
+    def scope_of_entity(self, artifact_id: str) -> Literal["enterprise", "engagement", "unknown"]:
+        meta = self._ensure_entity_meta().get(artifact_id)
+        if meta is None:
+            return "unknown"
+        return "enterprise" if meta[1] == "enterprise" else "engagement"
+
+    def scope_of_connection(self, artifact_id: str) -> Literal["enterprise", "engagement", "unknown"]:
+        meta = self._ensure_connection_meta().get(artifact_id)
+        if meta is None:
+            return "unknown"
+        return "enterprise" if meta[1] == "enterprise" else "engagement"
+
+    def _ensure_entity_meta(self) -> dict[str, tuple[str, str]]:
+        """Lazy-load the full entity id→(status, scope) map (one scan, cached)."""
         if self._entity_meta is None:
             self._entity_meta = {}
-            root = self.repo_root / "model-entities"
-            if root.exists():
+            for repo_root in self.repo_roots:
+                scope = self._scope_for_root(repo_root)
+                root = repo_root / "model-entities"
+                if not root.exists():
+                    continue
                 for f in root.rglob("*.md"):
                     try:
                         fm = _parse_frontmatter_from_path(f)
                         if fm and "artifact-id" in fm:
-                            self._entity_meta[str(fm["artifact-id"])] = str(
-                                fm.get("status", "")
-                            )
+                            aid = str(fm["artifact-id"])
+                            status = str(fm.get("status", ""))
+                            if aid in self._entity_meta:
+                                prev_scope = self._entity_meta[aid][1]
+                                raise ValueError(
+                                    f"Duplicate entity artifact-id '{aid}' across mounted repositories "
+                                    f"({prev_scope} and {scope}); this is forbidden by the framework"
+                                )
+                            self._entity_meta[aid] = (status, scope)
+                    except ValueError:
+                        raise
                     except Exception:  # noqa: BLE001
                         pass
         return self._entity_meta
@@ -148,6 +195,12 @@ class ModelRegistry:
     def entity_ids(self) -> set[str]:
         """Return the set of all known entity artifact-ids."""
         return set(self._ensure_entity_meta().keys())
+
+    def enterprise_entity_ids(self) -> set[str]:
+        return {aid for aid, (_, scope) in self._ensure_entity_meta().items() if scope == "enterprise"}
+
+    def engagement_entity_ids(self) -> set[str]:
+        return {aid for aid, (_, scope) in self._ensure_entity_meta().items() if scope == "engagement"}
 
     def entity_status(self, artifact_id: str) -> str | None:
         """Return the status of a single entity without forcing a full scan.
@@ -157,7 +210,8 @@ class ModelRegistry:
         efficient for spot-checks on individual entities.
         """
         if self._entity_meta is not None:
-            return self._entity_meta.get(artifact_id)
+            meta = self._entity_meta.get(artifact_id)
+            return meta[0] if meta else None
         # Cache not warm — targeted single-file lookup avoids scanning everything.
         f = self.find_file_by_id(artifact_id)
         if f is None:
@@ -170,11 +224,17 @@ class ModelRegistry:
 
     def entity_statuses(self) -> dict[str, str]:
         """Return a full artifact-id → status mapping (bulk; triggers full scan)."""
-        return dict(self._ensure_entity_meta())
+        return {aid: status for aid, (status, _) in self._ensure_entity_meta().items()}
 
     def connection_ids(self) -> set[str]:
         """Return the set of all known connection artifact-ids."""
         return set(self._ensure_connection_meta().keys())
+
+    def enterprise_connection_ids(self) -> set[str]:
+        return {aid for aid, (_, scope) in self._ensure_connection_meta().items() if scope == "enterprise"}
+
+    def engagement_connection_ids(self) -> set[str]:
+        return {aid for aid, (_, scope) in self._ensure_connection_meta().items() if scope == "engagement"}
 
     def connection_status(self, artifact_id: str) -> str | None:
         """Return the status of a single connection without forcing a full scan.
@@ -184,10 +244,13 @@ class ModelRegistry:
         spot-checks on individual connections.
         """
         if self._connection_meta is not None:
-            return self._connection_meta.get(artifact_id)
-        # Cache not warm — targeted single-file lookup.
-        root = self.repo_root / "connections"
-        if root.exists():
+            meta = self._connection_meta.get(artifact_id)
+            return meta[0] if meta else None
+        # Cache not warm — targeted single-file lookup across all roots.
+        for repo_root in self.repo_roots:
+            root = repo_root / "connections"
+            if not root.exists():
+                continue
             for f in root.rglob("*.md"):
                 if f.stem == artifact_id:
                     fm = _parse_frontmatter_from_path(f)
@@ -195,19 +258,30 @@ class ModelRegistry:
                         return str(fm.get("status", "")) or None
         return None
 
-    def _ensure_connection_meta(self) -> dict[str, str]:
-        """Lazy-load the full connection id→status map (one scan, cached)."""
+    def _ensure_connection_meta(self) -> dict[str, tuple[str, str]]:
+        """Lazy-load the full connection id→(status, scope) map (one scan, cached)."""
         if self._connection_meta is None:
             self._connection_meta = {}
-            root = self.repo_root / "connections"
-            if root.exists():
+            for repo_root in self.repo_roots:
+                scope = self._scope_for_root(repo_root)
+                root = repo_root / "connections"
+                if not root.exists():
+                    continue
                 for f in root.rglob("*.md"):
                     try:
                         fm = _parse_frontmatter_from_path(f)
                         if fm and "artifact-id" in fm:
-                            self._connection_meta[str(fm["artifact-id"])] = str(
-                                fm.get("status", "")
-                            )
+                            aid = str(fm["artifact-id"])
+                            status = str(fm.get("status", ""))
+                            if aid in self._connection_meta:
+                                prev_scope = self._connection_meta[aid][1]
+                                raise ValueError(
+                                    f"Duplicate connection artifact-id '{aid}' across mounted repositories "
+                                    f"({prev_scope} and {scope}); this is forbidden by the framework"
+                                )
+                            self._connection_meta[aid] = (status, scope)
+                    except ValueError:
+                        raise
                     except Exception:  # noqa: BLE001
                         pass
         return self._connection_meta
@@ -233,12 +307,13 @@ class ModelRegistry:
         ``TYPEABBR-NNN.friendly-name.md`` format.  The formal ID is always the
         portion of the stem before the first ``'.'``.
         """
-        root = self.repo_root / "model-entities"
-        if not root.exists():
-            return None
-        for f in root.rglob("*.md"):
-            if entity_id_from_path(f) == artifact_id:
-                return f
+        for repo_root in self.repo_roots:
+            root = repo_root / "model-entities"
+            if not root.exists():
+                continue
+            for f in root.rglob("*.md"):
+                if entity_id_from_path(f) == artifact_id:
+                    return f
         return None
 
 
@@ -271,6 +346,9 @@ _ENTITY_REQUIRED: frozenset[str] = frozenset(
         "owner-agent",
         "safety-relevant",
         "last-updated",
+        # NOTE: engagement is required for engagement-scope files, but is commonly
+        # omitted in enterprise-scope files (stripped on promotion). Enforced
+        # conditionally based on path scope.
         "engagement",
     }
 )
@@ -286,6 +364,7 @@ _CONNECTION_REQUIRED: frozenset[str] = frozenset(
         "phase-produced",
         "owner-agent",
         "last-updated",
+        # engagement conditionally required (see note in _ENTITY_REQUIRED)
         "engagement",
     }
 )
@@ -300,6 +379,7 @@ _DIAGRAM_REQUIRED: frozenset[str] = frozenset(
         "status",
         "phase-produced",
         "owner-agent",
+        # engagement conditionally required (enterprise diagrams may omit it)
         "engagement",
     }
 )
@@ -337,7 +417,15 @@ class ModelVerifier:
         if fm is None:
             return result
 
-        _check_required_fields(fm, _ENTITY_REQUIRED, result, loc)
+        required = _ENTITY_REQUIRED
+        scope = (
+            self.registry.scope_for_path(path)
+            if self.registry is not None
+            else ("enterprise" if "enterprise-repository" in path.resolve().parts else "engagement")
+        )
+        if scope == "enterprise":
+            required = frozenset(x for x in _ENTITY_REQUIRED if x != "engagement")
+        _check_required_fields(fm, required, result, loc)
         _check_artifact_id_entity(fm, result, loc)
         _check_artifact_type(fm, _ENTITY_TYPES, "entity type", result, loc)
         _check_enum(fm, "status", _VALID_STATUSES, result, loc)
@@ -362,7 +450,15 @@ class ModelVerifier:
         if fm is None:
             return result
 
-        _check_required_fields(fm, _CONNECTION_REQUIRED, result, loc)
+        required = _CONNECTION_REQUIRED
+        scope = (
+            self.registry.scope_for_path(path)
+            if self.registry is not None
+            else ("enterprise" if "enterprise-repository" in path.resolve().parts else "engagement")
+        )
+        if scope == "enterprise":
+            required = frozenset(x for x in _CONNECTION_REQUIRED if x != "engagement")
+        _check_required_fields(fm, required, result, loc)
         _check_artifact_id_connection(fm, path, result, loc)
         _check_artifact_type(fm, _CONNECTION_TYPES, "connection type", result, loc)
         _check_enum(fm, "status", _VALID_STATUSES, result, loc)
@@ -370,7 +466,11 @@ class ModelVerifier:
         _check_enum(fm, "owner-agent", _VALID_AGENTS, result, loc)
 
         if self.registry is not None:
-            _check_reference_resolution(fm, self.registry.entity_ids(), result, loc)
+            scope = self.registry.scope_for_path(path)
+            allowed = (
+                self.registry.enterprise_entity_ids() if scope == "enterprise" else self.registry.entity_ids()
+            )
+            _check_reference_resolution_scoped(fm, self.registry, allowed, scope, result, loc)
         else:
             result.issues.append(Issue(
                 Severity.WARNING,
@@ -398,13 +498,22 @@ class ModelVerifier:
         if fm is None:
             return result
 
-        _check_required_fields(fm, _DIAGRAM_REQUIRED, result, loc)
+        required = _DIAGRAM_REQUIRED
+        scope = (
+            self.registry.scope_for_path(path)
+            if self.registry is not None
+            else ("enterprise" if "enterprise-repository" in path.resolve().parts else "engagement")
+        )
+        if scope == "enterprise":
+            required = frozenset(x for x in _DIAGRAM_REQUIRED if x != "engagement")
+        _check_required_fields(fm, required, result, loc)
         _check_enum(fm, "status", _VALID_STATUSES, result, loc)
         _check_enum(fm, "phase-produced", _VALID_PHASES, result, loc)
         _check_enum(fm, "owner-agent", _VALID_AGENTS, result, loc)
 
         if self.registry is not None:
-            _check_diagram_references(fm, self.registry, result, loc)
+            scope = self.registry.scope_for_path(path)
+            _check_diagram_references_scoped(fm, self.registry, scope, result, loc)
         else:
             result.issues.append(Issue(
                 Severity.WARNING,
@@ -746,6 +855,55 @@ def _check_reference_resolution(
                 ))
 
 
+def _check_reference_resolution_scoped(
+    fm: dict,
+    registry: ModelRegistry,
+    allowed_ids: set[str],
+    file_scope: Literal["enterprise", "engagement", "unknown"],
+    result: VerificationResult,
+    loc: str,
+) -> None:
+    """Scope-aware source/target checks.
+
+    Rules:
+    - Engagement-scope artifacts may reference engagement+enterprise.
+    - Enterprise-scope artifacts may reference enterprise only.
+    """
+    all_known = registry.entity_ids()
+    for field_name in ("source", "target"):
+        if field_name not in fm or fm[field_name] is None:
+            continue
+        val = fm[field_name]
+        refs = val if isinstance(val, list) else [val]
+        for ref in refs:
+            rid = str(ref)
+            if rid in allowed_ids:
+                continue
+            if rid in all_known:
+                # Known, but in the wrong scope.
+                if file_scope == "enterprise":
+                    result.issues.append(Issue(
+                        Severity.ERROR,
+                        "E210",
+                        f"'{field_name}' references non-enterprise entity '{rid}' — enterprise artifacts may only reference enterprise entities",
+                        loc,
+                    ))
+                else:
+                    result.issues.append(Issue(
+                        Severity.ERROR,
+                        "E210",
+                        f"'{field_name}' references entity '{rid}' outside the allowed scope",
+                        loc,
+                    ))
+            else:
+                result.issues.append(Issue(
+                    Severity.ERROR,
+                    "E204",
+                    f"'{field_name}' references unknown entity '{rid}' (not in ModelRegistry)",
+                    loc,
+                ))
+
+
 def _check_diagram_references(
     fm: dict, registry: ModelRegistry, result: VerificationResult, loc: str
 ) -> None:
@@ -812,6 +970,105 @@ def _check_diagram_references(
                             Severity.ERROR, "E307",
                             f"baselined diagram references draft connection '{cid}' — "
                             "all connections in a baselined diagram must be baselined",
+                            loc,
+                        ))
+        elif conn_ids is not None:
+            result.issues.append(Issue(
+                Severity.WARNING, "W304",
+                "connection-ids-used should be a YAML list",
+                loc,
+            ))
+
+
+def _check_diagram_references_scoped(
+    fm: dict,
+    registry: ModelRegistry,
+    file_scope: Literal["enterprise", "engagement", "unknown"],
+    result: VerificationResult,
+    loc: str,
+) -> None:
+    """Scope-aware wrapper around diagram reference checks.
+
+    Engagement-scope diagrams may reference engagement+enterprise.
+    Enterprise-scope diagrams may reference enterprise only.
+    """
+
+    diagram_status = str(fm.get("status", ""))
+    diagram_is_baselined = diagram_status == "baselined"
+
+    allowed_entities = (
+        registry.enterprise_entity_ids() if file_scope == "enterprise" else registry.entity_ids()
+    )
+    allowed_connections = (
+        registry.enterprise_connection_ids() if file_scope == "enterprise" else registry.connection_ids()
+    )
+
+    all_entities = registry.entity_ids()
+    all_connections = registry.connection_ids()
+
+    if "entity-ids-used" in fm:
+        entity_ids = fm["entity-ids-used"]
+        if isinstance(entity_ids, list):
+            for eid in entity_ids:
+                eid_str = str(eid)
+                if eid_str not in allowed_entities:
+                    if eid_str in all_entities and file_scope == "enterprise":
+                        result.issues.append(Issue(
+                            Severity.ERROR,
+                            "E310",
+                            f"entity-ids-used references non-enterprise entity '{eid_str}' — enterprise diagrams may only reference enterprise entities",
+                            loc,
+                        ))
+                    else:
+                        result.issues.append(Issue(
+                            Severity.ERROR,
+                            "E301",
+                            f"entity-ids-used references unknown entity '{eid_str}'",
+                            loc,
+                        ))
+                elif diagram_is_baselined:
+                    status = registry.entity_status(eid_str)
+                    if status == "draft":
+                        result.issues.append(Issue(
+                            Severity.ERROR,
+                            "E306",
+                            f"baselined diagram references draft entity '{eid_str}' — all entities in a baselined diagram must be baselined",
+                            loc,
+                        ))
+        elif entity_ids is not None:
+            result.issues.append(Issue(
+                Severity.WARNING, "W303",
+                "entity-ids-used should be a YAML list",
+                loc,
+            ))
+
+    if "connection-ids-used" in fm:
+        conn_ids = fm["connection-ids-used"]
+        if isinstance(conn_ids, list):
+            for cid in conn_ids:
+                cid_str = str(cid)
+                if cid_str not in allowed_connections:
+                    if cid_str in all_connections and file_scope == "enterprise":
+                        result.issues.append(Issue(
+                            Severity.ERROR,
+                            "E320",
+                            f"connection-ids-used references non-enterprise connection '{cid_str}' — enterprise diagrams may only reference enterprise connections",
+                            loc,
+                        ))
+                    else:
+                        result.issues.append(Issue(
+                            Severity.ERROR,
+                            "E302",
+                            f"connection-ids-used references unknown connection '{cid_str}'",
+                            loc,
+                        ))
+                elif diagram_is_baselined:
+                    status = registry.connection_status(cid_str)
+                    if status == "draft":
+                        result.issues.append(Issue(
+                            Severity.ERROR,
+                            "E307",
+                            f"baselined diagram references draft connection '{cid_str}' — all connections in a baselined diagram must be baselined",
                             loc,
                         ))
         elif conn_ids is not None:

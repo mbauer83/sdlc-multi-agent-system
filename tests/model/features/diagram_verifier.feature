@@ -93,3 +93,10 @@ Feature: Diagram file verification
     When I run verify_all on the repository
     Then the invalid connection result has errors
     And the valid entity result has no errors
+
+  Scenario: Enterprise diagram referencing engagement entity is rejected
+    Given a ModelVerifier with a unified registry containing enterprise and engagement entities
+    And an enterprise-scope diagram whose entity-ids-used includes engagement entity "APP-001"
+    When I verify the diagram file
+    Then the result is invalid
+    And error code "E310" is reported

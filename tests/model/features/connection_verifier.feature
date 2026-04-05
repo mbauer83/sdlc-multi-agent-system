@@ -65,3 +65,24 @@ Feature: Connection file verification
     When I verify the connection file
     Then the result is valid
     And warning code "W001" is reported
+
+  Scenario: Enterprise connection may omit engagement field
+    Given a ModelVerifier with no registry
+    And an enterprise-scope connection file without an "engagement" field
+    When I verify the connection file
+    Then the result is valid
+    And warning code "W001" is reported
+
+  Scenario: Enterprise connection referencing engagement entity is rejected
+    Given a ModelVerifier with a unified registry containing enterprise and engagement entities
+    And an enterprise-scope connection referencing an engagement entity
+    When I verify the connection file
+    Then the result is invalid
+    And error code "E210" is reported
+
+  Scenario: Engagement connection may reference enterprise entity
+    Given a ModelVerifier with a unified registry containing enterprise and engagement entities
+    And an engagement-scope connection referencing an enterprise entity
+    When I verify the connection file
+    Then the result is valid
+    And there are no errors

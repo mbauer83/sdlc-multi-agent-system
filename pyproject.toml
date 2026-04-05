@@ -11,7 +11,14 @@ dependencies = [
     "langgraph>=0.2",
     "aiosqlite>=0.20",
     "alembic>=1.13",
+    "mcp>=1.27.0",
+    "python-frontmatter>=1.1.0",
+    "anyio>=4.0",
 ]
+
+[project.scripts]
+sdlc-mcp-model = "src.tools.mcp_model_server:main"
+sdlc-mcp-registry = "src.tools.mcp_registry_server:main"
 
 [project.optional-dependencies]
 dev = [

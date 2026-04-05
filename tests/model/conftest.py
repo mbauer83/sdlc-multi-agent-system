@@ -143,6 +143,71 @@ def verifier_full(tmp_path: Path) -> ModelVerifier:
     return ModelVerifier(registry=registry)
 
 
+@given(
+    "a ModelVerifier with a unified registry containing enterprise and engagement entities",
+    target_fixture="verifier",
+)
+def verifier_unified_registry(tmp_path: Path) -> ModelVerifier:
+    """Registry mounted over engagement + enterprise roots.
+
+    Enterprise root must be named "enterprise-repository" so scope detection works.
+    """
+
+    engagement_root = tmp_path / "engagement-architecture-repository"
+    enterprise_root = tmp_path / "enterprise-repository"
+
+    # Engagement entity
+    _build_registry(
+        engagement_root,
+        entities={"APP-001": "application-component"},
+        connections={},
+    )
+
+    # Enterprise entity (omit engagement field; registry derives engagement="enterprise")
+    ent_dir = enterprise_root / "model-entities" / "application" / "components"
+    ent_dir.mkdir(parents=True, exist_ok=True)
+    (ent_dir / "APP-900.md").write_text(
+        textwrap.dedent("""\
+            ---
+            artifact-id: APP-900
+            artifact-type: application-component
+            name: "APP-900 stub"
+            version: 1.0.0
+            status: baselined
+            phase-produced: A
+            owner-agent: SA
+            safety-relevant: false
+            last-updated: 2026-04-04
+            ---
+
+            <!-- §content -->
+
+            ## APP-900 stub
+
+            ## Properties
+
+            | Attribute | Value |
+            |---|---|
+            | Module | stub |
+
+            <!-- §display -->
+
+            ### archimate
+
+            ```yaml
+            layer: Application
+            element-type: ApplicationComponent
+            label: "APP-900"
+            alias: APP_900
+            ```
+        """),
+        encoding="utf-8",
+    )
+
+    registry = ModelRegistry([engagement_root, enterprise_root])
+    return ModelVerifier(registry=registry)
+
+
 # ---------------------------------------------------------------------------
 # Shared Then steps
 # ---------------------------------------------------------------------------

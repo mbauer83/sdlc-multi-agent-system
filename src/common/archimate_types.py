@@ -161,12 +161,17 @@ CONNECTION_TYPES_BY_LANGUAGE: dict[str, frozenset[str]] = {
         {
             "sequence-synchronous",
             "sequence-asynchronous",
+            "sequence-return",
+            "sequence-create",
+            "sequence-destroy",
         }
     ),
     "activity": frozenset(
         {
             "activity-sequence-flow",
             "activity-decision",
+            "activity-message-flow",
+            "activity-data-association",
         }
     ),
     "usecase": frozenset(
@@ -174,6 +179,7 @@ CONNECTION_TYPES_BY_LANGUAGE: dict[str, frozenset[str]] = {
             "usecase-include",
             "usecase-extend",
             "usecase-association",
+            "usecase-generalization",
         }
     ),
 }

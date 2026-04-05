@@ -175,6 +175,34 @@ def repo_with_mixed_files(tmp_path: Path) -> Path:
     return tmp_path
 
 
+@given(
+    'an enterprise-scope diagram whose entity-ids-used includes engagement entity "APP-001"',
+    target_fixture="diagram_file",
+)
+def enterprise_diagram_refs_engagement(tmp_path: Path) -> Path:
+    # Enterprise scope is derived from path containing "enterprise-repository".
+    diag_dir = tmp_path / "enterprise-repository" / "diagram-catalog" / "diagrams"
+    content = textwrap.dedent("""\
+        ' ---
+        ' artifact-id: enterprise-archimate-v1
+        ' artifact-type: diagram
+        ' name: "Enterprise Diagram"
+        ' diagram-type: archimate-application
+        ' version: 1.0.0
+        ' status: baselined
+        ' phase-produced: A
+        ' owner-agent: SA
+        ' entity-ids-used: [APP-001]
+        ' connection-ids-used: []
+        ' ---
+        @startuml
+        !include ../_macros.puml
+        APP_001()
+        @enduml
+    """)
+    return write_diagram(diag_dir / "enterprise-archimate-v1.puml", content)
+
+
 # ---------------------------------------------------------------------------
 # When
 # ---------------------------------------------------------------------------

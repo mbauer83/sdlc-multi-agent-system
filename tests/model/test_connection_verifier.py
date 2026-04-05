@@ -103,6 +103,39 @@ def conn_valid_no_registry(tmp_path: Path) -> Path:
     return write_connection(conn_dir / "APP-001---APP-016.md", VALID_CONNECTION)
 
 
+@given('an enterprise-scope connection file without an "engagement" field', target_fixture="conn_file")
+def enterprise_connection_no_engagement(tmp_path: Path) -> Path:
+    root = tmp_path / "enterprise-repository" / "connections" / "archimate" / "serving"
+    content = VALID_CONNECTION.replace("engagement: ENG-001\n", "").replace(
+        "artifact-id: APP-001---APP-016", "artifact-id: APP-900---APP-900"
+    ).replace("source: APP-001", "source: APP-900").replace("target: APP-016", "target: APP-900")
+    return write_connection(root / "APP-900---APP-900.md", content)
+
+
+@given("an enterprise-scope connection referencing an engagement entity", target_fixture="conn_file")
+def enterprise_connection_refs_engagement(tmp_path: Path) -> Path:
+    root = tmp_path / "enterprise-repository" / "connections" / "archimate" / "serving"
+    # Enterprise connection references APP-001 (engagement) -> should be rejected (E210)
+    content = (
+        VALID_CONNECTION.replace("engagement: ENG-001\n", "")
+        .replace("artifact-id: APP-001---APP-016", "artifact-id: APP-900---APP-001")
+        .replace("source: APP-001", "source: APP-900")
+        .replace("target: APP-016", "target: APP-001")
+    )
+    return write_connection(root / "APP-900---APP-001.md", content)
+
+
+@given("an engagement-scope connection referencing an enterprise entity", target_fixture="conn_file")
+def engagement_connection_refs_enterprise(tmp_path: Path) -> Path:
+    root = tmp_path / "connections" / "archimate" / "serving"
+    # Engagement connection references APP-900 (enterprise) -> allowed
+    content = (
+        VALID_CONNECTION.replace("artifact-id: APP-001---APP-016", "artifact-id: APP-001---APP-900")
+        .replace("target: APP-016", "target: APP-900")
+    )
+    return write_connection(root / "APP-001---APP-900.md", content)
+
+
 # ---------------------------------------------------------------------------
 # When
 # ---------------------------------------------------------------------------

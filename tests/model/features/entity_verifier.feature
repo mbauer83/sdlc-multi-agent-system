@@ -83,3 +83,9 @@ Feature: Entity file verification
     When I verify the entity file
     Then the result is valid
     And there are no errors
+
+  Scenario: Enterprise entity may omit engagement field
+    Given an enterprise entity file without an "engagement" field
+    When I verify the entity file
+    Then the result is valid
+    And there are no errors

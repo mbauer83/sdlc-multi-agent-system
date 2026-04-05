@@ -134,6 +134,14 @@ def entity_friendly_name_suffix(tmp_path: Path) -> Path:
     return write_entity(tmp_path / "APP-001.event-store.md", VALID_ENTITY)
 
 
+@given('an enterprise entity file without an "engagement" field', target_fixture="entity_file")
+def enterprise_entity_no_engagement(tmp_path: Path) -> Path:
+    # Enterprise scope is detected by the path containing "enterprise-repository".
+    root = tmp_path / "enterprise-repository" / "model-entities" / "application" / "components"
+    content = VALID_ENTITY.replace("engagement: ENG-001\n", "")
+    return write_entity(root / "APP-001.md", content)
+
+
 # ---------------------------------------------------------------------------
 # When
 # ---------------------------------------------------------------------------
