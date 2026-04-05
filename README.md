@@ -300,7 +300,7 @@ The framework and ENG-001 reference model are being built incrementally. Current
 | `docs/puml-bug-reports.md` — confirmed PlantUML 1.2025.x bugs (PB-001..PB-005) with reproduction cases and workarounds | Complete |
 | `src/` Python implementation (EventStore, agents, orchestration, dashboard) | Pending |
 
-**ArchiMate diagram conventions** (`framework/diagram-conventions.md`): §10 covers PlantUML compatibility constraints (PB-001..PB-005 workarounds, DECL_ two-token macro convention); §11 covers ArchiMate semantic constraints (layer boundary rule, active structure type rules, layer-aligned grouping stereotypes with prohibition on inline color overrides).
+**ArchiMate diagram conventions** (`framework/diagram-conventions.md`): §10 covers PlantUML compatibility constraints (PB-001..PB-005 workarounds, DECL_ two-token macro convention); §11 covers ArchiMate semantic constraints (layer boundary rule, active structure type rules, layer-aligned grouping stereotypes with prohibition on inline color overrides). For business operational decomposition (`§11.9.1a`), staged processes/interactions are diagrammed as nested parent containers (`BPR-NNN` / `BIA-NNN` as container element) with internal stage `flow`/`triggering`; parent→stage composition remains mandatory as connection files even when external composition arrows are omitted in the operational view.
 
 See `specs/IMPLEMENTATION_PLAN.md` for the detailed stage-by-stage plan and current checklist.
 

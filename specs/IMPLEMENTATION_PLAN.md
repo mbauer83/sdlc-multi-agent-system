@@ -1285,6 +1285,14 @@ sprint-review:
 
 **Stages 1–4.9e complete. ModelVerifier complete (71 BDD tests). Stage 4.9f partial (4/7 diagrams done). `src/common/model_query.py` complete. Business modeling guidelines (Stage 4.9g pre-work) added to framework. ENG-001 business-layer model rework pending.**
 
+### Completed this session (2026-04-06 — session 6)
+
+- **Nested operational decomposition convention standardized across framework + SA skills:**
+  - `framework/diagram-conventions.md` now explicitly mandates that decomposed `BPR-NNN` / `BIA-NNN` are diagrammed as nested parent containers (parent element is the container itself), not as outer groupings with duplicate parent nodes.
+  - `§7.archimate-business-operational` template updated to show nested process/interaction containers with internal stage `flow` links.
+  - `§11.9.1a` clarified that parent→stage `archimate-composition` files remain required model truth even when operational diagrams omit external composition arrows.
+  - SA skill alignment completed in `agents/solution-architect/skills/phase-b.md` and `agents/solution-architect/skills/reverse-architecture-ba.md` so both greenfield and reverse-architecture BA outputs follow the same nested rendering policy.
+
 ### Completed this session (2026-04-05 — session 5)
 
 - **Runtime search-space governance validated and documented**:

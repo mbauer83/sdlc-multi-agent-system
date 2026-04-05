@@ -428,6 +428,8 @@ BFN_003 ..[#B8860B].>> BSV_003 : <<realization>>
 
 Shows how roles/collaborations execute processes to deliver services, with business events as structural glue. The operational viewpoint must make the **full trigger-and-flow cycle** visible: events that start processes, processes that raise events, direct process-to-process dispatch, and objects produced or consumed. This view answers: "what triggers this process, what does it do, what does it raise when done, and what does the next process receive?"
 
+For decomposed behavior, diagram the parent `BPR-NNN` / `BIA-NNN` as the **container element itself** and place stage elements inside it. Do not use an outer grouping plus a duplicated parent node.
+
 ```plantuml
 @startuml
 !include _macros.puml
@@ -450,14 +452,22 @@ rectangle "Business Events" <<BusinessGrouping>> as GRP_EVENTS {
 
 ' --- Business Processes (execution sequences) ---
 rectangle "Processes" <<BusinessGrouping>> as GRP_PROCS {
-  DECL_BPR_001
+  rectangle "BPR-001 Sprint Planning" <<BusinessProcess>> as BPR_001 {
+    DECL_BPR_101
+    DECL_BPR_102
+    DECL_BPR_103
+  }
   DECL_BPR_002
   DECL_BPR_003
 }
 
 ' --- Business Interactions (collaborative behaviors) ---
 rectangle "Interactions" <<BusinessGrouping>> as GRP_IA {
-  DECL_BIA_001
+  rectangle "BIA-001 Sprint Review Interaction" <<BusinessInteraction>> as BIA_001 {
+    DECL_BIA_101
+    DECL_BIA_102
+    DECL_BIA_103
+  }
 }
 
 ' --- Business Objects (durable artifacts accessed/produced) ---
@@ -486,6 +496,12 @@ BPR_001 -[#B8860B]-> BPR_002 : <<triggering>>
 BPR_002 -[#B8860B]-> BEV_002 : <<triggering>>
 BPR_002 -[#B8860B]-> BEV_003 : <<triggering>>
 
+' --- Inner stage sequencing inside decomposed parent behavior ---
+BPR_101 -[#808080]-> BPR_102 : <<flow>>
+BPR_102 -[#808080]-> BPR_103 : <<flow>>
+BIA_101 -[#808080]-> BIA_102 : <<flow>>
+BIA_102 -[#808080]-> BIA_103 : <<flow>>
+
 ' --- Triggering LOOP: event re-enters a process ---
 BEV_002 -[#B8860B]-> BPR_001 : <<triggering>>
 
@@ -504,6 +520,8 @@ BPR_002 -[#808080]-> BOB_001 : <<access (write)>>
 **Rules:**
 - **Triggering is bidirectional in the operational view.** Every process that RECEIVES a triggering event must show `BEV → BPR`. Every process that RAISES an event on completion or outcome must show `BPR → BEV`. Direct process-to-process dispatch (one process unconditionally starts another) uses `BPR → BPR`. Omitting any direction creates a diagram that shows inputs without outputs — the reader cannot trace the flow.
 - **Every process must have at least one triggering-IN and one triggering-OUT (or a realization as its terminal output).** A process with no triggering-OUT and no realization connection is a dangling dead-end in the flow — a model gap.
+- **Decomposed behaviors must be drawn with nested parent containers.** For staged `BPR-NNN` or `BIA-NNN`, render the parent as `<<BusinessProcess>>` / `<<BusinessInteraction>>` containing its stage elements. Do not draw a separate grouping that also contains a duplicate parent element.
+- **Keep composition in the model, not as redundant visual clutter.** Parent→stage `archimate-composition` connection files remain mandatory in `connections/archimate/composition/`, but operational diagrams should prefer nested containment and stage `flow`/`triggering` lines over external composition arrows.
 - BOBs (business objects) produced or consumed by processes in this cluster must appear in the diagram with access connection lines (gray). BOBs are structural glue that make the flow auditable.
 - Functions (BFN) are typically omitted from a pure operational viewpoint; include them only when the diagram intentionally combines structural and operational aspects.
 - Where multiple roles collaborate in a structured sequence, use BCO (BusinessCollaboration) + BIA (BusinessInteraction) per §11.5.
@@ -1307,18 +1325,20 @@ A top-level `BPR-NNN` or `BIA-NNN` is composed of **ordered stages** (sub-proces
 - **`flow`**: information or material passes from one stage to the next. Use when the output of stage A is a direct input to stage B — the progression is data-driven.
 - **`triggering`**: stage A causally starts stage B. Use when B would not start without A completing, regardless of what data passes.
 
-In PlantUML, nest sub-stage elements inside the parent process `rectangle { }` block:
+In PlantUML, nest sub-stage elements inside the parent behavior block. The parent alias itself must be the top-level process/interaction (`BPR-NNN` / `BIA-NNN`) — not a separate grouping wrapper with a duplicated parent node:
 
 ```plantuml
 rectangle "Sprint Planning" <<BusinessProcess>> as BPR_001 {
-  rectangle "Evaluate Phase State" <<BusinessProcess>> as BPR_001_A
-  rectangle "Select Invocations" <<BusinessProcess>> as BPR_001_B
-  rectangle "Dispatch Sprint" <<BusinessProcess>> as BPR_001_C
+  rectangle "Evaluate Phase State" <<BusinessProcess>> as BPR_101
+  rectangle "Select Invocations" <<BusinessProcess>> as BPR_102
+  rectangle "Dispatch Sprint" <<BusinessProcess>> as BPR_103
 
-  BPR_001_A -[#B8860B]-> BPR_001_B : <<flow>>
-  BPR_001_B -[#B8860B]-> BPR_001_C : <<flow>>
+  BPR_101 -[#B8860B]-> BPR_102 : <<flow>>
+  BPR_102 -[#B8860B]-> BPR_103 : <<flow>>
 }
 ```
+
+Parent→stage `archimate-composition` connection files are still required in the model repository; the nested rendering is the preferred operational viewpoint presentation.
 
 **When to show inner stages in the operational ArchiMate diagram vs. Activity/BPMN diagram:**
 - ArchiMate operational diagram: show the key stages of a process when they have distinct roles, objects, or outcomes visible at the business level (typically 2–4 stages per process).

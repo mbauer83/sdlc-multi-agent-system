@@ -31,6 +31,7 @@
 ' ---
 @startuml b-usecase-vs001-v1
 !include ../_macros.puml
+!include ../_archimate-stereotypes.puml
 
 left to right direction
 skinparam usecase {

@@ -236,7 +236,7 @@ Execute D1–D4 per `framework/diagram-conventions.md §5` for each diagram:
 **Operational viewpoint** (`b-archimate-business-operational-v1.puml`) — or combined if scale permits:
 - **D1:** `list_artifacts` for BPR, BIA, BEV, ACT, BCO, BSV; `list_connections` for assignment, realization, triggering.
 - **D2:** Verify `§display ###archimate` on all entities. Add missing; `regenerate_macros()`.
-- **D3:** Load `read_framework_doc("framework/diagram-conventions.md §7.archimate-business-operational")`. Group by process cluster or VS stage; events connected to the processes they trigger. Write via `write_artifact`.
+- **D3:** Load `read_framework_doc("framework/diagram-conventions.md §7.archimate-business-operational")`. Group by process cluster or VS stage; events connected to the processes they trigger. For decomposed behavior, draw the parent `BPR-nnn` / `BIA-nnn` as the container element and nest stage behaviors inside it with internal `flow`/`triggering` lines (per `framework/diagram-conventions.md §11.9.1a`); do not use outer grouping + duplicate parent nodes. Write via `write_artifact`.
 - **D4:** `validate_diagram`; cross-check that every BPR shown has at least one role and one realizing service visible.
 
 Multiple diagrams per viewpoint are acceptable and encouraged when scope is large: produce one operational diagram per major VS stage or process cluster rather than one monolithic diagram.

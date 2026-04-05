@@ -227,6 +227,8 @@ Infer and write typed ArchiMate connection files. Priority order:
 9. **BEV → BPR triggering** (`connections/archimate/triggering/`): event triggers process
 10. **BCO → ACT aggregation** (`connections/archimate/aggregation/`): collaboration groups actors
 
+**Diagramming convention for decomposed behavior (mandatory):** when these connections are rendered in ArchiMate operational diagrams, staged process/interaction behavior must be shown with nested parent containers (`BPR-nnn` / `BIA-nnn` as the container element) and internal stage `flow`/`triggering` links. Do not render outer grouping wrappers with duplicated parent nodes. Keep composition connection files as model truth even when operational diagrams omit external composition arrows.
+
 Only write connections where both source and target entity files exist in ModelRegistry.
 
 ---

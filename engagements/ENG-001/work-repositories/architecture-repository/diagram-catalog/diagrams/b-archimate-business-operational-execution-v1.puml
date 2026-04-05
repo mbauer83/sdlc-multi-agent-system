@@ -22,10 +22,25 @@
 '   - BEV-005
 '   - BEV-007
 '   - BPR-002
+'   - BPR-201
+'   - BPR-202
+'   - BPR-203
 '   - BPR-003
+'   - BPR-301
+'   - BPR-302
+'   - BPR-303
 '   - BPR-005
+'   - BPR-501
+'   - BPR-502
+'   - BPR-503
 '   - BPR-007
+'   - BPR-701
+'   - BPR-702
+'   - BPR-703
 '   - BPR-008
+'   - BPR-801
+'   - BPR-802
+'   - BPR-803
 '   - ACT-001
 '   - ACT-002
 '   - ACT-003
@@ -53,6 +68,8 @@
 '   - BEV-004---BPR-003
 '   - BEV-005---BPR-005
 '   - BEV-007---BPR-008
+'   - BPR-002---BEV-004
+'   - BPR-002---BEV-005
 '   - ACT-003---BPR-002
 '   - ACT-004---BPR-002
 '   - ACT-005---BPR-002
@@ -79,6 +96,16 @@
 '   - BPR-007---BSV-001
 '   - BPR-008---BSV-001
 '   - BPR-008---BSV-002
+'   - BPR-201---BPR-202
+'   - BPR-202---BPR-203
+'   - BPR-301---BPR-302
+'   - BPR-302---BPR-303
+'   - BPR-501---BPR-502
+'   - BPR-502---BPR-503
+'   - BPR-701---BPR-702
+'   - BPR-702---BPR-703
+'   - BPR-801---BPR-802
+'   - BPR-802---BPR-803
 '   - BPR-002---BOB-001
 '   - BPR-002---BOB-006
 '   - BPR-003---BOB-003
@@ -129,17 +156,37 @@ rectangle "Supporting Roles" <<BusinessGrouping>> as GRP_SUPPORT {
 ' Execution & Lifecycle Processes
 ' ---------------------------------------------------------------------------
 rectangle "Execution Processes" <<BusinessGrouping>> as GRP_EXEC {
-  DECL_BPR_002
-  DECL_BPR_003
-  DECL_BPR_005
+  rectangle "BPR-002 Skill Execution" <<BusinessProcess>> as BPR_002 {
+    DECL_BPR_201
+    DECL_BPR_202
+    DECL_BPR_203
+  }
+  rectangle "BPR-003 CQ Lifecycle" <<BusinessProcess>> as BPR_003 {
+    DECL_BPR_301
+    DECL_BPR_302
+    DECL_BPR_303
+  }
+  rectangle "BPR-005 Algedonic Escalation" <<BusinessProcess>> as BPR_005 {
+    DECL_BPR_501
+    DECL_BPR_502
+    DECL_BPR_503
+  }
 }
 
 ' ---------------------------------------------------------------------------
 ' Knowledge Management Processes
 ' ---------------------------------------------------------------------------
 rectangle "Knowledge Management" <<BusinessGrouping>> as GRP_KNOW {
-  DECL_BPR_007
-  DECL_BPR_008
+  rectangle "BPR-007 Enterprise Promotion" <<BusinessProcess>> as BPR_007 {
+    DECL_BPR_701
+    DECL_BPR_702
+    DECL_BPR_703
+  }
+  rectangle "BPR-008 Reverse Architecture" <<BusinessProcess>> as BPR_008 {
+    DECL_BPR_801
+    DECL_BPR_802
+    DECL_BPR_803
+  }
 }
 
 ' ---------------------------------------------------------------------------
@@ -174,6 +221,12 @@ BEV_005 -[#B8860B]-> BPR_005 : <<triggering>>
 BEV_007 -[#B8860B]-> BPR_008 : <<triggering>>
 
 ' ---------------------------------------------------------------------------
+' Event-mediated process coordination
+' ---------------------------------------------------------------------------
+BPR_002 -[#B8860B]-> BEV_004 : <<triggering>>
+BPR_002 -[#B8860B]-> BEV_005 : <<triggering>>
+
+' ---------------------------------------------------------------------------
 ' Role assignments
 ' ---------------------------------------------------------------------------
 ' Skill execution — all specialist agents
@@ -194,6 +247,24 @@ ACT_010 -[#B8860B]-> BPR_005 : <<assignment>>
 ACT_003 -[#B8860B]-> BPR_008 : <<assignment>>
 ACT_004 -[#B8860B]-> BPR_008 : <<assignment>>
 BCO_001 -[#B8860B]-> BPR_007 : <<assignment>>
+
+' ---------------------------------------------------------------------------
+' Nested process blocks show containment; flows show internal sequencing.
+' ---------------------------------------------------------------------------
+BPR_201 -[#808080]-> BPR_202 : <<flow>>
+BPR_202 -[#808080]-> BPR_203 : <<flow>>
+
+BPR_301 -[#808080]-> BPR_302 : <<flow>>
+BPR_302 -[#808080]-> BPR_303 : <<flow>>
+
+BPR_501 -[#808080]-> BPR_502 : <<flow>>
+BPR_502 -[#808080]-> BPR_503 : <<flow>>
+
+BPR_701 -[#808080]-> BPR_702 : <<flow>>
+BPR_702 -[#808080]-> BPR_703 : <<flow>>
+
+BPR_801 -[#808080]-> BPR_802 : <<flow>>
+BPR_802 -[#808080]-> BPR_803 : <<flow>>
 
 ' ---------------------------------------------------------------------------
 ' Process → Service realization

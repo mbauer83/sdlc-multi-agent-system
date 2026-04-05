@@ -24,9 +24,21 @@
 '   - BEV-006
 '   - BEV-008
 '   - BPR-001
+'   - BPR-101
+'   - BPR-102
+'   - BPR-103
 '   - BPR-004
+'   - BPR-401
+'   - BPR-402
+'   - BPR-403
 '   - BPR-006
+'   - BPR-601
+'   - BPR-602
+'   - BPR-603
 '   - BIA-001
+'   - BIA-101
+'   - BIA-102
+'   - BIA-103
 '   - BCO-002
 '   - ACT-001
 '   - ACT-002
@@ -41,6 +53,16 @@
 '   - BEV-002---BIA-001
 '   - BEV-003---BPR-001
 '   - BEV-006---BPR-006
+'   - BPR-004---BEV-003
+'   - BPR-006---BEV-002
+'   - BPR-101---BPR-102
+'   - BPR-102---BPR-103
+'   - BPR-401---BPR-402
+'   - BPR-402---BPR-403
+'   - BPR-601---BPR-602
+'   - BPR-602---BPR-603
+'   - BIA-101---BIA-102
+'   - BIA-102---BIA-103
 '   - ACT-002---BPR-001
 '   - ACT-002---BPR-004
 '   - ACT-002---BPR-006
@@ -80,16 +102,32 @@ rectangle "Triggering Events" <<BusinessGrouping>> as GRP_EVTS {
 ' Governance Processes
 ' ---------------------------------------------------------------------------
 rectangle "Governance Processes" <<BusinessGrouping>> as GRP_PROCS {
-  DECL_BPR_001
-  DECL_BPR_004
-  DECL_BPR_006
+  rectangle "BPR-001 Sprint Planning" <<BusinessProcess>> as BPR_001 {
+    DECL_BPR_101
+    DECL_BPR_102
+    DECL_BPR_103
+  }
+  rectangle "BPR-004 Gate Evaluation" <<BusinessProcess>> as BPR_004 {
+    DECL_BPR_401
+    DECL_BPR_402
+    DECL_BPR_403
+  }
+  rectangle "BPR-006 Sprint Review" <<BusinessProcess>> as BPR_006 {
+    DECL_BPR_601
+    DECL_BPR_602
+    DECL_BPR_603
+  }
 }
 
 ' ---------------------------------------------------------------------------
 ' Sprint Review Collaborative Interaction
 ' ---------------------------------------------------------------------------
 rectangle "Sprint Review Interaction" <<BusinessGrouping>> as GRP_IA {
-  DECL_BIA_001
+  rectangle "BIA-001 Sprint Review Interaction" <<BusinessInteraction>> as BIA_001 {
+    DECL_BIA_101
+    DECL_BIA_102
+    DECL_BIA_103
+  }
   DECL_BCO_002
 }
 
@@ -126,6 +164,27 @@ BEV_002 -[#B8860B]-> BPR_001 : <<triggering>>
 BEV_002 -[#B8860B]-> BIA_001 : <<triggering>>
 BEV_003 -[#B8860B]-> BPR_001 : <<triggering>>
 BEV_006 -[#B8860B]-> BPR_006 : <<triggering>>
+
+' ---------------------------------------------------------------------------
+' Nested process/interactions show containment; flows show internal sequence.
+' ---------------------------------------------------------------------------
+BPR_101 -[#808080]-> BPR_102 : <<flow>>
+BPR_102 -[#808080]-> BPR_103 : <<flow>>
+
+BPR_401 -[#808080]-> BPR_402 : <<flow>>
+BPR_402 -[#808080]-> BPR_403 : <<flow>>
+
+BPR_601 -[#808080]-> BPR_602 : <<flow>>
+BPR_602 -[#808080]-> BPR_603 : <<flow>>
+
+BIA_101 -[#808080]-> BIA_102 : <<flow>>
+BIA_102 -[#808080]-> BIA_103 : <<flow>>
+
+' ---------------------------------------------------------------------------
+' Event-mediated process coordination
+' ---------------------------------------------------------------------------
+BPR_004 -[#B8860B]-> BEV_003 : <<triggering>>
+BPR_006 -[#B8860B]-> BEV_002 : <<triggering>>
 
 ' ---------------------------------------------------------------------------
 ' Role / Collaboration assignments

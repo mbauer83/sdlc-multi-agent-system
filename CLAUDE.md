@@ -140,6 +140,8 @@ tests/
 
 26. **Separate reusable skill intent from workflow-executable control logic.** Skill files should remain strict about outputs, quality checks, and domain procedure, but phase-gate execution logic (state transitions, dependency gating, retries, suspension/resume criteria) is owned by orchestration code and PM routing policies. Keep `invoke-when` / `trigger-conditions` as intent-level routing hints and documentation, not as the sole executable gate contract. Governed by `framework/agent-runtime-spec.md` and `framework/orchestration-topology.md`.
 
+27. **Business operational decomposition diagrams use nested parent containers by default.** For staged business behavior in operational ArchiMate diagrams, the parent `BPR-NNN` / `BIA-NNN` element is the container and stage behaviors are nested within it, connected by internal `flow`/`triggering` lines. Do not model outer grouping wrappers with duplicated parent nodes. Keep parent→stage `archimate-composition` files in `connections/archimate/composition/` as model truth even when external composition arrows are omitted in the operational diagram. Governed by `framework/diagram-conventions.md §7.archimate-business-operational` and `§11.9.1a`.
+
 ## End-of-Session Checklist
 
 At the end of any work session — regardless of scope — complete all of the following before finishing:
