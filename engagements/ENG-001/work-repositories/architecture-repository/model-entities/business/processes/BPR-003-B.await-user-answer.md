@@ -1,0 +1,40 @@
+---
+artifact-id: BPR-003-B
+artifact-type: business-process
+name: "Await User Answer"
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+safety-relevant: false
+produced-by-skill: SA-PHASE-B
+last-updated: 2026-04-05
+engagement: ENG-001
+parent-process: BPR-003
+stage-order: 2
+---
+
+<!-- §content -->
+
+## Await User Answer
+
+The system waits for the user to submit a CQ response via the Dashboard Queries tab. The user may type an answer, reference an external source (Confluence page, Jira key), or upload a file. The UserInputGateway receives the submission and routes it to the UserInteractionOrchestrator, which injects the answer into the waiting agent node's context.
+
+## Properties
+
+| Attribute | Value |
+|---|---|
+| Input | User answer submitted via Dashboard (text, reference, or file upload) |
+| Output | `cq.answered` event; answer text and optional upload reference in agent context |
+| Flow-to | BPR-003-C (Resume Specialist) |
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+layer: Business
+element-type: BusinessProcess
+label: "Await User Answer"
+alias: BPR_003_B
+```

@@ -1,0 +1,40 @@
+---
+artifact-id: BPR-006-A
+artifact-type: business-process
+name: "Present Sprint Output"
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+safety-relevant: false
+produced-by-skill: SA-PHASE-B
+last-updated: 2026-04-05
+engagement: ENG-001
+parent-process: BPR-006
+stage-order: 1
+---
+
+<!-- §content -->
+
+## Present Sprint Output
+
+The PM emits `review.pending` and the Dashboard presents the sprint's artifact list to the user. Each artifact is shown with its type, owner agent, version, and a summary. The user is invited to inspect each item on the Dashboard Review tab before making decisions.
+
+## Properties
+
+| Attribute | Value |
+|---|---|
+| Input | Sprint artifact list from work-repository; `sprint.close` event signal |
+| Output | `review.pending` event; Dashboard Review tab populated for user |
+| Flow-to | BPR-006-B (User Review Decision) |
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+layer: Business
+element-type: BusinessProcess
+label: "Present Sprint Output"
+alias: BPR_006_A
+```

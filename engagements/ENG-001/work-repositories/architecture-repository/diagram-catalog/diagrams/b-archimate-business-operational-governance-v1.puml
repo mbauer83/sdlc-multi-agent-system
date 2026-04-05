@@ -1,0 +1,164 @@
+' ---
+' artifact-id: b-archimate-business-operational-governance-v1
+' artifact-type: diagram
+' name: "Business Architecture — Operational Viewpoint: Governance & Review"
+' diagram-type: archimate-business
+' version: 0.1.0
+' status: draft
+' phase-produced: B
+' owner-agent: SA
+' engagement: ENG-001
+' domain: core-platform
+' purpose: >
+'   Operational view of the sprint governance and review cluster: events that initiate
+'   and terminate sprint cycles, the processes that execute them, and the roles and
+'   collaborations involved. Shows the heartbeat of the engagement — how sprint
+'   planning, gate evaluation, sprint review, and the PM+User interaction interact.
+'   Complements b-archimate-business-operational-execution-v1 (skill/knowledge cluster).
+' viewpoint: Operational
+' cluster: Governance & Review (BPR-001, BPR-004, BPR-006, BIA-001)
+' entity-ids-used:
+'   - BEV-001
+'   - BEV-002
+'   - BEV-003
+'   - BEV-006
+'   - BEV-008
+'   - BPR-001
+'   - BPR-004
+'   - BPR-006
+'   - BIA-001
+'   - BCO-002
+'   - ACT-001
+'   - ACT-002
+'   - ACT-010
+'   - BSV-003
+'   - BSV-009
+'   - BOB-002
+'   - BOB-004
+' connection-ids-used:
+'   - BEV-001---BPR-001
+'   - BEV-002---BPR-001
+'   - BEV-002---BIA-001
+'   - BEV-003---BPR-001
+'   - BEV-006---BPR-006
+'   - ACT-002---BPR-001
+'   - ACT-002---BPR-004
+'   - ACT-002---BPR-006
+'   - ACT-010---BPR-004
+'   - ACT-001---BPR-006
+'   - BCO-002---BIA-001
+'   - ACT-001---BCO-002
+'   - ACT-002---BCO-002
+'   - BPR-001---BSV-003
+'   - BPR-004---BSV-003
+'   - BPR-006---BSV-009
+'   - BIA-001---BSV-009
+'   - BPR-001---BOB-002
+'   - BPR-004---BOB-004
+' ---
+@startuml b-archimate-business-operational-governance-v1
+!include ../_macros.puml
+!include ../_archimate-stereotypes.puml
+
+skinparam groupInheritance 1
+skinparam nodesep 35
+skinparam ranksep 50
+skinparam padding 8
+
+' ---------------------------------------------------------------------------
+' Triggering Events (initiation and termination)
+' ---------------------------------------------------------------------------
+rectangle "Triggering Events" <<BusinessGrouping>> as GRP_EVTS {
+  DECL_BEV_001
+  DECL_BEV_002
+  DECL_BEV_003
+  DECL_BEV_006
+  DECL_BEV_008
+}
+
+' ---------------------------------------------------------------------------
+' Governance Processes
+' ---------------------------------------------------------------------------
+rectangle "Governance Processes" <<BusinessGrouping>> as GRP_PROCS {
+  DECL_BPR_001
+  DECL_BPR_004
+  DECL_BPR_006
+}
+
+' ---------------------------------------------------------------------------
+' Sprint Review Collaborative Interaction
+' ---------------------------------------------------------------------------
+rectangle "Sprint Review Interaction" <<BusinessGrouping>> as GRP_IA {
+  DECL_BIA_001
+  DECL_BCO_002
+}
+
+' ---------------------------------------------------------------------------
+' Roles / Actors
+' ---------------------------------------------------------------------------
+rectangle "Roles" <<BusinessGrouping>> as GRP_ROLES {
+  DECL_ACT_001
+  DECL_ACT_002
+  DECL_ACT_010
+}
+
+' ---------------------------------------------------------------------------
+' Business Objects (key managed objects in this cluster)
+' ---------------------------------------------------------------------------
+rectangle "Key Objects" <<BusinessGrouping>> as GRP_OBJ {
+  DECL_BOB_002
+  DECL_BOB_004
+}
+
+' ---------------------------------------------------------------------------
+' Business Services (outputs of governance cluster)
+' ---------------------------------------------------------------------------
+rectangle "Delivered Services" <<BusinessGrouping>> as GRP_SVCS {
+  DECL_BSV_003
+  DECL_BSV_009
+}
+
+' ---------------------------------------------------------------------------
+' Event → Process triggering
+' ---------------------------------------------------------------------------
+BEV_001 -[#B8860B]-> BPR_001 : <<triggering>>
+BEV_002 -[#B8860B]-> BPR_001 : <<triggering>>
+BEV_002 -[#B8860B]-> BIA_001 : <<triggering>>
+BEV_003 -[#B8860B]-> BPR_001 : <<triggering>>
+BEV_006 -[#B8860B]-> BPR_006 : <<triggering>>
+
+' ---------------------------------------------------------------------------
+' Role / Collaboration assignments
+' ---------------------------------------------------------------------------
+ACT_002 -[#B8860B]-> BPR_001 : <<assignment>>
+ACT_002 -[#B8860B]-> BPR_004 : <<assignment>>
+ACT_002 -[#B8860B]-> BPR_006 : <<assignment>>
+ACT_010 -[#B8860B]-> BPR_004 : <<assignment>>
+ACT_001 -[#B8860B]-> BPR_006 : <<assignment>>
+ACT_001 -[#B8860B]-> BCO_002 : <<assignment>>
+ACT_002 -[#B8860B]-> BCO_002 : <<assignment>>
+BCO_002 -[#B8860B]-> BIA_001 : <<assignment>>
+
+' ---------------------------------------------------------------------------
+' Process / Interaction → Service realization
+' ---------------------------------------------------------------------------
+BPR_001 ..[#B8860B].>> BSV_003 : <<realization>>
+BPR_004 ..[#B8860B].>> BSV_003 : <<realization>>
+BPR_006 ..[#B8860B].>> BSV_009 : <<realization>>
+BIA_001 ..[#B8860B].>> BSV_009 : <<realization>>
+
+' ---------------------------------------------------------------------------
+' Process → Object access (key objects produced/consumed)
+' ---------------------------------------------------------------------------
+BPR_001 -[#808080]-> BOB_002 : <<access (write)>>
+BPR_004 -[#808080]-> BOB_004 : <<access (write)>>
+
+note as N1
+  Governance cluster: sprint lifecycle + gate + review.
+  BEV-008 (Engagement Completed) terminates BEV-002 loop —
+  when recorded, Sprint Planning (BPR-001) does NOT re-fire.
+  BIA-001 + BCO-002: structured PM+User sprint review sequence.
+  See operational-execution diagram for skill/CQ/knowledge cluster.
+end note
+
+@enduml

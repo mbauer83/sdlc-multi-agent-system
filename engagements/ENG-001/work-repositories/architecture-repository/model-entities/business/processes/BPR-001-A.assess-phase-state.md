@@ -1,0 +1,40 @@
+---
+artifact-id: BPR-001-A
+artifact-type: business-process
+name: "Assess Phase State"
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+safety-relevant: false
+produced-by-skill: SA-PHASE-B
+last-updated: 2026-04-05
+engagement: ENG-001
+parent-process: BPR-001
+stage-order: 1
+---
+
+<!-- §content -->
+
+## Assess Phase State
+
+The PM agent reads the EventStore and all work-repositories to reconstruct current engagement state: which ADM phase is active, which gate votes are outstanding, which handoffs are pending, and which open CQs remain unanswered. This stage determines the starting condition for all subsequent planning decisions.
+
+## Properties
+
+| Attribute | Value |
+|---|---|
+| Input | EventStore snapshot; open handoffs; outstanding gate votes; unanswered CQs |
+| Output | Engagement state assessment: current phase, pending work, blockers |
+| Flow-to | BPR-001-B (Select Specialist Invocations) |
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+layer: Business
+element-type: BusinessProcess
+label: "Assess Phase State"
+alias: BPR_001_A
+```

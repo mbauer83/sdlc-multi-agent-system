@@ -1,0 +1,40 @@
+---
+artifact-id: BPR-002-A
+artifact-type: business-process
+name: "Load Skill Context"
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+safety-relevant: false
+produced-by-skill: SA-PHASE-B
+last-updated: 2026-04-05
+engagement: ENG-001
+parent-process: BPR-002
+stage-order: 1
+---
+
+<!-- §content -->
+
+## Load Skill Context
+
+The specialist agent assembles its 4-layer system prompt (identity + behavioral stance + skill file instructions + prior learnings from Step 0.L) and performs the Discovery Scan (5-layer artifact query). This stage produces the full execution context the agent needs before any artifact-producing tool calls are made.
+
+## Properties
+
+| Attribute | Value |
+|---|---|
+| Input | Agent identity (AGENT.md); skill file; LearningStore query results; discovery scan artifacts |
+| Output | Assembled execution context: system prompt layers + relevant artifact set |
+| Flow-to | BPR-002-B (Execute Skill Steps) |
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+layer: Business
+element-type: BusinessProcess
+label: "Load Skill Context"
+alias: BPR_002_A
+```

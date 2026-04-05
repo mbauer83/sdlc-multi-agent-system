@@ -1,0 +1,231 @@
+' ---
+' artifact-id: b-archimate-business-operational-execution-v1
+' artifact-type: diagram
+' name: "Business Architecture — Operational Viewpoint: Execution, CQ & Knowledge"
+' diagram-type: archimate-business
+' version: 0.1.0
+' status: draft
+' phase-produced: B
+' owner-agent: SA
+' engagement: ENG-001
+' domain: core-platform
+' purpose: >
+'   Operational view of the specialist execution, CQ lifecycle, safety escalation,
+'   and knowledge management cluster. Shows how skill execution is triggered and
+'   what it produces; how CQs are raised and resolved; how algedonic signals
+'   bypass normal flow; and how learning entries and enterprise promotion sustain
+'   long-term knowledge. Complements b-archimate-business-operational-governance-v1.
+' viewpoint: Operational
+' cluster: Execution / CQ / Safety / Knowledge (BPR-002, BPR-003, BPR-005, BPR-007, BPR-008)
+' entity-ids-used:
+'   - BEV-004
+'   - BEV-005
+'   - BEV-007
+'   - BPR-002
+'   - BPR-003
+'   - BPR-005
+'   - BPR-007
+'   - BPR-008
+'   - ACT-001
+'   - ACT-002
+'   - ACT-003
+'   - ACT-004
+'   - ACT-005
+'   - ACT-006
+'   - ACT-007
+'   - ACT-008
+'   - ACT-009
+'   - ACT-010
+'   - BCO-001
+'   - BSV-001
+'   - BSV-002
+'   - BSV-004
+'   - BSV-005
+'   - BSV-006
+'   - BSV-007
+'   - BSV-008
+'   - BSV-009
+'   - BOB-001
+'   - BOB-003
+'   - BOB-005
+'   - BOB-006
+' connection-ids-used:
+'   - BEV-004---BPR-003
+'   - BEV-005---BPR-005
+'   - BEV-007---BPR-008
+'   - ACT-003---BPR-002
+'   - ACT-004---BPR-002
+'   - ACT-005---BPR-002
+'   - ACT-006---BPR-002
+'   - ACT-007---BPR-002
+'   - ACT-008---BPR-002
+'   - ACT-009---BPR-002
+'   - ACT-010---BPR-002
+'   - ACT-001---BPR-003
+'   - ACT-002---BPR-005
+'   - ACT-010---BPR-005
+'   - ACT-003---BPR-008
+'   - ACT-004---BPR-008
+'   - BCO-001---BPR-007
+'   - BPR-002---BSV-001
+'   - BPR-002---BSV-002
+'   - BPR-002---BSV-004
+'   - BPR-002---BSV-005
+'   - BPR-002---BSV-006
+'   - BPR-002---BSV-007
+'   - BPR-002---BSV-008
+'   - BPR-003---BSV-009
+'   - BPR-005---BSV-004
+'   - BPR-007---BSV-001
+'   - BPR-008---BSV-001
+'   - BPR-008---BSV-002
+'   - BPR-002---BOB-001
+'   - BPR-002---BOB-006
+'   - BPR-003---BOB-003
+'   - BPR-005---BOB-005
+' ---
+@startuml b-archimate-business-operational-execution-v1
+!include ../_macros.puml
+!include ../_archimate-stereotypes.puml
+
+skinparam groupInheritance 1
+skinparam nodesep 35
+skinparam ranksep 50
+skinparam padding 8
+
+' ---------------------------------------------------------------------------
+' Triggering Events
+' ---------------------------------------------------------------------------
+rectangle "Triggering Events" <<BusinessGrouping>> as GRP_EVTS {
+  DECL_BEV_004
+  DECL_BEV_005
+  DECL_BEV_007
+}
+
+' ---------------------------------------------------------------------------
+' All specialist roles (assigned to BPR-002)
+' ---------------------------------------------------------------------------
+rectangle "Specialist Agent Roles" <<BusinessGrouping>> as GRP_AGENTS {
+  DECL_ACT_003
+  DECL_ACT_004
+  DECL_ACT_005
+  DECL_ACT_006
+  DECL_ACT_007
+  DECL_ACT_008
+  DECL_ACT_009
+  DECL_ACT_010
+}
+
+' ---------------------------------------------------------------------------
+' Supporting roles
+' ---------------------------------------------------------------------------
+rectangle "Supporting Roles" <<BusinessGrouping>> as GRP_SUPPORT {
+  DECL_ACT_001
+  DECL_ACT_002
+  DECL_BCO_001
+}
+
+' ---------------------------------------------------------------------------
+' Execution & Lifecycle Processes
+' ---------------------------------------------------------------------------
+rectangle "Execution Processes" <<BusinessGrouping>> as GRP_EXEC {
+  DECL_BPR_002
+  DECL_BPR_003
+  DECL_BPR_005
+}
+
+' ---------------------------------------------------------------------------
+' Knowledge Management Processes
+' ---------------------------------------------------------------------------
+rectangle "Knowledge Management" <<BusinessGrouping>> as GRP_KNOW {
+  DECL_BPR_007
+  DECL_BPR_008
+}
+
+' ---------------------------------------------------------------------------
+' Key Business Objects
+' ---------------------------------------------------------------------------
+rectangle "Key Objects" <<BusinessGrouping>> as GRP_OBJ {
+  DECL_BOB_001
+  DECL_BOB_003
+  DECL_BOB_005
+  DECL_BOB_006
+}
+
+' ---------------------------------------------------------------------------
+' Business Services (outputs of this cluster)
+' ---------------------------------------------------------------------------
+rectangle "Delivered Services" <<BusinessGrouping>> as GRP_SVCS {
+  DECL_BSV_001
+  DECL_BSV_002
+  DECL_BSV_004
+  DECL_BSV_005
+  DECL_BSV_006
+  DECL_BSV_007
+  DECL_BSV_008
+  DECL_BSV_009
+}
+
+' ---------------------------------------------------------------------------
+' Event → Process triggering
+' ---------------------------------------------------------------------------
+BEV_004 -[#B8860B]-> BPR_003 : <<triggering>>
+BEV_005 -[#B8860B]-> BPR_005 : <<triggering>>
+BEV_007 -[#B8860B]-> BPR_008 : <<triggering>>
+
+' ---------------------------------------------------------------------------
+' Role assignments
+' ---------------------------------------------------------------------------
+' Skill execution — all specialist agents
+ACT_003 -[#B8860B]-> BPR_002 : <<assignment>>
+ACT_004 -[#B8860B]-> BPR_002 : <<assignment>>
+ACT_005 -[#B8860B]-> BPR_002 : <<assignment>>
+ACT_006 -[#B8860B]-> BPR_002 : <<assignment>>
+ACT_007 -[#B8860B]-> BPR_002 : <<assignment>>
+ACT_008 -[#B8860B]-> BPR_002 : <<assignment>>
+ACT_009 -[#B8860B]-> BPR_002 : <<assignment>>
+ACT_010 -[#B8860B]-> BPR_002 : <<assignment>>
+' CQ lifecycle — user answers
+ACT_001 -[#B8860B]-> BPR_003 : <<assignment>>
+' Algedonic escalation — CSCO + PM
+ACT_002 -[#B8860B]-> BPR_005 : <<assignment>>
+ACT_010 -[#B8860B]-> BPR_005 : <<assignment>>
+' Knowledge management
+ACT_003 -[#B8860B]-> BPR_008 : <<assignment>>
+ACT_004 -[#B8860B]-> BPR_008 : <<assignment>>
+BCO_001 -[#B8860B]-> BPR_007 : <<assignment>>
+
+' ---------------------------------------------------------------------------
+' Process → Service realization
+' ---------------------------------------------------------------------------
+BPR_002 ..[#B8860B].>> BSV_001 : <<realization>>
+BPR_002 ..[#B8860B].>> BSV_002 : <<realization>>
+BPR_002 ..[#B8860B].>> BSV_004 : <<realization>>
+BPR_002 ..[#B8860B].>> BSV_005 : <<realization>>
+BPR_002 ..[#B8860B].>> BSV_006 : <<realization>>
+BPR_002 ..[#B8860B].>> BSV_007 : <<realization>>
+BPR_002 ..[#B8860B].>> BSV_008 : <<realization>>
+BPR_003 ..[#B8860B].>> BSV_009 : <<realization>>
+BPR_005 ..[#B8860B].>> BSV_004 : <<realization>>
+BPR_007 ..[#B8860B].>> BSV_001 : <<realization>>
+BPR_008 ..[#B8860B].>> BSV_001 : <<realization>>
+BPR_008 ..[#B8860B].>> BSV_002 : <<realization>>
+
+' ---------------------------------------------------------------------------
+' Process → Object access
+' ---------------------------------------------------------------------------
+BPR_002 -[#808080]-> BOB_001 : <<access (write)>>
+BPR_002 -[#808080]-> BOB_006 : <<access (r/w)>>
+BPR_003 -[#808080]-> BOB_003 : <<access (r/w)>>
+BPR_005 -[#808080]-> BOB_005 : <<access (r/w)>>
+
+note as N1
+  Execution cluster: skill invocations + CQ resolution +
+  algedonic escalation + enterprise promotion + reverse arch.
+  BEV-007 routes directly to BPR-008 for EP-G brownfield entry.
+  BPR-002 reads BOB-006 (learning entries) at Step 0.L and
+  writes new entries on gate-veto or feedback-revision trigger.
+  See governance diagram for sprint/gate/review cluster.
+end note
+
+@enduml

@@ -1,0 +1,40 @@
+---
+artifact-id: BPR-001-C
+artifact-type: business-process
+name: "Dispatch Sprint"
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+safety-relevant: false
+produced-by-skill: SA-PHASE-B
+last-updated: 2026-04-05
+engagement: ENG-001
+parent-process: BPR-001
+stage-order: 3
+---
+
+<!-- §content -->
+
+## Dispatch Sprint
+
+The PM emits the `sprint.started` event, writes the Sprint Plan (BOB-002) to the work-repository, and hands off to the first specialist agent in the invocation list. This stage closes Sprint Planning and transfers control to Skill Execution (BPR-002).
+
+## Properties
+
+| Attribute | Value |
+|---|---|
+| Input | Ordered invocation list (from BPR-001-B) |
+| Output | `sprint.started` event; Sprint Plan (BOB-002) written; first specialist invocation dispatched |
+| Triggers | BPR-002 (Skill Execution) |
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+layer: Business
+element-type: BusinessProcess
+label: "Dispatch Sprint"
+alias: BPR_001_C
+```

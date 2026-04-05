@@ -65,6 +65,20 @@
 !define DECL_BPR_006 rectangle "Sprint Review" <<BusinessProcess>> as BPR_006
 !define DECL_BPR_007 rectangle "Enterprise Promotion" <<BusinessProcess>> as BPR_007
 !define DECL_BPR_008 rectangle "Reverse Architecture" <<BusinessProcess>> as BPR_008
+!define DECL_BFN_001 rectangle "Engagement Governance" <<BusinessFunction>> as BFN_001
+!define DECL_BFN_002 rectangle "Specialist Execution" <<BusinessFunction>> as BFN_002
+!define DECL_BFN_003 rectangle "Human Collaboration" <<BusinessFunction>> as BFN_003
+!define DECL_BFN_004 rectangle "Safety & Compliance" <<BusinessFunction>> as BFN_004
+!define DECL_BFN_005 rectangle "Knowledge Management" <<BusinessFunction>> as BFN_005
+!define DECL_BIA_001 rectangle "Sprint Review Interaction" <<BusinessInteraction>> as BIA_001
+!define DECL_BEV_001 rectangle "Engagement Started" <<BusinessEvent>> as BEV_001
+!define DECL_BEV_002 rectangle "Sprint Closed" <<BusinessEvent>> as BEV_002
+!define DECL_BEV_003 rectangle "Gate Passed" <<BusinessEvent>> as BEV_003
+!define DECL_BEV_004 rectangle "Clarification Raised" <<BusinessEvent>> as BEV_004
+!define DECL_BEV_005 rectangle "Safety Signal Raised" <<BusinessEvent>> as BEV_005
+!define DECL_BEV_006 rectangle "Sprint Review Submitted" <<BusinessEvent>> as BEV_006
+!define DECL_BEV_007 rectangle "Brownfield Entry" <<BusinessEvent>> as BEV_007
+!define DECL_BEV_008 rectangle "Engagement Completed" <<BusinessEvent>> as BEV_008
 !define DECL_BSV_001 rectangle "Business Architecture Service" <<BusinessService>> as BSV_001
 !define DECL_BSV_002 rectangle "Application & Technology Architecture Service" <<BusinessService>> as BSV_002
 !define DECL_BSV_003 rectangle "Project Coordination Service" <<BusinessService>> as BSV_003
@@ -74,7 +88,14 @@
 !define DECL_BSV_007 rectangle "Quality Assurance Service" <<BusinessService>> as BSV_007
 !define DECL_BSV_008 rectangle "Platform Engineering Service" <<BusinessService>> as BSV_008
 !define DECL_BSV_009 rectangle "User Decisions Service" <<BusinessService>> as BSV_009
+!define DECL_BOB_001 rectangle "Architecture Artifact" <<BusinessObject>> as BOB_001
+!define DECL_BOB_002 rectangle "Sprint Plan" <<BusinessObject>> as BOB_002
+!define DECL_BOB_003 rectangle "Clarification Request" <<BusinessObject>> as BOB_003
+!define DECL_BOB_004 rectangle "Gate Outcome" <<BusinessObject>> as BOB_004
+!define DECL_BOB_005 rectangle "Algedonic Signal" <<BusinessObject>> as BOB_005
+!define DECL_BOB_006 rectangle "Learning Entry" <<BusinessObject>> as BOB_006
 !define DECL_BCO_001 rectangle "Architecture Board" <<BusinessCollaboration>> as BCO_001
+!define DECL_BCO_002 rectangle "Sprint Review Board" <<BusinessCollaboration>> as BCO_002
 
 ' ---------------------------------------------------------------------------
 ' Application
@@ -127,3 +148,25 @@
 !define DECL_DOB_013 rectangle "ArtifactRecord" <<DataObject>> as DOB_013
 !define DECL_ACO_001 rectangle "Skill Execution Collaboration" <<ApplicationCollaboration>> as ACO_001
 !define DECL_AIA_001 rectangle "Skill Execution" <<ApplicationInteraction>> as AIA_001
+' --- Sub-process stages (BPR-NNN-A/B/C) ---
+!define DECL_BPR_001_A rectangle "Assess Phase State" <<BusinessProcess>> as BPR_001_A
+!define DECL_BPR_001_B rectangle "Select Specialist Invocations" <<BusinessProcess>> as BPR_001_B
+!define DECL_BPR_001_C rectangle "Dispatch Sprint" <<BusinessProcess>> as BPR_001_C
+!define DECL_BPR_002_A rectangle "Load Skill Context" <<BusinessProcess>> as BPR_002_A
+!define DECL_BPR_002_B rectangle "Execute Skill Steps" <<BusinessProcess>> as BPR_002_B
+!define DECL_BPR_002_C rectangle "Emit Artifacts" <<BusinessProcess>> as BPR_002_C
+!define DECL_BPR_003_A rectangle "Route CQ to User" <<BusinessProcess>> as BPR_003_A
+!define DECL_BPR_003_B rectangle "Await User Answer" <<BusinessProcess>> as BPR_003_B
+!define DECL_BPR_003_C rectangle "Resume Specialist" <<BusinessProcess>> as BPR_003_C
+!define DECL_BPR_004_A rectangle "Collect Gate Votes" <<BusinessProcess>> as BPR_004_A
+!define DECL_BPR_004_B rectangle "Evaluate Gate Checklist" <<BusinessProcess>> as BPR_004_B
+!define DECL_BPR_004_C rectangle "Record Gate Outcome" <<BusinessProcess>> as BPR_004_C
+!define DECL_BPR_006_A rectangle "Present Sprint Output" <<BusinessProcess>> as BPR_006_A
+!define DECL_BPR_006_B rectangle "User Review Decision" <<BusinessProcess>> as BPR_006_B
+!define DECL_BPR_006_C rectangle "Process Review Decisions" <<BusinessProcess>> as BPR_006_C
+!define DECL_BPR_007_A rectangle "Assign Enterprise ID" <<BusinessProcess>> as BPR_007_A
+!define DECL_BPR_007_B rectangle "Reference Sweep" <<BusinessProcess>> as BPR_007_B
+!define DECL_BPR_007_C rectangle "Move and Record Promotion" <<BusinessProcess>> as BPR_007_C
+!define DECL_BPR_008_A rectangle "Multi-Source Scan" <<BusinessProcess>> as BPR_008_A
+!define DECL_BPR_008_B rectangle "Infer Entities" <<BusinessProcess>> as BPR_008_B
+!define DECL_BPR_008_C rectangle "Confirm and Populate Model" <<BusinessProcess>> as BPR_008_C
