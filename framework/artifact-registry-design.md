@@ -444,6 +444,8 @@ label: "<optional label>"
 | `resource` | `RES` | `resources/` | Resource | SA |
 | `course-of-action` | `COA` | `courses-of-action/` | Course of Action | SA |
 
+> **Capability realization:** `CAP` is a high-level strategic abstraction. It is realized only by **behavioral** elements — `BPR` (Business Process), `BFN` (Business Function), `BSV` (Business Service), or cross-layer `ASV`/`AIA` (Application Service/Interaction). Structural elements (`ACT`, `ROL`, `APP`, `ACO`) contribute to capabilities via `Assignment` or `Association`, not `Realization`. Capabilities are typically realized by more than one behavioral element — a well-modeled capability has at least one business-layer realizer and one application-layer realizer. See `framework/diagram-conventions.md §11.7` for the full rule and prohibited patterns.
+
 ### 4.3 Business Layer — `architecture-repository/business/`
 
 | artifact-type | Prefix | Directory | ArchiMate Element | Owner |

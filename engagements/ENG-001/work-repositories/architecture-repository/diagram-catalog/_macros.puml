@@ -125,5 +125,5 @@
 !define DECL_DOB_011 rectangle "PMDecision" <<DataObject>> as DOB_011
 !define DECL_DOB_012 rectangle "SDLCGraphState" <<DataObject>> as DOB_012
 !define DECL_DOB_013 rectangle "ArtifactRecord" <<DataObject>> as DOB_013
-!define DECL_ACO_001 rectangle "Skill Execution\nCollaboration" <<ApplicationCollaboration>> as ACO_001
+!define DECL_ACO_001 rectangle "Skill Execution Collaboration" <<ApplicationCollaboration>> as ACO_001
 !define DECL_AIA_001 rectangle "Skill Execution" <<ApplicationInteraction>> as AIA_001

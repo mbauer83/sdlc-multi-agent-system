@@ -14,8 +14,10 @@
 '   interface (port). Every serving arrow is a function-call boundary. Every
 '   composition arrow marks a LangGraph node or registry entry. Use this diagram
 '   as the authoritative module dependency map when implementing src/.
-'   Cross-layer realization arrows (APP → BSV) show which application modules
+'   Cross-layer realization arrows (ASV → BSV) show which application services
 '   deliver which business services (defined in phase-b-archimate-business-v1).
+'   ASV-001 (Agent Invocation Service) realizes BSV-001/002/003; ASV-003/004
+'   realize BSV-009 (User Decisions Service).
 ' entity-ids-used:
 '   - APP-001
 '   - APP-002
@@ -45,6 +47,9 @@
 '   - AIF-004
 '   - AIF-005
 '   - AIF-006
+'   - ASV-001
+'   - ASV-003
+'   - ASV-004
 ' connection-ids-used:
 '   - APP-001---APP-016
 '   - APP-001---APP-017
@@ -74,10 +79,11 @@
 '   - APP-022---APP-008
 '   - APP-022---APP-009
 '   - APP-022---APP-011
-'   - APP-007---BSV-003
-'   - APP-008---BSV-001
-'   - APP-009---BSV-002
-'   - APP-020---BSV-009
+'   - ASV-001---BSV-001
+'   - ASV-001---BSV-002
+'   - ASV-001---BSV-003
+'   - ASV-003---BSV-009
+'   - ASV-004---BSV-009
 ' ---
 @startuml phase-c-archimate-application-v1
 !include ../_macros.puml
@@ -90,7 +96,7 @@ skinparam padding 8
 skinparam rankdir LR
 
 ' ---------------------------------------------------------------------------
-' Cross-layer boundary: Business Services realized by this diagram's components.
+' Cross-layer boundary: Business Services realized by application services below.
 ' Declared outside application groups — these elements live in the business layer
 ' (phase-b-archimate-business-v1) and appear here only as realization targets.
 ' ---------------------------------------------------------------------------
@@ -98,6 +104,13 @@ rectangle "Business Architecture Service" <<BusinessService>> as BSV_001
 rectangle "App & Technology Architecture Service" <<BusinessService>> as BSV_002
 rectangle "Project Coordination Service" <<BusinessService>> as BSV_003
 rectangle "User Decisions Service" <<BusinessService>> as BSV_009
+
+' Cross-layer boundary: Application Services that realize the business services above.
+' ASV-001 groups APP-004+APP-005+APP-006 (agent invocation stack).
+' ASV-003 and ASV-004 handle sprint-review and CQ user-decision flows.
+DECL_ASV_001
+DECL_ASV_003
+DECL_ASV_004
 
 ' Cross-layer boundary: Human actor served by the dashboard.
 rectangle "User" <<BusinessActor>> as ACT_001
@@ -221,12 +234,14 @@ APP_022 -[#8D4E00]-> APP_011 : <<serving>> (read-write)
 APP_020 -[#8D4E00]-> ACT_001 : <<serving>>
 
 ' ---------------------------------------------------------------------------
-' Realization: Application components → Business Services (cross-layer)
-' Full realization chain: APP → BSV realized by BPR in phase-b diagram.
+' Realization: Application Services → Business Services (cross-layer)
+' §11.7/§11.8: behavioral ASV elements realize BSV, not structural APP components.
+' BPR-layer realizers are in phase-b-archimate-business-v1.
 ' ---------------------------------------------------------------------------
-APP_007 ..[#B8860B].>> BSV_003 : <<realization>>
-APP_008 ..[#B8860B].>> BSV_001 : <<realization>>
-APP_009 ..[#B8860B].>> BSV_002 : <<realization>>
-APP_020 ..[#B8860B].>> BSV_009 : <<realization>>
+ASV_001 ..[#0078A0].>> BSV_001 : <<realization>>
+ASV_001 ..[#0078A0].>> BSV_002 : <<realization>>
+ASV_001 ..[#0078A0].>> BSV_003 : <<realization>>
+ASV_003 ..[#0078A0].>> BSV_009 : <<realization>>
+ASV_004 ..[#0078A0].>> BSV_009 : <<realization>>
 
 @enduml
