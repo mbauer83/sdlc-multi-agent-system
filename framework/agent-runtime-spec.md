@@ -1,8 +1,8 @@
 # Agent Runtime Specification
 
-**Version:** 1.1.0  
+**Version:** 1.2.0  
 **Status:** Approved — Pre-Stage 5  
-**Last Updated:** 2026-04-03
+**Last Updated:** 2026-04-05
 
 ---
 
@@ -96,6 +96,34 @@ The Python routing layer selects a skill by evaluating `(agent_id, trigger_phase
 
 The `trigger-conditions` frontmatter field is a human/LLM-readable description of trigger logic; it is **not** parsed by the Python routing layer. The `trigger-phases` list is the authoritative machine-readable routing key.
 
+### 3.4 Search-Space Guardrails (skills)
+
+Skill inventory and load scope are constrained to keep routing and execution tractable:
+
+- Per-role skill inventory target: <=12 skills per agent role.
+- Runtime prompt load: exactly one active skill per invocation (`active_skill_id`); other skills are not injected.
+- Routing prefilter: `framework/agent-index.md` is loaded first as a compact routing table; full skill markdown is loaded only for the selected skill.
+- Authoring rule: if a role approaches the skill cap, split by trigger-phase or entry-point rather than adding broad multi-purpose skills.
+
+Complexity classes are the Layer 3 budget governor:
+
+- `simple`: <=600 tokens (soft), 720 (hard)
+- `standard`: <=1200 tokens (soft), 1440 (hard)
+- `complex`: <=2000 tokens (soft/hard)
+
+If soft cap is exceeded, `SkillLoader` truncates low-priority sections (`Algedonic Triggers`, then `Feedback Loop`, then `Outputs`) and never truncates `Steps`. Hard-cap exceedance raises `SkillBudgetExceededError`, signaling that the skill should be split.
+
+### 3.5 Skill Portability Boundary (intent vs executable workflow)
+
+To keep skills reusable across workflow profiles while preserving deterministic execution:
+
+- Skill markdown owns: domain procedure, output structure, quality/validation expectations, escalation semantics.
+- Orchestration/runtime code owns: executable workflow gating, phase transition checks, dependency readiness checks, suspension/resume routing, retry policies.
+- Frontmatter fields `invoke-when` and `trigger-conditions` are intent-level guidance and documentation.
+- Frontmatter field `trigger-phases` remains the primary machine-routing key in this architecture profile.
+
+Design rule: keep skill outputs strict and schema-bound, while moving environment- or engagement-specific workflow state logic into LangGraph/PM routing code.
+
 ---
 
 ## 4. `AgentDeps` Dataclass
@@ -182,6 +210,33 @@ result = await sa_agent.run(
 ## 6. Tool Set Per Agent
 
 All tools are defined in `src/agents/tools/`. Tool event emission is **tool-transparent** — tools emit the appropriate EventStore events internally; skill instructions do not need to mention event emission explicitly.
+
+### 6.0 Tooling Contract Boundary (authoring vs runtime)
+
+Agent and skill markdown describes **tooling intent** (discover/search/filter/query/validate/write), not the immutable runtime function signatures. Runtime binding is code-owned in LangGraph + PydanticAI registration (`src/agents/`, `src/orchestration/`, `src/tools/mcp_model_server.py`, `src/tools/model_mcp/`, `src/tools/model_write/`).
+
+For model entity/connection/diagram workflows, the current canonical MCP tool mapping is:
+
+| Intent | Canonical MCP tools |
+|---|---|
+| Discovery and filtering | `model_query_stats`, `model_query_list_artifacts` |
+| Content search/query | `model_query_search_artifacts`, `model_query_read_artifact` |
+| Graph query | `model_query_find_connections_for`, `model_query_find_neighbors` |
+| Validation | `model_verify_file`, `model_verify_all` |
+| Deterministic model writes | `model_write_help`, `model_create_entity`, `model_create_connection`, `model_create_diagram` |
+
+Legacy/alias names in skills (for example `list_artifacts`, `search_artifacts`, `read_artifact`, `write_artifact`, `validate_diagram`) are compatibility hints, not hard runtime contracts.
+
+### 6.0a Search-Space Guardrails (tools)
+
+Tool exposure is intentionally grouped and bounded to keep per-agent tool search-space small:
+
+- Tool registration is role-scoped (no global all-tools surface).
+- Universal tools provide the minimum common capability set; specialized tools are added only for roles that need them.
+- Per-agent exposed tool budget target: <=30 callable tools.
+- Preferred operating range: 12-26 tools per role (current architecture roles stay within this range).
+
+When a new capability is needed, add it to an existing tool family where possible before creating a new top-level tool. If the budget would be exceeded, split role responsibilities or consolidate overlapping tools.
 
 ### 6.1 Universal Tools (all agents)
 
@@ -349,7 +404,7 @@ Option A is implemented first. Option B is introduced only if sequential through
 |---|---|
 | Layer 1 (Role Identity) | 100–150 |
 | Layer 2 (Behavioral Stance) | 200–250 |
-| Layer 3 (Active Skill Instructions) | 400–700 |
+| Layer 3 (Active Skill Instructions) | Complexity class governed: simple <=600, standard <=1200, complex <=2000 |
 | Artifact context (summary mode) | 200–400 per artifact, max 3 artifacts |
 | Artifact context (full mode) | Up to 2,000 per artifact, max 1 artifact |
 | Conversation history | Rolling window; prune to last 8,000 tokens |

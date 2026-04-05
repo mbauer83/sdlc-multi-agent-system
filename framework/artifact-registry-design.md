@@ -595,6 +595,11 @@ One `ModelRegistry` instance per `EngagementSession`, initialised with **all** r
 
 **Engagement extensions of enterprise entities** are modelled as separate engagement entities connected to the enterprise entity via ArchiMate connection files (e.g., `archimate-specialization`, `archimate-realization` in `connections/archimate/`). The enterprise entity is never modified.
 
+**Cross-scope reference rule:**
+- Enterprise-scope artifacts may reference **only** enterprise-scope artifact-ids.
+- Engagement-scope artifacts may reference artifact-ids in the engagement scope and the enterprise scope.
+- A unified registry must not contain duplicate artifact-ids across its mounted roots; duplicates are a hard error.
+
 **ID spaces and promotion** (engagement → enterprise): Engagement-scope IDs (`CAP-001`, `APP-003`, etc.) are locally unique within the engagement only. Multiple concurrent engagements may independently create entities with the same ID; no cross-engagement reservation is feasible or required. Enterprise-scope IDs are globally unique, assigned from an enterprise-wide counter maintained in `enterprise-repository/governance-log/id-counters.yaml`.
 
 On promotion, the Architecture Board assigns a new enterprise-scope ID (next available for the entity's prefix from `id-counters.yaml`). The `promote_entity` tool then:
@@ -718,10 +723,21 @@ Entity instances, connections, and their `§display` specs may freely exist with
 
 | Tool | Contract |
 |---|---|
+| `model_write_help()` | Returns canonical entity/connection type catalogs and mapping completeness checks. Call before model creation when type certainty is low. |
+| `model_create_entity(...)` | Deterministically creates/updates a model-entity file, applies frontmatter/section conventions, validates with verifier, and supports `dry_run`. |
+| `model_create_connection(...)` | Deterministically creates/updates a connection file with artifact-id derived from source/target, validates references and structure, supports `dry_run`. |
+| `model_create_diagram(...)` | Deterministically creates/updates a diagram `.puml` with managed frontmatter and verification, supports inference options and `dry_run`. |
+| `model_query_list_artifacts(...)` | Metadata filter/query over indexed artifacts without loading full bodies. |
+| `model_query_search_artifacts(...)` | Ranked search over indexed content with optional metadata filters. |
+| `model_query_read_artifact(...)` | Reads one artifact by id in `summary` or `full` mode. |
+| `model_verify_file(path, ...)` | Verifies one entity/connection/diagram file; optional registry-aware checks. |
+| `model_verify_all(...)` | Batch verification for repo model files and diagrams with summary or full output. |
 | `write_artifact(path, content)` | Validates frontmatter (type, required fields, prefix match); validates `source`/`target` reference resolution for connections; validates section structure (`§content` present; `§display` present iff model-entity or model-connection; language subsection YAMLs valid per §3.6); writes file; updates ModelRegistry; emits `artifact.drafted` or `artifact.updated` |
 | `read_artifact(id_or_path, mode)` | Resolves id → path via ModelRegistry; reads at specified mode |
 | `list_artifacts(directory, **filter)` | Queries ModelRegistry; returns metadata list; never loads file bodies |
 | `list_connections(source=None, target=None, artifact_type=None)` | Convenience wrapper over `list_artifacts` scoped to `connections/`; filters by source id, target id, or connection type |
+
+`write_artifact`/`read_artifact`/`list_artifacts` entries remain valid as logical interface aliases in agent/skill documentation; concrete runtime binding is code-owned.
 
 Full specifications in `framework/agent-runtime-spec.md §6`.
 

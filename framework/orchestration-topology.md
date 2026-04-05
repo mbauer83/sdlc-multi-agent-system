@@ -53,6 +53,16 @@ Option B requires the LangGraph `Send` API and is introduced only when sequentia
 
 Any agent node can emit an `alg.raised` EventStore event. The LangGraph routing function at each node exit checks for open algedonics and routes to `algedonic_handler_node` before normal phase progression. This implements the algedonic bypass without polling.
 
+### 2.4 Workflow Control Ownership Boundary
+
+Executable workflow control is owned by the orchestration harness (LangGraph nodes, routing functions, PM tool policies), not by skill prose.
+
+- Skills define intent and output contracts (what to produce, required checks, quality bars).
+- Orchestration code defines execution control (when to run, precondition enforcement, phase/state transitions, retries, suspension/resume).
+- `invoke-when` and `trigger-conditions` in skill frontmatter are documentation hints; they do not replace runtime state-machine enforcement.
+
+This separation keeps skills reusable across entry points and future workflow profiles while preserving deterministic governance.
+
 ---
 
 ## 3. `SDLCGraphState` LangGraph TypedDict

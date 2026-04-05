@@ -97,6 +97,28 @@ last-updated: <YYYY-MM-DD>
 | `source` / `target` | Connection files only; all referenced ids must exist in ModelRegistry |
 | `last-updated` | ISO 8601 date (`YYYY-MM-DD`) |
 
+### 2.4 Repository Scope Rules (Enterprise vs Engagement)
+
+This framework operates with two architecture repository scopes:
+
+- **Engagement scope** (per-project/per-engagement work-repositories)
+- **Enterprise scope** (`enterprise-repository/`, read-only to engagement agents)
+
+Rules:
+
+1. **Reference scope**
+  - **Enterprise-scope** entity/connection/diagram artifacts may reference **only enterprise-scope** artifact-ids.
+  - **Engagement-scope** artifacts may reference artifact-ids in **their own engagement scope** and in the **enterprise scope**.
+  - Engagement artifacts must not reference artifacts from *other engagements* (those are not part of the session’s unified registry).
+
+2. **`engagement` frontmatter field in enterprise scope**
+  - On promotion (engagement → enterprise), the Architecture Board’s `promote_entity` / `promote_connection` tools strip the `engagement` field.
+  - The unified ModelRegistry derives `engagement="enterprise"` for enterprise-scope artifacts at index time (path-derived metadata), enabling discovery filters like `list_artifacts(engagement="enterprise")`.
+  - Engagement-scope artifacts must still include `engagement: <engagement-id>` as defined in §2.1–§2.2.
+
+3. **Artifact-id uniqueness within a unified registry**
+  Within a single EngagementSession’s unified registry (the mounted set of roots for that engagement), **the same `artifact-id` must not exist in more than one mounted repository root**. If duplicates exist, indexing/verification must fail loudly.
+
 ---
 
 ## 3. §content Section

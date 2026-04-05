@@ -1,0 +1,27 @@
+{
+  "mcpServers": {
+    "sdlc-registry": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "run",
+        "sdlc-mcp-registry"
+      ],
+      "env": {
+        "SDLC_MCP_AGENTS_ROOT": "agents",
+        "SDLC_MCP_TRANSPORT": "stdio"
+      }
+    },
+    "sdlc-model": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "run",
+        "sdlc-mcp-model"
+      ],
+      "env": {
+        "SDLC_MCP_TRANSPORT": "stdio"
+      }
+    }
+  }
+}

@@ -27,6 +27,13 @@ version: 1.0.0
 
 ---
 
+## Runtime Tooling Hint
+
+This skill expresses tool-use intent; concrete tool signatures are runtime-bound by orchestration code.
+
+- `invoke-when` and `trigger-conditions` are intent-level hints; executable phase/state gating is enforced by orchestration code.
+- Keep procedure and outputs strict; if invoked in an unexpected state, fail via pre-condition checks and route through CQ/algedonic paths.
+
 ## Inputs Required
 
 - Engagement Profile (`engagements/<id>/engagement-profile.md`) — entry point, scope, constraints

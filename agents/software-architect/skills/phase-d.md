@@ -27,6 +27,16 @@ version: 1.0.0
 
 ---
 
+## Runtime Tooling Hint
+
+Tool references in this skill are intent guidance; runtime APIs are bound in code.
+
+- Discovery/filter/search/query: use `model_query_*` tools.
+- Validation: use `model_verify_file` and `model_verify_all`.
+- Deterministic entity/connection/diagram writing: use `model_create_entity`, `model_create_connection`, `model_create_diagram` with `dry_run` before writes.
+- Frontmatter conditions remain intent-level and reusable; executable phase/dependency checks are orchestration responsibilities.
+- Keep output contract strict; when runtime state conflicts with assumptions, stop and escalate via CQ/algedonic handling rather than soft-continuing.
+
 ## Inputs Required
 
 | Input | Source | Minimum State | Notes |

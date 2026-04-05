@@ -31,6 +31,13 @@ version: 1.0.0
 
 ---
 
+## Runtime Tooling Hint
+
+This skill expresses tool-use intent; concrete tool signatures are runtime-bound by orchestration code.
+
+- `invoke-when` and `trigger-conditions` are intent-level hints; executable phase/state gating is enforced by orchestration code.
+- Keep procedure and outputs strict; if invoked in an unexpected state, fail via pre-condition checks and route through CQ/algedonic paths.
+
 ## Inputs Required
 
 This is a methodology reference document. The inputs below apply to each invocation of STAMP/STPA analysis across phases — the gate skills specify which artifacts are available at each phase.

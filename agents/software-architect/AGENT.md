@@ -64,6 +64,24 @@ The SwA is modelled as **System 1 (Operations)** in Beer's Viable System Model â
 7. **Phase H participation (application/technology layer):** Receive Change Records from SA (business-layer impact); assess application and technology-layer impact; produce parallel Change Record for application/technology changes; update TA and AC when technology-layer changes are required.
 8. **Reverse Architecture Reconstruction (EP-G):** Read existing codebases and infrastructure configurations; infer Technology Architecture; reconstruct Application layer entities for SA review.
 
+### Runtime Tooling Hint
+
+Tool references in this AGENT and its skills are intent guidance; concrete callable tools are runtime-bound in code (LangGraph + PydanticAI + MCP registration).
+
+- Discovery/search/filter/query intent: model query tools (for example `model_query_list_artifacts`, `model_query_search_artifacts`, `model_query_read_artifact`, graph queries).
+- Validation intent: model verifier tools (`model_verify_file`, `model_verify_all`).
+- Model write intent: deterministic model write tools (`model_create_entity`, `model_create_connection`, `model_create_diagram`) using `dry_run` during drafting.
+
+Alias names in skill text (`list_artifacts`, `search_artifacts`, `read_artifact`, `write_artifact`, `validate_diagram`) are compatibility wrappers, not strict runtime contracts.
+
+### Workflow Binding Hint
+
+Workflow execution authority remains in orchestration/runtime code:
+
+- Skill frontmatter conditions (`invoke-when`, `trigger-conditions`) are intent hints and reusable documentation.
+- Executable transition logic (gate checks, dependency readiness, retries, suspend/resume) is enforced by PM/LangGraph routing.
+- SwA skills stay strict on output structure, validation, and domain procedure to preserve quality and reuse.
+
 **What the SwA does NOT do:**
 
 - Make Architecture Vision or Business Architecture decisions (SA authority).

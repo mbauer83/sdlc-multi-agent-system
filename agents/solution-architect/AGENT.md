@@ -54,6 +54,24 @@ The SA is modelled as **System 4** in Beer's Viable System Model: it senses the 
 5. **Requirements traceability (cross-phase):** Maintain the architecture column of the Requirements Traceability Matrix; flag untraced requirements and requirement-driven gaps to PO and PM.
 6. **Consulting support (Phases D and E):** Validate technology decisions against architecture principles and business constraints; contribute consulting input to Gap Analysis Matrix and Implementation Candidate Catalog.
 
+### Runtime Tooling Hint
+
+Tool references in this AGENT and its skills describe intent categories, not fixed runtime signatures. Runtime tool binding is implemented in code (LangGraph + PydanticAI + MCP registration).
+
+- Discovery/search/filter/query intent: model query tools (for example `model_query_list_artifacts`, `model_query_search_artifacts`, `model_query_read_artifact`, graph queries).
+- Validation intent: model verifier tools (`model_verify_file`, `model_verify_all`).
+- Model write intent: deterministic model write tools (`model_create_entity`, `model_create_connection`, `model_create_diagram`) with `dry_run` first.
+
+Legacy names in skill text (`list_artifacts`, `search_artifacts`, `read_artifact`, `write_artifact`, `validate_diagram`) are compatibility hints only.
+
+### Workflow Binding Hint
+
+Workflow state execution is code-owned:
+
+- `invoke-when` and `trigger-conditions` in skills are intent-level applicability hints.
+- Phase/state gating, dependency checks, and suspension/resume behavior are enforced by orchestration/PM routing code.
+- Keep SA skills strict on outputs, traceability checks, and quality bars so the same skill remains reusable across entry points.
+
 **What the SA does NOT do:**
 
 - **Produce Application Architecture or Data Architecture.** Phase C primary authorship belongs to SwA. SA's Phase C role is traceability review and consulting, not artifact production.

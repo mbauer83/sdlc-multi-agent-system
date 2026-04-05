@@ -9,6 +9,8 @@ governs: All diagram production across all agent roles
 
 Specifies the production, rendering, and maintenance of PlantUML (PUML) diagrams. Diagrams are **views over the model**: they select and compose entities and connections from the architecture/technology repositories and render them according to the `§display` sections in those files. No separate element catalog exists — the model IS the catalog.
 
+**Tooling boundary:** This document governs diagram behavior and workflow. Concrete callable tool signatures are runtime-bound by code (LangGraph + PydanticAI registration). For model MCP workflows, prefer: `model_query_*` for discovery/search/filter/query, `model_verify_*` for validation, and `model_create_diagram` (plus `model_create_entity` / `model_create_connection` when the model must be extended). Legacy names in skills are intent-level aliases.
+
 ---
 
 ## 0. Diagram Scoping and Viewpoint Composition
@@ -424,7 +426,7 @@ BFN_003 ..[#B8860B].>> BSV_003 : <<realization>>
 
 ### §7.archimate-business-operational — Business Architecture Operational Viewpoint
 
-Shows how roles/collaborations execute processes to deliver services, with business events as structural glue. Functions (BFN) are typically omitted from a pure operational view, but may be included as light grouping context when the diagram is combining both viewpoints. This view answers "who does what to deliver which service and what triggers each step."
+Shows how roles/collaborations execute processes to deliver services, with business events as structural glue. The operational viewpoint must make the **full trigger-and-flow cycle** visible: events that start processes, processes that raise events, direct process-to-process dispatch, and objects produced or consumed. This view answers: "what triggers this process, what does it do, what does it raise when done, and what does the next process receive?"
 
 ```plantuml
 @startuml
@@ -439,7 +441,7 @@ rectangle "Participants" <<BusinessGrouping>> as GRP_ACTORS {
   DECL_BCO_001
 }
 
-' --- Business Events (triggers between processes) ---
+' --- Business Events (triggers and outcomes) ---
 rectangle "Business Events" <<BusinessGrouping>> as GRP_EVENTS {
   DECL_BEV_001
   DECL_BEV_002
@@ -458,6 +460,12 @@ rectangle "Interactions" <<BusinessGrouping>> as GRP_IA {
   DECL_BIA_001
 }
 
+' --- Business Objects (durable artifacts accessed/produced) ---
+rectangle "Key Objects" <<BusinessGrouping>> as GRP_OBJ {
+  DECL_BOB_001
+  DECL_BOB_002
+}
+
 ' --- Business Services (delivered outputs) ---
 rectangle "Business Services" <<BusinessGrouping>> as GRP_SVC {
   DECL_BSV_001
@@ -470,8 +478,15 @@ ACT_002 -[#B8860B]-> BPR_001 : <<assignment>>
 ACT_003 -[#B8860B]-> BPR_002 : <<assignment>>
 BCO_001 -[#B8860B]-> BIA_001 : <<assignment>>
 
-' --- Triggering (event → process) ---
-BEV_001 -[#B8860B]-> BPR_002 : <<triggering>>
+' --- Triggering IN: event → process (event initiates process) ---
+BEV_001 -[#B8860B]-> BPR_001 : <<triggering>>
+
+' --- Triggering OUT: process → event (process raises event on completion/outcome) ---
+BPR_001 -[#B8860B]-> BPR_002 : <<triggering>>
+BPR_002 -[#B8860B]-> BEV_002 : <<triggering>>
+BPR_002 -[#B8860B]-> BEV_003 : <<triggering>>
+
+' --- Triggering LOOP: event re-enters a process ---
 BEV_002 -[#B8860B]-> BPR_001 : <<triggering>>
 
 ' --- Realization (process/interaction → service) ---
@@ -479,12 +494,18 @@ BPR_001 ..[#B8860B].>> BSV_003 : <<realization>>
 BPR_002 ..[#B8860B].>> BSV_001 : <<realization>>
 BIA_001 ..[#B8860B].>> BSV_002 : <<realization>>
 
+' --- Access (process → object) ---
+BPR_001 -[#808080]-> BOB_002 : <<access (write)>>
+BPR_002 -[#808080]-> BOB_001 : <<access (write)>>
+
 @enduml
 ```
 
 **Rules:**
+- **Triggering is bidirectional in the operational view.** Every process that RECEIVES a triggering event must show `BEV → BPR`. Every process that RAISES an event on completion or outcome must show `BPR → BEV`. Direct process-to-process dispatch (one process unconditionally starts another) uses `BPR → BPR`. Omitting any direction creates a diagram that shows inputs without outputs — the reader cannot trace the flow.
+- **Every process must have at least one triggering-IN and one triggering-OUT (or a realization as its terminal output).** A process with no triggering-OUT and no realization connection is a dangling dead-end in the flow — a model gap.
+- BOBs (business objects) produced or consumed by processes in this cluster must appear in the diagram with access connection lines (gray). BOBs are structural glue that make the flow auditable.
 - Functions (BFN) are typically omitted from a pure operational viewpoint; include them only when the diagram intentionally combines structural and operational aspects.
-- Business events (BEV) are shown as triggering connections into the processes they initiate.
 - Where multiple roles collaborate in a structured sequence, use BCO (BusinessCollaboration) + BIA (BusinessInteraction) per §11.5.
 - Value stream stage context may be shown as a note or grouping label annotation to orient the reader without adding VS entities as elements.
 - Multiple operational diagrams are normal and expected — scope each to one process cluster, one VS stage, or one cross-role flow. A single monolithic operational diagram is almost always too large to be useful.
@@ -1273,6 +1294,71 @@ The mandatory modeling progression for any sprint that produces or revises busin
 
 Skipping ahead (e.g., defining roles before services, or defining processes before identifying which services they realize) produces models that are internally coherent but externally irrelevant.
 
+---
+
+### 11.9.1a Process Structure: Inner Decomposition and Outer Coordination
+
+Behavior at the business layer is structured at **two distinct levels**. Conflating them produces diagrams that are either incomprehensibly flat or artificially fragmented.
+
+#### Inner decomposition (within a process or interaction)
+
+A top-level `BPR-NNN` or `BIA-NNN` is composed of **ordered stages** (sub-processes or sub-interactions). Stages are behavioral steps: each has a clear start condition, does one thing, and passes its result to the next stage. Stages within a process are connected by:
+
+- **`flow`**: information or material passes from one stage to the next. Use when the output of stage A is a direct input to stage B — the progression is data-driven.
+- **`triggering`**: stage A causally starts stage B. Use when B would not start without A completing, regardless of what data passes.
+
+In PlantUML, nest sub-stage elements inside the parent process `rectangle { }` block:
+
+```plantuml
+rectangle "Sprint Planning" <<BusinessProcess>> as BPR_001 {
+  rectangle "Evaluate Phase State" <<BusinessProcess>> as BPR_001_A
+  rectangle "Select Invocations" <<BusinessProcess>> as BPR_001_B
+  rectangle "Dispatch Sprint" <<BusinessProcess>> as BPR_001_C
+
+  BPR_001_A -[#B8860B]-> BPR_001_B : <<flow>>
+  BPR_001_B -[#B8860B]-> BPR_001_C : <<flow>>
+}
+```
+
+**When to show inner stages in the operational ArchiMate diagram vs. Activity/BPMN diagram:**
+- ArchiMate operational diagram: show the key stages of a process when they have distinct roles, objects, or outcomes visible at the business level (typically 2–4 stages per process).
+- Activity/BPMN diagram: show all branching, conditions, and fine-grained step-level logic. This is the complete internal specification.
+- If a process is simple enough to summarize in one box, do not decompose it in the ArchiMate diagram. Decompose in Activity/BPMN only.
+
+#### Outer coordination (between top-level processes)
+
+Top-level processes coordinate through one of two mechanisms:
+
+**Direct triggering (`BPR-A → BPR-B` or `BPR-A → BIA-B`):**
+One process synchronously starts another within the same operational boundary. No event entity is created. Use when:
+- The coupling is tight and unconditional: B always starts immediately when A completes.
+- Both processes are in the same functional cluster (same `BFN-NNN`) or the same sprint cycle.
+- The trigger is a control dependency, not an architectural fact worth making externally visible.
+
+**Event-mediated triggering (`BPR-A → BEV-N → BPR-B`):**
+Process A raises a business event; process B receives it. Use when:
+- The trigger crosses a functional boundary (different `BFN-NNN`) or an operational cluster boundary.
+- The signal is a **significant business fact** worth making architecturally visible — e.g., "Gate Passed", "Sprint Closed", "Engagement Completed". Making these facts explicit helps stakeholders understand what the system produces, not just how it flows.
+- Multiple processes could react to the same event (fan-out).
+- The trigger is asynchronous or conditional on EventStore state observed later.
+
+**Decision rule (apply in order):**
+
+| Condition | Use |
+|---|---|
+| B always starts immediately when A completes, same cluster | Direct `BPR-A → BPR-B` triggering |
+| A produces a named business fact (a gate outcome, a sprint boundary, an escalation) | BEV entity + `BPR-A → BEV-N` + `BEV-N → BPR-B` |
+| Signal crosses a functional boundary (different BFN) | BEV entity as boundary marker |
+| Multiple processes may react to the same outcome | BEV entity (fan-out) |
+
+**Connection file locations:**
+- Inner flow: `connections/archimate/flow/<BPR-A>---<BPR-B>.md`
+- Outer direct triggering: `connections/archimate/triggering/<BPR-A>---<BPR-B>.md`
+- Process raises event: `connections/archimate/triggering/<BPR-A>---<BEV-N>.md`
+- Event initiates process: `connections/archimate/triggering/<BEV-N>---<BPR-B>.md`
+
+**Both directions of every process must be visible in the operational diagram.** A process without a triggering-IN (or the engagement start event) is unreachable. A process without a triggering-OUT and without a realization as its terminal output is a dead end — the reader cannot trace what happens after it completes.
+
 ### 11.9.2 Value Stream Stage Requirements
 
 Value stream entities (`VS-NNN`) must have named stages in their `§content` section. Stages are **not** ADM phases — they describe what value the organization delivers to stakeholders, not how the architecture process is organized.
@@ -1289,9 +1375,11 @@ Minimum 3–7 stages per value stream. A VS entity with no stages documented is 
 
 The set of business objects (`BOB-NNN`) and business interfaces (`BIF-NNN`) for an engagement must form a **globally coherent concept map**: every object is traceable to at least one VS stage and is read or written by at least one BPR, BIA, or BSV. Business events (`BEV-NNN`) that trigger process transitions are identified at this step, not later.
 
-When more than 6 BOB entities exist, a dedicated business concept map diagram is required. For fewer, the concept relationships are documented as a table in the BA narrative.
+**A dedicated concept map diagram (`b-archimate-business-concept-v1.puml`) is always required** — it makes the BOB↔DOB cross-layer mappings and the BEV→BPR→BOB trigger-to-object flow explicit in a single place. File naming: `b-archimate-business-concept-v1.puml`. The diagram must show: all BOB entities with their BPR access connections (access lines), all BEV entities with their BPR triggering connections, and a note listing BOB↔DOB cross-layer associations.
 
-BOB entities at the business layer correspond to DOB (data objects) at the application layer. These mappings must be captured as `archimate-association` connection files linking BOB and DOB entities.
+**BOBs also appear in operational viewpoint diagrams.** Each `BOB-NNN` accessed by a process in the operational cluster must be included in the corresponding operational diagram as well as in the concept map. This is not duplication — the concept map shows the full set and cross-layer mappings; operational diagrams show which objects are relevant to each process cluster. BOBs must NOT appear in structural viewpoint diagrams (structural = functions/roles/services, no objects).
+
+BOB entities at the business layer correspond to DOB (data objects) at the application layer. These mappings must be captured as `archimate-association` connection files in `connections/archimate/association/`.
 
 ### 11.9.4 Diagram Count and Scope
 

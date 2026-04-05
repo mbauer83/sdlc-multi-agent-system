@@ -34,6 +34,16 @@ version: 1.0.0
 
 ---
 
+## Runtime Tooling Hint
+
+This skill specifies tool-use intent; concrete signatures are runtime-bound by orchestration code.
+
+- Discovery/search/filter/query: use `model_query_*`.
+- Validation: use `model_verify_file` / `model_verify_all`.
+- Deterministic model build/update: use `model_create_entity`, `model_create_connection`, `model_create_diagram` and prefer `dry_run` before write.
+- Frontmatter triggers document intent; executable EP/phase sequencing and dependency control are enforced by orchestration.
+- Keep reverse-architecture outputs strict and evidence-linked; if invocation context is incomplete, route through CQ/algedonic mechanisms instead of weakening output structure.
+
 ## Inputs Required
 
 | Input | Source | Minimum State | Notes |

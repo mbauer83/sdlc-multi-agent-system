@@ -29,6 +29,16 @@ version: 1.0.0
 
 ---
 
+## Runtime Tooling Hint
+
+Tool-use statements here are intent-level guidance. Concrete tool signatures are runtime-bound.
+
+- Discovery/query/search/filter: `model_query_*` family.
+- Validation: `model_verify_file`, `model_verify_all`.
+- Deterministic creation/update of entities, connections, and diagrams: `model_create_entity`, `model_create_connection`, `model_create_diagram` (use `dry_run` first).
+- `invoke-when` and `trigger-conditions` are intent hints; runtime gating and phase-state enforcement belong to orchestration code.
+- Preserve strict output and validation procedure; out-of-profile invocations should stop at pre-condition checks and escalate via CQ/algedonic flow.
+
 ## Inputs Required
 
 | Input | Source | Minimum State | Notes |

@@ -32,6 +32,16 @@ version: 1.0.0
 
 ---
 
+## Runtime Tooling Hint
+
+This skill's tool references are intent-level; runtime signatures come from code wiring.
+
+- Discover/query/filter/search: use `model_query_*` family (or runtime aliases).
+- Validate files/repo state: use `model_verify_file` / `model_verify_all`.
+- Build model entities/connections/diagrams deterministically: use `model_create_entity`, `model_create_connection`, and `model_create_diagram` (`dry_run` first).
+- Frontmatter trigger fields are intent hints; executable EP/phase gating is orchestration-owned.
+- Preserve strict reverse-architecture outputs and evidence annotations; use CQ/algedonic flows when runtime state is insufficient.
+
 ## Inputs Required
 
 | Input | Source | Minimum State | Notes |

@@ -29,6 +29,16 @@ version: 1.0.0
 
 ---
 
+## Runtime Tooling Hint
+
+This skill expresses tool-use intent; runtime tool APIs are bound by code.
+
+- Discovery/filter/search/query: use `model_query_*` tools (or runtime aliases).
+- Validation: use `model_verify_file` and `model_verify_all`.
+- Deterministic model building: use `model_create_entity`, `model_create_connection`, and `model_create_diagram` with `dry_run` before commit writes.
+- `invoke-when` and `trigger-conditions` are intent-level hints; executable phase/state gating is enforced by orchestration code.
+- Keep procedure and outputs strict; if invoked in an unexpected state, fail via pre-condition checks and route through CQ/algedonic paths.
+
 ## Inputs Required
 
 | Input | Source | Minimum State | Notes |

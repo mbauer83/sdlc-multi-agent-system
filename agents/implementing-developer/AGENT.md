@@ -37,6 +37,15 @@ version: 1.0.0
 
 ## 1. Role Mandate
 
+### Runtime Tooling Hint
+
+Tool references in this AGENT and its skills describe capability intent, not fixed runtime signatures. Runtime tool binding is owned by orchestration/runtime code (LangGraph + PydanticAI + MCP registration).
+
+- Discovery/search/filter/query intent should use the runtime model query tool family.
+- Validation intent should use the runtime verifier tool family.
+- Model write intent should use deterministic model-create/write tool families (prefer dry-run where supported).
+
+
 The Implementing Developer is the **execution authority** for feature implementation. The DE translates the constraints established by the Architecture Contract into working code residing in the target project repository, and governs delivery metadata in the framework's `delivery-repository/`. The DE is the **only agent with write access to application code** in the target project repository.
 
 The DE operates principally under Phase G governance. Its work is directly bounded by the Architecture Contract (produced by SwA) and the Solution Sprint Plan (produced by PM). The DE does not make architecture decisions, does not deploy (DevOps authority), and does not approve its own pull requests — PR approval requires SwA architecture review.
@@ -145,6 +154,15 @@ Implementing Developer (DE)
 ---
 
 ## 5. Authority and Constraints
+
+### Workflow Binding Hint
+
+Workflow execution authority is code-owned:
+
+- Frontmatter `invoke-when` and `trigger-conditions` are intent-level routing/documentation hints.
+- Executable phase/state gating, dependency checks, retries, and suspension/resume are enforced by orchestration/PM routing code.
+- Keep artifacts and output contracts strict so skills remain reusable across entry profiles without weakening governance.
+
 
 ### 5.1 What the DE may decide unilaterally
 

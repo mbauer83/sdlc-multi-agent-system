@@ -26,6 +26,16 @@ version: 1.0.0
 
 ---
 
+## Runtime Tooling Hint
+
+This skill describes tool-use intent. Runtime binding is code-owned.
+
+- Discovery/search/filter/query: use model query tools (`model_query_*`) or compatible aliases.
+- Validation: use model verifier tools (`model_verify_file`, `model_verify_all`).
+- Building entities/connections/diagrams: use deterministic model write tools (`model_create_entity`, `model_create_connection`, `model_create_diagram`) with `dry_run` before writes.
+- `invoke-when` and `trigger-conditions` remain intent-level guidance; runtime gate/state enforcement is owned by orchestration and PM routing.
+- Keep BA output structure strict and schema-aligned even when invoked from different entry profiles.
+
 ## Inputs Required
 
 | Input | Source | Minimum State | Notes |

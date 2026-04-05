@@ -15,6 +15,17 @@ The principle is: **scan first, infer second, assume third, ask last.**
 
 Every agent skill that begins new phase work or enters at a non-EP-0 entry point must execute the Discovery Scan before raising CQs. A CQ is only valid if it asks for information that cannot be obtained by reading available sources. A CQ raised without a prior discovery scan is a governance violation (ALG-018 risk).
 
+### Tool Name Compatibility (runtime-bound)
+
+This protocol defines discovery/query behavior. Concrete tool names are bound by code (LangGraph + PydanticAI) and may expose aliases.
+
+- Canonical model MCP discovery/query tools: `model_query_stats`, `model_query_list_artifacts`, `model_query_search_artifacts`, `model_query_read_artifact`, `model_query_find_connections_for`, `model_query_find_neighbors`.
+- Canonical model MCP validation tools: `model_verify_file`, `model_verify_all`.
+- Canonical model MCP deterministic write tools for model artifacts: `model_write_help`, `model_create_entity`, `model_create_connection`, `model_create_diagram`.
+- Skill/agent docs may still reference logical aliases (`list_artifacts`, `search_artifacts`, `read_artifact`, `write_artifact`, `validate_diagram`) as intent hints.
+
+**Execution boundary:** skill `invoke-when` / `trigger-conditions` describe intent-level applicability. Runtime enforcement of when discovery is executed in a given phase/state is owned by orchestration/routing code.
+
 ---
 
 ## 2. Discovery Scan Procedure
