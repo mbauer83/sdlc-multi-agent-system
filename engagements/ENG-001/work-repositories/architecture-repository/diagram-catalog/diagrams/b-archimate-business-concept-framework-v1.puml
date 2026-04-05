@@ -1,0 +1,240 @@
+' ---
+' artifact-id: b-archimate-business-concept-framework-v1
+' artifact-type: diagram
+' diagram-type: archimate-business
+' name: "Business Architecture - Concept Map: ADM, Sprints, Diagram Taxonomy, Skill Semantics"
+' version: 0.1.0
+' status: draft
+' phase-produced: B
+' owner-agent: SA
+' engagement: ENG-001
+' purpose: >
+'   Concept map for foundational SDLC business concepts: TOGAF ADM phases,
+'   sprint kinds, diagram kinds, conceptual input/output objects,
+'   skill-definition and personality/posture concepts, plus core mappings
+'   to operational processes.
+' entity-ids-used:
+' - BOB-101
+' - BOB-102
+' - BOB-103
+' - BOB-104
+' - BOB-105
+' - BOB-106
+' - BOB-107
+' - BOB-108
+' - BOB-109
+' - BOB-110
+' - BOB-111
+' - BOB-112
+' - BOB-120
+' - BOB-121
+' - BOB-122
+' - BOB-123
+' - BOB-130
+' - BOB-131
+' - BOB-132
+' - BOB-133
+' - BOB-134
+' - BOB-135
+' - BOB-140
+' - BOB-141
+' - BOB-142
+' - BOB-143
+' - BOB-144
+' - BOB-145
+' - BOB-150
+' - BOB-151
+' - BOB-152
+' - BOB-153
+' - BOB-154
+' - BOB-155
+' - BPR-001
+' - BPR-002
+' - BPR-004
+' - BPR-008
+' connection-ids-used:
+' - BOB-101---BOB-102
+' - BOB-101---BOB-103
+' - BOB-101---BOB-104
+' - BOB-101---BOB-105
+' - BOB-101---BOB-106
+' - BOB-101---BOB-107
+' - BOB-101---BOB-108
+' - BOB-101---BOB-109
+' - BOB-101---BOB-110
+' - BOB-101---BOB-111
+' - BOB-101---BOB-112
+' - BOB-120---BOB-121
+' - BOB-120---BOB-122
+' - BOB-120---BOB-123
+' - BOB-121---BOB-103
+' - BOB-121---BOB-104
+' - BOB-121---BOB-105
+' - BOB-121---BOB-106
+' - BOB-121---BOB-107
+' - BOB-121---BOB-108
+' - BOB-121---BOB-109
+' - BOB-122---BOB-145
+' - BOB-123---BOB-110
+' - BOB-130---BOB-131
+' - BOB-130---BOB-132
+' - BOB-130---BOB-133
+' - BOB-130---BOB-134
+' - BOB-130---BOB-135
+' - BOB-140---BOB-142
+' - BOB-141---BOB-143
+' - BOB-142---BOB-145
+' - BOB-143---BOB-144
+' - BOB-144---BOB-141
+' - BOB-145---BOB-140
+' - BOB-150---BOB-151
+' - BOB-150---BOB-154
+' - BOB-150---BOB-155
+' - BOB-151---BOB-153
+' - BOB-152---BOB-151
+' - BOB-152---BOB-153
+' - BPR-001---BOB-145
+' - BPR-002---BOB-142
+' - BPR-002---BOB-143
+' - BPR-002---BOB-150
+' - BPR-004---BOB-144
+' - BPR-008---BOB-130
+' - BPR-008---BOB-131
+' - BPR-008---BOB-132
+' - BPR-008---BOB-133
+' - BPR-008---BOB-134
+' - BPR-008---BOB-135
+' ---
+@startuml b-archimate-business-concept-framework-v1
+!include ../_macros.puml
+!include ../_archimate-stereotypes.puml
+
+skinparam groupInheritance 1
+skinparam nodesep 35
+skinparam ranksep 50
+skinparam padding 8
+
+rectangle "TOGAF ADM Concept" <<BusinessGrouping>> as GRP_ADM {
+  DECL_BOB_101
+  DECL_BOB_102
+  DECL_BOB_103
+  DECL_BOB_104
+  DECL_BOB_105
+  DECL_BOB_106
+  DECL_BOB_107
+  DECL_BOB_108
+  DECL_BOB_109
+  DECL_BOB_110
+  DECL_BOB_111
+  DECL_BOB_112
+}
+
+rectangle "Sprint Concept Taxonomy" <<BusinessGrouping>> as GRP_SPRINT {
+  DECL_BOB_120
+  DECL_BOB_121
+  DECL_BOB_122
+  DECL_BOB_123
+}
+
+rectangle "Diagram-Type Taxonomy" <<BusinessGrouping>> as GRP_DIAG {
+  DECL_BOB_130
+  DECL_BOB_131
+  DECL_BOB_132
+  DECL_BOB_133
+  DECL_BOB_134
+  DECL_BOB_135
+}
+
+rectangle "Conceptual Inputs/Outputs" <<BusinessGrouping>> as GRP_IO {
+  DECL_BOB_140
+  DECL_BOB_141
+  DECL_BOB_142
+  DECL_BOB_143
+  DECL_BOB_144
+  DECL_BOB_145
+}
+
+rectangle "Skill and Behavior Concepts" <<BusinessGrouping>> as GRP_SKILL {
+  DECL_BOB_150
+  DECL_BOB_151
+  DECL_BOB_152
+  DECL_BOB_153
+  DECL_BOB_154
+  DECL_BOB_155
+}
+
+rectangle "Operational Process Anchors" <<BusinessGrouping>> as GRP_PROC {
+  DECL_BPR_001
+  DECL_BPR_002
+  DECL_BPR_004
+  DECL_BPR_008
+}
+
+BOB_101 *-[#B8860B]-> BOB_102 : <<composition>>
+BOB_101 *-[#B8860B]-> BOB_103 : <<composition>>
+BOB_101 *-[#B8860B]-> BOB_104 : <<composition>>
+BOB_101 *-[#B8860B]-> BOB_105 : <<composition>>
+BOB_101 *-[#B8860B]-> BOB_106 : <<composition>>
+BOB_101 *-[#B8860B]-> BOB_107 : <<composition>>
+BOB_101 *-[#B8860B]-> BOB_108 : <<composition>>
+BOB_101 *-[#B8860B]-> BOB_109 : <<composition>>
+BOB_101 *-[#B8860B]-> BOB_110 : <<composition>>
+BOB_101 *-[#B8860B]-> BOB_111 : <<composition>>
+BOB_101 *-[#B8860B]-> BOB_112 : <<composition>>
+
+BOB_120 *-[#B8860B]-> BOB_121 : <<composition>>
+BOB_120 *-[#B8860B]-> BOB_122 : <<composition>>
+BOB_120 *-[#B8860B]-> BOB_123 : <<composition>>
+
+BOB_130 *-[#B8860B]-> BOB_131 : <<composition>>
+BOB_130 *-[#B8860B]-> BOB_132 : <<composition>>
+BOB_130 *-[#B8860B]-> BOB_133 : <<composition>>
+BOB_130 *-[#B8860B]-> BOB_134 : <<composition>>
+BOB_130 *-[#B8860B]-> BOB_135 : <<composition>>
+
+BOB_140 *-[#B8860B]-> BOB_142 : <<composition>>
+BOB_141 *-[#B8860B]-> BOB_143 : <<composition>>
+BOB_150 *-[#B8860B]-> BOB_151 : <<composition>>
+BOB_150 *-[#B8860B]-> BOB_154 : <<composition>>
+BOB_150 *-[#B8860B]-> BOB_155 : <<composition>>
+
+BOB_152 -[#808080]-> BOB_151 : <<association>>
+BOB_152 -[#808080]-> BOB_153 : <<association>>
+BOB_151 -[#808080]-> BOB_153 : <<association>>
+
+BOB_145 -[#808080]-> BOB_140 : <<association>>
+BOB_144 -[#808080]-> BOB_141 : <<association>>
+BOB_142 -[#808080]-> BOB_145 : <<association>>
+BOB_143 -[#808080]-> BOB_144 : <<association>>
+
+BOB_121 -[#808080]-> BOB_103 : <<association>>
+BOB_121 -[#808080]-> BOB_104 : <<association>>
+BOB_121 -[#808080]-> BOB_105 : <<association>>
+BOB_121 -[#808080]-> BOB_106 : <<association>>
+BOB_121 -[#808080]-> BOB_107 : <<association>>
+BOB_121 -[#808080]-> BOB_108 : <<association>>
+BOB_121 -[#808080]-> BOB_109 : <<association>>
+BOB_122 -[#808080]-> BOB_145 : <<association>>
+BOB_123 -[#808080]-> BOB_110 : <<association>>
+
+BPR_001 -[#808080]-> BOB_145 : <<access>>
+BPR_002 -[#808080]-> BOB_150 : <<access>>
+BPR_002 -[#808080]-> BOB_142 : <<access>>
+BPR_002 -[#808080]-> BOB_143 : <<access>>
+BPR_004 -[#808080]-> BOB_144 : <<access>>
+BPR_008 -[#808080]-> BOB_130 : <<access>>
+BPR_008 -[#808080]-> BOB_131 : <<access>>
+BPR_008 -[#808080]-> BOB_132 : <<access>>
+BPR_008 -[#808080]-> BOB_133 : <<access>>
+BPR_008 -[#808080]-> BOB_134 : <<access>>
+BPR_008 -[#808080]-> BOB_135 : <<access>>
+
+note as N1
+  Framework Concept Map:
+  ADM phase taxonomy, sprint taxonomy, diagram taxonomy,
+  conceptual input/output artifacts, and skill/personality
+  concept definitions with process-level access anchors.
+  Operational object map remains in b-archimate-business-concept-v1.
+end note
+
+@enduml

@@ -15,6 +15,7 @@ from src.tools.model_write import (
     create_connection,
     create_diagram,
     create_entity,
+    create_matrix,
     write_help,
 )
 
@@ -29,4 +30,5 @@ __all__ = [
     "create_entity",
     "create_connection",
     "create_diagram",
+    "create_matrix",
 ]

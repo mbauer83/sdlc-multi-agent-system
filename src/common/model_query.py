@@ -2,7 +2,8 @@
 ERP v2.0 Model Query — rich indexed registry with metadata filtering and text search.
 
 Provides a high-level query API over model-entities/, connections/, and
-diagram-catalog/diagrams/ within any architecture-repository root.  Designed for
+diagram-catalog/diagrams/ within any architecture-repository root (PUML and
+matrix markdown diagram artifacts).  Designed for
 two uses:
 
   1. Agent tool layer (Stage 5b) — ``list_artifacts``, ``search_artifacts``,
@@ -166,7 +167,7 @@ class ConnectionRecord:
 
 @dataclass(frozen=True)
 class DiagramRecord:
-    """Full data record for one .puml diagram file."""
+    """Full data record for one diagram file (.puml or matrix .md)."""
 
     artifact_id: str
     artifact_type: str
@@ -444,6 +445,15 @@ class ModelRepository:
             diagrams_root = mount.root / "diagram-catalog" / "diagrams"
             if diagrams_root.exists():
                 for f in sorted(diagrams_root.rglob("*.puml")):
+                    rec = _parse_diagram(f, mount)
+                    if rec is not None:
+                        if rec.artifact_id in self._diagrams:  # type: ignore[operator]
+                            other = self._diagrams[rec.artifact_id].path  # type: ignore[index]
+                            raise DuplicateArtifactIdError(
+                                f"Duplicate diagram artifact-id '{rec.artifact_id}' in {f} and {other}"
+                            )
+                        self._diagrams[rec.artifact_id] = rec  # type: ignore[index]
+                for f in sorted(diagrams_root.rglob("*.md")):
                     rec = _parse_diagram(f, mount)
                     if rec is not None:
                         if rec.artifact_id in self._diagrams:  # type: ignore[operator]
@@ -1161,7 +1171,10 @@ def _parse_diagram(path: Path, mount: RepoMount) -> DiagramRecord | None:
         content = path.read_text(encoding="utf-8")
     except OSError:
         return None
-    fm = _extract_puml_frontmatter(content)
+    if path.suffix == ".puml":
+        fm = _extract_puml_frontmatter(content)
+    else:
+        fm = _extract_yaml_block(content)
     if not fm:
         return None
 

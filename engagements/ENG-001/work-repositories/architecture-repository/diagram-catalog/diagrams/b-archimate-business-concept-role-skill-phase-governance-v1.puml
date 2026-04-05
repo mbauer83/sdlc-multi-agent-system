@@ -1,0 +1,240 @@
+' ---
+' artifact-id: b-archimate-business-concept-role-skill-phase-governance-v1
+' artifact-type: diagram
+' diagram-type: archimate-business
+' name: Business Architecture - Role Skill Phase Map (governance)
+' version: 0.1.0
+' status: draft
+' phase-produced: B
+' owner-agent: SA
+' engagement: ENG-001
+' purpose: Granular mapping of roles to specific skills and ADM phases for governance
+'   cluster.
+' entity-ids-used:
+' - ACT-002
+' - ACT-003
+' - ACT-004
+' - BOB-103
+' - BOB-104
+' - BOB-105
+' - BOB-106
+' - BOB-107
+' - BOB-108
+' - BOB-109
+' - BOB-110
+' - BOB-111
+' - BOB-215
+' - BOB-216
+' - BOB-217
+' - BOB-218
+' - BOB-219
+' - BOB-220
+' - BOB-229
+' - BOB-230
+' - BOB-231
+' - BOB-232
+' - BOB-233
+' - BOB-234
+' - BOB-235
+' - BOB-236
+' - BOB-240
+' - BOB-241
+' - BOB-242
+' - BOB-243
+' - BOB-244
+' - BOB-245
+' - BOB-246
+' - BOB-247
+' connection-ids-used:
+' - ACT-002---BOB-215
+' - ACT-002---BOB-216
+' - ACT-002---BOB-217
+' - ACT-002---BOB-218
+' - ACT-002---BOB-219
+' - ACT-002---BOB-220
+' - ACT-003---BOB-229
+' - ACT-003---BOB-230
+' - ACT-003---BOB-231
+' - ACT-003---BOB-232
+' - ACT-003---BOB-233
+' - ACT-003---BOB-234
+' - ACT-003---BOB-235
+' - ACT-003---BOB-236
+' - ACT-004---BOB-240
+' - ACT-004---BOB-241
+' - ACT-004---BOB-242
+' - ACT-004---BOB-243
+' - ACT-004---BOB-244
+' - ACT-004---BOB-245
+' - ACT-004---BOB-246
+' - ACT-004---BOB-247
+' - BOB-215---BOB-103
+' - BOB-215---BOB-104
+' - BOB-215---BOB-105
+' - BOB-215---BOB-106
+' - BOB-215---BOB-107
+' - BOB-215---BOB-108
+' - BOB-215---BOB-109
+' - BOB-215---BOB-110
+' - BOB-215---BOB-111
+' - BOB-216---BOB-103
+' - BOB-216---BOB-104
+' - BOB-217---BOB-108
+' - BOB-217---BOB-109
+' - BOB-218---BOB-110
+' - BOB-219---BOB-111
+' - BOB-220---BOB-104
+' - BOB-220---BOB-105
+' - BOB-220---BOB-106
+' - BOB-220---BOB-107
+' - BOB-220---BOB-108
+' - BOB-220---BOB-109
+' - BOB-220---BOB-110
+' - BOB-220---BOB-111
+' - BOB-229---BOB-103
+' - BOB-229---BOB-104
+' - BOB-230---BOB-105
+' - BOB-231---BOB-106
+' - BOB-232---BOB-106
+' - BOB-233---BOB-111
+' - BOB-234---BOB-104
+' - BOB-234---BOB-105
+' - BOB-234---BOB-106
+' - BOB-234---BOB-111
+' - BOB-235---BOB-105
+' - BOB-236---BOB-103
+' - BOB-236---BOB-104
+' - BOB-240---BOB-107
+' - BOB-240---BOB-108
+' - BOB-241---BOB-106
+' - BOB-242---BOB-106
+' - BOB-243---BOB-107
+' - BOB-244---BOB-108
+' - BOB-245---BOB-109
+' - BOB-246---BOB-110
+' - BOB-247---BOB-111
+' ---
+@startuml b-archimate-business-concept-role-skill-phase-governance-v1
+!include ../_macros.puml
+!include ../_archimate-stereotypes.puml
+skinparam groupInheritance 1
+skinparam nodesep 30
+skinparam ranksep 45
+skinparam padding 8
+
+rectangle "ADM Phases" <<BusinessGrouping>> as GRP_PHASE {
+  DECL_BOB_103
+  DECL_BOB_104
+  DECL_BOB_105
+  DECL_BOB_106
+  DECL_BOB_107
+  DECL_BOB_108
+  DECL_BOB_109
+  DECL_BOB_110
+  DECL_BOB_111
+}
+
+rectangle "ACT-002 Skills" <<BusinessGrouping>> as GRP_ACT_002 {
+  DECL_ACT_002
+  DECL_BOB_215
+  DECL_BOB_216
+  DECL_BOB_217
+  DECL_BOB_218
+  DECL_BOB_219
+  DECL_BOB_220
+}
+rectangle "ACT-003 Skills" <<BusinessGrouping>> as GRP_ACT_003 {
+  DECL_ACT_003
+  DECL_BOB_229
+  DECL_BOB_230
+  DECL_BOB_231
+  DECL_BOB_232
+  DECL_BOB_233
+  DECL_BOB_234
+  DECL_BOB_235
+  DECL_BOB_236
+}
+rectangle "ACT-004 Skills" <<BusinessGrouping>> as GRP_ACT_004 {
+  DECL_ACT_004
+  DECL_BOB_240
+  DECL_BOB_241
+  DECL_BOB_242
+  DECL_BOB_243
+  DECL_BOB_244
+  DECL_BOB_245
+  DECL_BOB_246
+  DECL_BOB_247
+}
+
+ACT_002 -[#808080]-> BOB_215 : <<association>>
+BOB_215 -[#B8860B]-> BOB_103 : <<association>>
+BOB_215 -[#B8860B]-> BOB_104 : <<association>>
+BOB_215 -[#B8860B]-> BOB_105 : <<association>>
+BOB_215 -[#B8860B]-> BOB_106 : <<association>>
+BOB_215 -[#B8860B]-> BOB_107 : <<association>>
+BOB_215 -[#B8860B]-> BOB_108 : <<association>>
+BOB_215 -[#B8860B]-> BOB_109 : <<association>>
+BOB_215 -[#B8860B]-> BOB_110 : <<association>>
+BOB_215 -[#B8860B]-> BOB_111 : <<association>>
+ACT_002 -[#808080]-> BOB_216 : <<association>>
+BOB_216 -[#B8860B]-> BOB_103 : <<association>>
+BOB_216 -[#B8860B]-> BOB_104 : <<association>>
+ACT_002 -[#808080]-> BOB_217 : <<association>>
+BOB_217 -[#B8860B]-> BOB_108 : <<association>>
+BOB_217 -[#B8860B]-> BOB_109 : <<association>>
+ACT_002 -[#808080]-> BOB_218 : <<association>>
+BOB_218 -[#B8860B]-> BOB_110 : <<association>>
+ACT_002 -[#808080]-> BOB_219 : <<association>>
+BOB_219 -[#B8860B]-> BOB_111 : <<association>>
+ACT_002 -[#808080]-> BOB_220 : <<association>>
+BOB_220 -[#B8860B]-> BOB_104 : <<association>>
+BOB_220 -[#B8860B]-> BOB_105 : <<association>>
+BOB_220 -[#B8860B]-> BOB_106 : <<association>>
+BOB_220 -[#B8860B]-> BOB_107 : <<association>>
+BOB_220 -[#B8860B]-> BOB_108 : <<association>>
+BOB_220 -[#B8860B]-> BOB_109 : <<association>>
+BOB_220 -[#B8860B]-> BOB_110 : <<association>>
+BOB_220 -[#B8860B]-> BOB_111 : <<association>>
+ACT_003 -[#808080]-> BOB_229 : <<association>>
+BOB_229 -[#B8860B]-> BOB_103 : <<association>>
+BOB_229 -[#B8860B]-> BOB_104 : <<association>>
+ACT_003 -[#808080]-> BOB_230 : <<association>>
+BOB_230 -[#B8860B]-> BOB_105 : <<association>>
+ACT_003 -[#808080]-> BOB_231 : <<association>>
+BOB_231 -[#B8860B]-> BOB_106 : <<association>>
+ACT_003 -[#808080]-> BOB_232 : <<association>>
+BOB_232 -[#B8860B]-> BOB_106 : <<association>>
+ACT_003 -[#808080]-> BOB_233 : <<association>>
+BOB_233 -[#B8860B]-> BOB_111 : <<association>>
+ACT_003 -[#808080]-> BOB_234 : <<association>>
+BOB_234 -[#B8860B]-> BOB_104 : <<association>>
+BOB_234 -[#B8860B]-> BOB_105 : <<association>>
+BOB_234 -[#B8860B]-> BOB_106 : <<association>>
+BOB_234 -[#B8860B]-> BOB_111 : <<association>>
+ACT_003 -[#808080]-> BOB_235 : <<association>>
+BOB_235 -[#B8860B]-> BOB_105 : <<association>>
+ACT_003 -[#808080]-> BOB_236 : <<association>>
+BOB_236 -[#B8860B]-> BOB_103 : <<association>>
+BOB_236 -[#B8860B]-> BOB_104 : <<association>>
+ACT_004 -[#808080]-> BOB_240 : <<association>>
+BOB_240 -[#B8860B]-> BOB_107 : <<association>>
+BOB_240 -[#B8860B]-> BOB_108 : <<association>>
+ACT_004 -[#808080]-> BOB_241 : <<association>>
+BOB_241 -[#B8860B]-> BOB_106 : <<association>>
+ACT_004 -[#808080]-> BOB_242 : <<association>>
+BOB_242 -[#B8860B]-> BOB_106 : <<association>>
+ACT_004 -[#808080]-> BOB_243 : <<association>>
+BOB_243 -[#B8860B]-> BOB_107 : <<association>>
+ACT_004 -[#808080]-> BOB_244 : <<association>>
+BOB_244 -[#B8860B]-> BOB_108 : <<association>>
+ACT_004 -[#808080]-> BOB_245 : <<association>>
+BOB_245 -[#B8860B]-> BOB_109 : <<association>>
+ACT_004 -[#808080]-> BOB_246 : <<association>>
+BOB_246 -[#B8860B]-> BOB_110 : <<association>>
+ACT_004 -[#808080]-> BOB_247 : <<association>>
+BOB_247 -[#B8860B]-> BOB_111 : <<association>>
+note as N1
+  Specific role -> skill-id -> phase mappings
+  generated from skill frontmatter trigger-phases.
+end note
+@enduml

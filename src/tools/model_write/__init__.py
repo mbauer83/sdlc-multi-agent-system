@@ -9,6 +9,7 @@ from .help import write_help
 from .entity import create_entity
 from .connection import create_connection
 from .diagram import create_diagram
+from .matrix import create_matrix
 
 __all__ = [
     "WriteResult",
@@ -16,4 +17,5 @@ __all__ = [
     "create_entity",
     "create_connection",
     "create_diagram",
+    "create_matrix",
 ]

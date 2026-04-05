@@ -24,6 +24,7 @@ def write_help() -> dict[str, object]:
         "notes": [
             "Entity IDs in PUML should use underscore aliases (e.g. APP_001) to be inferable.",
             "ArchiMate connection inference requires stereotypes like : <<serving>> on the connection line.",
+            "Matrix diagrams can be created with model_create_matrix (.md), with optional auto-linking of entity IDs.",
             "Writer tools refuse to write outside engagements/<id>/work-repositories/.",
         ],
     }

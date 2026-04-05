@@ -121,6 +121,406 @@
 !define DECL_BOB_004 rectangle "Gate Outcome" <<BusinessObject>> as BOB_004
 !define DECL_BOB_005 rectangle "Algedonic Signal" <<BusinessObject>> as BOB_005
 !define DECL_BOB_006 rectangle "Learning Entry" <<BusinessObject>> as BOB_006
+!define DECL_BOB_101 rectangle "TOGAF ADM Lifecycle" <<BusinessObject>> as BOB_101
+!define DECL_BOB_102 rectangle "TOGAF ADM Phase" <<BusinessObject>> as BOB_102
+!define DECL_BOB_103 rectangle "Preliminary Phase" <<BusinessObject>> as BOB_103
+!define DECL_BOB_104 rectangle "Phase A Architecture Vision" <<BusinessObject>> as BOB_104
+!define DECL_BOB_105 rectangle "Phase B Business Architecture" <<BusinessObject>> as BOB_105
+!define DECL_BOB_106 rectangle "Phase C Information Systems Architecture" <<BusinessObject>> as BOB_106
+!define DECL_BOB_107 rectangle "Phase D Technology Architecture" <<BusinessObject>> as BOB_107
+!define DECL_BOB_108 rectangle "Phase E Opportunities and Solutions" <<BusinessObject>> as BOB_108
+!define DECL_BOB_109 rectangle "Phase F Migration Planning" <<BusinessObject>> as BOB_109
+!define DECL_BOB_110 rectangle "Phase G Implementation Governance" <<BusinessObject>> as BOB_110
+!define DECL_BOB_111 rectangle "Phase H Architecture Change Management" <<BusinessObject>> as BOB_111
+!define DECL_BOB_112 rectangle "Requirements Management" <<BusinessObject>> as BOB_112
+!define DECL_BOB_120 rectangle "Sprint Type Taxonomy" <<BusinessObject>> as BOB_120
+!define DECL_BOB_121 rectangle "Architecture Sprint" <<BusinessObject>> as BOB_121
+!define DECL_BOB_122 rectangle "Business Sprint" <<BusinessObject>> as BOB_122
+!define DECL_BOB_123 rectangle "Solution Sprint" <<BusinessObject>> as BOB_123
+!define DECL_BOB_130 rectangle "Diagram Type Taxonomy" <<BusinessObject>> as BOB_130
+!define DECL_BOB_131 rectangle "ArchiMate Diagram Type" <<BusinessObject>> as BOB_131
+!define DECL_BOB_132 rectangle "Activity BPMN Diagram Type" <<BusinessObject>> as BOB_132
+!define DECL_BOB_133 rectangle "Use Case Diagram Type" <<BusinessObject>> as BOB_133
+!define DECL_BOB_134 rectangle "Sequence Diagram Type" <<BusinessObject>> as BOB_134
+!define DECL_BOB_135 rectangle "ER Class Diagram Type" <<BusinessObject>> as BOB_135
+!define DECL_BOB_140 rectangle "Conceptual Input" <<BusinessObject>> as BOB_140
+!define DECL_BOB_141 rectangle "Conceptual Output" <<BusinessObject>> as BOB_141
+!define DECL_BOB_142 rectangle "Input Artifact Set" <<BusinessObject>> as BOB_142
+!define DECL_BOB_143 rectangle "Output Artifact Set" <<BusinessObject>> as BOB_143
+!define DECL_BOB_144 rectangle "Architecture Contract Concept" <<BusinessObject>> as BOB_144
+!define DECL_BOB_145 rectangle "Requirements Register Concept" <<BusinessObject>> as BOB_145
+!define DECL_BOB_150 rectangle "Skill Definition" <<BusinessObject>> as BOB_150
+!define DECL_BOB_151 rectangle "Runtime Behavioral Stance" <<BusinessObject>> as BOB_151
+!define DECL_BOB_152 rectangle "Agent Personality Profile" <<BusinessObject>> as BOB_152
+!define DECL_BOB_153 rectangle "Conflict Engagement Posture" <<BusinessObject>> as BOB_153
+!define DECL_BOB_154 rectangle "Entry-Point Routing Rule" <<BusinessObject>> as BOB_154
+!define DECL_BOB_155 rectangle "Phase-to-Skill Mapping" <<BusinessObject>> as BOB_155
+!define DECL_BOB_160 rectangle "Agent Role-Skill Assignment" <<BusinessObject>> as BOB_160
+!define DECL_BOB_161 rectangle "Phase-Skill Assignment" <<BusinessObject>> as BOB_161
+!define DECL_BOB_170 rectangle "Skill Input Taxonomy" <<BusinessObject>> as BOB_170
+!define DECL_BOB_171 rectangle "Skill Output Taxonomy" <<BusinessObject>> as BOB_171
+!define DECL_BOB_172 rectangle "Agent Role-Phase Responsibility Mapping" <<BusinessObject>> as BOB_172
+!define DECL_BOB_200 rectangle "Skill: CSCO-GATE-A" <<BusinessObject>> as BOB_200
+!define DECL_BOB_201 rectangle "Skill: CSCO-GATE-B" <<BusinessObject>> as BOB_201
+!define DECL_BOB_202 rectangle "Skill: CSCO-GATE-C" <<BusinessObject>> as BOB_202
+!define DECL_BOB_203 rectangle "Skill: CSCO-GATE-D" <<BusinessObject>> as BOB_203
+!define DECL_BOB_204 rectangle "Skill: CSCO-GATE-G" <<BusinessObject>> as BOB_204
+!define DECL_BOB_205 rectangle "Skill: CSCO-GATE-H" <<BusinessObject>> as BOB_205
+!define DECL_BOB_206 rectangle "Skill: CSCO-INCIDENT" <<BusinessObject>> as BOB_206
+!define DECL_BOB_207 rectangle "Skill: CSCO-STAMP-STPA" <<BusinessObject>> as BOB_207
+!define DECL_BOB_208 rectangle "Skill: DE-PHASE-E-FEEDBACK" <<BusinessObject>> as BOB_208
+!define DECL_BOB_209 rectangle "Skill: DE-PHASE-F-FEEDBACK" <<BusinessObject>> as BOB_209
+!define DECL_BOB_210 rectangle "Skill: DE-PHASE-G" <<BusinessObject>> as BOB_210
+!define DECL_BOB_211 rectangle "Skill: DO-PHASE-D" <<BusinessObject>> as BOB_211
+!define DECL_BOB_212 rectangle "Skill: DO-PHASE-E" <<BusinessObject>> as BOB_212
+!define DECL_BOB_213 rectangle "Skill: DO-PHASE-F" <<BusinessObject>> as BOB_213
+!define DECL_BOB_214 rectangle "Skill: DO-PHASE-G" <<BusinessObject>> as BOB_214
+!define DECL_BOB_215 rectangle "Skill: PM-MASTER" <<BusinessObject>> as BOB_215
+!define DECL_BOB_216 rectangle "Skill: PM-PHASE-A" <<BusinessObject>> as BOB_216
+!define DECL_BOB_217 rectangle "Skill: PM-PHASE-EF" <<BusinessObject>> as BOB_217
+!define DECL_BOB_218 rectangle "Skill: PM-PHASE-G" <<BusinessObject>> as BOB_218
+!define DECL_BOB_219 rectangle "Skill: PM-PHASE-H" <<BusinessObject>> as BOB_219
+!define DECL_BOB_220 rectangle "Skill: PM-RETRO" <<BusinessObject>> as BOB_220
+!define DECL_BOB_221 rectangle "Skill: PO-PHASE-A" <<BusinessObject>> as BOB_221
+!define DECL_BOB_222 rectangle "Skill: PO-PHASE-B" <<BusinessObject>> as BOB_222
+!define DECL_BOB_223 rectangle "Skill: PO-PHASE-H" <<BusinessObject>> as BOB_223
+!define DECL_BOB_224 rectangle "Skill: PO-REQ-MGMT" <<BusinessObject>> as BOB_224
+!define DECL_BOB_225 rectangle "Skill: PO-STAKEHOLDER" <<BusinessObject>> as BOB_225
+!define DECL_BOB_226 rectangle "Skill: QA-PHASE-EF" <<BusinessObject>> as BOB_226
+!define DECL_BOB_227 rectangle "Skill: QA-PHASE-G" <<BusinessObject>> as BOB_227
+!define DECL_BOB_228 rectangle "Skill: QA-PHASE-H" <<BusinessObject>> as BOB_228
+!define DECL_BOB_229 rectangle "Skill: SA-PHASE-A" <<BusinessObject>> as BOB_229
+!define DECL_BOB_230 rectangle "Skill: SA-PHASE-B" <<BusinessObject>> as BOB_230
+!define DECL_BOB_231 rectangle "Skill: SA-PHASE-C-APP-REVIEW" <<BusinessObject>> as BOB_231
+!define DECL_BOB_232 rectangle "Skill: SA-PHASE-C-DATA-REVIEW" <<BusinessObject>> as BOB_232
+!define DECL_BOB_233 rectangle "Skill: SA-PHASE-H" <<BusinessObject>> as BOB_233
+!define DECL_BOB_234 rectangle "Skill: SA-REQ-MGMT" <<BusinessObject>> as BOB_234
+!define DECL_BOB_235 rectangle "Skill: SA-REV-BA" <<BusinessObject>> as BOB_235
+!define DECL_BOB_236 rectangle "Skill: SA-REV-PRELIM-A" <<BusinessObject>> as BOB_236
+!define DECL_BOB_237 rectangle "Skill: SM-PHASE-A-MR" <<BusinessObject>> as BOB_237
+!define DECL_BOB_238 rectangle "Skill: SM-PHASE-A-SWOT" <<BusinessObject>> as BOB_238
+!define DECL_BOB_239 rectangle "Skill: SM-REQ-FEEDBACK" <<BusinessObject>> as BOB_239
+!define DECL_BOB_240 rectangle "Skill: SWA-REV-TA" <<BusinessObject>> as BOB_240
+!define DECL_BOB_241 rectangle "Skill: SwA-PHASE-C-APP" <<BusinessObject>> as BOB_241
+!define DECL_BOB_242 rectangle "Skill: SwA-PHASE-C-DATA" <<BusinessObject>> as BOB_242
+!define DECL_BOB_243 rectangle "Skill: SwA-PHASE-D" <<BusinessObject>> as BOB_243
+!define DECL_BOB_244 rectangle "Skill: SwA-PHASE-E" <<BusinessObject>> as BOB_244
+!define DECL_BOB_245 rectangle "Skill: SwA-PHASE-F" <<BusinessObject>> as BOB_245
+!define DECL_BOB_246 rectangle "Skill: SwA-PHASE-G" <<BusinessObject>> as BOB_246
+!define DECL_BOB_247 rectangle "Skill: SwA-PHASE-H" <<BusinessObject>> as BOB_247
+!define DECL_BOB_300 rectangle "Input Concept: ADR Register" <<BusinessObject>> as BOB_300
+!define DECL_BOB_301 rectangle "Input Concept: AV Safety Envelope draft (§3.7 or separate document)" <<BusinessObject>> as BOB_301
+!define DECL_BOB_302 rectangle "Input Concept: Affected AC artifact(s)" <<BusinessObject>> as BOB_302
+!define DECL_BOB_303 rectangle "Input Concept: Affected Application Architecture entities (AA)" <<BusinessObject>> as BOB_303
+!define DECL_BOB_304 rectangle "Input Concept: Affected Data Architecture entities (DA)" <<BusinessObject>> as BOB_304
+!define DECL_BOB_305 rectangle "Input Concept: Affected TA artifact(s)" <<BusinessObject>> as BOB_305
+!define DECL_BOB_306 rectangle "Input Concept: Affected architecture artifacts list" <<BusinessObject>> as BOB_306
+!define DECL_BOB_307 rectangle "Input Concept: Affected motivation/strategy/business artifact summary headers" <<BusinessObject>> as BOB_307
+!define DECL_BOB_308 rectangle "Input Concept: Algedonic signal (emergency track only)" <<BusinessObject>> as BOB_308
+!define DECL_BOB_309 rectangle "Input Concept: Algedonic signal or PM incident report" <<BusinessObject>> as BOB_309
+!define DECL_BOB_310 rectangle "Input Concept: Application Architecture (AA)" <<BusinessObject>> as BOB_310
+!define DECL_BOB_311 rectangle "Input Concept: Application Architecture (AA) draft" <<BusinessObject>> as BOB_311
+!define DECL_BOB_312 rectangle "Input Concept: Application Architecture (AA) — relevant APP-nnn components" <<BusinessObject>> as BOB_312
+!define DECL_BOB_313 rectangle "Input Concept: Application-Level Gap Analysis (from AA §3.8)" <<BusinessObject>> as BOB_313
+!define DECL_BOB_314 rectangle "Input Concept: Architecture Contract (AC)" <<BusinessObject>> as BOB_314
+!define DECL_BOB_315 rectangle "Input Concept: Architecture Contract (AC) for current sprint" <<BusinessObject>> as BOB_315
+!define DECL_BOB_316 rectangle "Input Concept: Architecture Contract (AC) per Solution Sprint" <<BusinessObject>> as BOB_316
+!define DECL_BOB_317 rectangle "Input Concept: Architecture Contract (if Phase G in progress)" <<BusinessObject>> as BOB_317
+!define DECL_BOB_318 rectangle "Input Concept: Architecture Contract draft — Phase F alignment" <<BusinessObject>> as BOB_318
+!define DECL_BOB_319 rectangle "Input Concept: Architecture Principles Register (PR)" <<BusinessObject>> as BOB_319
+!define DECL_BOB_320 rectangle "Input Concept: Architecture Roadmap draft" <<BusinessObject>> as BOB_320
+!define DECL_BOB_321 rectangle "Input Concept: Architecture Roadmap final draft" <<BusinessObject>> as BOB_321
+!define DECL_BOB_322 rectangle "Input Concept: Architecture Vision (AV)" <<BusinessObject>> as BOB_322
+!define DECL_BOB_323 rectangle "Input Concept: Architecture Vision overview" <<BusinessObject>> as BOB_323
+!define DECL_BOB_324 rectangle "Input Concept: Business Architecture (BA)" <<BusinessObject>> as BOB_324
+!define DECL_BOB_325 rectangle "Input Concept: Business Architecture (BA) draft" <<BusinessObject>> as BOB_325
+!define DECL_BOB_326 rectangle "Input Concept: Business Scenarios (detailed)" <<BusinessObject>> as BOB_326
+!define DECL_BOB_327 rectangle "Input Concept: CQ answer (if triggered by cq.answered)" <<BusinessObject>> as BOB_327
+!define DECL_BOB_328 rectangle "Input Concept: CQ answer record (if triggered by cq.answered)" <<BusinessObject>> as BOB_328
+!define DECL_BOB_329 rectangle "Input Concept: Change Record (CR)" <<BusinessObject>> as BOB_329
+!define DECL_BOB_330 rectangle "Input Concept: Change classification" <<BusinessObject>> as BOB_330
+!define DECL_BOB_331 rectangle "Input Concept: Change classification (from SA's CR)" <<BusinessObject>> as BOB_331
+!define DECL_BOB_332 rectangle "Input Concept: Change notifications from PO (RR version updates)" <<BusinessObject>> as BOB_332
+!define DECL_BOB_333 rectangle "Input Concept: Codebase and documentation scan" <<BusinessObject>> as BOB_333
+!define DECL_BOB_334 rectangle "Input Concept: Coding standards" <<BusinessObject>> as BOB_334
+!define DECL_BOB_335 rectangle "Input Concept: Current Architecture Principles Register (PR)" <<BusinessObject>> as BOB_335
+!define DECL_BOB_336 rectangle "Input Concept: Current RTM" <<BusinessObject>> as BOB_336
+!define DECL_BOB_337 rectangle "Input Concept: Current Requirements Register (RR)" <<BusinessObject>> as BOB_337
+!define DECL_BOB_338 rectangle "Input Concept: Current SA architecture artifacts (AV, BA, AA, DA)" <<BusinessObject>> as BOB_338
+!define DECL_BOB_339 rectangle "Input Concept: Data Architecture (DA)" <<BusinessObject>> as BOB_339
+!define DECL_BOB_340 rectangle "Input Concept: Data Architecture (DA) draft" <<BusinessObject>> as BOB_340
+!define DECL_BOB_341 rectangle "Input Concept: Data Architecture (DA) — draft" <<BusinessObject>> as BOB_341
+!define DECL_BOB_342 rectangle "Input Concept: Data Architecture (DA) — relevant DE-nnn entities" <<BusinessObject>> as BOB_342
+!define DECL_BOB_343 rectangle "Input Concept: Data-Level Gap Analysis (from DA §3.8)" <<BusinessObject>> as BOB_343
+!define DECL_BOB_344 rectangle "Input Concept: Defect Register (current)" <<BusinessObject>> as BOB_344
+!define DECL_BOB_345 rectangle "Input Concept: Defect Register — DE-assigned defects" <<BusinessObject>> as BOB_345
+!define DECL_BOB_346 rectangle "Input Concept: Dependency Matrix" <<BusinessObject>> as BOB_346
+!define DECL_BOB_347 rectangle "Input Concept: Deployment Record" <<BusinessObject>> as BOB_347
+!define DECL_BOB_348 rectangle "Input Concept: EP-G handoff from PM" <<BusinessObject>> as BOB_348
+!define DECL_BOB_349 rectangle "Input Concept: EPC draft from Phase D/E" <<BusinessObject>> as BOB_349
+!define DECL_BOB_350 rectangle "Input Concept: Engagement Profile" <<BusinessObject>> as BOB_350
+!define DECL_BOB_351 rectangle "Input Concept: Enterprise Solutions Landscape (ESL)" <<BusinessObject>> as BOB_351
+!define DECL_BOB_352 rectangle "Input Concept: Enterprise Standards Information Base (SIB)" <<BusinessObject>> as BOB_352
+!define DECL_BOB_353 rectangle "Input Concept: Enterprise Standards baseline" <<BusinessObject>> as BOB_353
+!define DECL_BOB_354 rectangle "Input Concept: Enterprise knowledge base (prior engagements)" <<BusinessObject>> as BOB_354
+!define DECL_BOB_355 rectangle "Input Concept: Enterprise repository motivation entities" <<BusinessObject>> as BOB_355
+!define DECL_BOB_356 rectangle "Input Concept: Enterprise requirements baseline" <<BusinessObject>> as BOB_356
+!define DECL_BOB_357 rectangle "Input Concept: Enterprise standards and landscape" <<BusinessObject>> as BOB_357
+!define DECL_BOB_358 rectangle "Input Concept: Enterprise strategic landscape" <<BusinessObject>> as BOB_358
+!define DECL_BOB_359 rectangle "Input Concept: Enterprise technology standards" <<BusinessObject>> as BOB_359
+!define DECL_BOB_360 rectangle "Input Concept: Environment Provisioning Catalog (EPC)" <<BusinessObject>> as BOB_360
+!define DECL_BOB_361 rectangle "Input Concept: Environment Provisioning Catalog (EPC) — Phase F" <<BusinessObject>> as BOB_361
+!define DECL_BOB_362 rectangle "Input Concept: Existing infrastructure documentation (EP-D, EP-G entries)" <<BusinessObject>> as BOB_362
+!define DECL_BOB_363 rectangle "Input Concept: External source artifacts" <<BusinessObject>> as BOB_363
+!define DECL_BOB_364 rectangle "Input Concept: External source artifacts (Confluence, SharePoint, etc.)" <<BusinessObject>> as BOB_364
+!define DECL_BOB_365 rectangle "Input Concept: External source market data" <<BusinessObject>> as BOB_365
+!define DECL_BOB_366 rectangle "Input Concept: Gap Analysis Matrix" <<BusinessObject>> as BOB_366
+!define DECL_BOB_367 rectangle "Input Concept: Gap Analysis Matrix (GAM)" <<BusinessObject>> as BOB_367
+!define DECL_BOB_368 rectangle "Input Concept: Gate evaluation outcome (if triggered by gate.evaluated)" <<BusinessObject>> as BOB_368
+!define DECL_BOB_369 rectangle "Input Concept: Handoff acknowledgement" <<BusinessObject>> as BOB_369
+!define DECL_BOB_370 rectangle "Input Concept: Handoff record from SwA" <<BusinessObject>> as BOB_370
+!define DECL_BOB_371 rectangle "Input Concept: Implementation Candidate Catalog" <<BusinessObject>> as BOB_371
+!define DECL_BOB_372 rectangle "Input Concept: Implementation Candidate Catalog (ICC)" <<BusinessObject>> as BOB_372
+!define DECL_BOB_373 rectangle "Input Concept: Implementation Candidate Catalog (ICC) — Phase E" <<BusinessObject>> as BOB_373
+!define DECL_BOB_374 rectangle "Input Concept: Implementation Plan (IP)" <<BusinessObject>> as BOB_374
+!define DECL_BOB_375 rectangle "Input Concept: Implementation Plan (IP) — Phase F" <<BusinessObject>> as BOB_375
+!define DECL_BOB_376 rectangle "Input Concept: Implementation Plan (IP) — Phase F additions" <<BusinessObject>> as BOB_376
+!define DECL_BOB_377 rectangle "Input Concept: Implementation Plan (IP) — Work Package definitions" <<BusinessObject>> as BOB_377
+!define DECL_BOB_378 rectangle "Input Concept: Implementation Plan draft (IP)" <<BusinessObject>> as BOB_378
+!define DECL_BOB_379 rectangle "Input Concept: Incident detail artifacts" <<BusinessObject>> as BOB_379
+!define DECL_BOB_380 rectangle "Input Concept: Infrastructure Diagram (within TA)" <<BusinessObject>> as BOB_380
+!define DECL_BOB_381 rectangle "Input Concept: Initial EPC draft" <<BusinessObject>> as BOB_381
+!define DECL_BOB_382 rectangle "Input Concept: Market Analysis (MA)" <<BusinessObject>> as BOB_382
+!define DECL_BOB_383 rectangle "Input Concept: Market Analysis / Business Scenarios" <<BusinessObject>> as BOB_383
+!define DECL_BOB_384 rectangle "Input Concept: Market Analysis / Business Scenarios (SM)" <<BusinessObject>> as BOB_384
+!define DECL_BOB_385 rectangle "Input Concept: Merged Pull Requests (trigger)" <<BusinessObject>> as BOB_385
+!define DECL_BOB_386 rectangle "Input Concept: Motivation/strategy entities from SA-REV-PRELIM-A" <<BusinessObject>> as BOB_386
+!define DECL_BOB_387 rectangle "Input Concept: Newly baselined architecture artifact (if triggered by artifact.baselined)" <<BusinessObject>> as BOB_387
+!define DECL_BOB_388 rectangle "Input Concept: PM incident report (if PM-triggered)" <<BusinessObject>> as BOB_388
+!define DECL_BOB_389 rectangle "Input Concept: PM instruction or trigger event" <<BusinessObject>> as BOB_389
+!define DECL_BOB_390 rectangle "Input Concept: PM's intake record (Warm-Start Change Record CR-000)" <<BusinessObject>> as BOB_390
+!define DECL_BOB_391 rectangle "Input Concept: PR log and test reports" <<BusinessObject>> as BOB_391
+!define DECL_BOB_392 rectangle "Input Concept: PR-ready handoff" <<BusinessObject>> as BOB_392
+!define DECL_BOB_393 rectangle "Input Concept: Phase E Complexity Report (DE's own)" <<BusinessObject>> as BOB_393
+!define DECL_BOB_394 rectangle "Input Concept: Phase G artifacts (if Phase G currently in progress)" <<BusinessObject>> as BOB_394
+!define DECL_BOB_395 rectangle "Input Concept: Phase H requirements impact summary (if invoked from phase-h.md)" <<BusinessObject>> as BOB_395
+!define DECL_BOB_396 rectangle "Input Concept: Prior H-phase SCO update" <<BusinessObject>> as BOB_396
+!define DECL_BOB_397 rectangle "Input Concept: Prior SCO version" <<BusinessObject>> as BOB_397
+!define DECL_BOB_398 rectangle "Input Concept: Prior SCO version (if any)" <<BusinessObject>> as BOB_398
+!define DECL_BOB_399 rectangle "Input Concept: QA Compliance Assessment (CA)" <<BusinessObject>> as BOB_399
+!define DECL_BOB_400 rectangle "Input Concept: QA test execution results" <<BusinessObject>> as BOB_400
+!define DECL_BOB_401 rectangle "Input Concept: RTM Skeleton" <<BusinessObject>> as BOB_401
+!define DECL_BOB_402 rectangle "Input Concept: Regulatory baseline" <<BusinessObject>> as BOB_402
+!define DECL_BOB_403 rectangle "Input Concept: Requirements Register (RR)" <<BusinessObject>> as BOB_403
+!define DECL_BOB_404 rectangle "Input Concept: Requirements Register (RR) — current version" <<BusinessObject>> as BOB_404
+!define DECL_BOB_405 rectangle "Input Concept: Requirements Traceability Matrix (RTM) — current version" <<BusinessObject>> as BOB_405
+!define DECL_BOB_406 rectangle "Input Concept: Risk Register" <<BusinessObject>> as BOB_406
+!define DECL_BOB_407 rectangle "Input Concept: Risk Register (draft)" <<BusinessObject>> as BOB_407
+!define DECL_BOB_408 rectangle "Input Concept: Risk Register — Phase E" <<BusinessObject>> as BOB_408
+!define DECL_BOB_409 rectangle "Input Concept: SA Architecture Principles Register (PR)" <<BusinessObject>> as BOB_409
+!define DECL_BOB_410 rectangle "Input Concept: SA change impact summary (if available)" <<BusinessObject>> as BOB_410
+!define DECL_BOB_411 rectangle "Input Concept: SA warm-start entities (optional)" <<BusinessObject>> as BOB_411
+!define DECL_BOB_412 rectangle "Input Concept: SA's business/motivation/strategy-layer Change Record (CR)" <<BusinessObject>> as BOB_412
+!define DECL_BOB_413 rectangle "Input Concept: SCO Phase A Baseline" <<BusinessObject>> as BOB_413
+!define DECL_BOB_414 rectangle "Input Concept: SCO Phase B Baseline" <<BusinessObject>> as BOB_414
+!define DECL_BOB_415 rectangle "Input Concept: SCO Phase C Baseline" <<BusinessObject>> as BOB_415
+!define DECL_BOB_416 rectangle "Input Concept: SCO — all applicable phases" <<BusinessObject>> as BOB_416
+!define DECL_BOB_417 rectangle "Input Concept: SCO — all phases (A through D)" <<BusinessObject>> as BOB_417
+!define DECL_BOB_418 rectangle "Input Concept: SWOT Analysis (SWOT)" <<BusinessObject>> as BOB_418
+!define DECL_BOB_419 rectangle "Input Concept: Safety Constraint Overlay (Phase A SCO, if CSCO produced one)" <<BusinessObject>> as BOB_419
+!define DECL_BOB_420 rectangle "Input Concept: Safety Constraint Overlay (SCO)" <<BusinessObject>> as BOB_420
+!define DECL_BOB_421 rectangle "Input Concept: Safety Constraint Overlay (SCO) Phase A update" <<BusinessObject>> as BOB_421
+!define DECL_BOB_422 rectangle "Input Concept: Safety Constraint Overlay (SCO) baseline" <<BusinessObject>> as BOB_422
+!define DECL_BOB_423 rectangle "Input Concept: Safety Constraint Overlay (SCO) latest update" <<BusinessObject>> as BOB_423
+!define DECL_BOB_424 rectangle "Input Concept: Safety Constraint Overlay (SCO) — Phase A baseline" <<BusinessObject>> as BOB_424
+!define DECL_BOB_425 rectangle "Input Concept: Safety Constraint Overlay (SCO) — Phase B update" <<BusinessObject>> as BOB_425
+!define DECL_BOB_426 rectangle "Input Concept: Safety Constraint Overlay (SCO) — Phase C update" <<BusinessObject>> as BOB_426
+!define DECL_BOB_427 rectangle "Input Concept: Safety Constraint Overlay (SCO) — Phase D update" <<BusinessObject>> as BOB_427
+!define DECL_BOB_428 rectangle "Input Concept: Safety Constraint Overlay (SCO) — current" <<BusinessObject>> as BOB_428
+!define DECL_BOB_429 rectangle "Input Concept: Safety Constraint Overlay (SCO) — current version" <<BusinessObject>> as BOB_429
+!define DECL_BOB_430 rectangle "Input Concept: Scoping Interview answers (EP-0) or user document (EP-A/EP-B)" <<BusinessObject>> as BOB_430
+!define DECL_BOB_431 rectangle "Input Concept: Scoping Interview answers (EP-0) or user input document (EP-A/B)" <<BusinessObject>> as BOB_431
+!define DECL_BOB_432 rectangle "Input Concept: Scoping Interview answers (EP-0) or user input document (EP-A/EP-B)" <<BusinessObject>> as BOB_432
+!define DECL_BOB_433 rectangle "Input Concept: Scoping Interview answers / user input document" <<BusinessObject>> as BOB_433
+!define DECL_BOB_434 rectangle "Input Concept: Solution Sprint Plan" <<BusinessObject>> as BOB_434
+!define DECL_BOB_435 rectangle "Input Concept: Spot-check target (Mode 1 only)" <<BusinessObject>> as BOB_435
+!define DECL_BOB_436 rectangle "Input Concept: Sprint activation instruction" <<BusinessObject>> as BOB_436
+!define DECL_BOB_437 rectangle "Input Concept: Sprint kickoff event" <<BusinessObject>> as BOB_437
+!define DECL_BOB_438 rectangle "Input Concept: Sprint kickoff event per Solution Sprint" <<BusinessObject>> as BOB_438
+!define DECL_BOB_439 rectangle "Input Concept: Sprint log (summary of sprint activities)" <<BusinessObject>> as BOB_439
+!define DECL_BOB_440 rectangle "Input Concept: Stakeholder Register" <<BusinessObject>> as BOB_440
+!define DECL_BOB_441 rectangle "Input Concept: System description (at whatever level is available)" <<BusinessObject>> as BOB_441
+!define DECL_BOB_442 rectangle "Input Concept: Target project repository access" <<BusinessObject>> as BOB_442
+!define DECL_BOB_443 rectangle "Input Concept: Target repository (codebase, README, configs)" <<BusinessObject>> as BOB_443
+!define DECL_BOB_444 rectangle "Input Concept: Target repository clone(s)" <<BusinessObject>> as BOB_444
+!define DECL_BOB_445 rectangle "Input Concept: Technology Architecture (TA)" <<BusinessObject>> as BOB_445
+!define DECL_BOB_446 rectangle "Input Concept: Technology Architecture (TA) — relevant TC-nnn components" <<BusinessObject>> as BOB_446
+!define DECL_BOB_447 rectangle "Input Concept: Technology Architecture draft (TA)" <<BusinessObject>> as BOB_447
+!define DECL_BOB_448 rectangle "Input Concept: Technology Component Catalog (within TA)" <<BusinessObject>> as BOB_448
+!define DECL_BOB_449 rectangle "Input Concept: Technology Gap Analysis" <<BusinessObject>> as BOB_449
+!define DECL_BOB_450 rectangle "Input Concept: Technology specifications (Level 3 only)" <<BusinessObject>> as BOB_450
+!define DECL_BOB_451 rectangle "Input Concept: Test Strategy (TS)" <<BusinessObject>> as BOB_451
+!define DECL_BOB_452 rectangle "Input Concept: Test Strategy (TS) — current baselined version" <<BusinessObject>> as BOB_452
+!define DECL_BOB_453 rectangle "Input Concept: Transition Architecture Diagrams" <<BusinessObject>> as BOB_453
+!define DECL_BOB_454 rectangle "Input Concept: Trigger event" <<BusinessObject>> as BOB_454
+!define DECL_BOB_455 rectangle "Input Concept: User-provided business process documents" <<BusinessObject>> as BOB_455
+!define DECL_BOB_456 rectangle "Input Concept: User-provided docs" <<BusinessObject>> as BOB_456
+!define DECL_BOB_457 rectangle "Input Concept: User-provided documents, diagrams, textual descriptions" <<BusinessObject>> as BOB_457
+!define DECL_BOB_458 rectangle "Input Concept: Work Package Catalog (WPC)" <<BusinessObject>> as BOB_458
+!define DECL_BOB_459 rectangle "Input Concept: Work Package Catalog (WPC) — Phase E" <<BusinessObject>> as BOB_459
+!define DECL_BOB_460 rectangle "Input Concept: sprint.started event" <<BusinessObject>> as BOB_460
+!define DECL_BOB_461 rectangle "Input Concept: sprint.started event (for the sprint in which this skill is invoked)" <<BusinessObject>> as BOB_461
+!define DECL_BOB_462 rectangle "Input Concept: sprint.started event (phase=B)" <<BusinessObject>> as BOB_462
+!define DECL_BOB_463 rectangle "Input Concept: sprint.started event (phase=H)" <<BusinessObject>> as BOB_463
+!define DECL_BOB_464 rectangle "Input Concept: sprint.started event for Phase A" <<BusinessObject>> as BOB_464
+!define DECL_BOB_465 rectangle "Input Concept: sprint.started event for the Phase H sprint" <<BusinessObject>> as BOB_465
+!define DECL_BOB_500 rectangle "Output Concept: ADR Register" <<BusinessObject>> as BOB_500
+!define DECL_BOB_501 rectangle "Output Concept: Algedonic records" <<BusinessObject>> as BOB_501
+!define DECL_BOB_502 rectangle "Output Concept: Application Architecture" <<BusinessObject>> as BOB_502
+!define DECL_BOB_503 rectangle "Output Concept: Application Interaction Diagrams" <<BusinessObject>> as BOB_503
+!define DECL_BOB_504 rectangle "Output Concept: Application source code" <<BusinessObject>> as BOB_504
+!define DECL_BOB_505 rectangle "Output Concept: Application/Technology Change Record" <<BusinessObject>> as BOB_505
+!define DECL_BOB_506 rectangle "Output Concept: ArchiMate connection files (assignment, triggering, realization, composition, serving)" <<BusinessObject>> as BOB_506
+!define DECL_BOB_507 rectangle "Output Concept: Architecture Compliance Notices" <<BusinessObject>> as BOB_507
+!define DECL_BOB_508 rectangle "Output Concept: Architecture Contract" <<BusinessObject>> as BOB_508
+!define DECL_BOB_509 rectangle "Output Concept: Architecture Decision Record stubs (ADR)" <<BusinessObject>> as BOB_509
+!define DECL_BOB_510 rectangle "Output Concept: Architecture Principles Register" <<BusinessObject>> as BOB_510
+!define DECL_BOB_511 rectangle "Output Concept: Architecture Roadmap" <<BusinessObject>> as BOB_511
+!define DECL_BOB_512 rectangle "Output Concept: Architecture Vision" <<BusinessObject>> as BOB_512
+!define DECL_BOB_513 rectangle "Output Concept: Architecture Vision overview document" <<BusinessObject>> as BOB_513
+!define DECL_BOB_514 rectangle "Output Concept: Architecture connection files (archimate/influence, archimate/association)" <<BusinessObject>> as BOB_514
+!define DECL_BOB_515 rectangle "Output Concept: BA feedback record" <<BusinessObject>> as BOB_515
+!define DECL_BOB_516 rectangle "Output Concept: Business Architecture" <<BusinessObject>> as BOB_516
+!define DECL_BOB_517 rectangle "Output Concept: Business Architecture overview document" <<BusinessObject>> as BOB_517
+!define DECL_BOB_518 rectangle "Output Concept: Business Process Catalog" <<BusinessObject>> as BOB_518
+!define DECL_BOB_519 rectangle "Output Concept: Business Scenarios v0.1.0" <<BusinessObject>> as BOB_519
+!define DECL_BOB_520 rectangle "Output Concept: Business entity files (ACT, ROL, BPR, BFN, BSV, BOB, BEV, BCO, BIF, PRD)" <<BusinessObject>> as BOB_520
+!define DECL_BOB_521 rectangle "Output Concept: CI/CD pipeline configuration" <<BusinessObject>> as BOB_521
+!define DECL_BOB_522 rectangle "Output Concept: CQ records" <<BusinessObject>> as BOB_522
+!define DECL_BOB_523 rectangle "Output Concept: Change Record (business/motivation/strategy layer)" <<BusinessObject>> as BOB_523
+!define DECL_BOB_524 rectangle "Output Concept: Change Safety Classification (embedded in SCO §12 or standalone annotation)" <<BusinessObject>> as BOB_524
+!define DECL_BOB_525 rectangle "Output Concept: Compliance Assessment contribution" <<BusinessObject>> as BOB_525
+!define DECL_BOB_526 rectangle "Output Concept: Data Architecture" <<BusinessObject>> as BOB_526
+!define DECL_BOB_527 rectangle "Output Concept: Data Classification Register" <<BusinessObject>> as BOB_527
+!define DECL_BOB_528 rectangle "Output Concept: Data Entity Catalog" <<BusinessObject>> as BOB_528
+!define DECL_BOB_529 rectangle "Output Concept: Defect Register" <<BusinessObject>> as BOB_529
+!define DECL_BOB_530 rectangle "Output Concept: Delivery Complexity Estimate summary" <<BusinessObject>> as BOB_530
+!define DECL_BOB_531 rectangle "Output Concept: Deployment Records" <<BusinessObject>> as BOB_531
+!define DECL_BOB_532 rectangle "Output Concept: Deployment Runbooks" <<BusinessObject>> as BOB_532
+!define DECL_BOB_533 rectangle "Output Concept: EPC draft v0.2.0" <<BusinessObject>> as BOB_533
+!define DECL_BOB_534 rectangle "Output Concept: Engagement Profile" <<BusinessObject>> as BOB_534
+!define DECL_BOB_535 rectangle "Output Concept: Engagement Retrospective" <<BusinessObject>> as BOB_535
+!define DECL_BOB_536 rectangle "Output Concept: Environment Provisioning Catalog" <<BusinessObject>> as BOB_536
+!define DECL_BOB_537 rectangle "Output Concept: Environment Provisioning Requirements" <<BusinessObject>> as BOB_537
+!define DECL_BOB_538 rectangle "Output Concept: Final Test Strategy" <<BusinessObject>> as BOB_538
+!define DECL_BOB_539 rectangle "Output Concept: G-Exit Gate Record (gr-G-exit-1.0.0.md)" <<BusinessObject>> as BOB_539
+!define DECL_BOB_540 rectangle "Output Concept: Gap Analysis Matrix" <<BusinessObject>> as BOB_540
+!define DECL_BOB_541 rectangle "Output Concept: Gap and Risk Assessment" <<BusinessObject>> as BOB_541
+!define DECL_BOB_542 rectangle "Output Concept: Gate Record Phase A (gr-A-B-1.0.0.md)" <<BusinessObject>> as BOB_542
+!define DECL_BOB_543 rectangle "Output Concept: Gate Record Phase B (gr-B-C-1.0.0.md)" <<BusinessObject>> as BOB_543
+!define DECL_BOB_544 rectangle "Output Concept: Gate Record Phase C (gr-C-D-1.0.0.md)" <<BusinessObject>> as BOB_544
+!define DECL_BOB_545 rectangle "Output Concept: Gate Record Phase D (gr-D-E-1.0.0.md)" <<BusinessObject>> as BOB_545
+!define DECL_BOB_546 rectangle "Output Concept: Gate Record Phase H (gr-H-<change-id>-1.0.0.md)" <<BusinessObject>> as BOB_546
+!define DECL_BOB_547 rectangle "Output Concept: Gate records" <<BusinessObject>> as BOB_547
+!define DECL_BOB_548 rectangle "Output Concept: Governance Checkpoint Records" <<BusinessObject>> as BOB_548
+!define DECL_BOB_549 rectangle "Output Concept: IaC code" <<BusinessObject>> as BOB_549
+!define DECL_BOB_550 rectangle "Output Concept: Immediate Containment Directive (if S1 — embedded in algedonic response)" <<BusinessObject>> as BOB_550
+!define DECL_BOB_551 rectangle "Output Concept: Implementation Candidate Catalog" <<BusinessObject>> as BOB_551
+!define DECL_BOB_552 rectangle "Output Concept: Implementation Complexity Report" <<BusinessObject>> as BOB_552
+!define DECL_BOB_553 rectangle "Output Concept: Implementation Dependency Validation" <<BusinessObject>> as BOB_553
+!define DECL_BOB_554 rectangle "Output Concept: Implementation Plan" <<BusinessObject>> as BOB_554
+!define DECL_BOB_555 rectangle "Output Concept: Implementation notes" <<BusinessObject>> as BOB_555
+!define DECL_BOB_556 rectangle "Output Concept: Incident Record (ir-<id>-1.0.0.md)" <<BusinessObject>> as BOB_556
+!define DECL_BOB_557 rectangle "Output Concept: Infrastructure Diagram" <<BusinessObject>> as BOB_557
+!define DECL_BOB_558 rectangle "Output Concept: Infrastructure compliance contribution" <<BusinessObject>> as BOB_558
+!define DECL_BOB_559 rectangle "Output Concept: Initial Environment Provisioning Catalog draft" <<BusinessObject>> as BOB_559
+!define DECL_BOB_560 rectangle "Output Concept: Initial Test Strategy draft" <<BusinessObject>> as BOB_560
+!define DECL_BOB_561 rectangle "Output Concept: Interface Catalog" <<BusinessObject>> as BOB_561
+!define DECL_BOB_562 rectangle "Output Concept: Lessons Learned" <<BusinessObject>> as BOB_562
+!define DECL_BOB_563 rectangle "Output Concept: Logical Data Model" <<BusinessObject>> as BOB_563
+!define DECL_BOB_564 rectangle "Output Concept: Market Analysis" <<BusinessObject>> as BOB_564
+!define DECL_BOB_565 rectangle "Output Concept: Motivation entity files (STK, DRV, ASS, GOL, PRI, REQ, CST)" <<BusinessObject>> as BOB_565
+!define DECL_BOB_566 rectangle "Output Concept: Organisational Model" <<BusinessObject>> as BOB_566
+!define DECL_BOB_567 rectangle "Output Concept: PR record" <<BusinessObject>> as BOB_567
+!define DECL_BOB_568 rectangle "Output Concept: Phase A Gate Record" <<BusinessObject>> as BOB_568
+!define DECL_BOB_569 rectangle "Output Concept: Phase D Feedback Record" <<BusinessObject>> as BOB_569
+!define DECL_BOB_570 rectangle "Output Concept: Phase E Delivery Complexity Assessment" <<BusinessObject>> as BOB_570
+!define DECL_BOB_571 rectangle "Output Concept: Phase G Exit Gate Record" <<BusinessObject>> as BOB_571
+!define DECL_BOB_572 rectangle "Output Concept: Phase Return Scope Statement" <<BusinessObject>> as BOB_572
+!define DECL_BOB_573 rectangle "Output Concept: Pipeline Design Document" <<BusinessObject>> as BOB_573
+!define DECL_BOB_574 rectangle "Output Concept: Post-incident Safety Finding (sf-<id>.md) — for retrospective" <<BusinessObject>> as BOB_574
+!define DECL_BOB_575 rectangle "Output Concept: Promotion Request Records" <<BusinessObject>> as BOB_575
+!define DECL_BOB_576 rectangle "Output Concept: Pull Request" <<BusinessObject>> as BOB_576
+!define DECL_BOB_577 rectangle "Output Concept: RR (currency-checked" <<BusinessObject>> as BOB_577
+!define DECL_BOB_578 rectangle "Output Concept: RTM (new traceability entries)" <<BusinessObject>> as BOB_578
+!define DECL_BOB_579 rectangle "Output Concept: RTM Architecture Column Contribution" <<BusinessObject>> as BOB_579
+!define DECL_BOB_580 rectangle "Output Concept: RTM skeleton v0.1.0" <<BusinessObject>> as BOB_580
+!define DECL_BOB_581 rectangle "Output Concept: RTM v0.2.0 (Phase B traceability entries)" <<BusinessObject>> as BOB_581
+!define DECL_BOB_582 rectangle "Output Concept: Regression Impact Assessment" <<BusinessObject>> as BOB_582
+!define DECL_BOB_583 rectangle "Output Concept: Requirements Market Coverage Feedback Record" <<BusinessObject>> as BOB_583
+!define DECL_BOB_584 rectangle "Output Concept: Requirements Register v0.1.0→1.0.0" <<BusinessObject>> as BOB_584
+!define DECL_BOB_585 rectangle "Output Concept: Revision Sprint Records" <<BusinessObject>> as BOB_585
+!define DECL_BOB_586 rectangle "Output Concept: Risk Register" <<BusinessObject>> as BOB_586
+!define DECL_BOB_587 rectangle "Output Concept: SA Consulting Acknowledgement" <<BusinessObject>> as BOB_587
+!define DECL_BOB_588 rectangle "Output Concept: SA Traceability Feedback" <<BusinessObject>> as BOB_588
+!define DECL_BOB_589 rectangle "Output Concept: SCO Incident Annotation (appended to current SCO phase version)" <<BusinessObject>> as BOB_589
+!define DECL_BOB_590 rectangle "Output Concept: SCO Phase A Baseline (sco-A-1.0.0.md)" <<BusinessObject>> as BOB_590
+!define DECL_BOB_591 rectangle "Output Concept: SCO Phase B Update (sco-B-1.0.0.md)" <<BusinessObject>> as BOB_591
+!define DECL_BOB_592 rectangle "Output Concept: SCO Phase C Update (sco-C-1.0.0.md)" <<BusinessObject>> as BOB_592
+!define DECL_BOB_593 rectangle "Output Concept: SCO Phase D Update (sco-D-1.0.0.md)" <<BusinessObject>> as BOB_593
+!define DECL_BOB_594 rectangle "Output Concept: SCO Phase G annotation (if violations found; minor version increment)" <<BusinessObject>> as BOB_594
+!define DECL_BOB_595 rectangle "Output Concept: SCO Phase H update (sco-H-<version>.md) — if change affects safety constraints" <<BusinessObject>> as BOB_595
+!define DECL_BOB_596 rectangle "Output Concept: STAMP Control Structure Analysis" <<BusinessObject>> as BOB_596
+!define DECL_BOB_597 rectangle "Output Concept: STPA Hazard List" <<BusinessObject>> as BOB_597
+!define DECL_BOB_598 rectangle "Output Concept: SWOT Analysis" <<BusinessObject>> as BOB_598
+!define DECL_BOB_599 rectangle "Output Concept: Safety Constraint Overlay" <<BusinessObject>> as BOB_599
+!define DECL_BOB_600 rectangle "Output Concept: Scoping Interview/Entry Assessment Report" <<BusinessObject>> as BOB_600
+!define DECL_BOB_601 rectangle "Output Concept: Solution Sprint Plan" <<BusinessObject>> as BOB_601
+!define DECL_BOB_602 rectangle "Output Concept: Spot-check Record(s) (scr-<sprint>-<seq>.md) — one per PM spot-check request" <<BusinessObject>> as BOB_602
+!define DECL_BOB_603 rectangle "Output Concept: Sprint Retrospective Note" <<BusinessObject>> as BOB_603
+!define DECL_BOB_604 rectangle "Output Concept: Sprint closeout records" <<BusinessObject>> as BOB_604
+!define DECL_BOB_605 rectangle "Output Concept: Sprint kickoff records" <<BusinessObject>> as BOB_605
+!define DECL_BOB_606 rectangle "Output Concept: Sprint log records" <<BusinessObject>> as BOB_606
+!define DECL_BOB_607 rectangle "Output Concept: Stakeholder Map" <<BusinessObject>> as BOB_607
+!define DECL_BOB_608 rectangle "Output Concept: Stakeholder change notification" <<BusinessObject>> as BOB_608
+!define DECL_BOB_609 rectangle "Output Concept: Stakeholder communication record (project-repository/requirements/stakeholder-communication/)" <<BusinessObject>> as BOB_609
+!define DECL_BOB_610 rectangle "Output Concept: Statement of Architecture Work" <<BusinessObject>> as BOB_610
+!define DECL_BOB_611 rectangle "Output Concept: Strategy capability entity updates (CAP detailed properties)" <<BusinessObject>> as BOB_611
+!define DECL_BOB_612 rectangle "Output Concept: Strategy entity files (CAP, VS, RES)" <<BusinessObject>> as BOB_612
+!define DECL_BOB_613 rectangle "Output Concept: Technical Sequencing Analysis" <<BusinessObject>> as BOB_613
+!define DECL_BOB_614 rectangle "Output Concept: Technology Architecture" <<BusinessObject>> as BOB_614
+!define DECL_BOB_615 rectangle "Output Concept: Technology Architecture overview document" <<BusinessObject>> as BOB_615
+!define DECL_BOB_616 rectangle "Output Concept: Technology Component Catalog" <<BusinessObject>> as BOB_616
+!define DECL_BOB_617 rectangle "Output Concept: Technology Gap Analysis" <<BusinessObject>> as BOB_617
+!define DECL_BOB_618 rectangle "Output Concept: Technology connection files (archimate/realization, archimate/serving, archimate/assignment)" <<BusinessObject>> as BOB_618
+!define DECL_BOB_619 rectangle "Output Concept: Technology entity files (NOD, DEV, SSW, TSV, ART, NET, TFN, TEV, TIF)" <<BusinessObject>> as BOB_619
+!define DECL_BOB_620 rectangle "Output Concept: Test Environment Requirements" <<BusinessObject>> as BOB_620
+!define DECL_BOB_621 rectangle "Output Concept: Test Execution Report" <<BusinessObject>> as BOB_621
+!define DECL_BOB_622 rectangle "Output Concept: Transition Architecture Diagrams" <<BusinessObject>> as BOB_622
+!define DECL_BOB_623 rectangle "Output Concept: Transition Architecture plateau outline" <<BusinessObject>> as BOB_623
+!define DECL_BOB_624 rectangle "Output Concept: UCA Record Set" <<BusinessObject>> as BOB_624
+!define DECL_BOB_625 rectangle "Output Concept: Unit test report reference" <<BusinessObject>> as BOB_625
+!define DECL_BOB_626 rectangle "Output Concept: Updated Application Architecture Entities" <<BusinessObject>> as BOB_626
+!define DECL_BOB_627 rectangle "Output Concept: Updated Architecture Artifacts (motivation/strategy/business layers)" <<BusinessObject>> as BOB_627
+!define DECL_BOB_628 rectangle "Output Concept: Updated Architecture Contract" <<BusinessObject>> as BOB_628
+!define DECL_BOB_629 rectangle "Output Concept: Updated RR (change-driven)" <<BusinessObject>> as BOB_629
+!define DECL_BOB_630 rectangle "Output Concept: Updated RTM (under-review links)" <<BusinessObject>> as BOB_630
+!define DECL_BOB_631 rectangle "Output Concept: Updated Technology Architecture" <<BusinessObject>> as BOB_631
+!define DECL_BOB_632 rectangle "Output Concept: Updated Test Strategy" <<BusinessObject>> as BOB_632
+!define DECL_BOB_633 rectangle "Output Concept: Value Stream Map" <<BusinessObject>> as BOB_633
+!define DECL_BOB_634 rectangle "Output Concept: Value stream entity updates (VS step sequences)" <<BusinessObject>> as BOB_634
+!define DECL_BOB_635 rectangle "Output Concept: Warm-Start Change Intake Record" <<BusinessObject>> as BOB_635
+!define DECL_BOB_636 rectangle "Output Concept: Work Package Catalog" <<BusinessObject>> as BOB_636
+!define DECL_BOB_637 rectangle "Output Concept: gap report to PM" <<BusinessObject>> as BOB_637
+!define DECL_BOB_638 rectangle "Output Concept: gate.vote_cast for A→B gate" <<BusinessObject>> as BOB_638
+!define DECL_BOB_639 rectangle "Output Concept: gate.vote_cast for B→C gate" <<BusinessObject>> as BOB_639
+!define DECL_BOB_640 rectangle "Output Concept: gate.vote_cast for C→D gate" <<BusinessObject>> as BOB_640
+!define DECL_BOB_641 rectangle "Output Concept: gate.vote_cast for D→E gate" <<BusinessObject>> as BOB_641
+!define DECL_BOB_642 rectangle "Output Concept: gate.vote_cast for G-exit gate" <<BusinessObject>> as BOB_642
+!define DECL_BOB_643 rectangle "Output Concept: gate.vote_cast for H gate (or emergency vote for safety-critical changes)" <<BusinessObject>> as BOB_643
+!define DECL_BOB_644 rectangle "Output Concept: gate.vote_cast for Prelim→A gate" <<BusinessObject>> as BOB_644
+!define DECL_BOB_645 rectangle "Output Concept: incremented)" <<BusinessObject>> as BOB_645
+!define DECL_BOB_646 rectangle "Output Concept: updated RR (if gaps found)" <<BusinessObject>> as BOB_646
 !define DECL_BCO_001 rectangle "Architecture Board" <<BusinessCollaboration>> as BCO_001
 !define DECL_BCO_002 rectangle "Sprint Review Board" <<BusinessCollaboration>> as BCO_002
 

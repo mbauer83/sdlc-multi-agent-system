@@ -540,3 +540,64 @@ def format_diagram_puml(
 
     body = puml_body.strip("\n") + "\n"
     return "\n".join(header_lines) + "\n" + body
+
+
+def format_matrix_markdown(
+    *,
+    engagement: str,
+    artifact_id: str,
+    name: str,
+    version: str,
+    status: str,
+    phase_produced: str,
+    owner_agent: str,
+    domain: str | None,
+    purpose: str,
+    matrix_markdown: str,
+    entity_ids_used: list[str] | None,
+    connection_ids_used: list[str] | None,
+) -> str:
+    """Format a matrix diagram as markdown with ERP-compliant frontmatter.
+
+    Matrix diagrams are used for high-density mapping views where node-link
+    diagrams are unreadable.
+    """
+
+    fm: dict[str, object] = {
+        "artifact-id": artifact_id,
+        "artifact-type": "diagram",
+        "diagram-type": "matrix",
+        "name": name,
+        "version": version,
+        "status": status,
+        "phase-produced": phase_produced,
+        "owner-agent": owner_agent,
+        "engagement": engagement,
+        "purpose": purpose.strip(),
+    }
+    if domain:
+        fm["domain"] = domain
+    if entity_ids_used is not None:
+        fm["entity-ids-used"] = entity_ids_used
+    if connection_ids_used is not None:
+        fm["connection-ids-used"] = connection_ids_used
+
+    ordered = [
+        "artifact-id",
+        "artifact-type",
+        "diagram-type",
+        "name",
+        "version",
+        "status",
+        "phase-produced",
+        "owner-agent",
+        "engagement",
+        "domain",
+        "purpose",
+        "entity-ids-used",
+        "connection-ids-used",
+    ]
+    fm_out = {k: fm[k] for k in ordered if k in fm}
+    yaml_text = yaml.safe_dump(fm_out, sort_keys=False).strip()
+    body = matrix_markdown.strip("\n") + "\n"
+    return f"---\n{yaml_text}\n---\n\n{body}"

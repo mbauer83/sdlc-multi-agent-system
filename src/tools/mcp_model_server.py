@@ -31,6 +31,7 @@ from src.tools.model_mcp.write_tools import (  # noqa: F401
     model_create_connection,
     model_create_diagram,
     model_create_entity,
+    model_create_matrix,
     model_write_help,
 )
 from src.tools.model_mcp.verify_tools import (  # noqa: F401

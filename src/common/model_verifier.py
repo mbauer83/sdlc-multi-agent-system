@@ -384,6 +384,8 @@ _DIAGRAM_REQUIRED: frozenset[str] = frozenset(
     }
 )
 
+_DIAGRAM_ARTIFACT_TYPES: frozenset[str] = frozenset({"diagram"})
+
 
 class ModelVerifier:
     """
@@ -507,6 +509,7 @@ class ModelVerifier:
         if scope == "enterprise":
             required = frozenset(x for x in _DIAGRAM_REQUIRED if x != "engagement")
         _check_required_fields(fm, required, result, loc)
+        _check_artifact_type(fm, _DIAGRAM_ARTIFACT_TYPES, "diagram artifact type", result, loc)
         _check_enum(fm, "status", _VALID_STATUSES, result, loc)
         _check_enum(fm, "phase-produced", _VALID_PHASES, result, loc)
         _check_enum(fm, "owner-agent", _VALID_AGENTS, result, loc)
@@ -524,6 +527,63 @@ class ModelVerifier:
 
         _check_puml_structure(content, fm, result, loc)
         _check_puml_syntax(path, result, loc)
+
+        return result
+
+    def verify_matrix_diagram_file(self, path: Path) -> VerificationResult:
+        """Verify a matrix diagram markdown file (.md in diagram-catalog/diagrams)."""
+        result = VerificationResult(path=path, file_type="diagram")
+        loc = str(path)
+
+        content = _read_file(path, result, loc)
+        if content is None:
+            return result
+
+        fm = _parse_frontmatter(content, result, loc)
+        if fm is None:
+            return result
+
+        required = _DIAGRAM_REQUIRED
+        scope = (
+            self.registry.scope_for_path(path)
+            if self.registry is not None
+            else ("enterprise" if "enterprise-repository" in path.resolve().parts else "engagement")
+        )
+        if scope == "enterprise":
+            required = frozenset(x for x in _DIAGRAM_REQUIRED if x != "engagement")
+
+        _check_required_fields(fm, required, result, loc)
+        _check_artifact_type(fm, _DIAGRAM_ARTIFACT_TYPES, "diagram artifact type", result, loc)
+        _check_enum(fm, "status", _VALID_STATUSES, result, loc)
+        _check_enum(fm, "phase-produced", _VALID_PHASES, result, loc)
+        _check_enum(fm, "owner-agent", _VALID_AGENTS, result, loc)
+
+        if self.registry is not None:
+            scope = self.registry.scope_for_path(path)
+            _check_diagram_references_scoped(fm, self.registry, scope, result, loc)
+        else:
+            result.issues.append(Issue(
+                Severity.WARNING,
+                "W002",
+                "No ModelRegistry provided; entity/connection reference checks skipped",
+                loc,
+            ))
+
+        if "diagram-type" in fm and str(fm.get("diagram-type")) != "matrix":
+            result.issues.append(Issue(
+                Severity.WARNING,
+                "W321",
+                "Markdown diagram file under diagram-catalog/diagrams should use diagram-type: matrix",
+                loc,
+            ))
+
+        if "|" not in content:
+            result.issues.append(Issue(
+                Severity.WARNING,
+                "W322",
+                "Matrix diagram markdown has no table markup; expected at least one matrix table",
+                loc,
+            ))
 
         return result
 
@@ -559,6 +619,8 @@ class ModelVerifier:
             if diagram_dir.exists():
                 for f in sorted(diagram_dir.rglob("*.puml")):
                     results.append(self.verify_diagram_file(f))
+                for f in sorted(diagram_dir.rglob("*.md")):
+                    results.append(self.verify_matrix_diagram_file(f))
 
         return results
 

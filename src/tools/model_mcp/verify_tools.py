@@ -35,7 +35,7 @@ def model_verify_file(
 
     inferred = file_type
     if inferred is None:
-        if p.suffix == ".puml":
+        if p.suffix == ".puml" or (p.suffix == ".md" and "diagram-catalog" in p.parts and "diagrams" in p.parts):
             inferred = "diagram"
         else:
             inferred = "connection" if "connections" in p.parts else "entity"
@@ -47,7 +47,10 @@ def model_verify_file(
         case "connection":
             result = verifier.verify_connection_file(p)
         case "diagram":
-            result = verifier.verify_diagram_file(p)
+            if p.suffix == ".md":
+                result = verifier.verify_matrix_diagram_file(p)
+            else:
+                result = verifier.verify_diagram_file(p)
 
     out = as_verification_result_dict(result)
     out["repo_roots"] = [str(r) for r in roots]

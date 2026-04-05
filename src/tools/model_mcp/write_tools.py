@@ -222,13 +222,81 @@ def model_create_diagram(
     return out
 
 
+def model_create_matrix(
+    *,
+    name: str,
+    purpose: str,
+    matrix_markdown: str,
+    phase_produced: str,
+    owner_agent: str,
+    artifact_id: str,
+    domain: str | None = None,
+    version: str = "0.1.0",
+    status: str = "draft",
+    infer_entity_ids: bool = True,
+    auto_link_entity_ids: bool = True,
+    entity_ids_used: list[str] | None = None,
+    connection_ids_used: list[str] | None = None,
+    dry_run: bool = True,
+    repo_root: str | None = None,
+    repo_preset: RepoPreset | None = None,
+    repo_scope: WriteRepoScope = "engagement",
+) -> dict[str, object]:
+    if repo_scope != "engagement":
+        raise ValueError("model_create_matrix only supports repo_scope='engagement'")
+
+    roots = resolve_repo_roots(
+        repo_scope="engagement",
+        repo_root=repo_root,
+        repo_preset=repo_preset,
+        enterprise_root=None,
+    )
+    key = roots_key(roots)
+    registry = registry_cached(key)
+    verifier = verifier_for(key, include_registry=True)
+
+    result = model_write_ops.create_matrix(
+        repo_root=roots[0],
+        registry=registry,
+        verifier=verifier,
+        clear_repo_caches=clear_caches_for_repo,
+        name=name,
+        purpose=purpose,
+        matrix_markdown=matrix_markdown,
+        phase_produced=phase_produced,
+        owner_agent=owner_agent,
+        artifact_id=artifact_id,
+        domain=domain,
+        version=version,
+        status=status,
+        infer_entity_ids=infer_entity_ids,
+        auto_link_entity_ids=auto_link_entity_ids,
+        entity_ids_used=entity_ids_used,
+        connection_ids_used=connection_ids_used,
+        dry_run=dry_run,
+    )
+
+    out: dict[str, object] = {
+        "dry_run": dry_run,
+        "wrote": bool(result.wrote),
+        "path": str(result.path),
+        "artifact_id": result.artifact_id,
+        "verification": result.verification,
+    }
+    if result.content is not None:
+        out["content"] = result.content
+    if result.warnings:
+        out["warnings"] = result.warnings
+    return out
+
+
 def register_write_tools(mcp: FastMCP) -> None:
     mcp.tool(
         name="model_write_help",
         title="Model Write: Help & Catalog",
         description=(
             "Return the authoritative catalog of entity/connection types and key conventions for deterministic writing. "
-            "Use this before calling model_create_entity/model_create_connection/model_create_diagram. "
+            "Use this before calling model_create_entity/model_create_connection/model_create_diagram/model_create_matrix. "
             "All lists are derived from code registries (src/common/archimate_types.py) and server mapping tables."
         ),
         structured_output=True,
@@ -266,3 +334,13 @@ def register_write_tools(mcp: FastMCP) -> None:
         ),
         structured_output=True,
     )(model_create_diagram)
+
+    mcp.tool(
+        name="model_create_matrix",
+        title="Model Write: Create Matrix Diagram",
+        description=(
+            "Create or update a matrix diagram markdown file deterministically. "
+            "Writes ERP-compliant frontmatter, supports dry_run, and can auto-link entity IDs to relative filesystem paths."
+        ),
+        structured_output=True,
+    )(model_create_matrix)
