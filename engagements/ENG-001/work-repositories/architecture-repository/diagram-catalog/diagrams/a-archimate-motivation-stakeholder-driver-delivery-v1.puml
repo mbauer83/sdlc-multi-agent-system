@@ -1,0 +1,75 @@
+' ---
+' artifact-id: a-archimate-motivation-stakeholder-driver-delivery-v1
+' artifact-type: diagram
+' diagram-type: archimate-motivation
+' name: Motivation - Stakeholder to Driver (Delivery Roles)
+' version: 0.1.0
+' status: draft
+' phase-produced: A
+' owner-agent: SA
+' engagement: ENG-001
+' domain: core-platform
+' purpose: Low-density stakeholder-driver slice for DevOps, DE, QA, and PO concerns.
+' entity-ids-used:
+' - DRV-006
+' - DRV-007
+' - DRV-008
+' - DRV-009
+' - DRV-015
+' - DRV-016
+' - DRV-017
+' - DRV-018
+' - STK-006
+' - STK-007
+' - STK-008
+' - STK-009
+' connection-ids-used:
+' - STK-006---DRV-006
+' - STK-006---DRV-015
+' - STK-007---DRV-007
+' - STK-007---DRV-016
+' - STK-008---DRV-008
+' - STK-008---DRV-017
+' - STK-009---DRV-009
+' - STK-009---DRV-018
+' ---
+@startuml a-archimate-motivation-stakeholder-driver-delivery-v1
+!include ../_macros.puml
+!include ../_archimate-stereotypes.puml
+
+left to right direction
+skinparam linetype ortho
+skinparam nodesep 70
+skinparam ranksep 75
+
+rectangle "Stakeholders" <<MotivationGrouping>> as GRP_STK {
+  DECL_STK_006
+  DECL_STK_007
+  DECL_STK_008
+  DECL_STK_009
+}
+
+rectangle "Role Drivers" <<MotivationGrouping>> as GRP_DRV {
+  DECL_DRV_006
+  DECL_DRV_015
+  DECL_DRV_007
+  DECL_DRV_016
+  DECL_DRV_008
+  DECL_DRV_017
+  DECL_DRV_009
+  DECL_DRV_018
+}
+
+STK_006 -[hidden]down-> STK_007
+STK_007 -[hidden]down-> STK_008
+STK_008 -[hidden]down-> STK_009
+
+STK_006 -[#6D4C41]right-> DRV_006 : <<association>>
+STK_006 -[#6D4C41]right-> DRV_015 : <<association>>
+STK_007 -[#6D4C41]right-> DRV_007 : <<association>>
+STK_007 -[#6D4C41]right-> DRV_016 : <<association>>
+STK_008 -[#6D4C41]right-> DRV_008 : <<association>>
+STK_008 -[#6D4C41]right-> DRV_017 : <<association>>
+STK_009 -[#6D4C41]right-> DRV_009 : <<association>>
+STK_009 -[#6D4C41]right-> DRV_018 : <<association>>
+@enduml

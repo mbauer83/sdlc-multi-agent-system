@@ -185,7 +185,7 @@ class "ReviewItem" as DOB_008 {
 }
 
 note right of DOB_008
-  Created during sprint review (BPR-006).
+  Created during sprint review interaction (BIA-001).
   Collected per-artifact in the review
   submission payload; embedded in the
   review.submitted event.

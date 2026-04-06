@@ -103,6 +103,8 @@ For each DOB-nnn in the Data Entity Catalog:
 3. Verify the DOB's classification is internally consistent with its BA context: a data entity involved exclusively in Public business processes should rarely be classified Restricted without explicit justification. Inconsistency: **Gap D2 — Classification inconsistency** (not a hard failure, but requires SwA rationale).
 4. Verify no technology-specific data model elements appear: no database column names, no SQL types, no file formats, no storage product names. If found: **Gap D3 — Technology-independence violation**.
 
+5. Verify data needed to evidence `OUT-nnn` metrics remains represented and attributable in the DA path (`OUT -> COA -> CAP -> BPR/BSV -> DOB`). Missing evidentiary data lineage is **Gap D6 — Outcome evidence data gap**.
+
 ---
 
 ### Step 2 — CRUD Coverage Check

@@ -12,7 +12,7 @@
 | Agent ID | Role | Primary Phases | Invoke When |
 |---|---|---|---|
 | PM | Project Manager (Coordinator) | Prelim, A, E, F, G, H | Engagement start/close; any phase/sprint start; gate evaluation; CQ batching; algedonic routing; inter-agent deadlock |
-| SA | Solution Architect (Integrator) | A, B, H (consulting: C, D–G) | Architecture Vision, Business Architecture, motivation/strategy/business entities; Phase H business-layer Change Record; Phase C traceability review (consulting) |
+| SA | Solution Architect (Integrator) | A, B, H (consulting: C, D–G) | Architecture Vision, Business Architecture, motivation/strategy/business entities; mandatory intent-to-value evidence chain (`STK->DRV->GOL->OUT->COA->CAP->BPR/BSV->VS value`); Phase H business-layer Change Record; Phase C traceability review (consulting) |
 | SwA | Software Architect / PE (Integrator) | C, D, E, F, G, H (consulting: A–B) | Application Architecture (APP/AIF/ASV), Data Architecture (DOB), Technology Architecture; Gap Analysis; Transition Architecture; Architecture Contract; Phase G compliance review; Phase H application/technology-layer Change Record |
 | DO | DevOps / Platform Engineer (Specialist) | D, E, F, G | Platform feasibility review of TA (Phase D); infrastructure planning (E/F); environment provisioning, pipeline execution, deployment records (G) |
 | DE | Implementing Developer (Specialist) | G | Phase G Solution Sprint feature implementation; PR submission against Architecture Contract |

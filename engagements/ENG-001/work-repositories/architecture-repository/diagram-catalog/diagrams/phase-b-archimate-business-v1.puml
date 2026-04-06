@@ -38,7 +38,7 @@
 '   - BPR-003
 '   - BPR-004
 '   - BPR-005
-'   - BPR-006
+'   - BIA-001
 '   - BPR-007
 '   - BPR-008
 '   - BSV-001
@@ -52,11 +52,11 @@
 '   - BSV-009
 ' connection-ids-used:
 '   - ACT-001---BPR-003
-'   - ACT-001---BPR-006
+'   - ACT-001---BIA-001
 '   - ACT-002---BPR-001
 '   - ACT-002---BPR-004
 '   - ACT-002---BPR-005
-'   - ACT-002---BPR-006
+'   - ACT-002---BIA-001
 '   - ACT-003---BPR-002
 '   - ACT-003---BPR-008
 '   - ACT-004---BPR-002
@@ -85,8 +85,8 @@
 '   - BPR-003---BSV-009
 '   - BPR-003---CAP-005
 '   - BPR-004---BSV-003
-'   - BPR-006---BSV-009
-'   - BPR-006---CAP-005
+'   - BIA-001---BSV-009
+'   - BIA-001---CAP-005
 '   - BPR-005---BSV-004
 '   - BPR-007---BSV-001
 '   - BPR-008---BSV-001
@@ -152,7 +152,7 @@ rectangle "SDLC Processes" <<BusinessGrouping>> as PROCS {
   DECL_BPR_003
   DECL_BPR_004
   DECL_BPR_005
-  DECL_BPR_006
+  DECL_BIA_001
   DECL_BPR_007
   DECL_BPR_008
 }
@@ -179,7 +179,7 @@ rectangle "Business Services" <<BusinessGrouping>> as SVCS {
 ACT_002 -[#B8860B]-> BPR_001 : <<assignment>>
 ACT_002 -[#B8860B]-> BPR_004 : <<assignment>>
 ACT_002 -[#B8860B]-> BPR_005 : <<assignment>>
-ACT_002 -[#B8860B]-> BPR_006 : <<assignment>>
+ACT_002 -[#B8860B]-> BIA_001 : <<assignment>>
 ' SA and SwA — skill execution + reverse architecture
 ACT_003 -[#B8860B]-> BPR_002 : <<assignment>>
 ACT_003 -[#B8860B]-> BPR_008 : <<assignment>>
@@ -197,7 +197,7 @@ ACT_010 -[#B8860B]-> BPR_004 : <<assignment>>
 ACT_010 -[#B8860B]-> BPR_005 : <<assignment>>
 ' User — CQ responses, sprint review decisions
 ACT_001 -[#B8860B]-> BPR_003 : <<assignment>>
-ACT_001 -[#B8860B]-> BPR_006 : <<assignment>>
+ACT_001 -[#B8860B]-> BIA_001 : <<assignment>>
 ' Architecture Board — enterprise promotion
 BCO_001 -[#B8860B]-> BPR_007 : <<assignment>>
 
@@ -214,7 +214,7 @@ BPR_002 ..[#B8860B].>> BSV_007 : <<realization>>
 BPR_002 ..[#B8860B].>> BSV_008 : <<realization>>
 BPR_003 ..[#B8860B].>> BSV_009 : <<realization>>
 BPR_004 ..[#B8860B].>> BSV_003 : <<realization>>
-BPR_006 ..[#B8860B].>> BSV_009 : <<realization>>
+BIA_001 ..[#B8860B].>> BSV_009 : <<realization>>
 BPR_005 ..[#B8860B].>> BSV_004 : <<realization>>
 BPR_007 ..[#B8860B].>> BSV_001 : <<realization>>
 BPR_008 ..[#B8860B].>> BSV_001 : <<realization>>
@@ -228,7 +228,7 @@ BPR_001 ..[#4682B4].>> CAP_003 : <<realization>>
 BPR_002 ..[#4682B4].>> CAP_002 : <<realization>>
 BPR_002 ..[#4682B4].>> CAP_004 : <<realization>>
 BPR_003 ..[#4682B4].>> CAP_005 : <<realization>>
-BPR_006 ..[#4682B4].>> CAP_005 : <<realization>>
+BIA_001 ..[#4682B4].>> CAP_005 : <<realization>>
 BPR_008 ..[#4682B4].>> CAP_006 : <<realization>>
 
 ' ---------------------------------------------------------------------------

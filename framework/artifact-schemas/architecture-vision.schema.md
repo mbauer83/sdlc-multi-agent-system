@@ -68,6 +68,16 @@ A high-level capability map covering the primary domains in scope. Uses ArchiMat
 
 This is intentionally high-level. Detail is produced in Phase B (Business Architecture).
 
+### 3.5.1 Outcome and Course-of-Action Anchors
+
+For each top-priority goal, AV must define at least one measurable target outcome and one intended course of action anchor to be elaborated in Phase B:
+
+- `OUT-nnn` hypothesis: outcome statement, metric, target/threshold, evidence source.
+- `COA-nnn` anchor: strategic approach that will be operationalized through capabilities.
+
+Minimum chain required at AV baseline:
+`STK -> DRV -> GOL -> OUT -> COA -> CAP`.
+
 ### 3.6 Architecture Principles (Phase A application)
 
 Reference the Architecture Principles Register. List the principles most directly constraining this engagement, with a one-line statement of how each applies.
@@ -128,6 +138,7 @@ Before the Phase A gate can pass, the Architecture Vision artifact must satisfy:
 - [ ] All stakeholder concerns are captured; no known stakeholder is absent from the register.
 - [ ] Every business driver is traceable to at least one stakeholder.
 - [ ] Capability overview covers all in-scope domains with no unexplained gaps.
+- [ ] Top-priority goals include measurable `OUT-nnn` hypotheses and `COA-nnn` anchors.
 - [ ] Safety envelope is present, authored or co-authored by CSCO, and CSCO sign-off recorded.
 - [ ] Architecture Vision Statement is comprehensible to a non-architect stakeholder.
 - [ ] Gap analysis is present for all four architecture domains.

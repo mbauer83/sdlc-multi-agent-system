@@ -1,8 +1,8 @@
 ---
 document: artifact-registry-design
-version: 2.1.0
+version: 2.2.0
 status: Approved — Stage 4.8d
-last-updated: 2026-04-04
+last-updated: 2026-04-06
 ---
 
 # Artifact Registry Design — Entity Registry Pattern
@@ -188,6 +188,18 @@ Not model entities; no `§display` section; not organised in `model-entities/` l
 | `diagram-template` | `diagram-catalog/templates/*.puml` | Blank per-type stub; frontmatter in header comment block (§2.4) |
 | `learning-entry` | `agents/<role>/learnings/<ROLE>-L-NNN.md` | Agent learning record; stored at framework/agent level, not per-engagement |
 | `repository-map` | `architecture-repository/` | Multi-repo engagement map |
+
+### 2.6 Dense-Association Modeling Pattern (split diagrams + matrix)
+
+For high-cardinality relationship sets (especially motivation/business traceability maps), model readability and model completeness are both mandatory.
+
+Pattern:
+
+1. Publish **multiple focused diagram slices** (`diagram` artifacts, `.puml`) with lower edge density.
+2. Publish one **full-coverage matrix companion** (`diagram` artifact, `.md`) listing the complete many-to-many mapping.
+3. Keep all slices and matrix in the same domain/version set and cross-reference by artifact-id in each artifact's `purpose`/narrative.
+
+This pattern is required when one diagram's edge routing becomes unreadable even after one layout-tuning pass. Governed by `framework/diagram-conventions.md §0.2.1` and `§5.D0`.
 
 ---
 

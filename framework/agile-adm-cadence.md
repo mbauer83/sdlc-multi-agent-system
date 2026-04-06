@@ -355,6 +355,7 @@ A phase transition gate is a formal checkpoint evaluated by the Project Manager 
 - [ ] CSCO sign-off obtained for all safety-relevant artifacts produced in the phase.
 - [ ] Open issues count is zero, or all open issues are explicitly classified as non-blocking with an assigned owner and a target sprint.
 - [ ] Requirements traceability confirmed by Product Owner.
+- [ ] Outcome-evidence chain is intact for in-scope value goals: `STK -> DRV -> GOL -> OUT -> COA -> CAP -> (BPR/BSV) -> VS-stage value`.
 - [ ] Sprint log entry closed by PM.
 - [ ] No blocking Clarification Requests (`CQ`) are open on any artifact required for this gate.
 - [ ] All assumptions recorded in artifact `assumptions` fields have been reviewed; undocumented assumptions are absent.
@@ -374,7 +375,7 @@ A phase transition gate is a formal checkpoint evaluated by the Project Manager 
 |---|---|
 | Prelim → A | RACI matrix confirmed by all agents |
 | A → B | Statement of Architecture Work signed off by PM; safety envelope approved by CSCO |
-| B → C | Business-level safety constraints accepted by CSCO and recorded in Safety Constraint Overlay |
+| B → C | Business-level safety constraints accepted by CSCO and recorded in Safety Constraint Overlay; SA confirms measurable `OUT` evidence paths exist for all in-scope value goals |
 | C → D | Application Architecture and Data Architecture artifacts both baselined |
 | D → E | All Phase D ADRs recorded with rationale; CSCO technology safety overlays accepted |
 | E → F | Risk Register reviewed by CSCO; implementation candidates approved by PM |
@@ -416,7 +417,7 @@ An artifact in **draft** state (version 0.x.x) may be shared for early feedback 
 
 ### 9.2 Sprint Review Cycle (user approval gate)
 
-The Sprint Review (BPR-006) is a distinct feedback loop governed by user authority, not the normal two-iteration cap:
+The Sprint Review Interaction (BIA-001) is a distinct feedback loop governed by user authority, not the normal two-iteration cap:
 
 1. PM emits `review.pending`; dashboard surfaces all sprint artifacts.
 2. **User** reviews each artifact and marks it: `approved`, `needs-revision`, or `rejected` (with optional agent tag and comment).
@@ -425,11 +426,13 @@ The Sprint Review (BPR-006) is a distinct feedback loop governed by user authori
 5. **Revised artifacts are re-presented to the user** for a fresh review cycle.
 6. Steps 2–5 repeat until the user marks **all** artifacts `approved`.
 7. Only when all items are approved does `sprint.close` proceed.
+8. If the user/PM chooses `pause`, `phase.suspended` is emitted and sprint planning remains blocked until an explicit `phase.resumed` decision is recorded.
 
 **Key constraints:**
 - The sprint does **not** close while any item is `needs-revision` or `rejected`.
 - The user has authority to request indefinite rework cycles — there is no iteration cap for the sprint review.
 - The 2-iteration cap in §9.1 applies to inter-agent handoff loops only; it does not constrain user-driven review cycles.
+- Pause must have a corresponding resume path; paused engagements are suspended, not terminated.
 
 ### 9.3 Retrospective Feedback (sprint boundary)
 

@@ -39,6 +39,7 @@ These entities carry over or are refined from Phase A. SA produces or updates th
 | `STK-nnn` | `stakeholder` | `motivation/stakeholders/` | Name; Role (user/consumer/regulator/sponsor); Concerns; Influence; Safety Relevance |
 | `DRV-nnn` | `driver` | `motivation/drivers/` | Name; Statement; Category (market/regulatory/technical/safety); Urgency |
 | `GOL-nnn` | `goal` | `motivation/goals/` | Name; Statement; Stakeholder (`STK-nnn`); Realised By (`CAP-nnn`) |
+| `OUT-nnn` | `outcome` | `motivation/outcomes/` | Name; Statement; Measurable Evidence (metric, target, source artifact); Related Goal (`GOL-nnn`) |
 | `REQ-nnn` | `requirement` | `motivation/requirements/` | Name; Statement; Type (Functional/Non-Functional/Constraint/Safety); Source (`STK-nnn`/`DRV-nnn`) |
 | `CST-nnn` | `constraint` | `motivation/constraints/` | Name; Statement; Type (Business/Regulatory/Technical/Safety); Imposed By |
 | `PRI-nnn` | `principle` | `motivation/principles/` | Name; Statement; Rationale; Implications |
@@ -51,6 +52,8 @@ Every `REQ-nnn` produced in Phase A is reviewed for completeness before Phase B 
 |---|---|---|---|
 | `CAP-nnn` | `capability` | `strategy/capabilities/` | Name; Description (what the business *has the ability to do*); Domain (Level-1 cluster); Strategic Classification (Core/Supporting/Commodity); Maturity Level (Current/Developing/Target); Gap (Yes/No); Traceable To (`DRV-nnn`) |
 | `VS-nnn` | `value-stream` | `strategy/value-streams/` | Name; Triggering Stakeholder (`STK-nnn`); Value Delivered; Key Processes (ordered `BPR-nnn` list); Metrics |
+| `COA-nnn` | `course-of-action` | `strategy/courses-of-action/` | Name; Strategic Approach; Realized Through (`CAP-nnn`); Outcome Target (`OUT-nnn`) |
+| `VAL-nnn` | `value` | `motivation/values/` | Name; Stage Value Statement; Value Stream Stage Reference; Evidence Link (`OUT-nnn`) |
 
 **Level 1 / Level 2 capability hierarchy:** Level-1 domains are modelled as `CAP-nnn` entries with `strategic-classification: domain`; Level-2 capabilities are `CAP-nnn` entries with a `parent-domain:` field naming the Level-1 domain. This is recorded in the entity's `§content` properties table; no separate index file is required.
 
@@ -84,9 +87,13 @@ Connection files are written to `architecture-repository/connections/` subdirect
 | `archimate-association` | `STK-nnn` → `GOL-nnn` | `connections/archimate/association/` | Stakeholder holds the goal |
 | `archimate-realization` | `BPR-nnn` → `CAP-nnn` | `connections/archimate/realization/` | Process realises capability |
 | `archimate-realization` | `BSV-nnn` → `CAP-nnn` | `connections/archimate/realization/` | Service realises capability |
+| `archimate-realization` | `OUT-nnn` → `GOL-nnn` | `connections/archimate/realization/` | Outcome evidences goal achievement |
+| `archimate-realization` | `CAP-nnn` → `COA-nnn` | `connections/archimate/realization/` | Capability operationalizes course of action |
 | `archimate-assignment` | `ACT-nnn` → `BPR-nnn` | `connections/archimate/assignment/` | Actor performs process |
 | `archimate-serving` | `BSV-nnn` → `STK-nnn` | `connections/archimate/serving/` | Service serves stakeholder |
 | `archimate-triggering` | `BPR-nnn` → `BPR-nnn` | `connections/archimate/triggering/` | Process sequence within a value stream |
+| `archimate-association` | `OUT-nnn` → `VAL-nnn` | `connections/archimate/association/` | Outcome evidence linked to delivered value |
+| `archimate-association` | `VAL-nnn` → `VS-nnn` | `connections/archimate/association/` | Value tied to value-stream stage context |
 
 ---
 
@@ -111,8 +118,11 @@ Required sections:
 ## 6. Quality Criteria
 
 - [ ] Every `CAP-nnn` is traceable to at least one `DRV-nnn` from the Architecture Vision.
+- [ ] Every in-scope `GOL-nnn` has at least one measurable `OUT-nnn` with evidence fields.
+- [ ] Every in-scope `OUT-nnn` has at least one `COA-nnn` and at least one capability operationalization path.
 - [ ] Every safety-relevant `BPR-nnn` is flagged `safety-relevant: true` and appears in the SCO Phase B update.
 - [ ] All `VS-nnn` value streams are complete end-to-end (trigger `STK-nnn` → outcome → `CAP-nnn`).
+- [ ] Value-stream stages have explicit delivered-value bindings (`VAL-nnn`) evidenced by outcomes.
 - [ ] Motivation architecture traces: every `GOL-nnn` has an `archimate-influence` connection to a `DRV-nnn`.
 - [ ] `ba-overview.md` summary header is complete and `csco-sign-off: true` is recorded after CSCO Phase B gate review.
 - [ ] No entity file is referenced by a diagram alias that lacks a backing `§display ###archimate` subsection (enforced by `validate_diagram`).

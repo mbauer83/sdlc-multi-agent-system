@@ -141,6 +141,8 @@ Based on Step 1 reading, produce a complete list of impacted artifacts for CR §
 
 For each cascading impact within SA's domain, SA notes the impact but does not modify the affected artifact at this step. The Change Record authorises the modifications; SA executes them in Step 7.
 
+**Traceability-chain preservation rule (mandatory):** Every approved change must preserve or deliberately revise the chain `STK -> DRV -> GOL -> OUT -> COA -> CAP -> (BPR/BSV) -> VS-stage value`. If any segment is removed or altered, CR §2.4 must explicitly list the broken link and the compensating update action before approval.
+
 ---
 
 ### Step 3 — Assess Change Classification

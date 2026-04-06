@@ -236,6 +236,8 @@ Infer and write typed ArchiMate connection files. Priority order:
 
 **Diagramming convention for decomposed behavior (mandatory):** when these connections are rendered in ArchiMate operational diagrams, staged process/interaction behavior must be shown with nested parent containers (`BPR-nnn` / `BIA-nnn` as the container element) and internal stage `flow`/`triggering` links. Do not render outer grouping wrappers with duplicated parent nodes. Keep composition connection files as model truth even when operational diagrams omit external composition arrows.
 
+**Decomposition sizing (mandatory):** reconstructed stage structures must be domain-derived, not template-derived. Do not default to a fixed three-stage decomposition. Use the smallest manageable number of stages that preserves behavioral clarity; if many stages are needed, split concerns into additional top-level behaviors and connect them explicitly.
+
 Only write connections where both source and target entity files exist in ModelRegistry.
 
 ---

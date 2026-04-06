@@ -28,7 +28,7 @@
 '   - BPR-003
 '   - BPR-004
 '   - BPR-005
-'   - BPR-006
+'   - BIA-001
 ' ---
 @startuml phase-b-activity-sprint-v1
 
@@ -111,11 +111,11 @@ if (Gate passed?) then (no — failed or deferred)
   stop
 else (yes)
   :Emit **phase.transitioned**\n(if phase boundary crossed);
-  :Trigger Sprint Review\n(BPR-006);
+  :Trigger Sprint Review Interaction\n(BIA-001);
 endif
 
 ' ---------------------------------------------------------------------------
-' Sprint Review (BPR-006)
+' Sprint Review Interaction (BIA-001)
 ' ---------------------------------------------------------------------------
 |User|
 :Receive sprint artifact\nlist on Dashboard;
@@ -150,7 +150,7 @@ if (Engagement\ncomplete?) then (yes)
   :Emit **engagement.completed**;
   stop
 else (no)
-  :Begin next sprint;
+  :Begin next sprint\n(or resume when paused);
   note right: Loop back to\nsprint planning
   stop
 endif

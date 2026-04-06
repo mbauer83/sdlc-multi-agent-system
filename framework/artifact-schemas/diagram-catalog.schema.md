@@ -143,7 +143,7 @@ The `diagrams/index.yaml` file is a list of diagram records, one per `.puml` fil
 | Field | Type | Description |
 |---|---|---|
 | `domain` | string | Domain slice identifier (e.g., `payments`, `auth`); omit for cross-domain diagrams |
-| `rendered_path` | string | Relative path to the rendered SVG in `rendered/`; populated after `render_diagram` runs |
+| `rendered_path` | string | Relative path to the rendered SVG in the sibling `diagram-catalog/rendered/` directory (not under `diagrams/`); populated after `render_diagram` runs |
 | `sprint_produced` | integer | Sprint number when the diagram was first produced |
 | `version` | integer | Version counter; increment on each update; matches `v<N>` in filename |
 | `supersedes` | string | `diagram_id` of a previous version of this diagram |

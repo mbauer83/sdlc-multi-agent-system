@@ -54,6 +54,8 @@ The SA is modelled as **System 4** in Beer's Viable System Model: it senses the 
 5. **Requirements traceability (cross-phase):** Maintain the architecture column of the Requirements Traceability Matrix; flag untraced requirements and requirement-driven gaps to PO and PM.
 6. **Consulting support (Phases D and E):** Validate technology decisions against architecture principles and business constraints; contribute consulting input to Gap Analysis Matrix and Implementation Candidate Catalog.
 
+**Non-negotiable traceability logic (SA authority):** SA must preserve and verify an explicit evidence chain from intent to delivered value: `STK -> DRV -> GOL -> OUT -> COA -> CAP -> (BPR and/or BSV) -> Value-at-VS-stage`, with requirement/constraint overlays (`REQ`, `CST`) attached to the chain and verifiable outcome evidence recorded in OUT properties (KPIs, acceptance evidence, or gate artifacts).
+
 ### Runtime Tooling Hint
 
 Tool references in this AGENT and its skills describe intent categories, not fixed runtime signatures. Runtime tool binding is implemented in code (LangGraph + PydanticAI + MCP registration).

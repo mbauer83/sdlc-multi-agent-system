@@ -36,13 +36,15 @@ The Requirements Register is the living, cross-phase record of all requirements 
 
 Cross-reference between requirements and the architecture artifacts that satisfy them.
 
-| Req ID | AV | BA | AA | DA | TA | IP | TS | SCO |
-|---|---|---|---|---|---|---|---|---|
-| RR-nnn | ● | ○ | ● | — | | | | |
+| Req ID | STK | DRV | GOL | OUT | COA | CAP | BA | AA | DA | TA | IP | TS | SCO |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| RR-nnn | ○ | ● | ● | ○ | ○ | ● | ● | ○ | — | | | | |
 
 Symbols: ● = primary satisfaction; ○ = partial/contributing; — = not addressed.
 
 **Completeness rule:** Every Active requirement must have at least one ● in the matrix. Any requirement with no ● at Phase F gate is an open gap and must be resolved before Phase G entry.
+
+**Value-evidence rule:** For Must-priority value-related requirements, at least one non-empty chain through `GOL -> OUT -> COA -> CAP` is required.
 
 ### 2.4 Change Log
 

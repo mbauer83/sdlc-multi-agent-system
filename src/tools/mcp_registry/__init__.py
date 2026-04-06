@@ -1,0 +1,1 @@
+"""MCP registry backend package."""

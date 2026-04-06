@@ -326,7 +326,7 @@ Use diagram tools for viewpoint visualisations (`.puml`) and matrix tools for de
 | `generate_er_content` | `(entity_ids: list[str]) → str` | Reads each entity's `§display ###er` block; returns PUML class declarations for paste into ER diagram. |
 | `generate_er_relations` | `(connection_ids: list[str]) → str` | Reads each er-connection's `§display ###er` block; returns cardinality lines. |
 | `validate_diagram` | `(puml_file_path: str) → list[str]` | Checks all PUML aliases resolve to ModelRegistry entity-ids with appropriate `§display ###<language>` sections; confirms `!include _macros.puml` present; returns error list. ALG-C03 if alias has no backing entity — extend the model, do not remove the alias. |
-| `render_diagram` | `(puml_file_path: str) → Path` | Invokes local PlantUML CLI; writes SVG to `rendered/`. Run at sprint boundary. |
+| `render_diagram` | `(puml_file_path: str) → Path` | Invokes local PlantUML CLI; writes SVG to the sibling `diagram-catalog/rendered/` directory for the source path under `diagram-catalog/diagrams/` (never `diagrams/rendered/`). Run at sprint boundary. |
 
 ### 6.5 PM-Only Orchestration Tools
 

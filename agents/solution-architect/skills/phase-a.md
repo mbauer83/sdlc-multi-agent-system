@@ -35,6 +35,8 @@ Representation choice (balanced and mandatory):
 - Use matrix artifacts (`model_create_matrix`) for dense many-to-many mappings, coverage, and traceability where node-link readability degrades.
 - Do not replace contextual architecture views with matrices alone: keep a reasonable set of diagrams that preserves end-to-end context for the domain slice.
 - Practical threshold: if a single node-link view would exceed about 25 elements or become edge-dense, keep/author at least one contextual diagram and shift dense cross-reference detail to a matrix.
+- If edge lanes still coincide after one layout pass, split into 2-4 thematic diagrams instead of forcing one monolithic view.
+- For motivation traceability, keep horizontal progression and vertical governance relationships in separate diagrams, and publish a matrix companion for full coverage.
 
 This skill expresses tool-use intent; concrete tool signatures are runtime-bound by orchestration code.
 
@@ -192,6 +194,8 @@ For each capability cluster:
 - Classify strategic importance: Core / Supporting / Commodity
 
 **Traceability check:** Every capability cluster must be traceable to at least one DRV-nnn business driver and at least one VS-nnn stub. Capability with no VS anchor is either out of scope or indicates a missing value stream.
+
+**Outcome-evidence anchor (mandatory):** For each top-priority goal in §3.4/§3.5, define at least one target outcome hypothesis (`OUT-nnn`, draft allowed at Phase A) with a measurable indicator and expected evidence source (for example: sprint review decision record, gate outcome, KPI trend). This establishes the chain `STK -> DRV -> GOL -> OUT -> COA -> CAP` that Phase B must operationalize.
 
 ---
 

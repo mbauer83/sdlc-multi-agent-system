@@ -1,0 +1,74 @@
+' ---
+' artifact-id: a-archimate-motivation-goal-influence-v1
+' artifact-type: diagram
+' diagram-type: archimate-motivation
+' name: Motivation - Requirement to Goal Influence
+' version: 0.1.0
+' status: draft
+' phase-produced: A
+' owner-agent: SA
+' engagement: ENG-001
+' domain: core-platform
+' purpose: Readable goal map using requirement-level influences; dense influences moved
+'   to matrix artifacts.
+' entity-ids-used:
+' - GOL-001
+' - GOL-003
+' - GOL-004
+' - GOL-005
+' - GOL-006
+' - GOL-007
+' - REQ-015
+' - REQ-017
+' - REQ-018
+' - REQ-020
+' - REQ-021
+' - REQ-023
+' connection-ids-used:
+' - REQ-015---GOL-007
+' - REQ-017---GOL-006
+' - REQ-018---GOL-005
+' - REQ-020---GOL-004
+' - REQ-021---GOL-001
+' - REQ-023---GOL-003
+' ---
+@startuml a-archimate-motivation-goal-influence-v1
+!include ../_macros.puml
+!include ../_archimate-stereotypes.puml
+
+left to right direction
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 48
+
+rectangle "Requirements (Goal-Relevant)" <<MotivationGrouping>> as GRP_REQ {
+  DECL_REQ_015
+  DECL_REQ_017
+  DECL_REQ_018
+  DECL_REQ_020
+  DECL_REQ_021
+  DECL_REQ_023
+}
+
+rectangle "Goals" <<MotivationGrouping>> as GRP_GOL {
+  DECL_GOL_001
+  DECL_GOL_002
+  DECL_GOL_003
+  DECL_GOL_004
+  DECL_GOL_005
+  DECL_GOL_006
+  DECL_GOL_007
+}
+
+REQ_021 -[#1565C0]right-> GOL_001 : <<influence>>
+REQ_023 -[#1565C0]right-> GOL_003 : <<influence>>
+REQ_020 -[#1565C0]right-> GOL_004 : <<influence>>
+REQ_018 -[#1565C0]right-> GOL_005 : <<influence>>
+REQ_017 -[#1565C0]right-> GOL_006 : <<influence>>
+REQ_015 -[#1565C0]right-> GOL_007 : <<influence>>
+
+note bottom of GRP_REQ
+Full driver+requirement to goal influences are captured in
+[a-matrix-motivation-goal-influence-full-v1].
+end note
+@enduml

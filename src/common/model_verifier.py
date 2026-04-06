@@ -1,1315 +1,352 @@
-"""
-ERP v2.0 Model Verifier — entity, connection, and diagram file validation.
-
-Checks syntactic correctness, frontmatter presence/format, and (when a registry
-is provided) referential integrity of source/target artifact-ids in connection files
-and entity-ids-used/connection-ids-used in diagram files.
-
-Designed for two usage modes:
-  1. Stage 5 integration — called by ``write_artifact`` before committing a file.
-  2. Standalone / pre-commit — ``ModelVerifier.verify_all(repo_path)`` batch scan.
-
-No exceptions are raised for validation failures; results are accumulated in
-``VerificationResult.issues`` so callers receive a full picture of all errors.
-
-Governed by:
-  - framework/artifact-schemas/entity-conventions.md
-  - framework/artifact-registry-design.md §3–§5
-  - framework/diagram-conventions.md §9
-"""
+"""ERP v2.0 model verification facade with modular helper backends."""
 
 from __future__ import annotations
 
-import os
-import re
-import subprocess
-import tempfile
-from dataclasses import dataclass, field
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Literal
+from typing import Callable, Literal
 
-from src.common.archimate_types import ALL_ENTITY_TYPES, ALL_CONNECTION_TYPES
-
-import yaml
-
-
-# ---------------------------------------------------------------------------
-# Public data model
-# ---------------------------------------------------------------------------
-
-
-class Severity:
-    ERROR = "error"
-    WARNING = "warning"
-
-
-@dataclass(frozen=True)
-class Issue:
-    severity: Literal["error", "warning"]
-    code: str  # E/W + three-digit number; see ERROR CODES at module bottom
-    message: str
-    location: str  # file path (optionally ":line")
-
-
-@dataclass
-class VerificationResult:
-    """
-    Result of verifying a single file.
-
-    ``valid`` is True when there are no ERROR-severity issues; warnings do not
-    invalidate a file.
-    """
-
-    path: Path
-    file_type: Literal["entity", "connection", "diagram"]
-    issues: list[Issue] = field(default_factory=list)
-
-    @property
-    def valid(self) -> bool:
-        return not any(i.severity == Severity.ERROR for i in self.issues)
-
-    @property
-    def errors(self) -> list[Issue]:
-        return [i for i in self.issues if i.severity == Severity.ERROR]
-
-    @property
-    def warnings(self) -> list[Issue]:
-        return [i for i in self.issues if i.severity == Severity.WARNING]
-
-    def __repr__(self) -> str:  # noqa: D105
-        status = "PASS" if self.valid else "FAIL"
-        return f"VerificationResult({status}, {self.path.name}, {len(self.issues)} issues)"
-
-
-# ---------------------------------------------------------------------------
-# Public utility — formal entity-id extraction from filename
-# ---------------------------------------------------------------------------
-
-
-def entity_id_from_path(path: Path) -> str:
-    """Extract the formal artifact-id from an entity filename.
-
-    Entity filenames follow the convention ``TYPEABBR-NNN.friendly-name.md``
-    (or the legacy ``TYPEABBR-NNN.md``).  The formal ID is always the portion
-    of the stem before the first ``'.'``.  Code must use this function rather
-    than ``Path.stem`` directly so that friendly-name suffixes are ignored
-    transparently.
-
-    Examples::
-
-        entity_id_from_path(Path("CAP-001.phase-execution.md")) == "CAP-001"
-        entity_id_from_path(Path("APP-007.pm-agent.md"))        == "APP-007"
-        entity_id_from_path(Path("ACT-001.md"))                 == "ACT-001"
-    """
-    return path.stem.split(".")[0]
-
-
-# ---------------------------------------------------------------------------
-# Registry — lightweight scan of model-entities/ and connections/
-# ---------------------------------------------------------------------------
-
-
-class ModelRegistry:
-    """
-    Lightweight in-memory registry of known entity and connection artifact-ids.
-
-    Built by scanning frontmatter of .md files under ``model-entities/`` and
-    ``connections/`` directories.  The registry is lazy-loaded on first access
-    and cached for the lifetime of the object.
-
-    For Stage 5 integration this will be replaced by the full ModelRegistry
-    implementation in ``src/agents/``.  The interface (``entity_ids()``,
-    ``connection_ids()``) is kept identical so the verifier can accept either.
-    """
-
-    def __init__(self, repo_root: Path | list[Path]) -> None:
-        """Create a registry over one or more ERP v2.0 repository roots.
-
-        Per framework/artifact-registry-design.md §6.1, an EngagementSession's
-        unified registry includes both engagement-scope and enterprise-scope
-        repository roots.
-        """
-
-        roots = [repo_root] if isinstance(repo_root, Path) else list(repo_root)
-        self.repo_roots = [r.resolve() for r in roots]
-
-        # Cache: populated together on first bulk access.
-        # id -> (status, scope)
-        self._entity_meta: dict[str, tuple[str, str]] | None = None
-        self._connection_meta: dict[str, tuple[str, str]] | None = None
-
-    @staticmethod
-    def _scope_for_root(root: Path) -> str:
-        return "enterprise" if root.name == "enterprise-repository" else "engagement"
-
-    def scope_for_path(self, path: Path) -> Literal["enterprise", "engagement", "unknown"]:
-        p = path.resolve()
-        for root in self.repo_roots:
-            try:
-                _ = p.relative_to(root)
-            except ValueError:
-                continue
-            return "enterprise" if self._scope_for_root(root) == "enterprise" else "engagement"
-        return "unknown"
-
-    def scope_of_entity(self, artifact_id: str) -> Literal["enterprise", "engagement", "unknown"]:
-        meta = self._ensure_entity_meta().get(artifact_id)
-        if meta is None:
-            return "unknown"
-        return "enterprise" if meta[1] == "enterprise" else "engagement"
-
-    def scope_of_connection(self, artifact_id: str) -> Literal["enterprise", "engagement", "unknown"]:
-        meta = self._ensure_connection_meta().get(artifact_id)
-        if meta is None:
-            return "unknown"
-        return "enterprise" if meta[1] == "enterprise" else "engagement"
-
-    def _ensure_entity_meta(self) -> dict[str, tuple[str, str]]:
-        """Lazy-load the full entity id→(status, scope) map (one scan, cached)."""
-        if self._entity_meta is None:
-            self._entity_meta = {}
-            for repo_root in self.repo_roots:
-                scope = self._scope_for_root(repo_root)
-                root = repo_root / "model-entities"
-                if not root.exists():
-                    continue
-                for f in root.rglob("*.md"):
-                    try:
-                        fm = _parse_frontmatter_from_path(f)
-                        if fm and "artifact-id" in fm:
-                            aid = str(fm["artifact-id"])
-                            status = str(fm.get("status", ""))
-                            if aid in self._entity_meta:
-                                prev_scope = self._entity_meta[aid][1]
-                                raise ValueError(
-                                    f"Duplicate entity artifact-id '{aid}' across mounted repositories "
-                                    f"({prev_scope} and {scope}); this is forbidden by the framework"
-                                )
-                            self._entity_meta[aid] = (status, scope)
-                    except ValueError:
-                        raise
-                    except Exception:  # noqa: BLE001
-                        pass
-        return self._entity_meta
-
-    def entity_ids(self) -> set[str]:
-        """Return the set of all known entity artifact-ids."""
-        return set(self._ensure_entity_meta().keys())
-
-    def enterprise_entity_ids(self) -> set[str]:
-        return {aid for aid, (_, scope) in self._ensure_entity_meta().items() if scope == "enterprise"}
-
-    def engagement_entity_ids(self) -> set[str]:
-        return {aid for aid, (_, scope) in self._ensure_entity_meta().items() if scope == "engagement"}
-
-    def entity_status(self, artifact_id: str) -> str | None:
-        """Return the status of a single entity without forcing a full scan.
-
-        If the full cache is already warm, uses it (O(1)).  Otherwise locates the
-        entity file directly via ``find_file_by_id`` and reads only that file —
-        efficient for spot-checks on individual entities.
-        """
-        if self._entity_meta is not None:
-            meta = self._entity_meta.get(artifact_id)
-            return meta[0] if meta else None
-        # Cache not warm — targeted single-file lookup avoids scanning everything.
-        f = self.find_file_by_id(artifact_id)
-        if f is None:
-            return None
-        fm = _parse_frontmatter_from_path(f)
-        if fm is None:
-            return None
-        status = str(fm.get("status", ""))
-        return status or None
-
-    def entity_statuses(self) -> dict[str, str]:
-        """Return a full artifact-id → status mapping (bulk; triggers full scan)."""
-        return {aid: status for aid, (status, _) in self._ensure_entity_meta().items()}
-
-    def connection_ids(self) -> set[str]:
-        """Return the set of all known connection artifact-ids."""
-        return set(self._ensure_connection_meta().keys())
-
-    def enterprise_connection_ids(self) -> set[str]:
-        return {aid for aid, (_, scope) in self._ensure_connection_meta().items() if scope == "enterprise"}
-
-    def engagement_connection_ids(self) -> set[str]:
-        return {aid for aid, (_, scope) in self._ensure_connection_meta().items() if scope == "engagement"}
-
-    def connection_status(self, artifact_id: str) -> str | None:
-        """Return the status of a single connection without forcing a full scan.
-
-        If the full cache is already warm, uses it (O(1)).  Otherwise locates the
-        connection file directly and reads only that file — efficient for
-        spot-checks on individual connections.
-        """
-        if self._connection_meta is not None:
-            meta = self._connection_meta.get(artifact_id)
-            return meta[0] if meta else None
-        # Cache not warm — targeted single-file lookup across all roots.
-        for repo_root in self.repo_roots:
-            root = repo_root / "connections"
-            if not root.exists():
-                continue
-            for f in root.rglob("*.md"):
-                if f.stem == artifact_id:
-                    fm = _parse_frontmatter_from_path(f)
-                    if fm:
-                        return str(fm.get("status", "")) or None
-        return None
-
-    def _ensure_connection_meta(self) -> dict[str, tuple[str, str]]:
-        """Lazy-load the full connection id→(status, scope) map (one scan, cached)."""
-        if self._connection_meta is None:
-            self._connection_meta = {}
-            for repo_root in self.repo_roots:
-                scope = self._scope_for_root(repo_root)
-                root = repo_root / "connections"
-                if not root.exists():
-                    continue
-                for f in root.rglob("*.md"):
-                    try:
-                        fm = _parse_frontmatter_from_path(f)
-                        if fm and "artifact-id" in fm:
-                            aid = str(fm["artifact-id"])
-                            status = str(fm.get("status", ""))
-                            if aid in self._connection_meta:
-                                prev_scope = self._connection_meta[aid][1]
-                                raise ValueError(
-                                    f"Duplicate connection artifact-id '{aid}' across mounted repositories "
-                                    f"({prev_scope} and {scope}); this is forbidden by the framework"
-                                )
-                            self._connection_meta[aid] = (status, scope)
-                    except ValueError:
-                        raise
-                    except Exception:  # noqa: BLE001
-                        pass
-        return self._connection_meta
-
-    @staticmethod
-    def _scan(root: Path) -> set[str]:
-        ids: set[str] = set()
-        if not root.exists():
-            return ids
-        for f in root.rglob("*.md"):
-            try:
-                fm = _parse_frontmatter_from_path(f)
-                if fm and "artifact-id" in fm:
-                    ids.add(str(fm["artifact-id"]))
-            except Exception:  # noqa: BLE001
-                pass
-        return ids
-
-    def find_file_by_id(self, artifact_id: str) -> Path | None:
-        """Return the Path of an entity file whose formal artifact-id matches *artifact_id*.
-
-        Supports both the legacy ``TYPEABBR-NNN.md`` format and the new
-        ``TYPEABBR-NNN.friendly-name.md`` format.  The formal ID is always the
-        portion of the stem before the first ``'.'``.
-        """
-        for repo_root in self.repo_roots:
-            root = repo_root / "model-entities"
-            if not root.exists():
-                continue
-            for f in root.rglob("*.md"):
-                if entity_id_from_path(f) == artifact_id:
-                    return f
-        return None
-
-
-# ---------------------------------------------------------------------------
-# Verifier
-# ---------------------------------------------------------------------------
-
-_ENTITY_ID_RE = re.compile(r"^[A-Z]+-[0-9]{3}$")
-_CONN_ID_RE = re.compile(
-    r"^[A-Z]+-[0-9]{3}(--[A-Z]+-[0-9]{3})*---[A-Z]+-[0-9]{3}(--[A-Z]+-[0-9]{3})*$"
+from src.common.model_verifier_incremental import (
+    FileInventory,
+    detect_changed_paths,
+    expand_impacted_paths,
+    git_head,
+    inventory_files,
+    load_incremental_state,
+    load_runtime_config,
+    save_incremental_state,
+    serialize_result,
+    state_file_path,
 )
-
-# Canonical type sets — imported from archimate_types.py (single source of truth).
-# Do not add types here; add them to src/common/archimate_types.py instead.
-_ENTITY_TYPES: frozenset[str] = ALL_ENTITY_TYPES
-_CONNECTION_TYPES: frozenset[str] = ALL_CONNECTION_TYPES
-
-_VALID_STATUSES: frozenset[str] = frozenset({"draft", "baselined", "deprecated"})
-_VALID_PHASES: frozenset[str] = frozenset({"Prelim", "A", "B", "C", "D", "E", "F", "G", "H"})
-_VALID_AGENTS: frozenset[str] = frozenset({"SA", "SwA", "PM", "PO", "DO", "DE", "QA", "CSCO"})
-
-_ENTITY_REQUIRED: frozenset[str] = frozenset(
-    {
-        "artifact-id",
-        "artifact-type",
-        "name",
-        "version",
-        "status",
-        "phase-produced",
-        "owner-agent",
-        "safety-relevant",
-        "last-updated",
-        # NOTE: engagement is required for engagement-scope files, but is commonly
-        # omitted in enterprise-scope files (stripped on promotion). Enforced
-        # conditionally based on path scope.
-        "engagement",
-    }
+from src.common.model_verifier_parsing import parse_frontmatter, parse_puml_frontmatter, read_file
+from src.common.model_verifier_registry import ModelRegistry
+from src.common.model_verifier_rules import (
+    check_artifact_id_connection,
+    check_artifact_id_entity,
+    check_artifact_type,
+    check_diagram_artifact_type,
+    check_diagram_references_scoped,
+    check_enum,
+    check_puml_structure,
+    check_reference_resolution_scoped,
+    check_required_fields,
+    check_safety_relevant,
+    check_section,
 )
-
-_CONNECTION_REQUIRED: frozenset[str] = frozenset(
-    {
-        "artifact-id",
-        "artifact-type",
-        "source",
-        "target",
-        "version",
-        "status",
-        "phase-produced",
-        "owner-agent",
-        "last-updated",
-        # engagement conditionally required (see note in _ENTITY_REQUIRED)
-        "engagement",
-    }
+from src.common.model_verifier_syntax import (
+    check_puml_syntax,
+    check_puml_syntax_batch,
+    resolve_worker_count,
 )
-
-_DIAGRAM_REQUIRED: frozenset[str] = frozenset(
-    {
-        "artifact-id",
-        "artifact-type",
-        "name",
-        "diagram-type",
-        "version",
-        "status",
-        "phase-produced",
-        "owner-agent",
-        # engagement conditionally required (enterprise diagrams may omit it)
-        "engagement",
-    }
+from src.common.model_verifier_types import (
+    CONNECTION_REQUIRED,
+    CONNECTION_TYPES,
+    DIAGRAM_REQUIRED,
+    ENTITY_REQUIRED,
+    ENTITY_TYPES,
+    IncrementalState,
+    Issue,
+    Severity,
+    VALID_AGENTS,
+    VALID_PHASES,
+    VALID_STATUSES,
+    VerificationResult,
+    VerifierRuntimeConfig,
+    entity_id_from_path,
 )
-
-_DIAGRAM_ARTIFACT_TYPES: frozenset[str] = frozenset({"diagram"})
 
 
 class ModelVerifier:
-    """
-    Verifies entity, connection, and diagram files against ERP v2.0 conventions.
-
-    Parameters
-    ----------
-    registry:
-        Optional ``ModelRegistry`` used for referential-integrity checks.  When
-        absent, reference checks are skipped (issues noted as warnings).  Pass a
-        registry whenever batch-verifying a repository so cross-file checks run.
-    """
-
-    def __init__(self, registry: ModelRegistry | None = None) -> None:
+    def __init__(self, registry: ModelRegistry | None = None, *, check_puml_syntax: bool = True) -> None:
         self.registry = registry
-
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
+        self.check_puml_syntax = check_puml_syntax
 
     def verify_entity_file(self, path: Path) -> VerificationResult:
-        """Verify a model-entity .md file."""
         result = VerificationResult(path=path, file_type="entity")
         loc = str(path)
-
-        content = _read_file(path, result, loc)
+        content = read_file(path, result, loc)
         if content is None:
             return result
-
-        fm = _parse_frontmatter(content, result, loc)
+        fm = parse_frontmatter(content, result, loc)
         if fm is None:
             return result
 
-        required = _ENTITY_REQUIRED
-        scope = (
-            self.registry.scope_for_path(path)
-            if self.registry is not None
-            else ("enterprise" if "enterprise-repository" in path.resolve().parts else "engagement")
-        )
-        if scope == "enterprise":
-            required = frozenset(x for x in _ENTITY_REQUIRED if x != "engagement")
-        _check_required_fields(fm, required, result, loc)
-        _check_artifact_id_entity(fm, result, loc)
-        _check_artifact_type(fm, _ENTITY_TYPES, "entity type", result, loc)
-        _check_enum(fm, "status", _VALID_STATUSES, result, loc)
-        _check_enum(fm, "phase-produced", _VALID_PHASES, result, loc)
-        _check_enum(fm, "owner-agent", _VALID_AGENTS, result, loc)
-        _check_safety_relevant(fm, result, loc)
-        _check_section(content, "§content", required=True, result=result, loc=loc)
-        _check_section(content, "§display", required=True, result=result, loc=loc)
+        scope = self._scope_for_path(path)
+        required = ENTITY_REQUIRED if scope != "enterprise" else frozenset(x for x in ENTITY_REQUIRED if x != "engagement")
 
+        check_required_fields(fm, required, result, loc)
+        check_artifact_id_entity(fm, result, loc)
+        check_artifact_type(fm, ENTITY_TYPES, "entity type", result, loc)
+        check_enum(fm, "status", VALID_STATUSES, result, loc)
+        check_enum(fm, "phase-produced", VALID_PHASES, result, loc)
+        check_enum(fm, "owner-agent", VALID_AGENTS, result, loc)
+        check_safety_relevant(fm, result, loc)
+        check_section(content, "§content", required=True, result=result, loc=loc)
+        check_section(content, "§display", required=True, result=result, loc=loc)
         return result
 
     def verify_connection_file(self, path: Path) -> VerificationResult:
-        """Verify a model-connection .md file."""
         result = VerificationResult(path=path, file_type="connection")
         loc = str(path)
-
-        content = _read_file(path, result, loc)
+        content = read_file(path, result, loc)
         if content is None:
             return result
-
-        fm = _parse_frontmatter(content, result, loc)
+        fm = parse_frontmatter(content, result, loc)
         if fm is None:
             return result
 
-        required = _CONNECTION_REQUIRED
-        scope = (
-            self.registry.scope_for_path(path)
-            if self.registry is not None
-            else ("enterprise" if "enterprise-repository" in path.resolve().parts else "engagement")
+        scope = self._scope_for_path(path)
+        required = CONNECTION_REQUIRED if scope != "enterprise" else frozenset(
+            x for x in CONNECTION_REQUIRED if x != "engagement"
         )
-        if scope == "enterprise":
-            required = frozenset(x for x in _CONNECTION_REQUIRED if x != "engagement")
-        _check_required_fields(fm, required, result, loc)
-        _check_artifact_id_connection(fm, path, result, loc)
-        _check_artifact_type(fm, _CONNECTION_TYPES, "connection type", result, loc)
-        _check_enum(fm, "status", _VALID_STATUSES, result, loc)
-        _check_enum(fm, "phase-produced", _VALID_PHASES, result, loc)
-        _check_enum(fm, "owner-agent", _VALID_AGENTS, result, loc)
+
+        check_required_fields(fm, required, result, loc)
+        check_artifact_id_connection(fm, path, result, loc)
+        check_artifact_type(fm, CONNECTION_TYPES, "connection type", result, loc)
+        check_enum(fm, "status", VALID_STATUSES, result, loc)
+        check_enum(fm, "phase-produced", VALID_PHASES, result, loc)
+        check_enum(fm, "owner-agent", VALID_AGENTS, result, loc)
 
         if self.registry is not None:
-            scope = self.registry.scope_for_path(path)
-            allowed = (
-                self.registry.enterprise_entity_ids() if scope == "enterprise" else self.registry.entity_ids()
-            )
-            _check_reference_resolution_scoped(fm, self.registry, allowed, scope, result, loc)
+            allowed = self.registry.enterprise_entity_ids() if scope == "enterprise" else self.registry.entity_ids()
+            check_reference_resolution_scoped(fm, self.registry, allowed, scope, result, loc)
         else:
-            result.issues.append(Issue(
-                Severity.WARNING,
-                "W001",
-                "No ModelRegistry provided; source/target reference checks skipped",
-                loc,
-            ))
+            result.issues.append(Issue(Severity.WARNING, "W001", "No ModelRegistry provided; source/target reference checks skipped", loc))
 
-        # §content is optional on connections (prose description), warn if absent
-        _check_section(content, "§content", required=False, result=result, loc=loc)
-        _check_section(content, "§display", required=True, result=result, loc=loc)
-
+        check_section(content, "§content", required=False, result=result, loc=loc)
+        check_section(content, "§display", required=True, result=result, loc=loc)
         return result
 
     def verify_diagram_file(self, path: Path) -> VerificationResult:
-        """Verify a diagram .puml file."""
+        return self._verify_diagram_file(path, run_syntax_check=self.check_puml_syntax)
+
+    def _verify_diagram_file(self, path: Path, *, run_syntax_check: bool) -> VerificationResult:
         result = VerificationResult(path=path, file_type="diagram")
         loc = str(path)
-
-        content = _read_file(path, result, loc)
+        content = read_file(path, result, loc)
         if content is None:
             return result
-
-        fm = _parse_puml_frontmatter(content, result, loc)
+        fm = parse_puml_frontmatter(content, result, loc)
         if fm is None:
             return result
 
-        required = _DIAGRAM_REQUIRED
-        scope = (
-            self.registry.scope_for_path(path)
-            if self.registry is not None
-            else ("enterprise" if "enterprise-repository" in path.resolve().parts else "engagement")
-        )
-        if scope == "enterprise":
-            required = frozenset(x for x in _DIAGRAM_REQUIRED if x != "engagement")
-        _check_required_fields(fm, required, result, loc)
-        _check_artifact_type(fm, _DIAGRAM_ARTIFACT_TYPES, "diagram artifact type", result, loc)
-        _check_enum(fm, "status", _VALID_STATUSES, result, loc)
-        _check_enum(fm, "phase-produced", _VALID_PHASES, result, loc)
-        _check_enum(fm, "owner-agent", _VALID_AGENTS, result, loc)
+        scope = self._scope_for_path(path)
+        required = DIAGRAM_REQUIRED if scope != "enterprise" else frozenset(x for x in DIAGRAM_REQUIRED if x != "engagement")
+
+        check_required_fields(fm, required, result, loc)
+        check_diagram_artifact_type(fm, result, loc)
+        check_enum(fm, "status", VALID_STATUSES, result, loc)
+        check_enum(fm, "phase-produced", VALID_PHASES, result, loc)
+        check_enum(fm, "owner-agent", VALID_AGENTS, result, loc)
 
         if self.registry is not None:
-            scope = self.registry.scope_for_path(path)
-            _check_diagram_references_scoped(fm, self.registry, scope, result, loc)
+            check_diagram_references_scoped(fm, self.registry, scope, result, loc)
         else:
-            result.issues.append(Issue(
-                Severity.WARNING,
-                "W002",
-                "No ModelRegistry provided; entity/connection reference checks skipped",
-                loc,
-            ))
+            result.issues.append(Issue(Severity.WARNING, "W002", "No ModelRegistry provided; entity/connection reference checks skipped", loc))
 
-        _check_puml_structure(content, fm, result, loc)
-        _check_puml_syntax(path, result, loc)
-
+        check_puml_structure(content, fm, result, loc)
+        if run_syntax_check:
+            result.issues.extend(check_puml_syntax(path, loc))
         return result
 
     def verify_matrix_diagram_file(self, path: Path) -> VerificationResult:
-        """Verify a matrix diagram markdown file (.md in diagram-catalog/diagrams)."""
         result = VerificationResult(path=path, file_type="diagram")
         loc = str(path)
-
-        content = _read_file(path, result, loc)
+        content = read_file(path, result, loc)
         if content is None:
             return result
-
-        fm = _parse_frontmatter(content, result, loc)
+        fm = parse_frontmatter(content, result, loc)
         if fm is None:
             return result
 
-        required = _DIAGRAM_REQUIRED
-        scope = (
-            self.registry.scope_for_path(path)
-            if self.registry is not None
-            else ("enterprise" if "enterprise-repository" in path.resolve().parts else "engagement")
-        )
-        if scope == "enterprise":
-            required = frozenset(x for x in _DIAGRAM_REQUIRED if x != "engagement")
+        scope = self._scope_for_path(path)
+        required = DIAGRAM_REQUIRED if scope != "enterprise" else frozenset(x for x in DIAGRAM_REQUIRED if x != "engagement")
 
-        _check_required_fields(fm, required, result, loc)
-        _check_artifact_type(fm, _DIAGRAM_ARTIFACT_TYPES, "diagram artifact type", result, loc)
-        _check_enum(fm, "status", _VALID_STATUSES, result, loc)
-        _check_enum(fm, "phase-produced", _VALID_PHASES, result, loc)
-        _check_enum(fm, "owner-agent", _VALID_AGENTS, result, loc)
+        check_required_fields(fm, required, result, loc)
+        check_diagram_artifact_type(fm, result, loc)
+        check_enum(fm, "status", VALID_STATUSES, result, loc)
+        check_enum(fm, "phase-produced", VALID_PHASES, result, loc)
+        check_enum(fm, "owner-agent", VALID_AGENTS, result, loc)
 
         if self.registry is not None:
-            scope = self.registry.scope_for_path(path)
-            _check_diagram_references_scoped(fm, self.registry, scope, result, loc)
+            check_diagram_references_scoped(fm, self.registry, scope, result, loc)
         else:
-            result.issues.append(Issue(
-                Severity.WARNING,
-                "W002",
-                "No ModelRegistry provided; entity/connection reference checks skipped",
-                loc,
-            ))
+            result.issues.append(Issue(Severity.WARNING, "W002", "No ModelRegistry provided; entity/connection reference checks skipped", loc))
 
         if "diagram-type" in fm and str(fm.get("diagram-type")) != "matrix":
-            result.issues.append(Issue(
-                Severity.WARNING,
-                "W321",
-                "Markdown diagram file under diagram-catalog/diagrams should use diagram-type: matrix",
-                loc,
-            ))
-
+            result.issues.append(Issue(Severity.WARNING, "W321", "Markdown diagram file under diagram-catalog/diagrams should use diagram-type: matrix", loc))
         if "|" not in content:
-            result.issues.append(Issue(
-                Severity.WARNING,
-                "W322",
-                "Matrix diagram markdown has no table markup; expected at least one matrix table",
-                loc,
-            ))
-
+            result.issues.append(Issue(Severity.WARNING, "W322", "Matrix diagram markdown has no table markup; expected at least one matrix table", loc))
         return result
 
-    def verify_all(
+    def verify_all(self, repo_path: Path, *, include_diagrams: bool = True) -> list[VerificationResult]:
+        cfg = load_runtime_config()
+        if cfg.mode == "incremental":
+            return self._verify_all_incremental(repo_path, include_diagrams=include_diagrams, cfg=cfg)
+        return self._verify_all_full(repo_path, include_diagrams=include_diagrams)
+
+    def _verify_all_full(self, repo_path: Path, *, include_diagrams: bool) -> list[VerificationResult]:
+        inv = inventory_files(repo_path, include_diagrams=include_diagrams)
+        return self._verify_inventory_subset(inv, set(inv.ordered_paths))
+
+    def _verify_all_incremental(
         self,
         repo_path: Path,
         *,
-        include_diagrams: bool = True,
+        include_diagrams: bool,
+        cfg: VerifierRuntimeConfig,
     ) -> list[VerificationResult]:
-        """
-        Batch-verify all entity, connection, and (optionally) diagram files under
-        ``repo_path``.
+        inv = inventory_files(repo_path, include_diagrams=include_diagrams)
+        state_path = state_file_path(repo_path, include_diagrams=include_diagrams, state_dir=cfg.state_dir)
+        prev = load_incremental_state(state_path)
+        head = git_head(repo_path)
 
-        ``repo_path`` should be an architecture-repository root containing
-        ``model-entities/``, ``connections/``, and ``diagram-catalog/``.
+        if prev is None or prev.include_diagrams != include_diagrams or prev.git_head != head:
+            mode = "full"
+            results = self._verify_all_full(repo_path, include_diagrams=include_diagrams)
+        else:
+            changed, deleted = detect_changed_paths(inv, prev)
+            if deleted:
+                mode = "full"
+                results = self._verify_all_full(repo_path, include_diagrams=include_diagrams)
+            elif not changed:
+                mode = "incremental-cached"
+                cached = _results_from_state(prev, inv)
+                results = cached if cached is not None else self._verify_all_full(repo_path, include_diagrams=include_diagrams)
+            else:
+                total = len(inv.ordered_paths)
+                changed_ratio = (len(changed) / total) if total > 0 else 1.0
+                too_large = changed_ratio >= cfg.changed_ratio_threshold or len(changed) >= cfg.changed_count_threshold
+                if too_large:
+                    mode = "full"
+                    results = self._verify_all_full(repo_path, include_diagrams=include_diagrams)
+                else:
+                    mode = "incremental"
+                    impacted = expand_impacted_paths(inv, changed)
+                    fresh = self._verify_inventory_subset(inv, impacted)
+                    results = _merge_results(prev, inv, fresh)
 
-        Results are ordered: entities first, then connections, then diagrams.
-        """
-        results: list[VerificationResult] = []
+        state = IncrementalState(
+            schema_version=1,
+            include_diagrams=include_diagrams,
+            git_head=head,
+            snapshots=inv.snapshots,
+            results={inv.path_to_rel[r.path]: serialize_result(r) for r in results},
+        )
+        save_incremental_state(state_path, state)
 
-        model_entities = repo_path / "model-entities"
-        if model_entities.exists():
-            for f in sorted(model_entities.rglob("*.md")):
-                results.append(self.verify_entity_file(f))
-
-        connections = repo_path / "connections"
-        if connections.exists():
-            for f in sorted(connections.rglob("*.md")):
-                results.append(self.verify_connection_file(f))
-
-        if include_diagrams:
-            diagram_dir = repo_path / "diagram-catalog" / "diagrams"
-            if diagram_dir.exists():
-                for f in sorted(diagram_dir.rglob("*.puml")):
-                    results.append(self.verify_diagram_file(f))
-                for f in sorted(diagram_dir.rglob("*.md")):
-                    results.append(self.verify_matrix_diagram_file(f))
-
+        if cfg.log_mode:
+            print(f"[ModelVerifier] mode={mode} include_diagrams={include_diagrams} files={len(results)}")
         return results
 
+    def _verify_inventory_subset(self, inv: FileInventory, relpaths: set[str]) -> list[VerificationResult]:
+        worker_count = resolve_worker_count()
+        if self.registry is not None:
+            _ = self.registry.entity_ids()
+            _ = self.registry.connection_ids()
+        entity_files = [inv.rel_to_path[r] for r in inv.entity_relpaths if r in relpaths]
+        connection_files = [inv.rel_to_path[r] for r in inv.connection_relpaths if r in relpaths]
+        diagram_files = [inv.rel_to_path[r] for r in inv.diagram_puml_relpaths if r in relpaths]
+        matrix_files = [inv.rel_to_path[r] for r in inv.diagram_matrix_relpaths if r in relpaths]
 
-# ---------------------------------------------------------------------------
-# Private helpers
-# ---------------------------------------------------------------------------
+        out: list[VerificationResult] = []
+        out.extend(_verify_paths(entity_files, self.verify_entity_file, workers=worker_count))
+        out.extend(_verify_paths(connection_files, self.verify_connection_file, workers=worker_count))
 
+        diagram_results = _verify_paths(
+            diagram_files,
+            lambda path: self._verify_diagram_file(path, run_syntax_check=False),
+            workers=min(worker_count, 4),
+        )
+        if self.check_puml_syntax and diagram_results:
+            issues_by_path = check_puml_syntax_batch([r.path for r in diagram_results])
+            for d in diagram_results:
+                d.issues.extend(issues_by_path.get(d.path, []))
+        out.extend(diagram_results)
 
-def _read_file(path: Path, result: VerificationResult, loc: str) -> str | None:
-    try:
-        return path.read_text(encoding="utf-8")
-    except OSError as exc:
-        result.issues.append(Issue(Severity.ERROR, "E001", f"Cannot read file: {exc}", loc))
-        return None
+        out.extend(_verify_paths(matrix_files, self.verify_matrix_diagram_file, workers=worker_count))
 
+        by_path = {r.path: r for r in out}
+        return [by_path[inv.rel_to_path[r]] for r in inv.ordered_paths if r in relpaths and inv.rel_to_path[r] in by_path]
 
-def _parse_frontmatter_from_path(path: Path) -> dict | None:
-    """Best-effort frontmatter parse — returns None on any failure."""
-    try:
-        content = path.read_text(encoding="utf-8")
-        return _extract_yaml_block(content)
-    except Exception:  # noqa: BLE001
-        return None
-
-
-def _extract_yaml_block(content: str) -> dict | None:
-    """Extract the opening --- ... --- YAML block. Returns None if absent."""
-    if not content.startswith("---"):
-        return None
-    end = content.find("\n---", 3)
-    if end == -1:
-        return None
-    return yaml.safe_load(content[3:end].strip()) or {}
-
-
-def _parse_frontmatter(
-    content: str, result: VerificationResult, loc: str
-) -> dict | None:
-    """Parse markdown frontmatter, recording errors into *result*."""
-    if not content.startswith("---"):
-        result.issues.append(Issue(
-            Severity.ERROR, "E011",
-            "File does not begin with YAML frontmatter (--- block)",
-            loc,
-        ))
-        return None
-
-    end = content.find("\n---", 3)
-    if end == -1:
-        result.issues.append(Issue(
-            Severity.ERROR, "E012",
-            "Frontmatter opening --- has no closing ---",
-            loc,
-        ))
-        return None
-
-    yaml_block = content[3:end].strip()
-    try:
-        fm = yaml.safe_load(yaml_block)
-    except yaml.YAMLError as exc:
-        result.issues.append(Issue(
-            Severity.ERROR, "E013", f"Frontmatter YAML parse error: {exc}", loc
-        ))
-        return None
-
-    if not isinstance(fm, dict):
-        result.issues.append(Issue(
-            Severity.ERROR, "E014", "Frontmatter is not a YAML mapping", loc
-        ))
-        return None
-
-    return fm
+    def _scope_for_path(self, path: Path) -> Literal["enterprise", "engagement", "unknown"]:
+        if self.registry is not None:
+            return self.registry.scope_for_path(path)
+        return "enterprise" if "enterprise-repository" in path.resolve().parts else "engagement"
 
 
-def _parse_puml_frontmatter(
-    content: str, result: VerificationResult, loc: str
-) -> dict | None:
-    """
-    Parse the PUML header comment block.
-
-    Format (per diagram-conventions.md §9)::
-
-        ' ---
-        ' artifact-id: some-diagram-v1
-        ' artifact-type: diagram
-        ' ...
-        ' ---
-        @startuml
-
-    Lines inside the block are prefixed with ``"' "``.  The ``' ---`` delimiters
-    are not included in the YAML body.
-    """
-    lines = content.splitlines()
-    in_block = False
-    yaml_lines: list[str] = []
-
-    for line in lines:
-        stripped = line.strip()
-
-        if not in_block:
-            if stripped == "' ---":
-                in_block = True
-                continue
-            if stripped == "":
-                continue
-            # Hit non-blank, non-start-delimiter before block — no frontmatter
-            break
-        else:
-            if stripped == "' ---":
-                break  # end delimiter
-            if stripped.startswith("' "):
-                yaml_lines.append(stripped[2:])
-            elif stripped == "'":
-                yaml_lines.append("")
-            else:
-                result.issues.append(Issue(
-                    Severity.WARNING,
-                    "W302",
-                    f"Unexpected line inside PUML frontmatter block: {line!r}",
-                    loc,
-                ))
-
-    if not yaml_lines:
-        result.issues.append(Issue(
-            Severity.ERROR,
-            "E311",
-            "PUML file has no frontmatter header comment block (expected \"' ---\" ... \"' ---\")",
-            loc,
-        ))
-        return None
-
-    try:
-        fm = yaml.safe_load("\n".join(yaml_lines))
-    except yaml.YAMLError as exc:
-        result.issues.append(Issue(
-            Severity.ERROR, "E312", f"PUML frontmatter YAML parse error: {exc}", loc
-        ))
-        return None
-
-    if not isinstance(fm, dict):
-        result.issues.append(Issue(
-            Severity.ERROR, "E313", "PUML frontmatter is not a YAML mapping", loc
-        ))
-        return None
-
-    return fm
-
-
-def _check_required_fields(
-    fm: dict, required: frozenset[str], result: VerificationResult, loc: str
-) -> None:
-    for f in sorted(required):
-        if f not in fm or fm[f] is None:
-            result.issues.append(Issue(
-                Severity.ERROR, "E021",
-                f"Required frontmatter field '{f}' is missing or null",
-                loc,
-            ))
-
-
-def _check_artifact_id_entity(fm: dict, result: VerificationResult, loc: str) -> None:
-    if "artifact-id" not in fm:
-        return
-    aid = str(fm["artifact-id"])
-    if not _ENTITY_ID_RE.match(aid):
-        result.issues.append(Issue(
-            Severity.ERROR, "E101",
-            f"artifact-id '{aid}' does not match pattern ^[A-Z]+-[0-9]{{3}}$",
-            loc,
-        ))
-        return  # filename check meaningless if ID itself is malformed
-
-    # Filename must start with the formal artifact-id (before the first '.').
-    # Both legacy "ACT-001.md" and new "ACT-001.friendly-name.md" are accepted.
-    file_id = entity_id_from_path(result.path)
-    if file_id != aid:
-        result.issues.append(Issue(
-            Severity.ERROR, "E104",
-            (
-                f"entity filename prefix '{file_id}' does not match artifact-id '{aid}'; "
-                f"filename must start with '{aid}' (e.g. '{aid}.friendly-name.md')"
-            ),
-            loc,
-        ))
-
-
-def _check_artifact_id_connection(
-    fm: dict, path: Path, result: VerificationResult, loc: str
-) -> None:
-    if "artifact-id" not in fm:
-        return
-    aid = str(fm["artifact-id"])
-
-    if not _CONN_ID_RE.match(aid):
-        result.issues.append(Issue(
-            Severity.ERROR, "E201",
-            f"connection artifact-id '{aid}' does not match SOURCE(--SOURCE)*---TARGET(--TARGET)* pattern",
-            loc,
-        ))
-
-    # artifact-id must match filename stem
-    stem = path.stem
-    if aid != stem:
-        result.issues.append(Issue(
-            Severity.ERROR, "E202",
-            f"artifact-id '{aid}' does not match filename stem '{stem}'",
-            loc,
-        ))
-
-
-def _check_artifact_type(
-    fm: dict,
-    valid: frozenset[str],
-    label: str,
-    result: VerificationResult,
-    loc: str,
-) -> None:
-    if "artifact-type" not in fm:
-        return
-    at = str(fm["artifact-type"])
-    if at not in valid:
-        result.issues.append(Issue(
-            Severity.ERROR, "E102",
-            f"artifact-type '{at}' is not a recognised {label}",
-            loc,
-        ))
-
-
-def _check_enum(
-    fm: dict,
-    field_name: str,
-    valid: frozenset[str],
-    result: VerificationResult,
-    loc: str,
-) -> None:
-    if field_name not in fm or fm[field_name] is None:
-        return
-    value = str(fm[field_name])
-    if value not in valid:
-        result.issues.append(Issue(
-            Severity.ERROR, "E022",
-            f"Field '{field_name}' has invalid value '{value}'; expected one of: {sorted(valid)}",
-            loc,
-        ))
-
-
-def _check_safety_relevant(fm: dict, result: VerificationResult, loc: str) -> None:
-    if "safety-relevant" not in fm:
-        return
-    val = fm["safety-relevant"]
-    if not isinstance(val, bool):
-        result.issues.append(Issue(
-            Severity.ERROR, "E103",
-            f"'safety-relevant' must be a boolean (true/false), got: {val!r}",
-            loc,
-        ))
-
-
-def _check_section(
-    content: str,
-    section: str,
+def _verify_paths(
+    paths: list[Path],
+    verifier_fn: Callable[[Path], VerificationResult],
     *,
-    required: bool,
-    result: VerificationResult,
-    loc: str,
-) -> None:
-    marker = f"<!-- {section} -->"
-    if marker not in content:
-        severity = Severity.ERROR if required else Severity.WARNING
-        code = "E031" if required else "W031"
-        result.issues.append(Issue(
-            severity, code,
-            f"Section marker '{marker}' is {'absent' if required else 'absent (optional for connections)'}",
-            loc,
-        ))
+    workers: int,
+) -> list[VerificationResult]:
+    if not paths:
+        return []
+    if workers <= 1:
+        return [verifier_fn(path) for path in paths]
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        return list(executor.map(verifier_fn, paths))
 
 
-def _check_reference_resolution(
-    fm: dict, known_ids: set[str], result: VerificationResult, loc: str
-) -> None:
-    """Verify source and target artifact-ids exist in the entity registry."""
-    for field_name in ("source", "target"):
-        if field_name not in fm or fm[field_name] is None:
+def _results_from_state(prev: IncrementalState, inv: FileInventory) -> list[VerificationResult] | None:
+    out: list[VerificationResult] = []
+    for rel in inv.ordered_paths:
+        raw = prev.results.get(rel)
+        if not isinstance(raw, dict):
+            return None
+        parsed = _deserialize_result(inv.rel_to_path[rel], raw)
+        if parsed is None:
+            return None
+        out.append(parsed)
+    return out
+
+
+def _merge_results(prev: IncrementalState, inv: FileInventory, fresh: list[VerificationResult]) -> list[VerificationResult]:
+    by_rel = {inv.path_to_rel[r.path]: r for r in fresh}
+    merged: list[VerificationResult] = []
+    for rel in inv.ordered_paths:
+        if rel in by_rel:
+            merged.append(by_rel[rel])
             continue
-        val = fm[field_name]
-        refs = val if isinstance(val, list) else [val]
-        for ref in refs:
-            if str(ref) not in known_ids:
-                result.issues.append(Issue(
-                    Severity.ERROR, "E204",
-                    f"'{field_name}' references unknown entity '{ref}' (not in ModelRegistry)",
-                    loc,
-                ))
+        raw = prev.results.get(rel)
+        if not isinstance(raw, dict):
+            return fresh
+        parsed = _deserialize_result(inv.rel_to_path[rel], raw)
+        if parsed is None:
+            return fresh
+        merged.append(parsed)
+    return merged
 
 
-def _check_reference_resolution_scoped(
-    fm: dict,
-    registry: ModelRegistry,
-    allowed_ids: set[str],
-    file_scope: Literal["enterprise", "engagement", "unknown"],
-    result: VerificationResult,
-    loc: str,
-) -> None:
-    """Scope-aware source/target checks.
-
-    Rules:
-    - Engagement-scope artifacts may reference engagement+enterprise.
-    - Enterprise-scope artifacts may reference enterprise only.
-    """
-    all_known = registry.entity_ids()
-    for field_name in ("source", "target"):
-        if field_name not in fm or fm[field_name] is None:
-            continue
-        val = fm[field_name]
-        refs = val if isinstance(val, list) else [val]
-        for ref in refs:
-            rid = str(ref)
-            if rid in allowed_ids:
-                continue
-            if rid in all_known:
-                # Known, but in the wrong scope.
-                if file_scope == "enterprise":
-                    result.issues.append(Issue(
-                        Severity.ERROR,
-                        "E210",
-                        f"'{field_name}' references non-enterprise entity '{rid}' — enterprise artifacts may only reference enterprise entities",
-                        loc,
-                    ))
-                else:
-                    result.issues.append(Issue(
-                        Severity.ERROR,
-                        "E210",
-                        f"'{field_name}' references entity '{rid}' outside the allowed scope",
-                        loc,
-                    ))
-            else:
-                result.issues.append(Issue(
-                    Severity.ERROR,
-                    "E204",
-                    f"'{field_name}' references unknown entity '{rid}' (not in ModelRegistry)",
-                    loc,
-                ))
+def _deserialize_result(path: Path, data: dict) -> VerificationResult | None:
+    file_type = data.get("file_type")
+    if file_type not in {"entity", "connection", "diagram"}:
+        return None
+    issues_raw = data.get("issues", [])
+    if not isinstance(issues_raw, list):
+        return None
+    issues: list[Issue] = []
+    for item in issues_raw:
+        if not isinstance(item, dict):
+            return None
+        severity = item.get("severity")
+        if severity not in {Severity.ERROR, Severity.WARNING}:
+            return None
+        code = item.get("code")
+        message = item.get("message")
+        location = item.get("location")
+        if not all(isinstance(v, str) for v in [code, message, location]):
+            return None
+        issues.append(Issue(severity=severity, code=str(code), message=str(message), location=str(location)))
+    return VerificationResult(path=path, file_type=file_type, issues=issues)
 
 
-def _check_diagram_references(
-    fm: dict, registry: ModelRegistry, result: VerificationResult, loc: str
-) -> None:
-    """Check entity-ids-used and connection-ids-used against the registry.
-
-    Status rules (draft-reference checks):
-    - E306: a ``baselined`` diagram references a ``draft`` entity.
-    - E307: a ``baselined`` diagram references a ``draft`` connection.
-
-    These checks are only enforced when the diagram itself is ``baselined``.
-    A ``draft`` diagram may freely reference ``draft`` entities and connections —
-    this is normal in-sprint work.  Connections may also reference draft entities
-    (they are created alongside the entities they link).  Once a diagram is
-    baselined it represents a frozen snapshot, so all referenced entities and
-    connections must themselves be baselined.
-    """
-    diagram_status = str(fm.get("status", ""))
-    diagram_is_baselined = diagram_status == "baselined"
-
-    if "entity-ids-used" in fm:
-        entity_ids = fm["entity-ids-used"]
-        if isinstance(entity_ids, list):
-            known = registry.entity_ids()
-            for eid in entity_ids:
-                eid_str = str(eid)
-                if eid_str not in known:
-                    result.issues.append(Issue(
-                        Severity.ERROR, "E301",
-                        f"entity-ids-used references unknown entity '{eid}'",
-                        loc,
-                    ))
-                elif diagram_is_baselined:
-                    status = registry.entity_status(eid_str)
-                    if status == "draft":
-                        result.issues.append(Issue(
-                            Severity.ERROR, "E306",
-                            f"baselined diagram references draft entity '{eid}' — "
-                            "all entities in a baselined diagram must be baselined",
-                            loc,
-                        ))
-        elif entity_ids is not None:
-            result.issues.append(Issue(
-                Severity.WARNING, "W303",
-                "entity-ids-used should be a YAML list",
-                loc,
-            ))
-
-    if "connection-ids-used" in fm:
-        conn_ids = fm["connection-ids-used"]
-        if isinstance(conn_ids, list):
-            known = registry.connection_ids()
-            for cid in conn_ids:
-                cid_str = str(cid)
-                if cid_str not in known:
-                    result.issues.append(Issue(
-                        Severity.ERROR, "E302",
-                        f"connection-ids-used references unknown connection '{cid}'",
-                        loc,
-                    ))
-                elif diagram_is_baselined:
-                    status = registry.connection_status(cid_str)
-                    if status == "draft":
-                        result.issues.append(Issue(
-                            Severity.ERROR, "E307",
-                            f"baselined diagram references draft connection '{cid}' — "
-                            "all connections in a baselined diagram must be baselined",
-                            loc,
-                        ))
-        elif conn_ids is not None:
-            result.issues.append(Issue(
-                Severity.WARNING, "W304",
-                "connection-ids-used should be a YAML list",
-                loc,
-            ))
-
-
-def _check_diagram_references_scoped(
-    fm: dict,
-    registry: ModelRegistry,
-    file_scope: Literal["enterprise", "engagement", "unknown"],
-    result: VerificationResult,
-    loc: str,
-) -> None:
-    """Scope-aware wrapper around diagram reference checks.
-
-    Engagement-scope diagrams may reference engagement+enterprise.
-    Enterprise-scope diagrams may reference enterprise only.
-    """
-
-    diagram_status = str(fm.get("status", ""))
-    diagram_is_baselined = diagram_status == "baselined"
-
-    allowed_entities = (
-        registry.enterprise_entity_ids() if file_scope == "enterprise" else registry.entity_ids()
-    )
-    allowed_connections = (
-        registry.enterprise_connection_ids() if file_scope == "enterprise" else registry.connection_ids()
-    )
-
-    all_entities = registry.entity_ids()
-    all_connections = registry.connection_ids()
-
-    if "entity-ids-used" in fm:
-        entity_ids = fm["entity-ids-used"]
-        if isinstance(entity_ids, list):
-            for eid in entity_ids:
-                eid_str = str(eid)
-                if eid_str not in allowed_entities:
-                    if eid_str in all_entities and file_scope == "enterprise":
-                        result.issues.append(Issue(
-                            Severity.ERROR,
-                            "E310",
-                            f"entity-ids-used references non-enterprise entity '{eid_str}' — enterprise diagrams may only reference enterprise entities",
-                            loc,
-                        ))
-                    else:
-                        result.issues.append(Issue(
-                            Severity.ERROR,
-                            "E301",
-                            f"entity-ids-used references unknown entity '{eid_str}'",
-                            loc,
-                        ))
-                elif diagram_is_baselined:
-                    status = registry.entity_status(eid_str)
-                    if status == "draft":
-                        result.issues.append(Issue(
-                            Severity.ERROR,
-                            "E306",
-                            f"baselined diagram references draft entity '{eid_str}' — all entities in a baselined diagram must be baselined",
-                            loc,
-                        ))
-        elif entity_ids is not None:
-            result.issues.append(Issue(
-                Severity.WARNING, "W303",
-                "entity-ids-used should be a YAML list",
-                loc,
-            ))
-
-    if "connection-ids-used" in fm:
-        conn_ids = fm["connection-ids-used"]
-        if isinstance(conn_ids, list):
-            for cid in conn_ids:
-                cid_str = str(cid)
-                if cid_str not in allowed_connections:
-                    if cid_str in all_connections and file_scope == "enterprise":
-                        result.issues.append(Issue(
-                            Severity.ERROR,
-                            "E320",
-                            f"connection-ids-used references non-enterprise connection '{cid_str}' — enterprise diagrams may only reference enterprise connections",
-                            loc,
-                        ))
-                    else:
-                        result.issues.append(Issue(
-                            Severity.ERROR,
-                            "E302",
-                            f"connection-ids-used references unknown connection '{cid_str}'",
-                            loc,
-                        ))
-                elif diagram_is_baselined:
-                    status = registry.connection_status(cid_str)
-                    if status == "draft":
-                        result.issues.append(Issue(
-                            Severity.ERROR,
-                            "E307",
-                            f"baselined diagram references draft connection '{cid_str}' — all connections in a baselined diagram must be baselined",
-                            loc,
-                        ))
-        elif conn_ids is not None:
-            result.issues.append(Issue(
-                Severity.WARNING, "W304",
-                "connection-ids-used should be a YAML list",
-                loc,
-            ))
-
-
-def _check_puml_structure(
-    content: str, fm: dict, result: VerificationResult, loc: str
-) -> None:
-    """Check @startuml/@enduml markers and required !include statements."""
-    if "@startuml" not in content:
-        result.issues.append(Issue(
-            Severity.ERROR, "E304", "@startuml marker is missing", loc
-        ))
-    if "@enduml" not in content:
-        result.issues.append(Issue(
-            Severity.ERROR, "E305", "@enduml marker is missing", loc
-        ))
-
-    diagram_type = str(fm.get("diagram-type", ""))
-    if "archimate" in diagram_type or "usecase" in diagram_type:
-        if "_macros.puml" not in content:
-            result.issues.append(Issue(
-                Severity.ERROR, "E303",
-                "ArchiMate/use-case diagram must include _macros.puml",
-                loc,
-            ))
-        if "_archimate-stereotypes.puml" not in content:
-            result.issues.append(Issue(
-                Severity.WARNING, "W301",
-                "ArchiMate/use-case diagram should include _archimate-stereotypes.puml",
-                loc,
-            ))
-
-
-def _find_plantuml_jar() -> Path | None:
-    """Locate plantuml.jar relative to the project root (tools/plantuml.jar)."""
-    # Walk up from this file to find the project root (contains pyproject.toml)
-    candidate = Path(__file__).resolve()
-    for _ in range(6):
-        candidate = candidate.parent
-        if (candidate / "pyproject.toml").exists():
-            jar = candidate / "tools" / "plantuml.jar"
-            return jar if jar.exists() else None
-    return None
-
-
-def _check_puml_syntax(path: Path, result: VerificationResult, loc: str) -> None:
-    """Run ``plantuml -checkonly`` against the file and surface any syntax errors.
-
-    Requires Java and ``tools/plantuml.jar`` relative to the project root.
-    If the JAR or Java is not found, a warning is appended instead of silently
-    skipping — this makes missing tooling visible in CI.
-
-    PlantUML exit code 200 indicates syntax errors; each error line is reported
-    as E350. Graphviz-not-found IOExceptions are suppressed (not a diagram error).
-    """
-    jar = _find_plantuml_jar()
-    if jar is None:
-        result.issues.append(Issue(
-            Severity.WARNING, "W350",
-            "tools/plantuml.jar not found; PUML syntax check skipped",
-            loc,
-        ))
-        return
-
-    java = os.environ.get("JAVA_HOME", "")
-    java_exe = (Path(java) / "bin" / "java") if java else Path("java")
-
-    # Run with -tsvg to a temp dir + verbose: this gives "Error line N in file: ..."
-    # which is far more actionable than -checkonly's minimal output.
-    # Graphviz-not-found IOExceptions are expected in CI and suppressed.
-    try:
-        with tempfile.TemporaryDirectory() as tmp_out:
-            proc = subprocess.run(
-                [
-                    str(java_exe), "-jar", str(jar),
-                    "-tsvg", "-verbose",
-                    "-o", tmp_out,
-                    str(path),
-                ],
-                capture_output=True,
-                text=True,
-                timeout=30,
-            )
-    except FileNotFoundError:
-        result.issues.append(Issue(
-            Severity.WARNING, "W351",
-            "java not found on PATH; PUML syntax check skipped",
-            loc,
-        ))
-        return
-    except subprocess.TimeoutExpired:
-        result.issues.append(Issue(
-            Severity.WARNING, "W352",
-            "plantuml render timed out after 30 s",
-            loc,
-        ))
-        return
-
-    if proc.returncode == 0:
-        return  # no errors
-
-    combined = proc.stdout + proc.stderr
-    # Extract "Error line N in file: ..." lines — these pinpoint the problem
-    error_lines = re.findall(r"^Error line \d+ in file:.*$", combined, re.MULTILINE)
-    # Also capture "Syntax Error?" lines from SVG error output embedded in stderr
-    syntax_lines = re.findall(r"Syntax Error\?.*", combined)
-
-    reported = error_lines or syntax_lines
-    if reported:
-        for line in reported:
-            result.issues.append(Issue(
-                Severity.ERROR, "E350",
-                f"PlantUML: {line.strip()}",
-                loc,
-            ))
-    else:
-        # Non-zero exit but no parseable error lines — surface the first
-        # non-noise line so there is at least some signal.
-        signal_lines = [
-            ln.strip() for ln in combined.splitlines()
-            if ln.strip()
-            and "IOException" not in ln
-            and "Cannot run program" not in ln
-            and "Caused by" not in ln
-            and "at java." not in ln
-            and "at net." not in ln
-            and ln.strip() not in ("Some diagram description contains errors",)
-        ]
-        msg = signal_lines[0] if signal_lines else f"exit {proc.returncode}"
-        result.issues.append(Issue(
-            Severity.ERROR, "E350",
-            f"PlantUML error (exit {proc.returncode}): {msg[:200]}",
-            loc,
-        ))
-
-
-# ---------------------------------------------------------------------------
-# Error / Warning Code Reference
-# ---------------------------------------------------------------------------
-#
-# E001  File read error (OS error)
-# E011  Missing YAML frontmatter opening ---
-# E012  Frontmatter --- block never closed
-# E013  Frontmatter YAML parse error
-# E014  Frontmatter is not a YAML mapping
-# E021  Required frontmatter field is missing
-# E022  Enum field has invalid value
-# E031  Required §section marker is absent
-# E101  Entity artifact-id does not match ^[A-Z]+-[0-9]{3}$
-# E102  artifact-type not in recognised type set
-# E103  safety-relevant is not a boolean
-# E104  Entity filename prefix does not match artifact-id
-# E201  Connection artifact-id does not match SOURCE---TARGET pattern
-# E202  Connection artifact-id does not match filename stem
-# E203  Connection artifact-type not recognised
-# E204  source/target references unknown entity
-# E301  entity-ids-used references unknown entity
-# E302  connection-ids-used references unknown connection
-# E303  ArchiMate diagram missing !include _macros.puml
-# E304  PUML file missing @startuml
-# E305  PUML file missing @enduml
-# E311  PUML file has no frontmatter header comment block
-# E312  PUML frontmatter YAML parse error
-# E313  PUML frontmatter is not a YAML mapping
-#
-# W001  No registry provided — source/target checks skipped
-# W002  No registry provided — diagram reference checks skipped
-# W031  Optional §content section absent on connection file
-# W301  ArchiMate diagram missing _archimate-stereotypes.puml
-# W302  Unexpected line inside PUML frontmatter block
-# W303  entity-ids-used is not a list
-# W304  connection-ids-used is not a list
-# E350  PlantUML syntax error reported by plantuml -checkonly
-# W350  tools/plantuml.jar not found; syntax check skipped
-# W351  java not found on PATH; syntax check skipped
-# W352  plantuml -checkonly timed out
+__all__ = [
+    "ModelRegistry",
+    "ModelVerifier",
+    "Issue",
+    "Severity",
+    "VerificationResult",
+    "entity_id_from_path",
+]

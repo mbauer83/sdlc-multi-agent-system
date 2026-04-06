@@ -1,107 +1,115 @@
 ' ---
 ' artifact-id: b-archimate-business-operational-governance-v1
 ' artifact-type: diagram
-' name: "Business Architecture — Operational Viewpoint: Governance & Review"
 ' diagram-type: archimate-business
-' version: 0.1.0
+' name: "Business Architecture \u2014 Operational Viewpoint: Governance & Review"
+' version: 0.3.0
 ' status: draft
 ' phase-produced: B
 ' owner-agent: SA
 ' engagement: ENG-001
 ' domain: core-platform
-' purpose: >
-'   Operational view of the sprint governance and review cluster: events that initiate
-'   and terminate sprint cycles, the processes that execute them, and the roles and
-'   collaborations involved. Shows the heartbeat of the engagement — how sprint
-'   planning, gate evaluation, sprint review, and the PM+User interaction interact.
-'   Complements b-archimate-business-operational-execution-v1 (skill/knowledge cluster).
-' viewpoint: Operational
-' cluster: Governance & Review (BPR-001, BPR-004, BPR-006, BIA-001)
+' purpose: Operational governance view showing sprint planning, specialist invocation
+'   coupling, CQ/algedonic triggers, and sprint review interaction outcomes (continue/pause/resume/end).
 ' entity-ids-used:
-'   - BEV-001
-'   - BEV-002
-'   - BEV-003
-'   - BEV-006
-'   - BEV-008
-'   - BPR-001
-'   - BPR-101
-'   - BPR-102
-'   - BPR-103
-'   - BPR-004
-'   - BPR-401
-'   - BPR-402
-'   - BPR-403
-'   - BPR-006
-'   - BPR-601
-'   - BPR-602
-'   - BPR-603
-'   - BIA-001
-'   - BIA-101
-'   - BIA-102
-'   - BIA-103
-'   - BCO-002
-'   - ACT-001
-'   - ACT-002
-'   - ACT-010
-'   - BSV-003
-'   - BSV-009
-'   - BOB-002
-'   - BOB-004
+' - ACT-001
+' - ACT-002
+' - ACT-010
+' - BCO-002
+' - BEV-001
+' - BEV-002
+' - BEV-003
+' - BEV-004
+' - BEV-005
+' - BEV-006
+' - BEV-008
+' - BEV-009
+' - BEV-010
+' - BIA-001
+' - BIA-101
+' - BIA-102
+' - BIA-103
+' - BOB-002
+' - BOB-004
+' - BPR-001
+' - BPR-002
+' - BPR-003
+' - BPR-004
+' - BPR-005
+' - BPR-101
+' - BPR-102
+' - BPR-103
+' - BPR-401
+' - BPR-402
+' - BPR-403
+' - BSV-003
+' - BSV-004
+' - BSV-009
 ' connection-ids-used:
-'   - BEV-001---BPR-001
-'   - BEV-002---BPR-001
-'   - BEV-002---BIA-001
-'   - BEV-003---BPR-001
-'   - BEV-006---BPR-006
-'   - BPR-004---BEV-003
-'   - BPR-006---BEV-002
-'   - BPR-101---BPR-102
-'   - BPR-102---BPR-103
-'   - BPR-401---BPR-402
-'   - BPR-402---BPR-403
-'   - BPR-601---BPR-602
-'   - BPR-602---BPR-603
-'   - BIA-101---BIA-102
-'   - BIA-102---BIA-103
-'   - ACT-002---BPR-001
-'   - ACT-002---BPR-004
-'   - ACT-002---BPR-006
-'   - ACT-010---BPR-004
-'   - ACT-001---BPR-006
-'   - BCO-002---BIA-001
-'   - ACT-001---BCO-002
-'   - ACT-002---BCO-002
-'   - BPR-001---BSV-003
-'   - BPR-004---BSV-003
-'   - BPR-006---BSV-009
-'   - BIA-001---BSV-009
-'   - BPR-001---BOB-002
-'   - BPR-004---BOB-004
+' - ACT-001---BCO-002
+' - ACT-001---BIA-001
+' - ACT-001---BPR-003
+' - ACT-002---BCO-002
+' - ACT-002---BIA-001
+' - ACT-002---BPR-001
+' - ACT-002---BPR-004
+' - ACT-002---BPR-005
+' - ACT-010---BPR-004
+' - ACT-010---BPR-005
+' - BCO-002---BIA-001
+' - BEV-001---BPR-001
+' - BEV-002---BPR-001
+' - BEV-003---BPR-001
+' - BEV-004---BPR-003
+' - BEV-005---BPR-005
+' - BEV-006---BIA-001
+' - BEV-010---BPR-001
+' - BIA-001---BEV-002
+' - BIA-001---BSV-009
+' - BIA-101---BIA-102
+' - BIA-102---BIA-103
+' - BIA-103---BEV-002
+' - BIA-103---BEV-008
+' - BIA-103---BEV-009
+' - BIA-103---BEV-010
+' - BPR-001---BPR-002
+' - BPR-001---BSV-003
+' - BPR-002---BEV-004
+' - BPR-002---BEV-005
+' - BPR-002---BPR-004
+' - BPR-003---BSV-009
+' - BPR-004---BEV-003
+' - BPR-004---BIA-001
+' - BPR-004---BSV-003
+' - BPR-005---BSV-004
+' - BPR-101---BPR-102
+' - BPR-102---BPR-103
+' - BPR-401---BPR-402
+' - BPR-402---BPR-403
 ' ---
 @startuml b-archimate-business-operational-governance-v1
 !include ../_macros.puml
 !include ../_archimate-stereotypes.puml
 
 skinparam groupInheritance 1
-skinparam nodesep 35
-skinparam ranksep 50
+skinparam nodesep 40
+skinparam ranksep 55
 skinparam padding 8
+skinparam linetype ortho
 
-' ---------------------------------------------------------------------------
-' Triggering Events (initiation and termination)
-' ---------------------------------------------------------------------------
-rectangle "Triggering Events" <<BusinessGrouping>> as GRP_EVTS {
+rectangle "Governance Events" <<BusinessGrouping>> as GRP_EVTS {
   DECL_BEV_001
   DECL_BEV_002
   DECL_BEV_003
+  DECL_BEV_004
+  DECL_BEV_005
   DECL_BEV_006
   DECL_BEV_008
+  DECL_BEV_009
+  DECL_BEV_010
 }
 
-' ---------------------------------------------------------------------------
-' Governance Processes
-' ---------------------------------------------------------------------------
-rectangle "Governance Processes" <<BusinessGrouping>> as GRP_PROCS {
+rectangle "Governance Core Processes" <<BusinessGrouping>> as GRP_CORE {
   rectangle "BPR-001 Sprint Planning" <<BusinessProcess>> as BPR_001 {
     DECL_BPR_101
     DECL_BPR_102
@@ -112,17 +120,15 @@ rectangle "Governance Processes" <<BusinessGrouping>> as GRP_PROCS {
     DECL_BPR_402
     DECL_BPR_403
   }
-  rectangle "BPR-006 Sprint Review" <<BusinessProcess>> as BPR_006 {
-    DECL_BPR_601
-    DECL_BPR_602
-    DECL_BPR_603
-  }
 }
 
-' ---------------------------------------------------------------------------
-' Sprint Review Collaborative Interaction
-' ---------------------------------------------------------------------------
-rectangle "Sprint Review Interaction" <<BusinessGrouping>> as GRP_IA {
+rectangle "Governance-Coupled Operational Processes" <<BusinessGrouping>> as GRP_COUPLED {
+  DECL_BPR_002
+  DECL_BPR_003
+  DECL_BPR_005
+}
+
+rectangle "Sprint Review Interaction (Outer-Level)" <<BusinessGrouping>> as GRP_REVIEW {
   rectangle "BIA-001 Sprint Review Interaction" <<BusinessInteraction>> as BIA_001 {
     DECL_BIA_101
     DECL_BIA_102
@@ -131,93 +137,86 @@ rectangle "Sprint Review Interaction" <<BusinessGrouping>> as GRP_IA {
   DECL_BCO_002
 }
 
-' ---------------------------------------------------------------------------
-' Roles / Actors
-' ---------------------------------------------------------------------------
 rectangle "Roles" <<BusinessGrouping>> as GRP_ROLES {
   DECL_ACT_001
   DECL_ACT_002
   DECL_ACT_010
 }
 
-' ---------------------------------------------------------------------------
-' Business Objects (key managed objects in this cluster)
-' ---------------------------------------------------------------------------
 rectangle "Key Objects" <<BusinessGrouping>> as GRP_OBJ {
   DECL_BOB_002
   DECL_BOB_004
 }
 
-' ---------------------------------------------------------------------------
-' Business Services (outputs of governance cluster)
-' ---------------------------------------------------------------------------
 rectangle "Delivered Services" <<BusinessGrouping>> as GRP_SVCS {
   DECL_BSV_003
+  DECL_BSV_004
   DECL_BSV_009
 }
 
-' ---------------------------------------------------------------------------
-' Event → Process triggering
-' ---------------------------------------------------------------------------
+' Event to process/interaction triggers
 BEV_001 -[#B8860B]-> BPR_001 : <<triggering>>
 BEV_002 -[#B8860B]-> BPR_001 : <<triggering>>
-BEV_002 -[#B8860B]-> BIA_001 : <<triggering>>
 BEV_003 -[#B8860B]-> BPR_001 : <<triggering>>
-BEV_006 -[#B8860B]-> BPR_006 : <<triggering>>
+BEV_004 -[#B8860B]-> BPR_003 : <<triggering>>
+BEV_005 -[#B8860B]-> BPR_005 : <<triggering>>
+BEV_006 -[#B8860B]-> BIA_001 : <<triggering>>
+BEV_010 -[#B8860B]-> BPR_001 : <<triggering>>
 
-' ---------------------------------------------------------------------------
-' Nested process/interactions show containment; flows show internal sequence.
-' ---------------------------------------------------------------------------
+' Process to process/interaction coordination
+BPR_001 -[#B8860B]-> BPR_002 : <<triggering>>
+BPR_002 -[#B8860B]-> BPR_004 : <<triggering>>
+BPR_002 -[#B8860B]-> BEV_004 : <<triggering>>
+BPR_002 -[#B8860B]-> BEV_005 : <<triggering>>
+BPR_004 -[#B8860B]-> BEV_003 : <<triggering>>
+BPR_004 -[#B8860B]-> BIA_001 : <<triggering>>
+
+' Sprint review interaction outcomes: continue / end / pause
+BIA_001 -[#B8860B]-> BEV_002 : <<triggering>>
+BIA_103 -[#B8860B]-> BEV_002 : <<triggering>>
+BIA_103 -[#B8860B]-> BEV_008 : <<triggering>>
+BIA_103 -[#B8860B]-> BEV_009 : <<triggering>>
+BIA_103 -[#B8860B]-> BEV_010 : <<triggering>>
+
+' Decomposed stage flows
 BPR_101 -[#808080]-> BPR_102 : <<flow>>
 BPR_102 -[#808080]-> BPR_103 : <<flow>>
-
 BPR_401 -[#808080]-> BPR_402 : <<flow>>
 BPR_402 -[#808080]-> BPR_403 : <<flow>>
-
-BPR_601 -[#808080]-> BPR_602 : <<flow>>
-BPR_602 -[#808080]-> BPR_603 : <<flow>>
-
 BIA_101 -[#808080]-> BIA_102 : <<flow>>
 BIA_102 -[#808080]-> BIA_103 : <<flow>>
 
-' ---------------------------------------------------------------------------
-' Event-mediated process coordination
-' ---------------------------------------------------------------------------
-BPR_004 -[#B8860B]-> BEV_003 : <<triggering>>
-BPR_006 -[#B8860B]-> BEV_002 : <<triggering>>
-
-' ---------------------------------------------------------------------------
-' Role / Collaboration assignments
-' ---------------------------------------------------------------------------
+' Assignments
 ACT_002 -[#B8860B]-> BPR_001 : <<assignment>>
 ACT_002 -[#B8860B]-> BPR_004 : <<assignment>>
-ACT_002 -[#B8860B]-> BPR_006 : <<assignment>>
 ACT_010 -[#B8860B]-> BPR_004 : <<assignment>>
-ACT_001 -[#B8860B]-> BPR_006 : <<assignment>>
+ACT_002 -[#B8860B]-> BPR_005 : <<assignment>>
+ACT_010 -[#B8860B]-> BPR_005 : <<assignment>>
+ACT_001 -[#B8860B]-> BPR_003 : <<assignment>>
 ACT_001 -[#B8860B]-> BCO_002 : <<assignment>>
 ACT_002 -[#B8860B]-> BCO_002 : <<assignment>>
+ACT_001 -[#B8860B]-> BIA_001 : <<assignment>>
+ACT_002 -[#B8860B]-> BIA_001 : <<assignment>>
 BCO_002 -[#B8860B]-> BIA_001 : <<assignment>>
 
-' ---------------------------------------------------------------------------
-' Process / Interaction → Service realization
-' ---------------------------------------------------------------------------
+' Realization
 BPR_001 ..[#B8860B].>> BSV_003 : <<realization>>
 BPR_004 ..[#B8860B].>> BSV_003 : <<realization>>
-BPR_006 ..[#B8860B].>> BSV_009 : <<realization>>
+BPR_005 ..[#B8860B].>> BSV_004 : <<realization>>
+BPR_003 ..[#B8860B].>> BSV_009 : <<realization>>
 BIA_001 ..[#B8860B].>> BSV_009 : <<realization>>
 
-' ---------------------------------------------------------------------------
-' Process → Object access (key objects produced/consumed)
-' ---------------------------------------------------------------------------
+' Object access
 BPR_001 -[#808080]-> BOB_002 : <<access (write)>>
 BPR_004 -[#808080]-> BOB_004 : <<access (write)>>
 
 note as N1
-  Governance cluster: sprint lifecycle + gate + review.
-  BEV-008 (Engagement Completed) terminates BEV-002 loop —
-  when recorded, Sprint Planning (BPR-001) does NOT re-fire.
-  BIA-001 + BCO-002: structured PM+User sprint review sequence.
-  See operational-execution diagram for skill/CQ/knowledge cluster.
+Governance decision policy:
+- Continue: all sprint artifacts approved and next phase/sprint still in scope -> BEV-002
+- End: all required phase obligations complete and user/PM confirm closure -> BEV-008
+- Pause: user/PM requests suspension or external dependency blocks progression -> BEV-009
+- Resume: explicit user/PM resume decision after pause -> BEV-010
+User role is mandatory in BIA-001 via BCO-002 assignment; PM cannot unilaterally close review.
 end note
 
 @enduml

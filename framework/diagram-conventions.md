@@ -1,6 +1,6 @@
 ---
 doc-id: diagram-conventions
-version: 2.2.0
+version: 2.3.0
 status: Approved — Stage 4.9f
 governs: All diagram production across all agent roles
 ---
@@ -44,6 +44,22 @@ No single diagram type has final authority over system behaviour. The five diagr
 - Select only entities and connections needed to answer that question.
 - For any entity that appears, include its most important direct connections (1-hop). Omit distant connections (2+ hops) unless they are essential to the diagram's question.
 - If the diagram requires more than ~30 elements to remain readable, split into focused sub-diagrams with a note cross-referencing each other.
+
+### 0.2.1 Dense-Edge Decomposition Rule (mandatory)
+
+When a node-link diagram shows edge congestion (parallel arrows sharing the same lane, unreadable labels, or repeated overlap at group boundaries), do not continue tuning the same monolithic diagram.
+
+Required strategy:
+
+1. **Attempt one layout pass only** (`direction`, `nodesep`, `ranksep`, simple ordering/hidden anchors).
+2. If congestion remains, **split into thematic slices** (typically 2-4 diagrams), each answering one question.
+3. For traceability-heavy domains, separate relationship families so lane pressure is reduced:
+  - **Horizontal progression slices** (example: stakeholder → driver, driver → requirement)
+  - **Vertical governance slices** (example: requirement → constraint, requirement/driver → goal)
+4. Add a **matrix companion artifact** for full many-to-many coverage (`diagram-catalog/diagrams/*.md`) so no relationship is lost.
+5. In every slice diagram `purpose`, reference the companion matrix artifact-id used for full coverage.
+
+Do not force dense association sets into a single visual panel when readability collapses.
 
 ### 0.3 Diagram output modes: update vs. new diagram vs. target/delta
 
@@ -138,6 +154,14 @@ Agents author PlantUML source text directly. The model (entity and connection fi
     ...
 ```
 
+**Rendering path invariant (mandatory):** Rendered SVG output path is always the sibling `diagram-catalog/rendered/` directory of `diagram-catalog/diagrams/`. Rendering into `diagram-catalog/diagrams/rendered/` is invalid and must be removed if found.
+
+When rendering from within `diagram-catalog/diagrams/`, use:
+
+```bash
+java -jar tools/plantuml.jar -tsvg -o ../rendered *.puml
+```
+
 There are no `elements/`, `connections/`, or `index.yaml` files in the diagram catalog. Model entities and connections in `architecture-repository/model-entities/` and `connections/` are the element and connection catalog; `§display` sections in those files define rendering. Diagrams are discovered by ModelRegistry scanning PUML header comment frontmatter (§9).
 
 **Reading vs. rendering:** Agents and skills read `.puml` source files (via `read_artifact`) for both local engagement diagrams and enterprise diagrams. Reading the PUML source is sufficient for agent context, validation, and authoring decisions. `render_diagram` produces an SVG and is only called when generating user-facing output (sprint reviews, deliverable packages, documentation exports) — never as a prerequisite for agent reasoning.
@@ -206,6 +230,7 @@ Before D1, choose the artifact form intentionally:
 - Use a `.puml` diagram when spatial/topological relationships, sequence, flow, or grouping structure are the primary communication need.
 - Use a matrix `.md` when the objective is coverage, traceability, dependency mapping, or many-to-many relationship inspection across large ID sets.
 - Default rule for dense mappings: if the same artifact would exceed ~25 nodes or become edge-dense enough to harm readability, produce a matrix first and add/keep only the minimal supporting diagrams needed for topology.
+- If a rendered diagram still has overlapping edge lanes after one layout pass, stop tuning and decompose into thematic sub-diagrams plus a full-coverage matrix.
 - Coverage guardrail: matrices must not become a substitute for architectural context. Keep a reasonable set of diagrams per domain slice so end-to-end behavior, boundaries, and interaction structure remain visible.
 
 For matrix authoring, use `model_create_matrix` with ID-based markdown and enabled auto-linking so cells resolve to model entities.
@@ -264,7 +289,7 @@ Call `validate_diagram(<puml_file_path>)` immediately after writing. The tool:
 
 ### D5 — Render (user-facing output only)
 
-Call `render_diagram(<puml_file_path>)` when producing user-facing output: sprint reviews, deliverable packages, or documentation exports. Invokes PlantUML CLI; writes SVG to `rendered/`. Commit both `.puml` and `.svg` at sprint close. Do not call `render_diagram` as part of agent reasoning or validation — `read_artifact` on the `.puml` source is sufficient for those purposes.
+Call `render_diagram(<puml_file_path>)` when producing user-facing output: sprint reviews, deliverable packages, or documentation exports. Invokes PlantUML CLI; writes SVG to the sibling `diagram-catalog/rendered/` directory of the source file's `diagram-catalog/diagrams/` path. Commit both `.puml` and `.svg` at sprint close. Do not call `render_diagram` as part of agent reasoning or validation — `read_artifact` on the `.puml` source is sufficient for those purposes.
 
 ---
 
@@ -1353,8 +1378,10 @@ rectangle "Sprint Planning" <<BusinessProcess>> as BPR_001 {
 
 Parent→stage `archimate-composition` connection files are still required in the model repository; the nested rendering is the preferred operational viewpoint presentation.
 
+**Stage-count rule (mandatory):** There is no fixed default stage count (for example, "always three"). Decompose into a manageable number of stages that matches solution-domain behavior and preserves readability. If decomposition grows too large to remain understandable in one parent container, split by separation of concerns into additional top-level processes/interactions and connect them via direct/event-mediated coordination.
+
 **When to show inner stages in the operational ArchiMate diagram vs. Activity/BPMN diagram:**
-- ArchiMate operational diagram: show the key stages of a process when they have distinct roles, objects, or outcomes visible at the business level (typically 2–4 stages per process).
+- ArchiMate operational diagram: show the key stages of a process when they have distinct roles, objects, or outcomes visible at the business level (count is domain-dependent; no fixed template).
 - Activity/BPMN diagram: show all branching, conditions, and fine-grained step-level logic. This is the complete internal specification.
 - If a process is simple enough to summarize in one box, do not decompose it in the ArchiMate diagram. Decompose in Activity/BPMN only.
 

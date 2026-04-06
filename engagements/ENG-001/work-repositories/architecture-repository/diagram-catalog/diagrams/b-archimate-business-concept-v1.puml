@@ -37,7 +37,7 @@
 '   - BPR-003
 '   - BPR-004
 '   - BPR-005
-'   - BPR-006
+'   - BIA-001
 '   - BPR-007
 '   - BPR-008
 ' connection-ids-used:
@@ -47,7 +47,7 @@
 '   - BEV-003---BPR-001
 '   - BEV-004---BPR-003
 '   - BEV-005---BPR-005
-'   - BEV-006---BPR-006
+'   - BEV-006---BIA-001
 '   - BEV-007---BPR-008
 '   - BPR-001---BOB-002
 '   - BPR-002---BOB-001
@@ -89,7 +89,7 @@ rectangle "Processes" <<BusinessGrouping>> as GRP_PROCS {
   DECL_BPR_003
   DECL_BPR_004
   DECL_BPR_005
-  DECL_BPR_006
+  DECL_BIA_001
   DECL_BPR_007
   DECL_BPR_008
 }
@@ -114,7 +114,7 @@ BEV_002 -[#B8860B]-> BPR_001 : <<triggering>>
 BEV_003 -[#B8860B]-> BPR_001 : <<triggering>>
 BEV_004 -[#B8860B]-> BPR_003 : <<triggering>>
 BEV_005 -[#B8860B]-> BPR_005 : <<triggering>>
-BEV_006 -[#B8860B]-> BPR_006 : <<triggering>>
+BEV_006 -[#B8860B]-> BIA_001 : <<triggering>>
 BEV_007 -[#B8860B]-> BPR_008 : <<triggering>>
 
 ' ---------------------------------------------------------------------------

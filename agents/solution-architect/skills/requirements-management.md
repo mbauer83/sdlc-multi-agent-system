@@ -110,6 +110,12 @@ For each active RR-nnn, verify that the architecture traceability chain is compl
 RR-nnn → AV.DRV-nnn (or AV capability cluster) → BA.CAP-nnn → AA.APP-nnn → DA.DE-nnn
 ```
 
+**Outcome-evidence traceability extension (mandatory where modeled):**
+```
+RR-nnn -> DRV-nnn -> GOL-nnn -> OUT-nnn -> COA-nnn -> CAP-nnn -> (BPR-nnn / BSV-nnn) -> VS-nnn stage value
+```
+At least one measurable OUT path is required for Must-priority value-related requirements.
+
 **Phase-appropriate completeness:**
 - After Phase A only: RR-nnn must trace to at least one AV element (DRV-nnn or capability cluster). No BA/AA/DA tracing required yet.
 - After Phase B: RR-nnn must trace to at least one AV element AND at least one BA element (CAP-nnn or BPR-nnn).

@@ -34,6 +34,8 @@ Representation choice (balanced and mandatory):
 - Use matrix artifacts (`model_create_matrix`) for dense many-to-many mappings, coverage, and traceability where node-link readability degrades.
 - Do not replace contextual architecture views with matrices alone: keep a reasonable set of diagrams that preserves end-to-end context for the domain slice.
 - Practical threshold: if a single node-link view would exceed about 25 elements or become edge-dense, keep/author at least one contextual diagram and shift dense cross-reference detail to a matrix.
+- If edges remain congested after one layout pass, split the relationship family into focused sub-diagrams and stop tuning the monolith.
+- Where traceability is split across multiple diagrams, produce a matrix companion that captures complete many-to-many coverage.
 
 This skill describes tool-use intent. Runtime binding is code-owned.
 
@@ -145,6 +147,10 @@ For each BSV-nnn:
 
 **Traceability back to AV:** Every BSV must ultimately trace to at least one AV DRV-nnn driver. Record this traceability explicitly. A service untraceable to any driver is either out of scope or points to a missing driver in AV.
 
+**Outcome-evidence completion (mandatory):** For each in-scope goal (`GOL-nnn`), model at least one verifiable outcome (`OUT-nnn`) and at least one course of action (`COA-nnn`) that operationalizes the outcome through capabilities and execution paths. Required operational chain at Phase B baseline:
+`STK -> DRV -> GOL -> OUT -> COA -> CAP -> (BPR and/or BSV) -> value delivered in VS stage`.
+Each `OUT-nnn` must include measurable evidence fields in properties (metric, threshold/target, evidence source artifact).
+
 ---
 
 ### Step 1.1 — Capability Cross-Reference *(Supporting EA step — not the entry point)*
@@ -244,6 +250,7 @@ Execute D1–D4 per `framework/diagram-conventions.md §5` for each diagram:
 - **D1:** `list_artifacts` for BPR, BIA, BEV, ACT, BCO, BSV; `list_connections` for assignment, realization, triggering.
 - **D2:** Verify `§display ###archimate` on all entities. Add missing; `regenerate_macros()`.
 - **D3:** Load `read_framework_doc("framework/diagram-conventions.md §7.archimate-business-operational")`. Group by process cluster or VS stage; events connected to the processes they trigger. For decomposed behavior, draw the parent `BPR-nnn` / `BIA-nnn` as the container element and nest stage behaviors inside it with internal `flow`/`triggering` lines (per `framework/diagram-conventions.md §11.9.1a`); do not use outer grouping + duplicate parent nodes. Write via `write_artifact`.
+- **D3a (decomposition sizing check):** Do not force a fixed stage count (for example, 3-step templates). Use a manageable stage count driven by domain behavior. If a parent decomposition becomes crowded or mixes concerns, split into additional top-level `BPR`/`BIA` elements and coordinate them explicitly (triggering/event-mediated links) rather than adding excessive nested stages.
 - **D4:** `validate_diagram`; cross-check that every BPR shown has at least one role and one realizing service visible.
 
 Multiple diagrams per viewpoint are acceptable and encouraged when scope is large: produce one operational diagram per major VS stage or process cluster rather than one monolithic diagram.

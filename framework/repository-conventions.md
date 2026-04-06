@@ -92,7 +92,7 @@ architecture-repository/
     templates/           # Blank per-type stubs; agents copy, rename, and adapt for new diagrams
       archimate-business-template.puml
       class-er-template.puml
-    rendered/            # *.svg outputs; committed at sprint boundary
+    rendered/            # *.svg outputs; sibling of diagrams/ and templates/. Never create diagrams/rendered/
   decisions/             # ADR-nnn-<slug>.md
   overview/              # Phase overview documents (av-overview.md, ba-overview.md, etc.)
 ```

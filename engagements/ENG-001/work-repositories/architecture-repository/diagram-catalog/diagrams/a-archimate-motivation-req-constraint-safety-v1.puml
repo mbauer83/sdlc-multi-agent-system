@@ -1,0 +1,44 @@
+' ---
+' artifact-id: a-archimate-motivation-req-constraint-safety-v1
+' artifact-type: diagram
+' diagram-type: archimate-motivation
+' name: Motivation - Safety Requirement to Constraint Map
+' version: 0.1.0
+' status: draft
+' phase-produced: A
+' owner-agent: SA
+' engagement: ENG-001
+' domain: core-platform
+' purpose: Focused safety and compliance constraint view; split from dense aggregate
+'   requirement-constraint diagram.
+' entity-ids-used:
+' - CST-006
+' - CST-012
+' - REQ-014
+' - REQ-023
+' connection-ids-used:
+' - REQ-014---CST-006
+' - REQ-023---CST-012
+' ---
+@startuml a-archimate-motivation-req-constraint-safety-v1
+!include ../_macros.puml
+!include ../_archimate-stereotypes.puml
+
+top to bottom direction
+skinparam linetype ortho
+skinparam nodesep 44
+skinparam ranksep 52
+
+rectangle "Safety and Compliance Requirements" <<MotivationGrouping>> as GRP_REQ {
+  DECL_REQ_014
+  DECL_REQ_023
+}
+
+rectangle "Safety and Compliance Constraints" <<MotivationGrouping>> as GRP_CST {
+  DECL_CST_006
+  DECL_CST_012
+}
+
+REQ_014 -[#2E7D32]down-> CST_006 : <<association>>
+REQ_023 -[#2E7D32]down-> CST_012 : <<association>>
+@enduml

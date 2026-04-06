@@ -720,7 +720,7 @@ Agent roles, core SDLC processes, and business services — the "what the system
   - `BPR-003.md` — `CQ Lifecycle` — agent raises CQ → PM batches → dashboard surfaces → user answers → agent resumes
   - `BPR-004.md` — `Gate Evaluation` — PM collects votes; evaluates checklist; records `gate.evaluated` event
   - `BPR-005.md` — `Algedonic Escalation` — `alg.raised` bypasses topology; reaches escalation target immediately — `safety-relevant: true`
-  - `BPR-006.md` — `Sprint Review` — PM emits `review.pending`; dashboard surfaces review; user marks items; PM routes corrections; sprint closes
+  - `BIA-001.md` — `Sprint Review Interaction` — PM+User collaborative review sequence; user decisions drive continue/pause/end; PM routes corrections
   - `BPR-007.md` — `Enterprise Promotion` — entity promoted from engagement to enterprise repo; ID reference sweep; Architecture Board review
   - `BPR-008.md` — `Reverse Architecture` — EP-G entry; multi-source scan; entity inference; user confirmation; ERP model population
 
@@ -733,7 +733,7 @@ Agent roles, core SDLC processes, and business services — the "what the system
   - `BSV-006.md` — `Code Delivery` (DE) — implements work packages; submits PRs; contributes test reports
   - `BSV-007.md` — `Quality Assurance` (QA) — test strategy; test execution; compliance assessment
   - `BSV-008.md` — `Platform Engineering` (DO) — IaC; CI/CD pipelines; environment provisioning; deployment records
-  - `BSV-009.md` — `User Decisions` (User) — CQ answers; file uploads; sprint review approvals — the user's contribution as a bounded service consumed by BPR-003 and BPR-006
+  - `BSV-009.md` — `User Decisions` (User) — CQ answers; file uploads; sprint review decisions — consumed by BPR-003 and BIA-001, including pause/resume intent
 
 #### 4.9d — Application Layer Entities (Phase C) — Primary Stage 5 Implementation Specification
 
@@ -816,7 +816,7 @@ Enumerate specific connection files. Each is an `.md` file with frontmatter and 
   - `ASV-002---CAP-002.md`, `ASV-001---CAP-003.md`, `ASV-005---CAP-004.md` — services realise capabilities
   - `ASV-004---CAP-005.md`, `ASV-003---CAP-005.md` — CQ and Sprint Review services realise User Interaction
   - `APP-008---CAP-006.md`, `APP-009---CAP-006.md` — SA/SwA agents realise Reverse Architecture
-  - `ASV-001---BPR-002.md`, `ASV-004---BPR-003.md`, `ASV-003---BPR-006.md` — services realise BPR processes
+  - `ASV-001---BPR-002.md`, `ASV-004---BPR-003.md`, `ASV-003---BIA-001.md` — services realise core execution/review behaviors
   - `APP-008---BSV-001.md`, `APP-009---BSV-002.md`, `APP-007---BSV-003.md`, `APP-020---BSV-009.md` — agents realise BSV services
 
 - [x] **`connections/archimate/serving/`** ✅ 24 files. Corrections: `APP-006---APP-016.md` (plan erroneously listed APP-005---APP-006); 6 additional SkillLoader→agent connections for DO/DE/QA/PO/SM/CSCO (plan said "four more" but 6 agents remain):
@@ -1005,7 +1005,7 @@ The following events govern reverse-architecture and user-input persistence. The
   - `write_tools.py` — per-agent path-constrained write tools (RepositoryBoundaryError on violation → ALG-007)
   - `target_repo_tools.py` — **multi-repo aware**: `read_target_repo(path, repo_id=None)` (repo_id=None → primary repo; raises TargetRepoNotFoundError if id not registered); `write_target_repo(path, content, repo_id=None)` (DE and DO only, per their respective access grants); `execute_pipeline(repo_id=None)` (DO only); `scan_target_repo(repo_id=None)` (Discovery Layer 4 single-repo scan — called once per repo by Layer 4 procedure); `list_target_repos()` (alias for `list_target_repositories()` — convenience import in this module). **Backward compatibility:** when `target-repository` (singular) is configured, `repo_id=None` and `repo_id="default"` both refer to it.
   - `pm_tools.py` — PM decision events (all emitted inside the tool call, before returning to the agent): `invoke_specialist(agent_id, skill_id, task)` → emits `specialist.invoked`; `evaluate_gate(gate_id, votes)` → emits `gate.evaluated` + `create_snapshot("gate.evaluated")` on pass; `batch_cqs(cq_ids)` → emits `cq.batched`; `record_decision(rationale)` → emits `decision.recorded`; `trigger_review()` → emits `review.pending`
-  - `diagram_tools.py` — Model-driven diagram production per `framework/diagram-conventions.md §5` (D1–D5 protocol): `regenerate_macros(repo_path)` (scans all entity `§display ###archimate` blocks via ModelRegistry; rewrites `_macros.puml`; called automatically by `write_artifact` when an entity's archimate display spec changes — ALG-C04 if count drift detected); `generate_er_content(entity_ids)` (reads each DOB entity's `§display ###er` block; returns PUML class declarations with attribute lists for direct paste into ER diagram); `generate_er_relations(connection_ids)` (reads each er-connection's `§display ###er` block; returns cardinality lines); `validate_diagram(puml_file_path)` (extracts all PUML aliases; checks each against ModelRegistry; verifies each resolved entity has the appropriate `§display ###<language>` section; confirms `!include _macros.puml` present for ArchiMate/use-case diagrams; returns list of validation errors; ALG-C03 on alias with no backing entity — model must be extended, alias must not be removed); `render_diagram(puml_file_path)` (invokes local `plantuml` CLI; writes SVG to `rendered/`; sprint-boundary render only unless on-demand requested by PM). Non-SA agents call `diagram.display-spec-request` handoff when a needed `§display ###<language>` subsection is missing from an entity. **Agents author PUML source text directly via `write_artifact`, following templates from `framework/diagram-conventions.md §7`.**
+  - `diagram_tools.py` — Model-driven diagram production per `framework/diagram-conventions.md §5` (D1–D5 protocol): `regenerate_macros(repo_path)` (scans all entity `§display ###archimate` blocks via ModelRegistry; rewrites `_macros.puml`; called automatically by `write_artifact` when an entity's archimate display spec changes — ALG-C04 if count drift detected); `generate_er_content(entity_ids)` (reads each DOB entity's `§display ###er` block; returns PUML class declarations with attribute lists for direct paste into ER diagram); `generate_er_relations(connection_ids)` (reads each er-connection's `§display ###er` block; returns cardinality lines); `validate_diagram(puml_file_path)` (extracts all PUML aliases; checks each against ModelRegistry; verifies each resolved entity has the appropriate `§display ###<language>` section; confirms `!include _macros.puml` present for ArchiMate/use-case diagrams; returns list of validation errors; ALG-C03 on alias with no backing entity — model must be extended, alias must not be removed); `render_diagram(puml_file_path)` (invokes local `plantuml` CLI; writes SVG to the sibling `diagram-catalog/rendered/` directory for files in `diagram-catalog/diagrams/`; never writes to `diagrams/rendered/`; sprint-boundary render only unless on-demand requested by PM). Non-SA agents call `diagram.display-spec-request` handoff when a needed `§display ###<language>` subsection is missing from an entity. **Agents author PUML source text directly via `write_artifact`, following templates from `framework/diagram-conventions.md §7`.**
 - [ ] **`src/agents/learning_store.py`**: `LearningStore` wrapper around LangGraph `BaseStore` (per `framework/learning-protocol.md §12.1`); implements `query()` and `record()` with graph-expansion and optional semantic tier; handles store rebuild from files on startup
 - [ ] **`src/agents/project_manager.py`**: PM agent with `result_type=PMDecision`; all PM skills loaded via SkillLoader
 - [ ] **`src/agents/solution_architect.py`**: SA agent; Discovery Scan tool registered; all SA skills loadable
@@ -1285,7 +1285,33 @@ sprint-review:
 
 **Stages 1–4.9e complete. ModelVerifier complete (71 BDD tests). Stage 4.9f partial (4/7 diagrams done). `src/common/model_query.py` complete. Business modeling guidelines (Stage 4.9g pre-work) added to framework. ENG-001 business-layer model rework pending.**
 
+### Completed this session (2026-04-06 — session 8)
+
+- **Rendering-path invariant enforced end-to-end:**
+  - Removed non-canonical rendered artifacts under `diagram-catalog/diagrams/rendered/`.
+  - Updated framework/docs/spec text to require rendering from `diagram-catalog/diagrams/` into sibling `diagram-catalog/rendered/` only.
+  - Regenerated modified SVGs in canonical `diagram-catalog/rendered/`.
+
+- **SA traceability logic upgraded from intent-to-value with verifiable outcomes:**
+  - Prescribed mandatory chain across SA agent-definition and skills: `STK -> DRV -> GOL -> OUT -> COA -> CAP -> (BPR/BSV) -> VS-stage value`.
+  - Updated schema guidance (`architecture-vision`, `business-architecture`, `requirements-register`) to include measurable outcomes (`OUT`) and courses of action (`COA`) with value-evidence linkage.
+  - Updated process governance (`agile-adm-cadence` universal gate checklist) to require outcome-evidence chain integrity at gates.
+
+- **ENG-001 model implemented for outcome-evidence traceability:**
+  - Added entity sets: `OUT-001..002`, `COA-001..002`, `VAL-001..002` with ERP-compliant files and display specs.
+  - Added motivation/strategy/business cross-layer connections linking stakeholder intent to operational evidence and value-stream value.
+  - Added new diagram: `a-archimate-motivation-outcome-course-value-traceability-v1.puml` and rendered SVG.
+  - Repaired stale BPR-006 aliases in `b-archimate-business-concept-v1.puml` and `phase-b-archimate-business-v1.puml`.
+  - Full verifier run via `uv run`: **2001 files, 0 errors**.
+
 ### Completed this session (2026-04-06 — session 7)
+
+- **Dense-diagram decomposition policy codified across framework + skills:**
+  - `framework/diagram-conventions.md` updated to v2.3.0 with mandatory dense-edge decomposition rule (§0.2.1): after one layout pass, split monolithic diagrams into thematic slices and add matrix companion artifacts for full coverage.
+  - `framework/diagram-conventions.md §5.D0` now explicitly instructs agents to stop layout tuning when lane overlap persists and switch to split-diagram + matrix strategy.
+  - `framework/artifact-registry-design.md` updated to v2.2.0 with the dense-association modeling pattern (§2.6): focused `.puml` slices plus full-coverage `.md` matrix as a paired output.
+  - SA runtime guidance updated in `agents/solution-architect/skills/phase-a.md` and `agents/solution-architect/skills/phase-b.md` so active skills explicitly direct this strategy at execution time.
+  - Orientation docs updated (`README.md`, `CLAUDE.md` rule 29) so the policy is visible both to implementers and to agent authors.
 
 - **Diagram-vs-matrix representation policy is now explicit, balanced, and uniform across framework + skills:**
   - `framework/agent-runtime-spec.md` now documents matrix creation alongside diagram creation in the runtime tool-capability map.

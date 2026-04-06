@@ -1,0 +1,85 @@
+' ---
+' artifact-id: a-archimate-motivation-outcome-course-value-traceability-v1
+' artifact-type: diagram
+' diagram-type: archimate-motivation
+' name: Motivation/Strategy/Business Outcome Evidence Traceability
+' version: 0.1.0
+' status: draft
+' phase-produced: B
+' owner-agent: SA
+' engagement: ENG-001
+' domain: core-platform
+' purpose: Show explicit verifiable chain from stakeholder intent to delivered value through outcomes, courses of action, capabilities, and business execution.
+' entity-ids-used:
+' - STK-001
+' - DRV-018
+' - GOL-004
+' - REQ-021
+' - CST-007
+' - OUT-001
+' - COA-001
+' - CAP-005
+' - BIA-001
+' - VAL-001
+' - VS-001
+' connection-ids-used:
+' - STK-001---DRV-018
+' - DRV-018---GOL-004
+' - REQ-021---GOL-004
+' - OUT-001---GOL-004
+' - COA-001---OUT-001
+' - CAP-005---COA-001
+' - BIA-001---CAP-005
+' - BIA-001---OUT-001
+' - OUT-001---VAL-001
+' - VAL-001---VS-001
+' ---
+@startuml a-archimate-motivation-outcome-course-value-traceability-v1
+!include ../_macros.puml
+!include ../_archimate-stereotypes.puml
+
+left to right direction
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 46
+
+rectangle "Intent" <<MotivationGrouping>> as GRP_INTENT {
+  DECL_STK_001
+  DECL_DRV_018
+  DECL_REQ_021
+  DECL_GOL_004
+}
+
+rectangle "Evidence" <<MotivationGrouping>> as GRP_EVID {
+  DECL_OUT_001
+  DECL_VAL_001
+}
+
+rectangle "Operationalization" <<StrategyGrouping>> as GRP_STRAT {
+  DECL_COA_001
+  DECL_CAP_005
+  DECL_VS_001
+}
+
+rectangle "Execution" <<BusinessGrouping>> as GRP_EXEC {
+  DECL_BIA_001
+}
+
+STK_001 -[#2E7D32]-> DRV_018 : <<association>>
+DRV_018 -[#1565C0]-> GOL_004 : <<influence>>
+REQ_021 -[#1565C0]-> GOL_004 : <<influence>>
+OUT_001 -[#B8860B]-> GOL_004 : <<realization>>
+COA_001 -[#2E7D32]-> OUT_001 : <<association>>
+CAP_005 -[#B8860B]-> COA_001 : <<realization>>
+BIA_001 -[#B8860B]-> CAP_005 : <<realization>>
+BIA_001 -[#B8860B]-> OUT_001 : <<realization>>
+OUT_001 -[#2E7D32]-> VAL_001 : <<association>>
+VAL_001 -[#2E7D32]-> VS_001 : <<association>>
+
+note bottom
+Verifiable chain required:
+STK to DRV to GOL to OUT to COA to CAP to BIA/BPR/BSV to VS stage value.
+OUT properties must define measurable evidence fields.
+end note
+
+@enduml

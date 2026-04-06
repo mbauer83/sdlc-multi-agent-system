@@ -16,11 +16,44 @@
 ' ---------------------------------------------------------------------------
 !define DECL_STK_001 rectangle "User / Engagement Owner" <<Stakeholder>> as STK_001
 !define DECL_STK_002 rectangle "Architecture Board" <<Stakeholder>> as STK_002
+!define DECL_STK_003 rectangle "Project Manager Agent Stakeholder" <<Stakeholder>> as STK_003
+!define DECL_STK_004 rectangle "Solution Architect Agent Stakeholder" <<Stakeholder>> as STK_004
+!define DECL_STK_005 rectangle "Software Architect / PE Agent Stakeholder" <<Stakeholder>> as STK_005
+!define DECL_STK_006 rectangle "DevOps / Platform Agent Stakeholder" <<Stakeholder>> as STK_006
+!define DECL_STK_007 rectangle "Implementing Developer Agent Stakeholder" <<Stakeholder>> as STK_007
+!define DECL_STK_008 rectangle "QA Agent Stakeholder" <<Stakeholder>> as STK_008
+!define DECL_STK_009 rectangle "Product Owner Agent Stakeholder" <<Stakeholder>> as STK_009
+!define DECL_STK_010 rectangle "Sales & Marketing Agent Stakeholder" <<Stakeholder>> as STK_010
+!define DECL_STK_011 rectangle "CSCO Agent Stakeholder" <<Stakeholder>> as STK_011
 !define DECL_DRV_001 rectangle "SDLC Execution Cost" <<Driver>> as DRV_001
 !define DECL_DRV_002 rectangle "Architecture Documentation Debt" <<Driver>> as DRV_002
+!define DECL_DRV_003 rectangle "Coordination Deadlock Risk" <<Driver>> as DRV_003
+!define DECL_DRV_004 rectangle "Architecture Coherence Erosion" <<Driver>> as DRV_004
+!define DECL_DRV_005 rectangle "Conceptual Integrity Drift" <<Driver>> as DRV_005
+!define DECL_DRV_006 rectangle "Platform Fragility Under Change" <<Driver>> as DRV_006
+!define DECL_DRV_007 rectangle "Execution Friction and Local Complexity" <<Driver>> as DRV_007
+!define DECL_DRV_008 rectangle "Defect Escape Pressure" <<Driver>> as DRV_008
+!define DECL_DRV_009 rectangle "Opportunity-Cost Exposure" <<Driver>> as DRV_009
+!define DECL_DRV_010 rectangle "Market Relevance Volatility" <<Driver>> as DRV_010
+!define DECL_DRV_011 rectangle "Latent Safety and Compliance Risk" <<Driver>> as DRV_011
+!define DECL_DRV_012 rectangle "Sprint Predictability Volatility" <<Driver>> as DRV_012
+!define DECL_DRV_013 rectangle "Cross-Layer Traceability Gaps" <<Driver>> as DRV_013
+!define DECL_DRV_014 rectangle "Architecture-to-Code Divergence" <<Driver>> as DRV_014
+!define DECL_DRV_015 rectangle "Rollback and Recovery Uncertainty" <<Driver>> as DRV_015
+!define DECL_DRV_016 rectangle "Constraint Interpretation Ambiguity" <<Driver>> as DRV_016
+!define DECL_DRV_017 rectangle "Regression Coverage Blind Spots" <<Driver>> as DRV_017
+!define DECL_DRV_018 rectangle "Value Hypothesis Ambiguity" <<Driver>> as DRV_018
+!define DECL_DRV_019 rectangle "Competitive Narrative Drift" <<Driver>> as DRV_019
+!define DECL_DRV_020 rectangle "Control Loop Inadequacy" <<Driver>> as DRV_020
 !define DECL_GOL_001 rectangle "Full ADM Phase Coverage" <<Goal>> as GOL_001
 !define DECL_GOL_002 rectangle "End-to-End Traceability" <<Goal>> as GOL_002
 !define DECL_GOL_003 rectangle "Safety-by-Default" <<Goal>> as GOL_003
+!define DECL_GOL_004 rectangle "Predictable Sprint Throughput" <<Goal>> as GOL_004
+!define DECL_GOL_005 rectangle "Operational Resilience by Design" <<Goal>> as GOL_005
+!define DECL_GOL_006 rectangle "Verifiable Architecture Conformance" <<Goal>> as GOL_006
+!define DECL_GOL_007 rectangle "Decision Auditability Across Phases" <<Goal>> as GOL_007
+!define DECL_OUT_001 rectangle "Predictable Throughput Evidenced" <<Outcome>> as OUT_001
+!define DECL_OUT_002 rectangle "Value Hypothesis Evidenced" <<Outcome>> as OUT_002
 !define DECL_PRI_001 rectangle "Domain-Centric Layering" <<Principle>> as PRI_001
 !define DECL_PRI_002 rectangle "EventStore Primacy" <<Principle>> as PRI_002
 !define DECL_PRI_003 rectangle "Model-First" <<Principle>> as PRI_003
@@ -29,8 +62,39 @@
 !define DECL_REQ_003 rectangle "Brownfield Support" <<Requirement>> as REQ_003
 !define DECL_REQ_004 rectangle "Resumable State" <<Requirement>> as REQ_004
 !define DECL_REQ_005 rectangle "Agent Learning" <<Requirement>> as REQ_005
+!define DECL_REQ_006 rectangle "Structured Conflict Mediation Records" <<Requirement>> as REQ_006
+!define DECL_REQ_007 rectangle "Explicit Cross-Domain Trade-off Reasoning" <<Requirement>> as REQ_007
+!define DECL_REQ_008 rectangle "Architecture Compliance in Delivery Changes" <<Requirement>> as REQ_008
+!define DECL_REQ_009 rectangle "Operability Evidence for Architecture Decisions" <<Requirement>> as REQ_009
+!define DECL_REQ_010 rectangle "Locally Actionable Design Constraints" <<Requirement>> as REQ_010
+!define DECL_REQ_011 rectangle "Evidence-Bound Defect Closure" <<Requirement>> as REQ_011
+!define DECL_REQ_012 rectangle "Value-Priority Traceability to Scope" <<Requirement>> as REQ_012
+!define DECL_REQ_013 rectangle "Market-Signal Traceability to Requirements" <<Requirement>> as REQ_013
+!define DECL_REQ_014 rectangle "Non-Bypassable Safety Gate Reviews" <<Requirement>> as REQ_014
+!define DECL_REQ_015 rectangle "Phase-Gate Decision Traceability" <<Requirement>> as REQ_015
+!define DECL_REQ_016 rectangle "Cross-Layer Realization Traceability" <<Requirement>> as REQ_016
+!define DECL_REQ_017 rectangle "Architecture-to-Code Conformance Checks" <<Requirement>> as REQ_017
+!define DECL_REQ_018 rectangle "Progressive Delivery and Rollback Controls" <<Requirement>> as REQ_018
+!define DECL_REQ_019 rectangle "Implementation Constraint Playbooks" <<Requirement>> as REQ_019
+!define DECL_REQ_020 rectangle "Risk-Based Regression Strategy" <<Requirement>> as REQ_020
+!define DECL_REQ_021 rectangle "Value Hypothesis and KPI Binding" <<Requirement>> as REQ_021
+!define DECL_REQ_022 rectangle "Market Claim to Capability Traceability" <<Requirement>> as REQ_022
+!define DECL_REQ_023 rectangle "Safety Control Feedback Closure" <<Requirement>> as REQ_023
+!define DECL_REQ_024 rectangle "Conflict Escalation SLA" <<Requirement>> as REQ_024
 !define DECL_CST_001 rectangle "No Framework Lock-In" <<Constraint>> as CST_001
 !define DECL_CST_002 rectangle "Local-Only Runtime" <<Constraint>> as CST_002
+!define DECL_CST_003 rectangle "No Silent Conflict Suppression" <<Constraint>> as CST_003
+!define DECL_CST_004 rectangle "No PM Technical Decision Override" <<Constraint>> as CST_004
+!define DECL_CST_005 rectangle "No Release Without QA Evidence" <<Constraint>> as CST_005
+!define DECL_CST_006 rectangle "No Safety or Compliance Gate Bypass" <<Constraint>> as CST_006
+!define DECL_CST_007 rectangle "No Scope Commitment Without Value Traceability" <<Constraint>> as CST_007
+!define DECL_CST_008 rectangle "No Technology Decision Without Operability Signals" <<Constraint>> as CST_008
+!define DECL_CST_009 rectangle "No Phase Transition Without Decision Rationale" <<Constraint>> as CST_009
+!define DECL_CST_010 rectangle "No Merge Without Architecture Conformance Signal" <<Constraint>> as CST_010
+!define DECL_CST_011 rectangle "No Production Change Without Rollback Strategy" <<Constraint>> as CST_011
+!define DECL_CST_012 rectangle "No Safety Control Without Observable Feedback" <<Constraint>> as CST_012
+!define DECL_VAL_001 rectangle "Predictable Sprint Value" <<Value>> as VAL_001
+!define DECL_VAL_002 rectangle "Value Hypothesis Value" <<Value>> as VAL_002
 
 ' ---------------------------------------------------------------------------
 ' Strategy
@@ -43,6 +107,8 @@
 !define DECL_CAP_006 rectangle "Reverse Architecture" <<Capability>> as CAP_006
 !define DECL_VS_001 rectangle "Forward SDLC" <<ValueStream>> as VS_001
 !define DECL_VS_002 rectangle "Brownfield Onboarding" <<ValueStream>> as VS_002
+!define DECL_COA_001 rectangle "Evidence-Gated Governance" <<CourseOfAction>> as COA_001
+!define DECL_COA_002 rectangle "Value-Hypothesis Binding" <<CourseOfAction>> as COA_002
 
 ' ---------------------------------------------------------------------------
 ' Business
@@ -62,7 +128,6 @@
 !define DECL_BPR_003 rectangle "CQ Lifecycle" <<BusinessProcess>> as BPR_003
 !define DECL_BPR_004 rectangle "Gate Evaluation" <<BusinessProcess>> as BPR_004
 !define DECL_BPR_005 rectangle "Algedonic Escalation" <<BusinessProcess>> as BPR_005
-!define DECL_BPR_006 rectangle "Sprint Review" <<BusinessProcess>> as BPR_006
 !define DECL_BPR_007 rectangle "Enterprise Promotion" <<BusinessProcess>> as BPR_007
 !define DECL_BPR_008 rectangle "Reverse Architecture" <<BusinessProcess>> as BPR_008
 !define DECL_BPR_101 rectangle "Assess Phase State" <<BusinessProcess>> as BPR_101
@@ -80,9 +145,6 @@
 !define DECL_BPR_501 rectangle "Detect Algedonic Signal" <<BusinessProcess>> as BPR_501
 !define DECL_BPR_502 rectangle "Perform Severity Assessment" <<BusinessProcess>> as BPR_502
 !define DECL_BPR_503 rectangle "Route Escalation Decision" <<BusinessProcess>> as BPR_503
-!define DECL_BPR_601 rectangle "Present Sprint Output" <<BusinessProcess>> as BPR_601
-!define DECL_BPR_602 rectangle "User Review Decision" <<BusinessProcess>> as BPR_602
-!define DECL_BPR_603 rectangle "Process Review Decisions" <<BusinessProcess>> as BPR_603
 !define DECL_BPR_701 rectangle "Assign Enterprise ID" <<BusinessProcess>> as BPR_701
 !define DECL_BPR_702 rectangle "Reference Sweep" <<BusinessProcess>> as BPR_702
 !define DECL_BPR_703 rectangle "Move and Record Promotion" <<BusinessProcess>> as BPR_703
@@ -106,6 +168,8 @@
 !define DECL_BEV_006 rectangle "Sprint Review Submitted" <<BusinessEvent>> as BEV_006
 !define DECL_BEV_007 rectangle "Brownfield Entry" <<BusinessEvent>> as BEV_007
 !define DECL_BEV_008 rectangle "Engagement Completed" <<BusinessEvent>> as BEV_008
+!define DECL_BEV_009 rectangle "Engagement Paused" <<BusinessEvent>> as BEV_009
+!define DECL_BEV_010 rectangle "Engagement Resumed" <<BusinessEvent>> as BEV_010
 !define DECL_BSV_001 rectangle "Business Architecture Service" <<BusinessService>> as BSV_001
 !define DECL_BSV_002 rectangle "Application & Technology Architecture Service" <<BusinessService>> as BSV_002
 !define DECL_BSV_003 rectangle "Project Coordination Service" <<BusinessService>> as BSV_003

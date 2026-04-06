@@ -54,7 +54,7 @@ Nine specialist agents cover the full SDLC:
 | Project Manager | System 3 (coordinator/supervisor) | All (coordination) |
 | Chief Safety & Compliance Officer | System 2 (regulator) | All phases (gate reviews) |
 
-The Project Manager acts as the LangGraph supervisor node: it deliberates on what to do next, routes work to specialists, batches clarification requests for the user, evaluates phase-transition gates, and manages the sprint review workflow. It does not produce architecture artifacts — it coordinates their production.
+The Project Manager acts as the LangGraph supervisor node: it deliberates on what to do next, routes work to specialists, batches clarification requests for the user, evaluates phase-transition gates, and manages the sprint review interaction workflow (continue, pause, resume, end). It does not produce architecture artifacts — it coordinates their production.
 
 Each agent's mandate, input/output contracts, entry-point behaviour, personality stance, and skill index are specified in `agents/<role>/AGENT.md`.
 
@@ -142,7 +142,7 @@ The enterprise repository can be configured in three modes via `enterprise-repos
 
 ### `engagements-config.yaml`
 
-Defines the active engagement: entry point, target repositories (single-repo or multi-repo), sprint review settings, and upload configuration. Multi-repo engagements (microservices, CQRS, microfrontends) are first-class: each registered repository has a role, domain, and primary flag.
+Defines the active engagement: entry point, target repositories (single-repo or multi-repo), sprint review settings, pause/resume behavior, and upload configuration. Multi-repo engagements (microservices, CQRS, microfrontends) are first-class: each registered repository has a role, domain, and primary flag.
 
 ```yaml
 engagement-id: my-project
@@ -222,7 +222,9 @@ Each engagement maintains a set of role-owned work repositories under `engagemen
 
 Architecture entities follow the **Entity Registry Pattern v2.0**: one `.md` file per entity, organised by ArchiMate layer (e.g. `model-entities/business/roles/`, `model-entities/business/collaborations/`, `model-entities/application/components/`), with machine-readable YAML frontmatter. The `ModelRegistry` is built from these files at startup. Architecture views in `diagram-catalog/diagrams/` include both PlantUML diagram files (`*.puml`) and matrix view files (`*.md`) authored by agents using the same model IDs and references. The full catalog of diagram/matrix conventions and authoring rules is in `framework/diagram-conventions.md`. The canonical registry of valid entity types, connection types, ArchiMate element types, and grouping stereotypes lives in `src/common/archimate_types.py` and is the single source of truth for both documentation and the `ModelVerifier`.
 
-**Validated and semantically discoverable:** `src/common/model_verifier.py` (`ModelVerifier`) validates every entity, connection, and diagram file against ERP v2.0 rules — referential integrity, status lifecycle (E306/E307: baselined diagrams cannot reference draft elements), PlantUML syntax, required frontmatter fields, and ArchiMate type correctness. `src/common/model_query.py` (`ModelRepository`) provides keyword and synonym search, graph traversal, and the framework-aligned `list_artifacts` / `search_artifacts` / `read_artifact` query API used by all agents during Discovery Scan Step 0. Together these tools enable agents to efficiently query only what they need (targeted `entity_status()` lookup without full scans; `find_neighbors()` for local graph traversal) while the batch `verify_all()` ensures the entire model stays coherent. The same `ModelRegistry` interface is shared between the verifier and the query engine — no duplication.
+**Validated and semantically discoverable:** `src/common/model_verifier.py` (`ModelVerifier`) validates every entity, connection, and diagram file against ERP v2.0 rules — referential integrity, status lifecycle (E306/E307: baselined diagrams cannot reference draft elements), PlantUML syntax, required frontmatter fields, and ArchiMate type correctness. Diagram syntax checking uses batched PlantUML invocations to reduce process-spawn overhead at scale. `src/common/model_query.py` (`ModelRepository`) provides keyword and synonym search, graph traversal, and the framework-aligned `list_artifacts` / `search_artifacts` / `read_artifact` query API used by all agents during Discovery Scan Step 0. Together these tools enable agents to efficiently query only what they need (targeted `entity_status()` lookup without full scans; `find_neighbors()` for local graph traversal) while the batch `verify_all()` ensures the entire model stays coherent. The same `ModelRegistry` interface is shared between the verifier and the query engine — no duplication.
+
+Verifier runtime mode is selected through an environment config chain (no API-argument bloat): `SDLC_MODEL_VERIFY_MODE=incremental|full`, default `incremental`. Incremental mode persists restart-safe verifier state under `SDLC_MODEL_VERIFY_STATE_DIR` when provided, otherwise `${XDG_CACHE_HOME}/sdlc-agents/model-verifier` or `~/.cache/sdlc-agents/model-verifier`. State invalidates safely on git HEAD changes, file deletions, include-diagrams mode changes, and large change-sets, at which point verifier falls back to full scan.
 
 In runtime use, these capabilities are exposed through MCP tool families (model query + model write + verification), so agents use tools to query, construct, and validate model entities, connections, and diagrams rather than relying on ad-hoc file walking.
 
@@ -230,26 +232,18 @@ This repository also provides an additional reusable MCP server, `sdlc-registry`
 
 #### Diagram types produced
 
-Matrix view artifacts (`diagram-catalog/diagrams/*.md`) are also first-class architecture views for dense mappings and coverage checks (for example skill I/O traceability matrices). Representation choice is intentional and balanced: use diagrams where structural/behavioral context matters, and use matrices where high-cardinality traceability is the primary concern. Matrix outputs do not replace contextual diagrams when topology or flow understanding would be lost.
+The system produces a small set of complementary architecture views:
 
-Agents produce five families of PlantUML diagram. **No single diagram type has final authority over system behaviour** — the types are complementary and intentionally overlapping. An application component that appears in an ArchiMate diagram, a sequence diagram, an activity diagram, and an ER diagram must be mutually consistent across all four; deliberate overlap is the cross-verification mechanism that catches mismatches between structural, behavioural, and data specifications. The decision of which diagram type to use for a given aspect is a workflow concern, not a tooling constraint — the rules below guide applicability; some aspects warrant multiple diagram types by design.
+| Diagram Type | Primary Purpose | Typical Usage |
+|---|---|---|
+| ArchiMate | Structural architecture views | Motivation, strategy, business, application, technology layer maps |
+| Activity (BPMN-style) | Workflow and process logic | Business operations (Phase B) and internal application flows (Phase C) |
+| Sequence | Runtime interaction behavior | Scenario-level interactions between system components, services, and external actors |
+| ER (class-style) | Data structure and cardinality | Domain data models and persistence-oriented relationships |
+| Use-case | Stakeholder interaction scope | Vision and business scoping (Phases A/B) |
+| Matrix (`.md`) | Dense traceability/coverage | High-cardinality many-to-many mappings where node-link views become unreadable |
 
-**ArchiMate layer diagrams** — the primary structural deliverable of the architecture phases. One diagram per layer, using PlantUML's `!include` macro system against a shared stereotype library (`_archimate-stereotypes.puml`) and a per-engagement macro file (`_macros.puml`) auto-generated from entity `§display ###archimate` blocks. Typical diagrams: Motivation (stakeholders, drivers, goals, principles), Strategy (capabilities, value streams), Business (actors, roles, processes, services), Application (components, interfaces, services, data objects), Technology (nodes, system software, infrastructure services). Connections use ArchiMate relationship types (association, composition, realization, serving, assignment, influence, access). ArchiMate diagrams establish *what exists and how it is related* — they are the structural backbone. Behavioural, data, and interaction details require complementary diagram types.
-
-**ER diagrams (via PlantUML class notation)** — specify the data model: field names, types, and cardinality relationships for persisted domain objects. Each entity's `§display ###er` block provides its class declaration and attribute list; connection files in `connections/er/` provide cardinality lines. ER diagrams are the authoritative field-level specification — the same attribute names appear in Pydantic models, database columns, and API payloads. They intentionally overlap with ArchiMate data-object and technology-node specifications: if an ER diagram and an ArchiMate diagram both reference a domain object, they must agree on its identity and structure.
-
-**Activity diagrams (BPMN-oriented)** — specify workflows and process logic. Used at two levels within an engagement, both of which apply to the software being designed and built:
-
-- **Business layer (Phase B — SA primary):** The workflows of the organisation the software serves — business processes, approval flows, multi-party collaboration procedures, operational sequences. Swim lanes are business actors and roles. These diagrams capture *what the organisation does* and provide the traceability bridge from business requirements to software scope. They overlap with and must be consistent with Phase B ArchiMate business-process entities.
-- **Application layer (Phase C — SwA primary):** The process logic *within the software being built* — internal workflows, data-processing pipelines, state machines, multi-step request-handling sequences, and any application-level BPMN that gives precision and granularity to application components or services. Swim lanes are application components, services, or user-facing roles. These diagrams specify *how the software must behave internally* — complementing the structural ArchiMate application diagram with the temporal, conditional flow that structural diagrams intentionally omit. They overlap with sequence diagrams; where both exist for the same scenario, mutual consistency is required.
-
-Decision diamonds map to branching logic in the implementation; action boxes map to discrete steps, handler calls, or service invocations.
-
-> **ENG-001 note (meta-level):** ENG-001 uses this framework to govern the development of the framework itself. Its activity diagrams therefore cover both levels — the business processes of the multi-agent practice (Phase B) and the internal process logic of the multi-agent system (Phase C: skill invocation loop, CQ lifecycle, sprint review flow). In ENG-001, these diagrams are also the binding specification for `src/orchestration/` code, which is a consequence of the self-referential engagement, not a general property of activity diagrams.
-
-**Sequence diagrams** — specify runtime interaction protocols between specific components for specific scenarios. Used for the skill invocation loop, the CQ lifecycle (agent → EventStore → dashboard → user → agent), the sprint review flow, and reverse-architecture reconstruction. Participants map to Python classes or modules; each arrow maps to a method call or event. Sequence diagrams share participants with activity and ArchiMate diagrams — the same component that appears as a box in an ArchiMate application diagram must appear as a participant in the sequence diagrams that govern its runtime behaviour.
-
-**Use-case / user-story diagrams** — produced by the Product Owner and Solution Architect during Phases A and B to capture stakeholder interactions with the system and map them to capabilities and business services. Used as a communication and requirements-scoping artifact; typically accompanies the Architecture Vision and Requirements Register. Use-case actors correspond to business actors and roles in the ArchiMate business-layer diagram — consistency between the two is a required cross-check at Phase B gate.
+Rule of thumb: keep contextual diagrams for topology/flow understanding, and use matrices for dense association coverage. If one node-link diagram becomes too dense, split it into smaller thematic diagrams and add a matrix companion for complete traceability.
 
 ### Target Repositories
 
@@ -303,7 +297,7 @@ The framework and ENG-001 reference model are being built incrementally. Current
 | `docs/puml-bug-reports.md` — confirmed PlantUML 1.2025.x bugs (PB-001..PB-005) with reproduction cases and workarounds | Complete |
 | `src/` Python implementation (EventStore, agents, orchestration, dashboard) | Pending |
 
-**ArchiMate diagram conventions** (`framework/diagram-conventions.md`): §10 covers PlantUML compatibility constraints (PB-001..PB-005 workarounds, DECL_ two-token macro convention); §11 covers ArchiMate semantic constraints (layer boundary rule, active structure type rules, layer-aligned grouping stereotypes with prohibition on inline color overrides). For business operational decomposition (`§11.9.1a`), staged processes/interactions are diagrammed as nested parent containers (`BPR-NNN` / `BIA-NNN` as container element) with internal stage `flow`/`triggering`; parent→stage composition remains mandatory as connection files even when external composition arrows are omitted in the operational view.
+**ArchiMate diagram conventions** (`framework/diagram-conventions.md`): §10 covers PlantUML compatibility constraints (PB-001..PB-005 workarounds, DECL_ two-token macro convention); §11 covers ArchiMate semantic constraints (layer boundary rule, active structure type rules, layer-aligned grouping stereotypes with prohibition on inline color overrides). For business operational decomposition (`§11.9.1a`), staged processes/interactions are diagrammed as nested parent containers (`BPR-NNN` / `BIA-NNN` as container element) with internal stage `flow`/`triggering`; parent→stage composition remains mandatory as connection files even when external composition arrows are omitted in the operational view. Decomposition stage count is explicitly domain-dependent: use a manageable number of stages, and split into additional top-level behaviors when separation of concerns requires it.
 
 See `specs/IMPLEMENTATION_PLAN.md` for the detailed stage-by-stage plan and current checklist.
 

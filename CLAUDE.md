@@ -142,6 +142,8 @@ tests/
 
 27. **Business operational decomposition diagrams use nested parent containers by default.** For staged business behavior in operational ArchiMate diagrams, the parent `BPR-NNN` / `BIA-NNN` element is the container and stage behaviors are nested within it, connected by internal `flow`/`triggering` lines. Do not model outer grouping wrappers with duplicated parent nodes. Keep parent→stage `archimate-composition` files in `connections/archimate/composition/` as model truth even when external composition arrows are omitted in the operational diagram. Governed by `framework/diagram-conventions.md §7.archimate-business-operational` and `§11.9.1a`.
 28. **Representation choice must remain balanced: diagrams for context, matrices for dense mapping.** Matrix artifacts are first-class in `diagram-catalog/diagrams/*.md`, but they do not replace contextual diagrams. Use diagrams when topology, flow, sequence, or architectural narrative is required; use matrices when high-cardinality coverage and traceability are primary. Governed by `framework/diagram-conventions.md` and `framework/agent-runtime-spec.md`.
+29. **Dense edge sets must use decomposition, not forced monolith diagrams.** If a node-link diagram remains congested after one layout pass (overlapping lanes/labels), split it into focused thematic diagrams and add a matrix companion for full many-to-many coverage. Favor separating horizontal progression links from vertical governance links where applicable. Governed by `framework/diagram-conventions.md §0.2.1` and `§5.D0`.
+30. **Sprint Review is interaction-only in the business operational model.** Use `BIA-001` with sub-interactions (`BIA-101..103`) as the canonical Sprint Review representation; do not model a parallel `BPR-006` review process chain. If an engagement can be paused (`BEV-009` / `phase.suspended`), a corresponding explicit resume path (`BEV-010` / `phase.resumed`) must be modeled in artifacts, workflows, and diagrams.
 
 ## End-of-Session Checklist
 
@@ -150,7 +152,7 @@ At the end of any work session — regardless of scope — complete all of the f
 1. **`specs/IMPLEMENTATION_PLAN.md`** — tick completed checklist items, update the "Current State & Immediate Next Actions" section, add any new design decisions resolved.
 2. **`CLAUDE.md`** — update the Implementation Stages table status column; update any authoring rules or repository layout notes that changed.
 3. **`README.md`** — update the Agent Roles table, Work Repositories table, Skills description, implementation status section, and any workflow sections that reflect the current state of the system.
-4. **Model and diagram verification** — run `ModelVerifier.verify_all()` and confirm 0 errors. Re-render any modified diagrams with `java -jar tools/plantuml.jar -tsvg -o rendered/ diagrams/*.puml`. Commit both the corrected source and the updated SVGs.
+4. **Model and diagram verification** — run `ModelVerifier.verify_all()` and confirm 0 errors. Re-render any modified diagrams from `diagram-catalog/diagrams/` into the sibling `diagram-catalog/rendered/` directory only (e.g., `java -jar tools/plantuml.jar -tsvg -o ../rendered diagrams/*.puml` when run from `diagram-catalog/diagrams/`). Never render into `diagram-catalog/diagrams/rendered/`. Commit both the corrected source and the updated SVGs.
 
 These files are the canonical orientation documents. If they drift from reality, the next session starts with a false picture of the system.
 

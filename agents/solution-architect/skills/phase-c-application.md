@@ -105,6 +105,8 @@ For each APP-nnn in the Application Component Catalog:
 
 **Reverse check:** For each BPR-nnn in BA, verify at least one APP-nnn marks it as a primary (`●`) realisation. Any BPR-nnn with no primary APP-nnn is: **Gap T4 — Unrealised business process** (AA coverage gap).
 
+**Outcome integrity check:** For each `OUT-nnn` used in BA motivation/strategy traceability, verify the AA still preserves the intended execution path (`COA -> CAP -> BPR/BSV -> APP/ASV`). If an APP decomposition removes the only viable path to a measured outcome, record **Gap T6 — Outcome evidence path broken**.
+
 ---
 
 ### Step 2 — Interface Traceability Check
