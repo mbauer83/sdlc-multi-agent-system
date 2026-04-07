@@ -285,7 +285,7 @@ The framework and ENG-001 reference model are being built incrementally. Current
 | ENG-001 reference model — entities (99 files across motivation, strategy, business, application layers; entity types ArchiMate-correct: BusinessRole for agent roles, BusinessCollaboration for Architecture Board) | Complete |
 | ENG-001 reference model — connections (89 files: realization, serving, assignment, composition, access, ER; includes 14 BPR→BSV business-layer realization files) | Complete |
 | ENG-001 reference model — `_macros.puml` (99 macros, auto-generated from entity `§display ###archimate` blocks via `src/tools/generate_macros.py`) | Complete |
-| ENG-001 reference model — diagrams (4/7 produced and semantically verified; sequence diagrams pending) | Partial |
+| ENG-001 reference model — diagrams (7/7 produced and semantically verified; business workflow activity/BPMN coverage added for skill invocation, CQ lifecycle, and sprint review; application-layer sequence views deferred) | Complete |
 | ENG-001 reference model — overview docs + ADRs | Pending |
 | `src/common/model_verifier.py` — BDD-tested verifier for entity/connection/diagram files (71 scenarios); E306/E307 draft-reference checks with targeted `entity_status()`/`connection_status()` lookups; `entity_id_from_path()` formal-id extraction | Complete |
 | `src/common/archimate_types.py` — canonical type registry for all entity, connection, element, and grouping stereotype types; single source of truth imported by verifier and referenced in documentation | Complete |

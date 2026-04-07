@@ -1,0 +1,67 @@
+' ---
+' artifact-id: phase-c-activity-cq-lifecycle-v1
+' artifact-type: diagram
+' diagram-type: activity-bpmn
+' name: "Phase C Activity — CQ Lifecycle"
+' version: 0.1.0
+' status: draft
+' phase-produced: C
+' owner-agent: SA
+' engagement: ENG-001
+' domain: core-platform
+' purpose: >
+'   Business-process activity view for CQ raise/batch/answer/resume flow.
+'   Captures BPR-003 decomposition and user-facing suspension/resume semantics
+'   without introducing application-layer sequence detail.
+' entity-ids-used:
+'   - ACT-003
+'   - ACT-002
+'   - ACT-001
+'   - BPR-003
+'   - BPR-301
+'   - BPR-302
+'   - BPR-303
+' connection-ids-used:
+'   - BPR-301---BPR-302
+'   - BPR-302---BPR-303
+' ---
+@startuml phase-c-activity-cq-lifecycle-v1
+
+skinparam activity {
+  BackgroundColor AliceBlue
+  BorderColor SteelBlue
+  DiamondBackgroundColor LightYellow
+  DiamondBorderColor DarkGoldenrod
+  ArrowColor SteelBlue
+  FontSize 11
+}
+skinparam swimlane {
+  BorderColor CadetBlue
+  TitleFontStyle bold
+}
+
+|Specialist Agents|
+start
+:Detect missing information
+during BPR-202;
+:Raise CQ and enter
+BPR-003 lifecycle;
+
+|PM Agent|
+:BPR-301 Route CQ to user
+(single or batched);
+
+|User|
+:BPR-302 Review CQ and
+submit answer;
+
+|PM Agent|
+:BPR-303 Integrate answer
+and route resume;
+
+|Specialist Agents|
+:Resume suspended task with
+answer in context;
+stop
+
+@enduml

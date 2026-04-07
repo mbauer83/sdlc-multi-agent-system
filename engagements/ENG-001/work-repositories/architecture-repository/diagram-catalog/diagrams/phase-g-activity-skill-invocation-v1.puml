@@ -1,0 +1,92 @@
+' ---
+' artifact-id: phase-g-activity-skill-invocation-v1
+' artifact-type: diagram
+' diagram-type: activity-bpmn
+' name: "Phase G Activity — Skill Invocation Workflow"
+' version: 0.1.0
+' status: draft
+' phase-produced: G
+' owner-agent: SA
+' engagement: ENG-001
+' domain: core-platform
+' purpose: >
+'   Business-process activity view for Phase G specialist invocation and
+'   sub-process execution. Focuses on PM role orchestration, specialist
+'   execution loop, CQ/algedonic branches, and deterministic gate handoff.
+' entity-ids-used:
+'   - ACT-002
+'   - ACT-003
+'   - ACT-010
+'   - BPR-001
+'   - BPR-002
+'   - BPR-201
+'   - BPR-202
+'   - BPR-203
+'   - BPR-004
+'   - BPR-005
+'   - BPR-003
+' connection-ids-used:
+'   - BPR-001---BPR-002
+'   - BPR-201---BPR-202
+'   - BPR-202---BPR-203
+'   - BPR-002---BPR-004
+' ---
+@startuml phase-g-activity-skill-invocation-v1
+
+skinparam activity {
+  BackgroundColor AliceBlue
+  BorderColor SteelBlue
+  DiamondBackgroundColor LightYellow
+  DiamondBorderColor DarkGoldenrod
+  ArrowColor SteelBlue
+  FontSize 11
+}
+skinparam swimlane {
+  BorderColor CadetBlue
+  TitleFontStyle bold
+}
+
+|PM Agent|
+start
+:BPR-001 Sprint Planning;
+:BPR-201 Select specialist
+and active skill;
+
+|Specialist Agents|
+:BPR-202 Execute skill and
+produce artifacts;
+
+if (Knowledge gap?) then (yes)
+  :Route to BPR-003
+CQ Lifecycle;
+else (no)
+endif
+
+if (Critical risk or safety
+constraint breach?) then (yes)
+  |CSCO Agent|
+  :BPR-005 Algedonic
+Escalation;
+  |PM Agent|
+  :Apply fast-path decision
+or hold;
+  |Specialist Agents|
+else (no)
+endif
+
+:BPR-203 Return completion
+signal to PM;
+
+|PM Agent|
+:BPR-004 Gate Evaluation;
+if (Gate passed?) then (yes)
+  :Route to next phase/sprint
+control node;
+  stop
+else (no)
+  :Record hold/rework decision
+and replan;
+  stop
+endif
+
+@enduml

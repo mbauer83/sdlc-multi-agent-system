@@ -1,0 +1,82 @@
+' ---
+' artifact-id: phase-c-activity-sprint-review-v1
+' artifact-type: diagram
+' diagram-type: activity-bpmn
+' name: "Phase C Activity — Sprint Review Workflow"
+' version: 0.1.0
+' status: draft
+' phase-produced: C
+' owner-agent: SA
+' engagement: ENG-001
+' domain: core-platform
+' purpose: >
+'   Business interaction activity view for sprint review and correction loop.
+'   Models BIA-001 staged flow and rework cycle until user approval.
+' entity-ids-used:
+'   - ACT-002
+'   - ACT-001
+'   - ACT-003
+'   - BIA-001
+'   - BIA-101
+'   - BIA-102
+'   - BIA-103
+'   - BPR-004
+' connection-ids-used:
+'   - BIA-101---BIA-102
+'   - BIA-102---BIA-103
+' ---
+@startuml phase-c-activity-sprint-review-v1
+
+skinparam activity {
+  BackgroundColor AliceBlue
+  BorderColor SteelBlue
+  DiamondBackgroundColor LightYellow
+  DiamondBorderColor DarkGoldenrod
+  ArrowColor SteelBlue
+  FontSize 11
+}
+skinparam swimlane {
+  BorderColor CadetBlue
+  TitleFontStyle bold
+}
+
+|PM Agent|
+start
+:BPR-004 Gate Evaluation
+passed;
+:Start BIA-001 Sprint
+Review Interaction;
+:BIA-101 Present sprint
+outputs;
+
+|User|
+:BIA-102 Review outputs and
+decide outcome;
+
+if (All items approved?) then (yes)
+  |PM Agent|
+  :BIA-103 Record approval
+and close sprint;
+  stop
+else (no)
+  |PM Agent|
+  :BIA-103 Route correction
+handoffs;
+  |Specialist Agents|
+  :Revise flagged artifacts;
+  |PM Agent|
+  :Re-open review cycle;
+  |User|
+  :Re-review revised outputs;
+  |PM Agent|
+  :Process updated decisions;
+  if (Approved now?) then (yes)
+    :Close sprint;
+    stop
+  else (no)
+    :Continue correction loop;
+    stop
+  endif
+endif
+
+@enduml

@@ -798,30 +798,27 @@ Seven diagrams. Each has a stated **implementation purpose** — what Stage 5 de
   - **Orchestration** (APP-016 LangGraph, APP-017 Session, APP-018 UIO, APP-019 Promotion; AIF-001) — `src/orchestration/`
   - **Dashboard & Interaction** (APP-020 DashboardServer, APP-021 UserInputGateway; AIF-003, APP-022 TargetRepoManager) — `src/dashboard/ + src/sources/`
 
-- [ ] **`phase-c-class-er-v1.puml`**
+- [x] **`phase-c-class-er-v1.puml`** ✅ present and semantically aligned to persisted DOB scope.
   *Purpose:* Pydantic model specification for `src/models/` — field names in this diagram are the authoritative attribute names used in Stage 5 code.
   *Scope:* The eight persisted domain objects that flow through EventStore and define workflow state: DOB-001 (WorkflowEvent), DOB-002 (Engagement), DOB-003 (LearningEntry), DOB-004 (ClarificationRequest), DOB-005 (AlgedonicSignal), DOB-006 (HandoffRecord), DOB-007 (GateOutcome), DOB-008 (ReviewItem). Runtime-only objects (DOB-009 WorkflowState, DOB-010 AgentDeps, DOB-011 PMDecision, DOB-012 SDLCGraphState, DOB-013 ArtifactRecord) are in the model but excluded from this diagram — they have no ER relationships to show.
   *Contents:* Each DOB as a PlantUML class with attribute list (name: type). ER connections with cardinalities per `connections/er/` entries. `DOB-002 Engagement` at top-left as aggregate root; `DOB-001 WorkflowEvent` as the central hub entity.
 
-- [ ] **`phase-b-activity-sprint-v1.puml`**
+- [x] **`phase-b-activity-sprint-v1.puml`** ✅ present and aligned to sprint lifecycle + review loop.
   *Purpose:* LangGraph graph topology specification for Stage 5c — every decision diamond maps to a routing function; every action box maps to a node implementation.
   *Contents:* Full ADM sprint lifecycle as UML activity diagram. Start fork: entry point selection (EP-0 through EP-H). Main path: Sprint Planning (BPR-001) → Phase Execution (BPR-002, loop per agent per phase) → Gate Evaluation (BPR-004) → decision: gate passed? → next phase or return. Branches: (1) CQ suspension fork from any phase execution node → await `cq.answered` → resume; (2) Algedonic bypass from any node → ALG handler → resolution → resume or halt; (3) Sprint review branch after each sprint close: decision `sprint-review.enabled?` → if true: `review.pending` → await `review.submitted` → corrections loop → sprint close; if false: direct close. End: Engagement Complete.
   *Swim-lanes:* PM (planning/gating/review), Agent (execution), User (CQ answers/review), EventStore (state writes at each transition).
 
-- [ ] **`phase-g-sequence-skill-invocation-v1.puml`**
-  *Purpose:* Specifies the Stage 5b core runtime loop — the sequence every Stage 5 developer must internalise before implementing a single agent or node.
-  *Contents:* Participants: EngagementSession, LangGraph, pm_node, routing_function, specialist_node, AgentFactory, SkillLoader, PydanticAI_Agent, UniversalTools, EventStore. Sequence: Session invokes graph.stream() → PM node runs (PM Agent via AgentFactory, Layer 1+2 prompt) → PMDecision returned → routing function reads next_action → specialist node selected → specialist_node calls AgentFactory.build_agent() → build_agent calls SkillLoader.load_instructions(skill_id) (Layer 3) → PydanticAI.run_sync(deps) → agent calls tool (e.g. read_artifact via AIF-004, query_learnings via AIF-006) → agent calls write_artifact → ModelRegistry.upsert() + file written → agent calls EventStore.record_event(artifact.created) → agent returns → specialist_node emits handoff.created if needed → returns to LangGraph → next iteration.
-  *Note at bottom:* "Layer 4 = tool results appended to context by PydanticAI between tool calls — not shown separately."
+- [x] **`phase-g-activity-skill-invocation-v1.puml`** ✅ added (session 15).
+  *Purpose:* Business-process activity/BPMN view of Phase G specialist invocation and sub-process execution boundaries.
+  *Contents:* Swimlanes for PM, Specialist, and CSCO roles; progression through BPR-001 → BPR-201 → BPR-202 → BPR-203 → BPR-004 with CQ and algedonic branches.
 
-- [ ] **`phase-c-sequence-cq-lifecycle-v1.puml`**
-  *Purpose:* Specifies `src/orchestration/user_interaction.py` and Dashboard `/queries` interaction for Stage 5b + 5.5b.
-  *Participants:* Agent (any specialist), EventStore, UserInteractionOrchestrator, DashboardServer, User.
-  *Sequence:* Agent raises CQ → `EventStore.record_event(cq.raised)` → PM batches open CQs → UserInteractionOrchestrator detects `cq.raised` → DashboardServer serves `/queries` page (open CQs visible with count badge) → User types answer + optional file attach → POST /queries/<id>/answer → UserInputGateway validates → `EventStore.record_event(cq.answered)` → UserInteractionOrchestrator detects `cq.answered` → emits `cq.routed` to raising agent's node → agent resumes with answer in context.
+- [x] **`phase-c-activity-cq-lifecycle-v1.puml`** ✅ added (session 15).
+  *Purpose:* Business-process activity/BPMN view of BPR-003 CQ lifecycle (route, await, integrate, resume).
+  *Contents:* Swimlanes for Specialist, PM, and User; explicit BPR-301 → BPR-302 → BPR-303 flow with resume handoff back to specialist execution.
 
-- [ ] **`phase-c-sequence-sprint-review-v1.puml`**
-  *Purpose:* Specifies Stage 5.5b `ReviewManager`, `sprint_close_node`, and `review_processing_node` for Stage 5c + 5.5b.
-  *Participants:* PM_node, EventStore, UserInteractionOrchestrator, DashboardServer, User, review_processing_node.
-  *Sequence:* PM node decides close_sprint → checks `sprint-review.enabled` → `EventStore.record_event(review.pending)` (sprint NOT closed yet) → DashboardServer surfaces `/review` with artifact list → User marks each item (approved/needs-revision/rejected + agent_tag + comment) → POST /review/submit → UserInputGateway validates all items decided → `EventStore.record_event(review.submitted)` → UserInteractionOrchestrator signals `review_processing_node` → review_processing_node processes: needs-revision/rejected items → `handoff.created` to tagged agent; agents revise and write artifacts → **loop back** to DashboardServer re-surfaces updated artifacts → User re-reviews. Cycle repeats until **all items approved by the User**. Only then: `review.sprint-closed` → `sprint.close`. The user has authority to request indefinite rework cycles; the sprint cannot close while any item is unresolved.
+- [x] **`phase-c-activity-sprint-review-v1.puml`** ✅ added (session 15).
+  *Purpose:* Business-interaction activity/BPMN view of BIA-001 sprint review loop.
+  *Contents:* Swimlanes for PM, User, Specialist; staged interaction BIA-101 → BIA-102 → BIA-103 and correction loop until approval closure.
 
 - [ ] Each diagram `.puml` file carries frontmatter in its header comment block per `framework/diagram-conventions.md`; no `diagrams/index.yaml` — ERP v2.0 uses frontmatter only (DiagramCatalog built from file scans at startup).
 
@@ -1287,7 +1284,22 @@ This subsection is the canonical review-control model for dashboard-driven human
 
 ## Current State & Immediate Next Actions
 
-**Stages 1–4.9e complete. ModelVerifier complete (71 BDD tests). Stage 4.9f partial (4/7 diagrams done). `src/common/model_query.py` complete. Business modeling guidelines (Stage 4.9g pre-work) added to framework. ENG-001 business-layer model rework pending.**
+**Stages 1–4.9f complete. ModelVerifier complete (71 BDD tests). Stage 4.9f diagrams are now 7/7 complete, rendered, and verified (`model_verify_all`: 0 errors, 0 warnings). Slice A framework MCP freshness/path parity is validated by targeted `uv run pytest` tests. `src/common/model_query.py` complete.**
+
+### Completed this session (2026-04-08 — session 15)
+
+- **Slice A closure validated:**
+  - Ran targeted framework MCP parity tests with `uv run pytest tests/tools/test_framework_mcp_tool_improvements.py tests/model/test_framework_query.py tests/tools/test_registry_asyncio_and_mcp_servers.py`.
+  - Result: all tests passed.
+
+- **Slice B completed (Wave 3 Stage 4.9f):**
+  - Added business workflow activity/BPMN diagrams:
+    - `phase-g-activity-skill-invocation-v1.puml`
+    - `phase-c-activity-cq-lifecycle-v1.puml`
+    - `phase-c-activity-sprint-review-v1.puml`
+  - Added supporting business-flow model artifacts under `connections/activity/sequence-flow/`.
+  - Rendered canonical SVG outputs in sibling `diagram-catalog/rendered/`.
+  - Ran `model_verify_all` for engagement scope: 0 errors, 0 warnings.
 
 ### Completed this session (2026-04-08 — session 14)
 
@@ -1464,26 +1476,29 @@ This subsection is the canonical review-control model for dashboard-driven human
 - **Phase-B diagram — complete connectivity** — `phase-b-archimate-business-v1.puml` updated to v0.3.0: 9 new assignment connections (all specialist roles now assigned to BPR-002; CSCO additionally to BPR-004/005; PM to BPR-005); all 5 orphan BSVs realised by BPR-002; BPR-008 realises BSV-001; 7 new BPR→CAP realization connections (cross-layer, steel blue). 9 new assignment + 7 new BPR→CAP realization connection files created. Total: 17 assignment + 22 realization connection files. No entity in phase-b is now unconnected. ModelVerifier: 204 files, 0 errors.
 - **README + diagram-conventions.md** — Activity diagram description corrected to cover three scopes: (1) external business processes of the client organisation (Phase B), (2) process logic within the software being built (Phase C), (3) ENG-001 meta-level (framework orchestration, binding spec for `src/orchestration/`). `diagram-conventions.md §7.activity-bpmn` updated with separate business-layer and application-layer templates and rules. Version bumped to 2.2.0.
 
-### Resume at: ENG-001 business-layer model rework → Stage 4.9f remaining diagrams → Stage 5
+### Resume at: Stage 5 implementation
 
-**ENG-001 business-layer rework required before resuming Stage 4.9f diagrams** (§11.9 guidelines now in place):
-1. Update `VS-001` and `VS-002` with proper stakeholder-facing stages (not ADM phases)
-2. Create `BFN-001..007` entity files (business functions) in `model-entities/business/functions/`
-3. Create `BEV-001..006` entity files (business events) in `model-entities/business/events/`
-4. Create `BOB-001..006` entity files (business objects) in `model-entities/business/objects/`
-5. Create `BIA-001..002` entity files (business interactions) in `model-entities/business/interactions/`
-6. Create connection files: ACT→BFN assignment; BFN→BSV/CAP realization; BEV→BPR triggering (`connections/archimate/triggering/`); ASV→BPR serving
-7. Rewrite `phase-b-archimate-business-v1.puml` as structural viewpoint; create `phase-b-archimate-business-operational-v1.puml`
-8. Update `phase-c-archimate-application-v1.puml` to add ASV→BPR serving connections
-9. Regenerate `_macros.puml`; run `ModelVerifier.verify_all()`; render SVGs
+**Stage 4.9f is complete (2026-04-08, session 15).**
+
+Completion evidence:
+1. Added remaining activity/BPMN workflow diagrams:
+  - `phase-g-activity-skill-invocation-v1.puml`
+  - `phase-c-activity-cq-lifecycle-v1.puml`
+  - `phase-c-activity-sprint-review-v1.puml`
+2. Added supporting activity sequence-flow connection artifacts:
+  - `BPR-001---BPR-002`, `BPR-201---BPR-202`, `BPR-202---BPR-203`, `BPR-002---BPR-004`
+  - `BPR-301---BPR-302`, `BPR-302---BPR-303`
+  - `BIA-101---BIA-102`, `BIA-102---BIA-103`
+3. Rendered all three to canonical sibling `diagram-catalog/rendered/` outputs.
+4. `model_verify_all` (engagement scope) returned 0 errors and 0 warnings.
 
 **`src/common/model_query.py` pre-empts Stage 5b `src/common/model_registry.py` (in-memory tier only).** The production Stage 5b model registry adds: SQLite FTS5 full-text index, `watchdog` filesystem listener for incremental refresh, sqlite-vec embedding tier, and thread-safety (`threading.RLock`). `model_query.py`'s `ModelRepository` provides the in-memory query API that the Stage 5b tools delegate to; the interface (`list_artifacts`, `search_artifacts`, `read_artifact`) is already production-ready and will not change.
 
 **Stage 4.9e** — ✅ Complete: 115 connection files (original 89 + 9 new assignment + 7 new BPR→CAP realization).
-**Stage 4.9f** — Partial: 4/7 diagrams done, semantically corrected, fully connected, rendered to SVG (0 verifier errors). Remaining: `phase-g-sequence-skill-invocation-v1.puml`, `phase-c-sequence-cq-lifecycle-v1.puml`, `phase-c-sequence-sprint-review-v1.puml`.
+**Stage 4.9f** — ✅ Complete: 7/7 diagrams done, semantically corrected, rendered to SVG, verifier clean (0 errors, 0 warnings).
 **`_macros.puml`** — ✅ Regenerated: 99 macros, BCO_001 alias correct.
 
-**Stage 4.9** — ENG-001 reference model: entity files, connection files, `_macros.puml`, four PUML diagrams. Documents the SDLC system itself. Serves as integration test fixture. Entity ownership reflects Stage 4.8h model (SwA owns APP/DOB entities; SA owns motivation/strategy/business entities).
+**Stage 4.9** — ENG-001 reference model: entity files, connection files, `_macros.puml`, and seven PUML diagrams. Documents the SDLC system itself. Serves as integration test fixture. Entity ownership reflects Stage 4.8h model (SwA owns APP/DOB entities; SA owns motivation/strategy/business entities).
 
 **Stage 5** — Python implementation. Read `framework/agent-runtime-spec.md` and `framework/orchestration-topology.md` before authoring any `src/` file. Begin with Stage 5a (EventStore completion), then 5b (agent layer). Key implementation dependencies:
 - `src/sources/target_repo.py` implements `TargetRepoManager` (multi-repo aware; see Stage 5d)

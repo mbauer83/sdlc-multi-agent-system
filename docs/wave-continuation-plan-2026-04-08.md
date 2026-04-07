@@ -70,10 +70,10 @@ Primary targets:
 - `specs/IMPLEMENTATION_PLAN.md`
 
 Planned outputs:
-1. Complete missing sequence diagrams:
-- `phase-g-sequence-skill-invocation-v1.puml`
-- `phase-c-sequence-cq-lifecycle-v1.puml`
-- `phase-c-sequence-sprint-review-v1.puml`
+1. Complete missing business workflow activity/BPMN diagrams:
+- `phase-g-activity-skill-invocation-v1.puml`
+- `phase-c-activity-cq-lifecycle-v1.puml`
+- `phase-c-activity-sprint-review-v1.puml`
 2. Validate event/routing alignment against Wave 2 contracts.
 3. Add/update matrix artifact(s) only if edge density requires traceability support.
 
