@@ -37,127 +37,55 @@ The `artifact-type` value determines the category via the framework lookup table
 
 ### 2.1 Architecture Repository
 
+Canonical shape:
+
 ```
 engagements/<id>/work-repositories/architecture-repository/
-  model-entities/                       ← all ArchiMate entity files grouped here
-    motivation/
-      stakeholders/     STK-001.md  STK-002.md  STK-003.md
-      drivers/          DRV-001.md  DRV-002.md  DRV-003.md
-      assessments/      ASS-001.md  ASS-002.md
-      goals/            GOL-001.md  GOL-002.md  GOL-003.md
-      outcomes/         OUT-001.md  OUT-002.md
-      principles/       PRI-001.md  PRI-002.md  PRI-003.md
-      requirements/     REQ-001.md  REQ-002.md  REQ-003.md  REQ-004.md  REQ-005.md
-      constraints/      CST-001.md  CST-002.md
-      meanings/         MEA-001.md
-      values/           VAL-001.md  VAL-002.md
-    strategy/
-      capabilities/     CAP-001.phase-execution.md  CAP-002.artifact-production.md  CAP-003.multi-agent-orchestration.md
-      value-streams/    VS-001.forward-sdlc.md   VS-002.brownfield-onboarding.md
-      resources/        RES-001.some-resource.md  RES-002.other-resource.md
-      courses-of-action/ COA-001.some-course.md  COA-002.other-course.md
-    business/
-      actors/           ACT-001.user.md
-      roles/            ROL-001.some-role.md  ROL-002.other-role.md
-      processes/        BPR-001.sprint-planning.md  BPR-002.skill-execution.md  BPR-003.cq-lifecycle.md
-      functions/        BFN-001.some-function.md  BFN-002.other-function.md
-      services/         BSV-001.business-architecture-service.md  BSV-002.app-technology-architecture-service.md
-      events/           BEV-001.some-event.md  BEV-002.other-event.md
-      objects/          BOB-001.some-object.md  BOB-002.other-object.md
-      interfaces/       BIF-001.some-interface.md
-      collaborations/   BCO-001.architecture-board.md
-      products/         PRD-001.some-product.md
-      contracts/        CTR-001.some-contract.md
-      representations/  RPR-001.some-representation.md
-    application/
-      components/       APP-001.event-store.md  APP-002.model-registry.md  APP-003.learning-store.md
-      services/         ASV-001.agent-invocation-service.md  ASV-002.artifact-io-service.md
-      interfaces/       AIF-001.event-store-port.md  AIF-002.llm-client-port.md
-      functions/        AFN-001.some-function.md  AFN-002.other-function.md
-      events/           AEV-001.some-event.md
-      data-objects/     DOB-001.workflow-event.md  DOB-002.engagement.md  DOB-003.learning-entry.md
-      processes/        APR-001.some-process.md
-      collaborations/   ACO-001.some-collaboration.md
-    implementation/
-      work-packages/    WP-001.some-package.md   WP-002.other-package.md
-      deliverables/     DEL-001.some-deliverable.md  DEL-002.other-deliverable.md
-      gaps/             GAP-001.some-gap.md  GAP-002.other-gap.md
-      plateaus/         PLT-001.some-plateau.md
-      events/           IEV-001.some-event.md
-  connections/                          ← sibling to model-entities/
-    archimate/
-      realization/    APP-001---BSV-001.md   APP-002---BSV-001.md   APP-003---CAP-001.md
-      serving/        APP-001---APP-003.md   APP-002---APP-004.md   APP-004---APP-005.md
-      assignment/     ACT-001---ROL-001.md   ACT-002---ROL-001.md   ACT-003---ROL-002.md
-      composition/    CAP-001---CAP-002.md   CAP-001---CAP-003.md
-      aggregation/    BCO-001---ACT-001.md   BCO-001---ACT-002.md
-      influence/      DRV-001---GOL-001.md   DRV-002---GOL-001.md   DRV-002---GOL-002.md
-      triggering/     BPR-001---BPR-002.md   BPR-002---BPR-003.md
-      flow/           BOB-001---APP-003.md
-      access/         APP-001---DOB-001.md   APP-002---DOB-002.md   APP-003---DOB-003.md
-      association/    STK-001---GOL-001.md   STK-002---GOL-002.md
-      specialization/ ROL-001---ROL-002.md
-    er/
-      one-to-many/    DOB-001---DOB-002.md   DOB-001---DOB-003.md   DOB-002---DOB-004.md
-      many-to-many/   DOB-003---DOB-005.md   DOB-004---DOB-006.md
-      one-to-one/     DOB-001---DOB-007.md
-    sequence/
-      synchronous/    APP-001---APP-002.md   APP-002---APP-003.md   APP-003---APP-006.md
-      asynchronous/   APP-003---APP-004.md   APP-004---APP-005.md
-      return/         APP-002---APP-001.md   APP-003---APP-002.md
-    activity/
-      sequence-flow/  BPR-001---BPR-002.md   BPR-002---BPR-003.md   BPR-003---BPR-004.md
-      message-flow/   ACT-001---APP-001.md   ACT-002---APP-002.md
-    usecase/
-      include/        BSV-001---BSV-002.md
-      extend/         BSV-003---BSV-001.md
-      actor-association/ ACT-001---BSV-001.md   ACT-001---BSV-002.md   ACT-002---BSV-003.md
-  diagram-catalog/                      ← sibling to model-entities/ and connections/
-    _macros.puml                        # Auto-generated from entity §display blocks — do not edit
-    _archimate-stereotypes.puml         # Shared ArchiMate skinparam library
-    diagrams/                           # All produced engagement diagrams
-      phase-b-archimate-business-v1.puml      # Naming: <phase>-<type>-<subject>[-<domain>]-v<N>.puml
-      phase-c-archimate-application-v1.puml   # Each starts with PUML header comment frontmatter (see §2.4)
-      phase-c-class-er-v1.puml               # May reference entities from any ModelRegistry scope
-      phase-b-activity-sprint-v1.puml
-    templates/                          # Per-type starting stubs demonstrating structure and conventions
-      archimate-business-template.puml  # Naming: <type>-template.puml
-      class-er-template.puml            # Agents copy into diagrams/, rename, then adapt: add, remove,
-      sequence-template.puml            # and rewire elements and connections for the specific diagram
+  model-entities/
+    motivation/{stakeholders,drivers,assessments,goals,outcomes,principles,requirements,constraints,meanings,values}/
+    strategy/{capabilities,value-streams,resources,courses-of-action}/
+    business/{actors,roles,collaborations,interfaces,processes,functions,interactions,events,services,objects,contracts,products,representations}/
+    application/{components,collaborations,interfaces,processes,functions,interactions,events,services,data-objects}/
+    implementation/{work-packages,deliverables,events,plateaus,gaps}/
+  connections/
+    archimate/<relationship-type>/
+    er/<cardinality-type>/
+    sequence/<message-type>/
+    activity/<flow-type>/
+    usecase/<relationship-type>/
+  diagram-catalog/
+    _macros.puml
+    _archimate-stereotypes.puml
+    diagrams/
+    templates/
     rendered/
-      phase-b-archimate-business-v1.svg
-  decisions/          ADR-001.md  ADR-002.md  ADR-003.md
+  decisions/
   overview/
-    architecture-vision.md
-    ba-overview.md    aa-overview.md    da-overview.md
 ```
+
+Filename patterns:
+- Entities: `PREFIX-NNN.friendly-name.md`
+- Connections: `SOURCE(--SOURCE)*---TARGET(--TARGET)*.md`
+- Diagrams: `<phase>-<type>-<subject>[-<domain>]-v<N>.puml`
 
 ### 2.2 Technology Repository
 
+Canonical shape:
+
 ```
 engagements/<id>/work-repositories/technology-repository/
-  technology/
-    nodes/            NOD-001.md  NOD-002.md  NOD-003.md
-    devices/          DEV-001.md
-    system-software/  SSW-001.md  SSW-002.md  SSW-003.md
-    services/         TSV-001.md  TSV-002.md  TSV-003.md
-    artifacts/        ART-001.md  ART-002.md  ART-003.md
-    networks/         NET-001.md
-    functions/        TFN-001.md  TFN-002.md
-    events/           TEV-001.md
-    interfaces/       TIF-001.md  TIF-002.md
-    processes/        TPR-001.md
+  model-entities/
+    technology/{nodes,devices,system-software,collaborations,interfaces,paths,networks,processes,functions,interactions,events,services,artifacts}/
   connections/
-    archimate/
-      realization/    ART-001---NOD-001.md   SSW-001---TSV-001.md
-      serving/        NOD-001---APP-001.md   TSV-001---APP-003.md   TSV-002---APP-004.md
-      assignment/     ART-001---NOD-001.md
-      triggering/     TPR-001---TPR-002.md
-      ...
-  solutions/          SOL-001.md  SOL-002.md
-  decisions/          ADR-001.md  ADR-002.md
-  coding-standards/   (repository-content; not ERP model entities)
+    archimate/<relationship-type>/
+  solutions/
+  decisions/
+  coding-standards/
 ```
+
+Notes:
+- Technology repository follows the same ERP sibling layout (`model-entities/`, `connections/`, `diagram-catalog/`) as architecture repository.
+- `coding-standards/` is repository-content, not model entities.
 
 ### 2.3 Technology Repository Structure Note
 

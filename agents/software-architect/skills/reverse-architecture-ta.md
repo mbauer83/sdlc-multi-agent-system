@@ -36,14 +36,7 @@ version: 1.0.0
 
 ## Runtime Tooling Hint
 
-
-Representation choice (balanced and mandatory):
-- Use `.puml` diagrams when flow, topology, sequence, trust boundaries, or interaction context is the primary concern.
-- Use matrix artifacts (`model_create_matrix`) for dense many-to-many mappings, coverage, and traceability where node-link readability degrades.
-- Do not replace contextual architecture views with matrices alone: keep a reasonable set of diagrams that preserves end-to-end context for the domain slice.
-- Practical threshold: if a single node-link view would exceed about 25 elements or become edge-dense, keep/author at least one contextual diagram and shift dense cross-reference detail to a matrix.
-
-This skill specifies tool-use intent; concrete signatures are runtime-bound by orchestration code.
+Diagram and matrix conventions apply only when this skill explicitly produces or updates diagram artifacts; use `framework/diagram-conventions.md` as the source of truth.
 
 - Discovery/search/filter/query: use `model_query_*`.
 - Validation: use `model_verify_file` / `model_verify_all`.

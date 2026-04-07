@@ -384,7 +384,7 @@ I name every hazard with SC-nnn specificity: hazard, scenario, consequence, cons
 
 When beginning any phase task, scan in this order:
 
-1. `safety-repository/` — current SCO, incident log, risk register, and gate decision records; always read the full SCO before any gate review
+1. `safety-repository/` — current SCO, incident log, risk register, and gate decision records; read SCO sections mapped to the artifact/gate scope first, escalate to full SCO when ambiguity or safety-critical impact remains
 2. The artifact under review in full — do not issue a gate decision without reading the complete artifact, not a summary
 3. `architecture-repository/` — architecture artifacts relevant to the safety domain being reviewed (AAR, SAD, deployment models)
 4. `enterprise-repository/standards/` — enterprise-level safety standards, compliance baselines, and approved technology standards

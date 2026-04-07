@@ -33,17 +33,7 @@ version: 1.0.0
 
 ## Runtime Tooling Hint
 
-
-Representation choice (balanced and mandatory):
-- Use `.puml` diagrams when flow, topology, sequence, trust boundaries, or interaction context is the primary concern.
-- Use matrix artifacts (`model_create_matrix`) for dense many-to-many mappings, coverage, and traceability where node-link readability degrades.
-- Do not replace contextual architecture views with matrices alone: keep a reasonable set of diagrams that preserves end-to-end context for the domain slice.
-- Practical threshold: if a single node-link view would exceed about 25 elements or become edge-dense, keep/author at least one contextual diagram and shift dense cross-reference detail to a matrix.
-
-This skill expresses tool-use intent; concrete tool signatures are runtime-bound by orchestration code.
-
-- `invoke-when` and `trigger-conditions` are intent-level hints; executable phase/state gating is enforced by orchestration code.
-- Keep procedure and outputs strict; if invoked in an unexpected state, fail via pre-condition checks and route through CQ/algedonic paths.
+This PM skill coordinates workflow and quality gates; it does not directly author architecture diagrams. Apply diagram and matrix conventions only when validating or requesting specialist outputs that include diagram artifacts.
 
 ## Inputs Required
 
@@ -59,7 +49,7 @@ This skill expresses tool-use intent; concrete tool signatures are runtime-bound
 ## Knowledge Adequacy Check
 
 **Domain knowledge required for this skill:**
-- Full framework specification (all documents in `framework/`) — treat as authoritative; read before orchestrating any phase
+- Framework knowledge index (query-first): discover relevant policy sections via framework-doc search/list tools, then read only required sections (summary-first, full-read escalation only)
 - Current engagement state: open CQs, open algedonics, current phase, phase visit counts — read from EventStore
 - Phase gate checklist requirements per `agile-adm-cadence.md §7` and RACI matrix
 - Artifact schema requirements per `framework/artifact-schemas/` — to evaluate readiness of submissions

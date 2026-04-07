@@ -28,7 +28,6 @@ version: 1.0.0
 
 ## Runtime Tooling Hint
 
-
 Representation choice (balanced and mandatory):
 - Use `.puml` diagrams when flow, topology, sequence, trust boundaries, or interaction context is the primary concern.
 - Use matrix artifacts (`model_create_matrix`) for dense many-to-many mappings, coverage, and traceability where node-link readability degrades.
@@ -255,7 +254,6 @@ Execute D1–D4 per `framework/diagram-conventions.md §5` for each diagram:
 
 Multiple diagrams per viewpoint are acceptable and encouraged when scope is large: produce one operational diagram per major VS stage or process cluster rather than one monolithic diagram.
 
-
 ---
 
 ### Step 3 — Author Value Stream Map
@@ -281,7 +279,6 @@ Execute D1–D4 per `framework/diagram-conventions.md §5`:
 - **D2:** For each ACT-nnn and VS-nnn entity that will appear, verify `§display ###archimate` subsections exist. Add missing subsections via `write_artifact`; run `regenerate_macros()`.
 - **D3:** Load template via `read_framework_doc("framework/diagram-conventions.md §7.use-case")`. Author one Use Case diagram per value stream: triggering stakeholder as entity alias actor, value stream stages as use cases, participating actors annotated. Include required frontmatter comment block. Write to `architecture-repository/diagram-catalog/diagrams/b-usecase-<vs-id>-v1.puml` via `write_artifact`.
 - **D4:** Call `validate_diagram`; fix errors; re-validate before proceeding.
-
 
 ---
 

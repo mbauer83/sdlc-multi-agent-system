@@ -15,77 +15,49 @@ Specifies the production, rendering, and maintenance of PlantUML (PUML) diagrams
 
 ## 0. Diagram Scoping and Viewpoint Composition
 
-Every diagram is a **view over the model** produced for a **specific stakeholder viewpoint**. Before authoring any diagram, answer three questions:
+Every diagram is a view over the model for one stakeholder question.
 
-1. **Who reads it?** The target audience determines which ArchiMate layer, which level of abstraction, and which detail density are appropriate.
-2. **What question does it answer?** A diagram that answers more than one question is almost always too large and will confuse every audience. Split it.
-3. **What phase/scope boundary does it respect?** Phase B diagrams show business-layer content; Phase C diagrams show application-layer content. Cross-layer elements appear only at boundaries (declared outside grouping rectangles) and only when required to show a realization or serving relationship.
+Before authoring, confirm:
+1. Audience and decision question.
+2. Phase/layer boundary (Phase B = business, Phase C = application; cross-layer only when needed).
+3. Scope size (if readability fails, split).
 
 ### 0.1 Diagram type roles and viewpoints
 
-No single diagram type has final authority over system behaviour. The five diagram families are **complementary and intentionally overlapping**:
-
-| Diagram type | Primary question answered | Primary audience | Key overlap |
-|---|---|---|---|
-| ArchiMate | What exists and how is it structurally related? | Architects, tech leads | Shares entities with all other types |
-| ER | What are the data fields, types, and cardinalities? | Developers, DBAs | Shares domain objects with ArchiMate and sequence diagrams |
-| Activity / BPMN | How does work flow through the system over time? | Business analysts, process owners | Overlaps with sequence diagrams (same scenario, different abstraction) |
-| Sequence | How do components interact in a specific runtime scenario? | Developers, architects | Shares participants with ArchiMate and activity diagrams |
-| Use-case | What do stakeholders need and how do they interact? | Product owners, stakeholders | Shares actors with ArchiMate business layer |
+Use diagram families as complementary views:
+- ArchiMate: structure and relationships.
+- ER: data fields and cardinalities.
+- Activity/BPMN: process flow.
+- Sequence: runtime interaction scenario.
+- Use-case: stakeholder interaction intent.
 
 ### 0.2 Scoping rules
 
-**Too broad:** A diagram that includes all entities in a layer (or multiple layers without a clear viewpoint) is unreadable and serves no audience. The ArchiMate overview diagram for a phase shows the structural skeleton; detail is delegated to activity, sequence, and ER diagrams scoped to specific processes or scenarios.
-
-**Too narrow:** A diagram that shows a single component in isolation, with no connections to neighbors or cross-layer realizations, adds no architectural value beyond what the entity file itself contains. A diagram must include enough context to make the shown relationships meaningful.
-
-**Scoping heuristic:**
-- Identify the **primary question** (one sentence).
-- Select only entities and connections needed to answer that question.
-- For any entity that appears, include its most important direct connections (1-hop). Omit distant connections (2+ hops) unless they are essential to the diagram's question.
-- If the diagram requires more than ~30 elements to remain readable, split into focused sub-diagrams with a note cross-referencing each other.
+- Avoid "everything-in-one" diagrams.
+- Avoid isolated single-node diagrams without meaningful relations.
+- Prefer 1-hop context around in-scope entities.
+- If readability degrades around ~30 elements, split into focused diagrams.
 
 ### 0.2.1 Dense-Edge Decomposition Rule (mandatory)
 
-When a node-link diagram shows edge congestion (parallel arrows sharing the same lane, unreadable labels, or repeated overlap at group boundaries), do not continue tuning the same monolithic diagram.
-
-Required strategy:
-
-1. **Attempt one layout pass only** (`direction`, `nodesep`, `ranksep`, simple ordering/hidden anchors).
-2. If congestion remains, **split into thematic slices** (typically 2-4 diagrams), each answering one question.
-3. For traceability-heavy domains, separate relationship families so lane pressure is reduced:
-  - **Horizontal progression slices** (example: stakeholder → driver, driver → requirement)
-  - **Vertical governance slices** (example: requirement → constraint, requirement/driver → goal)
-4. Add a **matrix companion artifact** for full many-to-many coverage (`diagram-catalog/diagrams/*.md`) so no relationship is lost.
-5. In every slice diagram `purpose`, reference the companion matrix artifact-id used for full coverage.
-
-Do not force dense association sets into a single visual panel when readability collapses.
+After one layout pass, if congestion remains:
+1. Split into 2-4 thematic diagrams.
+2. Separate horizontal progression from vertical governance links when useful.
+3. Add a matrix companion artifact for full many-to-many coverage.
+4. Reference that matrix artifact-id in each slice's `purpose`.
 
 ### 0.3 Diagram output modes: update vs. new diagram vs. target/delta
 
-A sprint does not necessarily produce *new* diagrams. The correct output depends on the nature of the work:
+Use this rule:
+1. Check existing diagrams via `list_artifacts` and `search_artifacts`.
+2. Same viewpoint exists: update baseline and bump version.
+3. Work-package delta needed: add target/delta diagram alongside baseline.
+4. No matching viewpoint: create new diagram.
 
-| Sprint scope | Diagram output |
-|---|---|
-| Greenfield phase (first pass through a phase) | New diagrams per the canonical set for that phase (table below) |
-| Extension or modification of an existing system | **Update existing baseline diagrams** to reflect the changed model; increment diagram version; may also add new diagrams for new viewpoints |
-| Deprecation of elements | Set `status: deprecated` on the entity or connection file — this is a **first-class lifecycle state**, not merely a pre-deletion flag. Deprecated elements are excluded from new diagrams but remain in the model for audit, traceability, and rollback. A diagram that showed a deprecated element should have it removed (diagram version incremented) or the diagram itself marked deprecated if it no longer represents any current or target state. **Every status change must emit an `artifact.updated` event** via `write_artifact`, with the payload recording the previous status, new status, and the rationale. |
-| Removal of elements from an existing system | Removal is a separate, later step: physically delete entity/connection files only after they have been deprecated *and* all diagrams and connections referencing them have been updated. If no sprint or governance decision has explicitly authorised removal, deprecation is sufficient — do not delete. Deletion must emit an `artifact.deleted` event (if supported by the EventStore version) or be recorded as an `artifact.updated` event with `status: deleted` in the payload. |
-| Scoped change request (Phase E/F/H, specific work-package) | **New target diagram** scoped to the work-package (WP-nnn), showing only the delta — *in addition to* updating the baseline; delta may include additions, modifications, and removals |
-| Revisit of a previously baselined phase | Update existing diagrams; preserve non-affected content; note revision rationale in diagram frontmatter |
-
-**Baseline vs. target diagrams:**
-- **Baseline diagram**: reflects the current approved state of the architecture (as-is or last-baselined to-be). Filename: `<phase>-<type>-<subject>-v<N>.puml`. Updated in place; version number incremented on each change.
-- **Target diagram**: reflects the intended state for a specific bounded scope — typically a work-package, plateau, or change request. Filename: `<phase>-<type>-<subject>-<wp-id>-target-v<N>.puml`. Exists alongside the baseline; archived or promoted to baseline at implementation close.
-- **Delta / change diagram**: highlights only what changes between baseline and target. Used in Phase H Change Records and Phase E gap analysis. Typically a clone of the baseline with additions coloured distinctly and removals marked deprecated.
-
-**Decision rule — update or create?**
-1. Call `list_artifacts(artifact_type="diagram")` and `search_artifacts(query)` to find any existing diagram covering the same viewpoint and scope.
-2. If a diagram exists for the same viewpoint: **update it** (read current PUML, apply changes, increment version).
-3. If the change is scoped to a work-package and the baseline must remain stable for parallel tracks: **create a target diagram** referencing the same entities with the added/changed elements clearly marked.
-4. If no existing diagram covers the viewpoint: **create a new diagram** per the canonical set below.
-
-**Event emission — mandatory for all model mutations:** Every change to an entity, connection, or diagram file — including status changes, deprecations, and removals — must be recorded via `write_artifact`, which emits `artifact.created`, `artifact.updated`, or (for logical deletion) `artifact.updated` with `status: deprecated` or `status: deleted` in the payload. No silent file edits. This is the invariant that makes engagement state fully replayable from the EventStore. Governed by `framework/architecture-repository-design.md §4.2` and `CLAUDE.md rule 22`.
+Lifecycle rules:
+- `deprecated` is first-class status (not immediate deletion).
+- Physical deletion only after dependent diagrams/connections are updated.
+- All entity/connection/diagram mutations must go through `write_artifact` and emit events.
 
 **Canonical minimum diagram set per ADM phase** (greenfield first pass):
 
@@ -348,9 +320,8 @@ Call `render_diagram(<puml_file_path>)` when producing user-facing output: sprin
 
 ## 7. PUML Authoring Templates
 
-Load via `read_framework_doc("framework/diagram-conventions.md §7.<type>")` at step D3a. All element aliases are artifact-ids.
-
----
+Load via `read_framework_doc("framework/diagram-conventions.md §7.<type>")` at D3a.
+All aliases use underscore artifact IDs (`APP_001`, `DOB_002`).
 
 ### §7.archimate-motivation — Architecture Vision Motivation Overlay
 
@@ -358,509 +329,51 @@ Load via `read_framework_doc("framework/diagram-conventions.md §7.<type>")` at 
 @startuml
 !include _macros.puml
 !include _archimate-stereotypes.puml
-
-' --- Stakeholders ---
 STK_001
-STK_002
-
-' --- Drivers ---
 DRV_001
-DRV_002
-
-' --- Goals ---
 GOL_001
-GOL_002
-
-' --- Constraints ---
-CST_001
-
-' --- Relationships (from connection files §display ###archimate) ---
-STK-001 --> GOL-001 : influences
-STK-001 --> DRV-001 : association
-DRV-001 --> GOL-001 : influence
-GOL-001 --> CST-001 : association
-
+DRV_001 ..> GOL_001 : <<influence>>
 @enduml
 ```
-
-**Rules:**
-- Macro calls expand to the PUML declarations from `_macros.puml`.
-- Relationship lines are authored from `archimate-influence` and `archimate-association` connection files in `connections/archimate/`.
-- ArchiMate stereotype labels are defined in `_archimate-stereotypes.puml`.
-
----
 
 ### §7.archimate-business — Business Architecture Structural Viewpoint
 
-Shows the stable organizational structure: functions, roles assigned to functions, capabilities realized by functions, and services delivered. **Never show individual processes in this viewpoint** — processes belong in the operational viewpoint.
-
-```plantuml
-@startuml
-!include _macros.puml
-!include _archimate-stereotypes.puml
-
-' --- Strategy: Value Streams (what drives the organization) ---
-rectangle "Value Streams" <<StrategyGrouping>> as GRP_VS {
-  DECL_VS_001
-  DECL_VS_002
-}
-
-' --- Strategy: Capabilities ---
-rectangle "Capabilities" <<StrategyGrouping>> as GRP_CAP {
-  DECL_CAP_001
-  DECL_CAP_002
-  DECL_CAP_003
-}
-
-' --- Business Functions (stable organizational groupings) ---
-rectangle "Architecture & Design" <<BusinessGrouping>> as GRP_ARCH {
-  DECL_BFN_001
-  DECL_BFN_002
-  DECL_ACT_003
-  DECL_ACT_004
-}
-
-rectangle "Project Governance" <<BusinessGrouping>> as GRP_GOV {
-  DECL_BFN_003
-  DECL_ACT_001
-  DECL_ACT_002
-}
-
-' --- Business Services (externally visible outputs per function) ---
-rectangle "Business Services" <<BusinessGrouping>> as GRP_SVC {
-  DECL_BSV_001
-  DECL_BSV_002
-  DECL_BSV_003
-}
-
-' --- Relationships ---
-' Roles assigned to functions (behavioral specification)
-ACT_003 -[#B8860B]-> BFN_001 : <<assignment>>
-ACT_004 -[#B8860B]-> BFN_002 : <<assignment>>
-ACT_002 -[#B8860B]-> BFN_003 : <<assignment>>
-ACT_001 -[#B8860B]-> BFN_003 : <<assignment>>
-
-' Functions realize capabilities (stable organizational ability)
-BFN_001 ..[#4682B4].>> CAP_001 : <<realization>>
-BFN_002 ..[#4682B4].>> CAP_002 : <<realization>>
-
-' Functions realize services (externally delivered output)
-BFN_001 ..[#B8860B].>> BSV_001 : <<realization>>
-BFN_002 ..[#B8860B].>> BSV_002 : <<realization>>
-BFN_003 ..[#B8860B].>> BSV_003 : <<realization>>
-
-@enduml
-```
-
-**Rules:**
-- Each grouping rectangle represents a function cluster or organizational domain.
-- Roles/actors and collaborations appear **inside or adjacent to** the function groupings they primarily serve — structural viewpoints always include roles/actors to show who fills each function.
-- Business services appear **outside** function groupings — they are the externally visible output.
-- Cross-layer connection from application layer is shown in the Phase C diagram; add a note cross-referencing it.
-- Relationship labels match ArchiMate relationship types from connection `§display ###archimate`.
-- **Single vs. dual diagram:** For small systems (≤ ~5 functions, ≤ ~8 processes, ≤ ~25 total elements), a single diagram may show both structural (functions, roles) and operational (processes, events) aspects together. For larger or more complex systems, split into separate structural and operational diagrams. The decision is a viewpoint judgment — document it in the diagram `purpose` frontmatter field.
-
----
+Use for stable structure only (functions, roles/collaborations, services, capabilities).
+Do not include process flow detail.
 
 ### §7.archimate-business-operational — Business Architecture Operational Viewpoint
 
-Shows how roles/collaborations execute processes to deliver services, with business events as structural glue. The operational viewpoint must make the **full trigger-and-flow cycle** visible: events that start processes, processes that raise events, direct process-to-process dispatch, and objects produced or consumed. This view answers: "what triggers this process, what does it do, what does it raise when done, and what does the next process receive?"
-
-For decomposed behavior, diagram the parent `BPR-NNN` / `BIA-NNN` as the **container element itself** and place stage elements inside it. Do not use an outer grouping plus a duplicated parent node.
-
-```plantuml
-@startuml
-!include _macros.puml
-!include _archimate-stereotypes.puml
-
-' --- Actors & Roles (participants in the processes) ---
-rectangle "Participants" <<BusinessGrouping>> as GRP_ACTORS {
-  DECL_ACT_001
-  DECL_ACT_002
-  DECL_ACT_003
-  DECL_BCO_001
-}
-
-' --- Business Events (triggers and outcomes) ---
-rectangle "Business Events" <<BusinessGrouping>> as GRP_EVENTS {
-  DECL_BEV_001
-  DECL_BEV_002
-  DECL_BEV_003
-}
-
-' --- Business Processes (execution sequences) ---
-rectangle "Processes" <<BusinessGrouping>> as GRP_PROCS {
-  rectangle "BPR-001 Sprint Planning" <<BusinessProcess>> as BPR_001 {
-    DECL_BPR_101
-    DECL_BPR_102
-    DECL_BPR_103
-  }
-  DECL_BPR_002
-  DECL_BPR_003
-}
-
-' --- Business Interactions (collaborative behaviors) ---
-rectangle "Interactions" <<BusinessGrouping>> as GRP_IA {
-  rectangle "BIA-001 Sprint Review Interaction" <<BusinessInteraction>> as BIA_001 {
-    DECL_BIA_101
-    DECL_BIA_102
-    DECL_BIA_103
-  }
-}
-
-' --- Business Objects (durable artifacts accessed/produced) ---
-rectangle "Key Objects" <<BusinessGrouping>> as GRP_OBJ {
-  DECL_BOB_001
-  DECL_BOB_002
-}
-
-' --- Business Services (delivered outputs) ---
-rectangle "Business Services" <<BusinessGrouping>> as GRP_SVC {
-  DECL_BSV_001
-  DECL_BSV_002
-  DECL_BSV_003
-}
-
-' --- Assignments (role/collaboration → process/interaction) ---
-ACT_002 -[#B8860B]-> BPR_001 : <<assignment>>
-ACT_003 -[#B8860B]-> BPR_002 : <<assignment>>
-BCO_001 -[#B8860B]-> BIA_001 : <<assignment>>
-
-' --- Triggering IN: event → process (event initiates process) ---
-BEV_001 -[#B8860B]-> BPR_001 : <<triggering>>
-
-' --- Triggering OUT: process → event (process raises event on completion/outcome) ---
-BPR_001 -[#B8860B]-> BPR_002 : <<triggering>>
-BPR_002 -[#B8860B]-> BEV_002 : <<triggering>>
-BPR_002 -[#B8860B]-> BEV_003 : <<triggering>>
-
-' --- Inner stage sequencing inside decomposed parent behavior ---
-BPR_101 -[#808080]-> BPR_102 : <<flow>>
-BPR_102 -[#808080]-> BPR_103 : <<flow>>
-BIA_101 -[#808080]-> BIA_102 : <<flow>>
-BIA_102 -[#808080]-> BIA_103 : <<flow>>
-
-' --- Triggering LOOP: event re-enters a process ---
-BEV_002 -[#B8860B]-> BPR_001 : <<triggering>>
-
-' --- Realization (process/interaction → service) ---
-BPR_001 ..[#B8860B].>> BSV_003 : <<realization>>
-BPR_002 ..[#B8860B].>> BSV_001 : <<realization>>
-BIA_001 ..[#B8860B].>> BSV_002 : <<realization>>
-
-' --- Access (process → object) ---
-BPR_001 -[#808080]-> BOB_002 : <<access (write)>>
-BPR_002 -[#808080]-> BOB_001 : <<access (write)>>
-
-@enduml
-```
-
-**Rules:**
-- **Triggering is bidirectional in the operational view.** Every process that RECEIVES a triggering event must show `BEV → BPR`. Every process that RAISES an event on completion or outcome must show `BPR → BEV`. Direct process-to-process dispatch (one process unconditionally starts another) uses `BPR → BPR`. Omitting any direction creates a diagram that shows inputs without outputs — the reader cannot trace the flow.
-- **Every process must have at least one triggering-IN and one triggering-OUT (or a realization as its terminal output).** A process with no triggering-OUT and no realization connection is a dangling dead-end in the flow — a model gap.
-- **Decomposed behaviors must be drawn with nested parent containers.** For staged `BPR-NNN` or `BIA-NNN`, render the parent as `<<BusinessProcess>>` / `<<BusinessInteraction>>` containing its stage elements. Do not draw a separate grouping that also contains a duplicate parent element.
-- **Keep composition in the model, not as redundant visual clutter.** Parent→stage `archimate-composition` connection files remain mandatory in `connections/archimate/composition/`, but operational diagrams should prefer nested containment and stage `flow`/`triggering` lines over external composition arrows.
-- BOBs (business objects) produced or consumed by processes in this cluster must appear in the diagram with access connection lines (gray). BOBs are structural glue that make the flow auditable.
-- Functions (BFN) are typically omitted from a pure operational viewpoint; include them only when the diagram intentionally combines structural and operational aspects.
-- Where multiple roles collaborate in a structured sequence, use BCO (BusinessCollaboration) + BIA (BusinessInteraction) per §11.5.
-- Value stream stage context may be shown as a note or grouping label annotation to orient the reader without adding VS entities as elements.
-- Multiple operational diagrams are normal and expected — scope each to one process cluster, one VS stage, or one cross-role flow. A single monolithic operational diagram is almost always too large to be useful.
-- Relationship labels match ArchiMate relationship types from connection `§display ###archimate`.
-
----
+Use for trigger-and-flow behavior (events, processes/interactions, object access, service realization).
+For staged behavior, parent `BPR`/`BIA` is the container and stages are nested.
 
 ### §7.archimate-application — Application Architecture Component Overview
 
-```plantuml
-@startuml
-!include _macros.puml
-!include _archimate-stereotypes.puml
-
-' --- Application Components ---
-APP_001
-APP_002
-APP_003
-
-' --- Application Interfaces ---
-AIF_001
-
-' --- Application Services ---
-ASV_001
-
-' --- External Actor ---
-ACT_001
-
-' --- Relationships ---
-ACT-001 --> AIF-001 : serving
-AIF-001 --> APP-001 : serving
-APP-001 --> ASV-001 : realization
-APP-001 --> APP-002 : serving
-APP-002 --> APP-003 : triggering
-
-@enduml
-```
-
----
+Include components, interfaces, services, and required serving/realization relations.
 
 ### §7.archimate-technology — Technology Architecture Node Diagram
 
-```plantuml
-@startuml
-!include _macros.puml
-!include _archimate-stereotypes.puml
-
-' --- Technology Nodes ---
-NOD_001
-NOD_002
-
-' --- System Software ---
-SSW_001
-SSW_002
-
-' --- Technology Services ---
-TSV_001
-TSV_002
-
-' --- Artifacts ---
-ART_001
-
-' --- Application Components (hosted) ---
-APP_001
-APP_002
-
-' --- Relationships ---
-NOD-001 --> SSW-001 : assignment
-SSW-001 --> APP-001 : realization
-APP-001 --> TSV-001 : serving
-ART-001 --> NOD-001 : assignment
-NOD-001 --> NOD-002 : association
-
-@enduml
-```
-
----
+Include nodes/system-software/services/artifacts and assignment/serving/realization relations.
 
 ### §7.usecase — Use Case Diagram
 
-```plantuml
-@startuml
-!include _macros.puml
-
-left to right direction
-
-' --- Actors ---
-ACT_001
-ACT_002
-
-' --- System boundary ---
-rectangle "System Name" {
-  BSV_001
-  BSV_002
-  BSV_003
-}
-
-' --- Relationships ---
-ACT-001 --> BSV-001
-ACT-001 --> BSV-002
-ACT-002 --> BSV-002
-BSV-003 .> BSV-001 : <<extend>>
-
-@enduml
-```
-
-**Rules:**
-- Business service (BSV) artifact-ids represent use cases in the system boundary.
-- `<<include>>` and `<<extend>>` are the only stereotype labels on use-case arrows.
-- Actor aliases reference `ACT-nnn` artifact-ids.
-
----
+Use BSV IDs for use-cases and ACT/ROL for actors.
+Use only `<<include>>`, `<<extend>>`, `association`, and `generalization` relationships.
 
 ### §7.class-er — Entity-Relationship (Class) Diagram
 
-ER diagrams do not use `_macros.puml`. Class declarations and relationships are generated from entity/connection `§display ###er` blocks using `generate_er_content()` and `generate_er_relations()`.
-
-```plantuml
-@startuml
-
-skinparam class {
-  BackgroundColor LightCyan
-  BorderColor CadetBlue
-  ArrowColor SteelBlue
-}
-
-' --- Generated from DOB entity §display ###er blocks ---
-' (paste output of generate_er_content([DOB-001, DOB-002, DOB-003]) here)
-
-class "WorkflowEvent" as DOB_001 {
-  + id : UUID <<PK>>
-  + engagement_id : String
-  + event_type : String
-  + sequence_num : Integer
-  + timestamp : DateTime
-  + payload : JSON
-}
-
-class "Engagement" as DOB_002 {
-  + id : UUID <<PK>>
-  + name : String
-  + entry_point : String
-}
-
-class "LearningEntry" as DOB_003 {
-  + id : UUID <<PK>>
-  + agent_role : String
-  + artifact_type : String
-  + error_type : String
-}
-
-' --- Generated from er connection §display ###er blocks ---
-' (paste output of generate_er_relations([DOB-001---DOB-002, DOB-001---DOB-003]) here)
-
-DOB_002 "1" -- "0..*" DOB_001 : has
-DOB_002 "1" -- "0..*" DOB_003 : records
-
-@enduml
-```
-
-**Rules:**
-- Class aliases MUST use the **underscore form** (`DOB_nnn`), never the hyphenated artifact-id (`DOB-nnn`). PlantUML treats `-` as arithmetic in identifier contexts; hyphenated aliases cause parse errors in class body declarations and relationship lines. See §3 (Element Identity) and §10 (Alias Naming) for the general rule — it applies to all diagram languages including ER.
-- Every relationship must show cardinality on both ends (from `§display ###er` `source-cardinality`/`target-cardinality`).
-- PK/FK annotations derive from entity `§display ###er` `primary-key` and `attributes` fields.
-
----
+Do not include `_macros.puml`.
+Generate class declarations via `generate_er_content()` and relationships via `generate_er_relations()`.
+Aliases must use underscores (`DOB_001`), never hyphens.
 
 ### §7.sequence — Sequence Diagram
 
-```plantuml
-@startuml
-!include _macros.puml
-
-skinparam sequence {
-  ParticipantBackgroundColor AliceBlue
-  ParticipantBorderColor SteelBlue
-}
-
-' --- Participants (from entity §display ###sequence blocks) ---
-actor "Solution Architect Agent" as ACT-001
-participant "PM Agent" as APP-001
-participant "SA Agent" as APP-002
-database "EventStore" as TSV-001
-
-' --- Messages (from sequence connection §display ###sequence blocks) ---
-ACT-001 -> APP-001 : initiateEngagement(config)
-activate APP-001
-
-APP-001 -> APP-002 : invokeSkill(phase="B")
-activate APP-002
-
-APP-002 -> TSV-001 : emit(artifact.drafted)
-TSV-001 --> APP-002 : ok
-
-APP-002 --> APP-001 : phaseComplete(result)
-deactivate APP-002
-
-APP-001 --> ACT-001 : phaseGatePassed
-deactivate APP-001
-
-@enduml
-```
-
-**Rules:**
-- Participant aliases are artifact-ids; `participant-type` from `§display ###sequence` determines PUML keyword (`actor`, `participant`, `database`, etc.).
-- `label` from `§display ###sequence` provides the display name.
-- Asynchronous messages use `->>`; returns use `-->`.
-- `activate`/`deactivate` blocks required for synchronous participants.
-
----
+Participants come from entity `§display ###sequence`; messages come from `connections/sequence/*`.
+Use synchronous/asynchronous/return semantics exactly as modeled.
 
 ### §7.activity-bpmn — Activity / BPMN-Overlay Process Diagram
 
-Activity diagrams serve two distinct purposes in the SDLC and must be clearly scoped to one:
-
-**Business-layer activity diagrams (Phase B — SA primary):** Model external workflows of the organisation the software serves. Participants (swimlane lanes) are business actors (`ACT-`), business roles (`BRL-`), external systems, or organisational units. These diagrams capture "what the organisation does" — approval flows, multi-party business processes, operational sequences — and provide traceability from business requirements to software scope.
-
-**Application-layer activity diagrams (Phase C — SwA primary):** Model process logic *within the software being built* — internal workflows, data-processing pipelines, state machines, multi-step request-handling sequences, background job flows, and any application-level BPMN that gives precision and granularity to application components and services. Participants are application components (`APP-`), application services (`ASV-`), data objects (`DOB-`), or user-facing actors. These are the authoritative behavioural specification for how the software must work internally — complementing the structural ArchiMate component diagram with the temporal, conditional flow it omits.
-
-Both types follow the same PlantUML template:
-
-```plantuml
-@startuml
-!include _macros.puml
-
-skinparam activity {
-  BackgroundColor AliceBlue
-  BorderColor SteelBlue
-  DiamondBackgroundColor LightYellow
-  DiamondBorderColor DarkGoldenrod
-}
-
-' --- Swimlane labels from entity §display ###activity blocks ---
-' Business-layer example: actor/role lanes
-|ACT-001|
-' swimlane-label: "User"
-start
-
-:Submit change request;
-
-|BRL-001|
-' swimlane-label: "Change Manager"
-:Assess impact;
-
-if (Safety-relevant?) then (yes)
-  |CST-001|
-  :Escalate to CSCO;
-else (no)
-  |BRL-001|
-  :Approve and schedule;
-endif
-
-stop
-
-@enduml
-```
-
-```plantuml
-' --- Application-layer example: component/service lanes ---
-|APP-016|
-' swimlane-label: "LangGraph Orchestrator"
-start
-
-:Receive skill invocation request;
-
-|APP-004|
-' swimlane-label: "SkillLoader"
-:Load skill file for phase/agent;
-:Assemble 4-layer system prompt;
-
-|APP-007|
-' swimlane-label: "PM Agent"
-:Execute skill steps;
-:Write artifact via write_artifact();
-
-if (Artifact valid?) then (yes)
-  |APP-001|
-  ' swimlane-label: "EventStore"
-  :Emit artifact.created;
-else (no)
-  |APP-007|
-  :Raise algedonic signal;
-endif
-
-|APP-016|
-stop
-```
-
-**Rules:**
-- Swimlane pool labels (`|ACT-001|`, `|APP-004|` etc.) use entity artifact-ids; the display label comes from `§display ###activity` `swimlane-label`.
-- Business-layer diagrams: swimlane participants are business actors, roles, collaborations, or external systems. Do not use application component IDs.
-- Application-layer diagrams: swimlane participants are application components, services, or user-facing actors. Avoid business-layer role IDs except where a user actor genuinely initiates a flow.
-- Only BPMN-compatible constructs: sequential tasks, exclusive/parallel gateways, start/stop, intermediate events.
-- Task names are verb-object phrases.
-- Decision diamond labels state the condition being tested, not the outcome.
-
-**Collective swimlane abstraction:** A swimlane may use a collective label (e.g. "External Systems", "Approval Workflow") when the diagram intentionally abstracts over which specific actor or role executes a step. This is a viewpoint choice for the diagram, not a change to any entity's identity. Each entity's `§display ###activity swimlane-label` must always reflect that entity's own name. The collective label appears only in the PUML `|…|` delimiter and in the diagram header comment that maps the lane to its represented entity-ids.
-
----
+Keep business-layer and application-layer activity scopes separate unless showing a single explicit handoff boundary.
+Always label branch outcomes (`yes/no`, `pass/fail`) and map swimlanes to model entities.
 
 ## 8. Write Authority
 

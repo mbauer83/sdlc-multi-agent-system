@@ -700,57 +700,21 @@ Architecture Sprints tend toward more full retrievals (new binding artifacts bei
 
 ## Appendix A — Stream Interaction Diagram
 
-```
-BUSINESS STREAM (PO, Sales)
-─────────────────────────────────────────────────────────────────────────────────────────
-  [BS-1: Stakeholder Map]──►[BS-2: Requirements]──►[BS-n: Ongoing Elicitation + Change]
-            │                       │                           │
-            │                       ▼                           ▼
-            │            Requirements Register ◄─── continuous updates
-            │                       │
-ARCHITECTURE STREAM (SA, SwA/PE, CSCO)
-─────────────────────────────────────────────────────────────────────────────────────────
-            ▼                       ▼
-     [AS-Prelim]────►[AS-A]────►[AS-B]────►[AS-C]────►[AS-D]────►[AS-E]────►[AS-F]
-       Principles     AV+SoAW    BA        AA+DA        TA       Candidates   IP
-          │             │         │           │           │           │         │
-          └─────────────┴─────────┴───────────┴───────────┘           │         │
-                                                                       ▼         ▼
-                                                              Gate E/F Review + Solution Sprint Plan
-                                                                                 │
-IMPLEMENTATION STREAM (Dev, DevOps, QA)               ◄──────────────────────────┘
-─────────────────────────────────────────────────────────────────────────────────────────
-                                                        [SS-1]──►[SS-2]──►[SS-n]──►Phase G exit
-                                                         SBBs     SBBs    SBBs + DR
-                                                           │        │        │
-                                                           └────────┴────────┘
-                                                                    │
-                                    Compliance Assessments + Change Requests
-                                                                    │
-                                    ◄───────────────────────────────┘
-                         ARCHITECTURE STREAM (Phase G governance + Phase H change mgmt)
-```
+Canonical flow:
+
+1. Business stream continuously updates Requirements Register.
+2. Architecture stream consumes requirements and produces baselined architecture artifacts (Prelim through F).
+3. Implementation stream consumes baselined architecture outputs and produces working increments and compliance evidence.
+4. Governance/change loop returns compliance findings and change requests into Architecture Phase G/H.
 
 ---
 
 ## Appendix B — Artifact Dependency Map
 
-```
-PR (Principles) ──────────────────────────────────────────────────────► all phases
-RR (Requirements) ─────────────────────────────────────────────────────► all phases
-                                                        ▲ (continuous updates)
-AV ─────────────────────────────────────────────► BA ─► AA ─► IP
-                                                   │     DA ─► IP
-                                                   │           │
-                                              SCO (B) ─────────► SCO (C) ─► SCO (D)
-                                                                      │          │
-                                                                      └──────────► IP
-                                                                                   │
-                                                                TA ──────────────► IP ─► AC ─► CA
-                                                                │                        │
-                                                               ADR                    Compliance
-                                                                                          │
-                                                                                    TS ──► DR
-                                                                                          │
-                                                                                    CR ◄── (H)
-```
+Canonical dependency summary:
+
+1. `PR` and `RR` constrain all phases.
+2. `AV -> BA -> (AA, DA) -> IP` is the primary architecture chain.
+3. `SCO` evolves by phase (`B -> C -> D`) and gates downstream implementation planning.
+4. `TA + ADR -> IP -> AC -> CA` governs implementation authorization and conformance.
+5. `TS -> DR` feeds execution evidence; `CR` feeds Phase H revisitation.

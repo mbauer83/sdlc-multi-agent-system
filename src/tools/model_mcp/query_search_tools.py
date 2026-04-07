@@ -1,8 +1,17 @@
 from __future__ import annotations
 
+from dataclasses import asdict
+from typing import Literal
+
 from mcp.server.fastmcp import FastMCP  # type: ignore[import-not-found]
 
-from src.tools.model_mcp.context import RepoPreset, RepoScope, repo_cached, resolve_repo_roots, roots_key
+from src.tools.model_mcp.context import RepoScope, repo_cached, resolve_repo_roots, roots_key
+
+
+def _project(record: dict[str, object], fields: list[str] | None) -> dict[str, object]:
+    if not fields:
+        return record
+    return {field: record[field] for field in fields if field in record}
 
 
 def register_query_search_tools(mcp: FastMCP) -> None:
@@ -26,17 +35,18 @@ def register_query_search_tools(mcp: FastMCP) -> None:
         engagement: str | None = None,
         include_connections: bool = True,
         include_diagrams: bool = True,
+        prefer_record_type: Literal["entity", "connection", "diagram"] | None = None,
+        strict_record_type: bool = False,
+        fields: list[str] | None = None,
         repo_root: str | None = None,
-        repo_preset: RepoPreset | None = None,
-        enterprise_root: str | None = None,
         repo_scope: RepoScope = "both",
         refresh: bool = False,
     ) -> dict[str, object]:
         roots = resolve_repo_roots(
             repo_scope=repo_scope,
             repo_root=repo_root,
-            repo_preset=repo_preset,
-            enterprise_root=enterprise_root,
+            repo_preset=None,
+            enterprise_root=None,
         )
         key = roots_key(roots)
         repo = repo_cached(key)
@@ -51,18 +61,24 @@ def register_query_search_tools(mcp: FastMCP) -> None:
             engagement=engagement,
             include_connections=include_connections,
             include_diagrams=include_diagrams,
+            prefer_record_type=prefer_record_type,
+            strict_record_type=strict_record_type,
         )
 
         hits: list[dict[str, object]] = []
         for h in result.hits:
             aid = getattr(h.record, "artifact_id", "")
-            record_summary = repo.read_artifact(aid, mode="summary") if aid else None
-            hits.append({
+            summary = repo.summarize_artifact(aid) if aid else None
+            record = {
                 "score": h.score,
                 "record_type": h.record_type,
                 "artifact_id": aid,
-                "record": record_summary,
-            })
+            }
+            if summary is not None:
+                summary_dict = asdict(summary)
+                summary_dict["path"] = str(summary.path)
+                record.update(summary_dict)
+            hits.append(_project(record, fields))
 
         return {
             "repo_roots": [str(p) for p in roots],

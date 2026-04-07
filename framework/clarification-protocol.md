@@ -1,9 +1,9 @@
 # Clarification Protocol
 
-**Version:** 1.0.0  
+**Version:** 1.2.0  
 **Status:** Approved — Foundation  
 **Owner:** Project Manager  
-**Last Updated:** 2026-04-02
+**Last Updated:** 2026-04-08
 
 ---
 
@@ -72,7 +72,7 @@ When an agent determines that a Clarification Request is needed, it writes a `CQ
 cq-id:            # <sprint-id>-CQ-<sequence>, e.g. AS-A-CQ-001
 raised-by:        # agent role
 raised-in:        # sprint identifier
-target:           # User | PM | <agent-role>
+target:           # User | PM
 status:           # open | answered | superseded | withdrawn
 blocking:         # true | false (is work suspended pending this answer?)
 blocks-task:      # description of the specific task or artifact section that is blocked
@@ -116,6 +116,17 @@ Every question in a Clarification Request MUST be:
 
 Questions that fail this standard should be reformulated before the CQ is issued. A vague question produces a vague answer and does not unblock work.
 
+### 3.2 Interaction Taxonomy (Wave 1)
+
+This protocol uses two interaction classes and one explicit non-interaction boundary:
+
+| Class | Definition | Typical Initiator | Typical Responder | Persistence Contract | Suspension Contract |
+|---|---|---|---|---|---|
+| User-facing Clarification Interaction (CQ) | Missing user/domain facts that cannot be retrieved from available artifacts or sources | Specialist agent or PM | User | `cq.raised`; `cq.batched` when PM consolidates; `phase.suspended` / `phase.resumed` when blocking | Blocking only when `blocking: true`; suspension scope is the minimum blocked task unit |
+| Agent-directed Coordination Interaction | Inter-agent feedback, handoff, arbitration, review, or escalation | Specialist agent or PM | Producing specialist and/or PM (PM-governed routing) | `handoff.created`, `specialist.invoked`, `specialist.completed`, `decision.recorded`, `gate.evaluated`, `review.pending`; algedonic events when applicable | Non-blocking by default; may become blocking only if PM issues a hold or routes into CQ/algedonic handling |
+
+**Boundary (non-goal for Wave 1):** Agent tool retrieval (`list/search/read/count/find`) is tool-use behavior, not an interaction class. Retrieval is governed by discovery and tool contracts (`framework/discovery-protocol.md`, `framework/tool-catalog.md`) and is never routed as a CQ.
+
 ---
 
 ## 4. Routing Rules
@@ -132,6 +143,23 @@ Clarification Requests are routed based on the nature of the gap:
 | Architectural preference where both options are valid | **Resolved internally** — agent makes a reasoned choice and documents it as an ADR | Not a knowledge gap |
 
 **User-facing CQs are the primary focus of this protocol.** Agent-to-agent gaps are handled by the structured feedback loop (`repository-conventions.md §6`).
+
+### 4.2 Interaction Class Routing Contract
+
+| Interaction Class | Who Initiates | Who Responds | PM Routing Responsibility | Required Event Touchpoints | Blocking Behavior |
+|---|---|---|---|---|---|
+| User-facing Clarification Interaction (CQ) | Specialist or PM | User | PM may batch, present, and resume work after answer integration | `cq.raised`, `cq.batched` (optional), `phase.suspended` / `phase.resumed` (if blocking) | Blocking when `blocking: true` only |
+| Agent-directed Coordination Interaction | Specialist or PM | Specialist and/or PM | PM governs re-assignment, arbitration, gate sequencing, and review routing | `handoff.created`, `specialist.invoked`, `specialist.completed`, `decision.recorded`, `gate.evaluated`, `review.pending` | Non-blocking by default; PM can place explicit hold |
+
+### 4.1 Inter-Agent Clarification Boundary
+
+To avoid duplicating governance channels, direct agent-to-agent CQs are not introduced as a separate protocol path.
+
+- If the issue is artifact ambiguity or quality: use structured feedback/handoff to the producing agent.
+- If the issue is cross-artifact conflict or scope arbitration: route to PM for decision and re-assignment.
+- If user/domain facts are missing: raise CQ to User.
+
+This keeps CQ semantics reserved for missing knowledge, while inter-agent coordination remains in the feedback/handoff control loop.
 
 ---
 

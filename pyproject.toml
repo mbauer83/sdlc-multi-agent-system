@@ -19,6 +19,7 @@ dependencies = [
 [project.scripts]
 sdlc-mcp-model = "src.tools.mcp_model_server:main"
 sdlc-mcp-registry = "src.tools.mcp_registry_server:main"
+sdlc-mcp-framework = "src.tools.mcp_framework_server:main"
 
 [project.optional-dependencies]
 dev = [

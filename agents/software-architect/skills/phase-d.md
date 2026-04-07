@@ -29,12 +29,7 @@ version: 1.0.0
 
 ## Runtime Tooling Hint
 
-
-Representation choice (balanced and mandatory):
-- Use `.puml` diagrams when flow, topology, sequence, trust boundaries, or interaction context is the primary concern.
-- Use matrix artifacts (`model_create_matrix`) for dense many-to-many mappings, coverage, and traceability where node-link readability degrades.
-- Do not replace contextual architecture views with matrices alone: keep a reasonable set of diagrams that preserves end-to-end context for the domain slice.
-- Practical threshold: if a single node-link view would exceed about 25 elements or become edge-dense, keep/author at least one contextual diagram and shift dense cross-reference detail to a matrix.
+Diagram and matrix conventions apply only when this skill explicitly produces or updates diagram artifacts; use `framework/diagram-conventions.md` as the source of truth.
 
 Tool references in this skill are intent guidance; runtime APIs are bound in code.
 
@@ -113,7 +108,6 @@ Before authoring technology diagrams, query the model registries:
 2. Call `list_artifacts(artifact_type="technology-node")`, `list_artifacts(artifact_type="technology-service")`, and `list_artifacts(artifact_type="artifact")` from the technology-repository — identify existing NOD-nnn, TSV-nnn, ARF-nnn entries.
 3. Annotate working context: "Model registry: N application components (APP-nnn); M technology nodes (NOD-nnn) found relevant."
 
-
 ### Step 1 — Read and Validate Inputs
 
 1.1 Read AA in full (not summary-only). Retrieve AA from canonical path. Confirm version is ≥ 1.0.0. Record all APP-nnn entries; note which are `safety-relevant: true`.
@@ -180,7 +174,6 @@ Execute D1–D4 per `framework/diagram-conventions.md §5`:
 - **D4:** Call `validate_diagram`; fix errors; re-validate before proceeding.
 
 *Note: SwA writes to `technology-repository/diagram-catalog/diagrams/`; SA integrates via `diagram.catalog-proposal` handoff at phase transition.*
-
 
 ### Step 5 — Author Architecture Decision Records (ADR Register)
 
@@ -251,7 +244,6 @@ Execute D1–D4 per `framework/diagram-conventions.md §5`:
 - **D4:** Call `validate_diagram`; fix errors; re-validate before proceeding.
 
 *Note: SwA writes to `technology-repository/diagram-catalog/diagrams/`; SA integrates via `diagram.catalog-proposal` handoff at phase transition.*
-
 
 ### Step 9 — Author Technology Standards Catalog
 

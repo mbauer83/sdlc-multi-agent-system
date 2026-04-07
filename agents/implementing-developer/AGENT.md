@@ -117,7 +117,7 @@ The DE is the sole writer of `engagements/<id>/work-repositories/delivery-reposi
 - `engagements/<id>/handoff-log/` — incoming handoffs from SwA (AC), PM (sprint plan), QA (defect notifications)
 - `engagements/<id>/clarification-log/` — CQ status
 - `enterprise-repository/standards/` — enterprise-wide SIB and coding standards (if available)
-- `framework/` — all framework documents (read-only; treat as authoritative reference)
+- `framework/` — query-first framework lookup, then read only required sections (read-only authoritative source)
 
 **DE does NOT write to:** `architecture-repository/`, `technology-repository/`, `project-repository/`, `safety-repository/`, `qa-repository/`, `devops-repository/`, or any `enterprise-repository/` path.
 

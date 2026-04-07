@@ -31,18 +31,6 @@ version: 1.1.0
 
 ## Runtime Tooling Hint
 
-
-Representation choice (balanced and mandatory):
-- Use `.puml` diagrams when flow, topology, sequence, trust boundaries, or interaction context is the primary concern.
-- Use matrix artifacts (`model_create_matrix`) for dense many-to-many mappings, coverage, and traceability where node-link readability degrades.
-- Do not replace contextual architecture views with matrices alone: keep a reasonable set of diagrams that preserves end-to-end context for the domain slice.
-- Practical threshold: if a single node-link view would exceed about 25 elements or become edge-dense, keep/author at least one contextual diagram and shift dense cross-reference detail to a matrix.
-
-This skill expresses tool-use intent; concrete tool signatures are runtime-bound by orchestration code.
-
-- `invoke-when` and `trigger-conditions` are intent-level hints; executable phase/state gating is enforced by orchestration code.
-- Keep procedure and outputs strict; if invoked in an unexpected state, fail via pre-condition checks and route through CQ/algedonic paths.
-
 ## Inputs Required
 
 | Input | Source | Minimum State | Notes |
@@ -63,7 +51,7 @@ This skill expresses tool-use intent; concrete tool signatures are runtime-bound
 ### Required Knowledge
 
 - The change request itself: what has changed or is requested to change; who raised it; what systems or processes it affects.
-- The current state of all architecture artifacts: SA must read the summary headers (and relevant sections) of all baselined architecture artifacts before performing impact assessment.
+- The current state of impacted architecture artifacts: SA queries baselined artifacts by CR scope/dependencies, reads summary headers first, then only relevant sections for impact assessment.
 - Change classification rules from `agile-adm-cadence.md §10`: Minor / Significant / Major / Safety-Critical — these determine the decision authority and phase-return scope.
 - Safety constraint context: whether the change touches any component or data entity classified as safety-relevant in the SCO. If the SCO is not current, SA must note this gap before proceeding.
 - RACI rules for change approval authority: Minor (PM only), Significant (SA + PM), Major (all affected owners + CSCO), Safety-Critical (CSCO mandatory; halt if unavailable).

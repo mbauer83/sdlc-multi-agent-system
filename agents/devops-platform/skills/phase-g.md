@@ -30,18 +30,6 @@ version: 1.0.0
 
 ## Runtime Tooling Hint
 
-
-Representation choice (balanced and mandatory):
-- Use `.puml` diagrams when flow, topology, sequence, trust boundaries, or interaction context is the primary concern.
-- Use matrix artifacts (`model_create_matrix`) for dense many-to-many mappings, coverage, and traceability where node-link readability degrades.
-- Do not replace contextual architecture views with matrices alone: keep a reasonable set of diagrams that preserves end-to-end context for the domain slice.
-- Practical threshold: if a single node-link view would exceed about 25 elements or become edge-dense, keep/author at least one contextual diagram and shift dense cross-reference detail to a matrix.
-
-This skill expresses tool-use intent; concrete tool signatures are runtime-bound by orchestration code.
-
-- `invoke-when` and `trigger-conditions` are intent-level hints; executable phase/state gating is enforced by orchestration code.
-- Keep procedure and outputs strict; if invoked in an unexpected state, fail via pre-condition checks and route through CQ/algedonic paths.
-
 ## Inputs Required
 
 | Input | Source | Minimum State | Notes |

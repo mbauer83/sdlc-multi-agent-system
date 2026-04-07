@@ -1,8 +1,8 @@
 # Orchestration Topology
 
-**Version:** 1.0.0  
+**Version:** 1.3.0  
 **Status:** Approved — Pre-Stage 5  
-**Last Updated:** 2026-04-02
+**Last Updated:** 2026-04-08
 
 ---
 
@@ -10,33 +10,36 @@
 
 This document specifies how the multi-agent SDLC system is orchestrated at runtime: how agents are coordinated across ADM phases, how LangGraph models the ADM workflow, and how the PM supervisor coordinates specialist agents. It is the architectural reference for `src/orchestration/`.
 
-The system uses a two-layer architecture:
-- **LangGraph** manages the ADM phase workflow: phase progression, gate evaluation, algedonic handling, sprint sequencing. It is the outer control loop.
-- **PydanticAI** handles individual agent invocations: each agent run is a `PydanticAI Agent.run()` call with appropriate context. It is the inner execution layer.
-- **EventStore** persists all state transitions. LangGraph reads state from EventStore at each node entry; agents write state to EventStore via events.
+The system uses a nested control architecture:
+- **LangGraph (outer graph)** manages engagement lifecycle control: new vs resume, entry-point classification, engagement-type routing, suspend/resume, and completion.
+- **LangGraph (engagement-type subgraphs)** manages mostly deterministic phase flows for EP-0 and warm-start/reverse-architecture entry paths.
+- **LangGraph (phase/agent subgraphs)** manages per-phase specialist execution, fan-out/fan-in, and gate transitions.
+- **PydanticAI (leaf nodes only)** executes specialist reasoning and artifact production under strict schema/result contracts.
+- **EventStore** persists all state transitions. Graph nodes read and update state via events.
 
 ---
 
 ## 2. Coordination Model
 
-### 2.1 Primary Model: PM Supervisor with Agent-as-Tool
+### 2.1 Primary Model: PM Supervisor with Nested Subgraphs
 
-The Project Manager is the **supervisor node** in the LangGraph graph. When a phase requires specialist work, the PM node calls the specialist PydanticAI agent via the `invoke_specialist` tool (`framework/agent-runtime-spec.md §7`). This is a **hierarchical, sequential coordination model**:
+The Project Manager is the supervisor authority, while execution is organized as nested LangGraph subgraphs instead of PM agent tool-calls to specialists. This keeps high-level coordination deliberative but phase execution deterministic and inspectable.
 
 ```
-PM supervisor node
-  → invoke_specialist("SA", "SA-PHASE-A", task)
-  ← result + EventStore events emitted by SA
-  → evaluate gate A→B
-  → invoke_specialist("SA", "SA-PHASE-B", task)
-  ...
+outer_graph (engagement lifecycle)
+    → classify_entry_and_mode
+    → run engagement_subgraph(ep_type)
+            → run phase_subgraph(phase)
+                    → leaf specialist node(s) using PydanticAI
+            → evaluate gate / review / suspend-resume
+    → close_or_resume
 ```
 
-**Why PM-as-supervisor:** The PM holds the coordination authority (VSM System 3) and is the only agent with `evaluate_gate` and `batch_cqs` tools. Routing decisions belong to the PM, not to a separate orchestration layer disconnected from the ADM protocol.
+**Why this model:** PM remains the decision authority (VSM System 3), but deterministic flow control is encoded in graph topology rather than prompt-level routing behavior. This improves reproducibility, resumability, and selective fan-out.
 
-### 2.2 Optional Extension: LangGraph Fan-Out for Phase G
+### 2.2 Fan-Out/Fan-In inside Phase Subgraphs
 
-Phase G Solution Sprints have three concurrent agents (DE, DO, QA). For serial execution (Option A), PM calls them sequentially. For parallel execution (Option B), LangGraph's `Send` API fans out to three concurrent sub-graphs:
+Phase subgraphs may use LangGraph `Send` fan-out where independence exists (for example DE/DO/QA execution lanes in Phase G), followed by deterministic fan-in merge and gate evaluation.
 
 ```
 Phase G Sprint node
@@ -47,13 +50,22 @@ Phase G Sprint node
   → evaluate sprint close
 ```
 
-Option B requires the LangGraph `Send` API and is introduced only when sequential throughput is insufficient (Stage 5 evaluation criterion: serial Phase G sprint > 5 minutes wall-clock for a typical sprint scope).
+Fan-out is a topology decision in orchestration code, not a skill-level decision.
 
-### 2.3 Algedonic Bypass
+### 2.3 Engagement-Type Subgraphs
+
+The outer graph selects one deterministic engagement-type subgraph before phase work begins:
+- `ep0_greenfield_subgraph`
+- `warm_start_subgraph` (EP-A through EP-F)
+- `reverse_architecture_subgraph` (EP-G/EP-H)
+
+Each engagement-type subgraph determines phase start conditions, warm-start ingestion, and required validations before entering the standard phase control loop.
+
+### 2.4 Algedonic Bypass
 
 Any agent node can emit an `alg.raised` EventStore event. The LangGraph routing function at each node exit checks for open algedonics and routes to `algedonic_handler_node` before normal phase progression. This implements the algedonic bypass without polling.
 
-### 2.4 Workflow Control Ownership Boundary
+### 2.5 Workflow Control Ownership Boundary
 
 Executable workflow control is owned by the orchestration harness (LangGraph nodes, routing functions, PM tool policies), not by skill prose.
 
@@ -62,6 +74,99 @@ Executable workflow control is owned by the orchestration harness (LangGraph nod
 - `invoke-when` and `trigger-conditions` in skill frontmatter are documentation hints; they do not replace runtime state-machine enforcement.
 
 This separation keeps skills reusable across entry points and future workflow profiles while preserving deterministic governance.
+
+### 2.6 Agent-Phase Workflow Decomposition Contract
+
+Agent-phase workflows are authored as model-level behavior specifications, then implemented as nested LangGraph subgraphs.
+
+- A workflow unit is defined by `(agent_id, phase, skill_id)`.
+- Each workflow unit may be represented by one activity/BPMN diagram at the model level when branching or multi-party coordination is non-trivial.
+- The runtime graph remains the execution authority; diagrams are binding design specifications for node/routing intent, not executable control planes.
+
+Deterministic vs agentic mapping rules:
+
+1. Deterministic step:
+- Preconditions, transitions, and outputs are fully specified and machine-checkable.
+- Implement as explicit LangGraph node logic and routing conditions.
+
+2. Agentic step:
+- Requires bounded reasoning, synthesis, or judgement under a selected skill.
+- Implement as a specialist leaf node invocation using one active skill (`active_skill_id`).
+
+3. Decision branch:
+- Model as explicit branch outcomes.
+- Implement as routing function predicates over graph state and/or PM decision payload.
+
+4. Suspension/resume:
+- Model as explicit waiting states (for example CQ answer or review decision).
+- Implement through dedicated suspension/resume nodes and events (`phase.suspended`, `phase.resumed`).
+
+5. Parallel lanes:
+- Model only when independence exists.
+- Implement via fan-out/fan-in topology (`Send`) with deterministic merge criteria.
+
+Discovery/source usage in workflow units:
+
+- Source scanning policy is phase-and-skill scoped by runtime context and tool contracts.
+- External source breadth is configuration-driven and situative, not unconditional.
+- CQ and feedback handling follows `framework/clarification-protocol.md` routing rules.
+
+### 2.7 Interaction Class Routing Contract (Wave 1)
+
+Runtime routing distinguishes interaction classes from retrieval behavior:
+
+| Class | Initiated By | Runtime Routing Owner | Primary Runtime Path | Required Events | Blocking Behavior |
+|---|---|---|---|---|---|
+| User-facing Clarification Interaction (CQ) | Specialist or PM | PM + orchestration routing functions | `raise_cq` -> `cq_user_node` -> `route_after_cq` | `cq.raised`; `cq.batched` (optional); `phase.suspended` / `phase.resumed` when blocking | Blocking only when CQ is marked blocking |
+| Agent-directed Coordination Interaction | Specialist or PM | PM + orchestration routing functions | PM decision path through specialist/gate/review/handoff nodes | `handoff.created`, `specialist.invoked`, `specialist.completed`, `decision.recorded`, `gate.evaluated`, `review.pending` | Non-blocking by default; PM can explicitly hold |
+
+**Boundary (non-interaction):** Retrieval tool calls (`list/search/read/count/find`) are not interaction classes and are not routed via CQ logic. They execute as normal tool behavior within a node and follow discovery/tool contracts.
+
+### 2.8 Subgraph Decomposition Matrix (Wave 2)
+
+The runtime topology is decomposed into four workflow-unit tiers. For each tier, runtime ownership is explicit.
+
+Implementation linkage: [@DOC:IMPLEMENTATION_PLAN#5c-orchestration-layer](../specs/IMPLEMENTATION_PLAN.md#5c--orchestration-layer).
+
+| Workflow Unit Tier | Scope | Primary Responsibilities | Deterministic Owner | Agentic Owner | Branch Ownership | Suspend/Resume Ownership | Fan-Out/Fan-In Ownership |
+|---|---|---|---|---|---|---|---|
+| Outer lifecycle graph | Engagement lifecycle | Start/resume, engagement-mode dispatch, completion | LangGraph outer lifecycle nodes + routing | None | Routing functions in outer lifecycle graph | Outer lifecycle suspension/resume nodes | Not used at this tier |
+| Engagement-type subgraph | Entry-point family control | Greenfield vs warm-start vs reverse-architecture flow | Engagement-type subgraph nodes and predicates | None | Engagement-type routing predicates | Engagement-type wait-state routing | Optional, only if engagement profile requires independent branches |
+| Phase subgraph | Phase-local execution control | Specialist ordering, gate checkpoints, CQ/review gateways | Phase graph nodes + routing predicates | None at control layer | Phase routing functions | `cq_user_node` and review/gate routing functions | Phase topology design via `Send` and deterministic merge conditions |
+| Specialist leaf node | Skill execution | Skill reasoning and artifact production | Input/output contract checks in leaf wrapper | Specialist PydanticAI invocation | PM decision selecting specialist/skill | Leaf returns control to graph; suspension enacted by graph nodes | Never owns fan-out topology |
+
+### 2.9 Deterministic vs Agentic Checklist Per Workflow Unit (Wave 2)
+
+Use this checklist when authoring or reviewing any workflow unit `(agent_id, phase, skill_id)`.
+
+Implementation linkage: [@DOC:IMPLEMENTATION_PLAN#5c-orchestration-layer](../specs/IMPLEMENTATION_PLAN.md#5c--orchestration-layer).
+
+| Checklist Item | Deterministic Step Requirement | Agentic Step Requirement | Runtime Owner |
+|---|---|---|---|
+| Preconditions | Machine-checkable predicates over `WorkflowState` and `SDLCGraphState` before execution | Explicitly bounded prompt scope and selected `active_skill_id` | Routing/node code for deterministic checks; PM + specialist runtime for agentic bounds |
+| Event emissions | Required lifecycle events emitted by the infrastructure node/tool path | Specialist/tool events emitted transparently by called tools | Node implementation owner for lifecycle events; tool implementation owner for specialist events |
+| Branch criteria | Predicate-based route outcomes are explicit and testable | PM decision payload fields are explicit (`next_action`, `specialist_id`, `skill_id`) | Routing functions + PM decision model |
+| Fan-in merge criteria | Merge contract lists required lane outputs and gate preconditions | Not applicable as agentic responsibility | Phase subgraph implementation |
+| Suspension entry invariant | Enter suspension only with explicit blocker cause and event emission (`phase.suspended`) | Agentic reasoning may request suspension via CQ/algedonic tools; graph applies it | CQ/algedonic nodes and routing functions |
+| Suspension exit invariant | Resume only after unblocking evidence/event (`cq.answered`, review decision, or PM hold release) with `phase.resumed` when applicable | Agentic node never resumes itself; it requests via PM/tool path | Routing functions + PM orchestration decisions |
+
+### 2.10 Minimal Stage 5 Node and Routing Implementation Checklist (Wave 2)
+
+The following checklist is the minimum contract for Stage 5 continuation.
+
+| Area | Required Contract | Runtime Owner |
+|---|---|---|
+| State consumed by routing | `pm_decision`, `algedonic_active`, `review_pending`, and phase/gate context from replayed `WorkflowState` | Routing module + node inputs |
+| State produced by nodes | Updated execution context (`current_agent`, `current_skill`, `last_specialist_output`) and lifecycle flags | Node implementations |
+| Event taxonomy touchpoints | `engagement.started`, `sprint.started/close`, `phase.entered/transitioned/suspended/resumed`, `specialist.invoked/completed`, `cq.raised/batched/answered`, `review.pending/sprint-closed`, `algedonic.escalated`, `engagement.completed` | Orchestration nodes (lifecycle), PM tools (decision), specialist tools (artifact/interaction) |
+| Gate ownership | PM decision + gate evaluator tool; routing enforces hold/pass transitions | PM agent + gate_check_node + route_after_gate |
+| Escalation ownership | Algedonic bypass checked before normal routing progression | Routing functions + algedonic handler node |
+| Fan-out/fan-in ownership | Topology defined in phase subgraph code, never in skill prose | Phase subgraph designers/maintainers |
+| CQ routing ownership | CQ surfaced and resumed through dedicated CQ node and PM resumption path | CQ node + PM routing |
+
+These checks are sufficient to implement and verify branch/suspend/fan-out behavior without policy ambiguity.
+
+Planning linkage: [@DOC:IMPLEMENTATION_PLAN#5c-orchestration-layer](../specs/IMPLEMENTATION_PLAN.md#5c--orchestration-layer).
 
 ---
 

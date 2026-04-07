@@ -23,6 +23,8 @@ from src.common.model_query_types import (
     summary_from_entity,
 )
 
+_NONE_LABEL = "(none)"
+
 
 class ModelRepository:
     def __init__(
@@ -296,6 +298,19 @@ class ModelRepository:
             return _read_diagram(diagram, mode=mode)
         return None
 
+    def summarize_artifact(self, artifact_id: str) -> ArtifactSummary | None:
+        self._ensure_loaded()
+        entity = self._entities.get(artifact_id)
+        if entity is not None:
+            return summary_from_entity(entity)
+        connection = self._connections.get(artifact_id)
+        if connection is not None:
+            return summary_from_connection(connection)
+        diagram = self._diagrams.get(artifact_id)
+        if diagram is not None:
+            return summary_from_diagram(diagram)
+        return None
+
     def search_artifacts(
         self,
         query: str,
@@ -306,6 +321,8 @@ class ModelRepository:
         engagement: str | None = None,
         include_connections: bool = True,
         include_diagrams: bool = True,
+        prefer_record_type: Literal["entity", "connection", "diagram"] | None = None,
+        strict_record_type: bool = False,
     ) -> SearchResult:
         layers = _to_set(layer)
         types = _to_set(artifact_type)
@@ -317,7 +334,54 @@ class ModelRepository:
             include_connections=include_connections,
             include_diagrams=include_diagrams,
             engagement=engagement,
+            prefer_record_type=prefer_record_type,
+            strict_record_type=strict_record_type,
         )
+
+    def count_artifacts_by(
+        self,
+        group_by: Literal["artifact_type", "diagram_type", "phase_produced", "owner_agent"],
+        *,
+        artifact_type: str | list[str] | None = None,
+        layer: str | list[str] | None = None,
+        owner_agent: str | list[str] | None = None,
+        phase_produced: str | list[str] | None = None,
+        status: str | list[str] | None = None,
+        safety_relevant: bool | None = None,
+        engagement: str | None = None,
+        include_connections: bool = True,
+        include_diagrams: bool = True,
+    ) -> dict[str, int]:
+        self._ensure_loaded()
+        counts: dict[str, int] = {}
+
+        if group_by == "diagram_type":
+            diagrams = self.list_diagrams(
+                owner_agent=_single_or_none(owner_agent),
+                phase_produced=_single_or_none(phase_produced),
+                status=_single_or_none(status),
+                engagement=engagement,
+            )
+            for rec in diagrams:
+                key = rec.diagram_type or _NONE_LABEL
+                counts[key] = counts.get(key, 0) + 1
+            return dict(sorted(counts.items(), key=lambda item: item[0]))
+
+        summaries = self.list_artifacts(
+            artifact_type=artifact_type,
+            layer=layer,
+            owner_agent=owner_agent,
+            phase_produced=phase_produced,
+            status=status,
+            safety_relevant=safety_relevant,
+            engagement=engagement,
+            include_connections=include_connections,
+            include_diagrams=include_diagrams,
+        )
+        for rec in summaries:
+            key = _summary_group_key(rec, group_by)
+            counts[key] = counts.get(key, 0) + 1
+        return dict(sorted(counts.items(), key=lambda item: item[0]))
 
     def stats(self) -> dict[str, object]:
         self._ensure_loaded()
@@ -392,6 +456,8 @@ class ModelRepository:
         include_connections: bool = True,
         include_diagrams: bool = True,
         engagement: str | None = None,
+        prefer_record_type: Literal["entity", "connection", "diagram"] | None = None,
+        strict_record_type: bool = False,
     ) -> SearchResult:
         self._ensure_loaded()
         query_lc = query.lower()
@@ -408,7 +474,16 @@ class ModelRepository:
             hits.extend(self._search_diagrams(query_lc, tokens, engagement))
         self._apply_semantic_supplement(query, hits)
 
-        hits.sort(key=lambda h: h.score, reverse=True)
+        if strict_record_type and prefer_record_type is not None:
+            hits = [hit for hit in hits if hit.record_type == prefer_record_type]
+
+        if prefer_record_type is not None:
+            hits.sort(
+                key=lambda h: (h.record_type == prefer_record_type, h.score),
+                reverse=True,
+            )
+        else:
+            hits.sort(key=lambda h: h.score, reverse=True)
         return SearchResult(query=query, hits=hits[:limit])
 
     def _search_entities(
@@ -628,6 +703,26 @@ def _to_set(value: str | list[str] | None) -> set[str]:
     if value is None:
         return set()
     return {value} if isinstance(value, str) else set(value)
+
+
+def _single_or_none(value: str | list[str] | None) -> str | None:
+    if isinstance(value, str):
+        return value
+    return None
+
+
+def _summary_group_key(
+    summary: ArtifactSummary,
+    group_by: Literal["artifact_type", "diagram_type", "phase_produced", "owner_agent"],
+) -> str:
+    if group_by == "artifact_type":
+        return summary.artifact_type or _NONE_LABEL
+    if group_by == "phase_produced":
+        return summary.phase_produced or _NONE_LABEL
+    if group_by == "owner_agent":
+        return summary.owner_agent or _NONE_LABEL
+    # diagram_type grouping is handled directly over DiagramRecord in count_artifacts_by.
+    return _NONE_LABEL
 
 
 def _read_entity(rec: EntityRecord, *, mode: Literal["summary", "full"]) -> dict[str, object]:

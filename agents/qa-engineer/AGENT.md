@@ -116,7 +116,7 @@ The QA is the sole writer of `engagements/<id>/work-repositories/qa-repository/`
 - `engagements/<id>/handoff-log/` — incoming handoffs (AC from SwA, PRs ready from DE, sprint plans from PM)
 - `engagements/<id>/clarification-log/` — open CQ status
 - `enterprise-repository/standards/` — enterprise testing standards and SIB (if available)
-- `framework/` — all framework documents (read-only; authoritative reference)
+- `framework/` — query-first framework lookup (role/phase scoped), then read only required sections (read-only)
 
 **QA does NOT write to:** `architecture-repository/`, `technology-repository/`, `project-manager/`, `safety-repository/`, `delivery-repository/`, `devops-repository/`, or any `enterprise-repository/` path without Architecture Board approval.
 

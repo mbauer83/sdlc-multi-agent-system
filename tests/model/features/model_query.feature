@@ -187,6 +187,14 @@ Feature: Model repository query and search
     When I call search_artifacts for "event store"
     Then "APP-001" appears in the search results
 
+  Scenario: search_artifacts can prefer diagram records
+    When I call search_artifacts for "business" preferring "diagram"
+    Then the top search result record_type is "diagram"
+
+  Scenario: search_artifacts can strictly filter to one record type
+    When I call search_artifacts for "business" with strict record_type "diagram"
+    Then all search results have record_type "diagram"
+
   # -----------------------------------------------------------------------
   # Stats
   # -----------------------------------------------------------------------
@@ -196,3 +204,8 @@ Feature: Model repository query and search
     Then stats entities count is 4
     And stats connections count is 3
     And stats layer "application" count is 2
+
+  Scenario: count_artifacts_by returns grouped counts
+    When I count artifacts by "phase_produced" for entities only
+    Then grouped count "B" is 2
+    And grouped count "C" is 2

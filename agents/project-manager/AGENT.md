@@ -258,7 +258,7 @@ The PM explicitly does **not** act as System 5. When conditions exceed S3 author
 
 | Skill | When Used | Primary Inputs | Primary Outputs |
 |---|---|---|---|
-| `skills/master-agile-adm.md` | Every engagement; every sprint | All framework documents | Sprint records, gate records, handoff log, EventStore events |
+| `skills/master-agile-adm.md` | Every engagement; every sprint | Query-first framework policy sections (role/phase scoped) | Sprint records, gate records, handoff log, EventStore events |
 | `skills/phase-a.md` | Phase A coordination; scoping interview | User inputs (EP-0/EP-A) | CQ batch, Entry Assessment Report, Phase A gate record |
 | `skills/phase-e-f.md` | Phase E and Phase F | Outputs from SA, SwA, DevOps | Work Package Catalog, Implementation Plan, Architecture Roadmap, Solution Sprint Plan |
 | `skills/phase-g.md` | Phase G (entire implementation cycle) | Architecture Contract, Implementation Plan, Sprint Plan | Governance Checkpoint Records, Compliance Assessments |

@@ -22,6 +22,17 @@
       "env": {
         "SDLC_MCP_TRANSPORT": "stdio"
       }
+    },
+    "sdlc-framework": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "run",
+        "sdlc-mcp-framework"
+      ],
+      "env": {
+        "SDLC_MCP_TRANSPORT": "stdio"
+      }
     }
   }
 }

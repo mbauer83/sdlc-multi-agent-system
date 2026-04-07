@@ -19,11 +19,7 @@ The most common error in TOGAF implementations is treating the Architecture Repo
 
 ### 2.1 Scope 1 — Enterprise Architecture Repository
 
-**What it is:** The organisation's canonical store of architecture knowledge that spans all projects and business units. It exists before any engagement starts and persists after any engagement ends. It is the architectural "memory" of the organisation.
-
-**Who owns it:** The Architecture Board (or equivalent governance body), not any individual project or agent.
-
-**Lifetime:** Indefinite. Versioned but never archived wholesale.
+Canonical enterprise scope: long-lived, cross-engagement architecture memory owned by the Architecture Board.
 
 **Contents (TOGAF Architecture Repository components):**
 
@@ -47,15 +43,11 @@ The most common error in TOGAF implementations is treating the Architecture Repo
 | **Segment Architecture** | Business domain or programme; portfolio level; 1–2 year horizon | Months to years | Domain Architect |
 | **Capability Architecture** | Specific project or initiative; produced per engagement | Duration of engagement | Engagement SA/SwA |
 
-Capability-level architectures are produced by individual engagements and **promoted** to the Enterprise Landscape on engagement completion if they represent reusable or durable architecture.
+Capability-level outputs from engagements are promoted when reusable/durable and approved.
 
 ### 2.2 Scope 2 — Engagement Repository (Project-Scoped)
 
-**What it is:** The working store of architecture artifacts and project records for a single ADM engagement cycle. Created at engagement start; closed (and partially promoted to enterprise) at engagement end.
-
-**Who owns it:** The Project Manager for the engagement, with artifact ownership per the RACI matrix.
-
-**Lifetime:** Duration of the engagement plus a defined retention period.
+Canonical engagement scope: per-engagement working store for one ADM cycle, owned operationally by PM with artifact ownership per RACI.
 
 **Structure:** One directory per engagement under `engagements/<engagement-id>/`. Each engagement has its own work-repositories, workflow event log, sprint log, and clarification log.
 
@@ -78,18 +70,14 @@ engagements/
     algedonic-log/                 # Algedonic signal records
 ```
 
-**Relationship to Enterprise Repository:**
-- The engagement consumes enterprise standards, principles, reference architectures, and the existing Architecture Landscape as **inputs** (read-only during the engagement).
-- The engagement contributes new capability-level architectures, validated SBBs, governance log entries, and lessons learned back to the Enterprise Repository as **outputs** (written at engagement close or significant milestones).
-- If the engagement produces content that is suitable for promotion to Segment or Strategic level, the Architecture Board decides on promotion.
+Relationship to enterprise scope:
+- Engagement consumes enterprise standards/principles/reference architectures as read-only inputs.
+- Engagement contributes reusable capability outputs and lessons through governed promotion.
+- Architecture Board decides segment/strategic promotion.
 
 ### 2.3 Scope 3 — External Read-Only Sources
 
-**What they are:** Existing organisational information stores that agents should be able to query when building context, but must never write to.
-
-**Access model:** Each external source is accessed via a named **source adapter** configured in `external-sources/`. The adapter defines the source type, connection details, access credentials (never hardcoded — referenced from environment or secrets manager), and the indexing strategy.
-
-**Why read-only is a hard rule:** External sources contain organisation-owned content whose write governance is managed by other teams and tools. An agent that writes to Confluence or Jira could corrupt organisation records, create shadow state, or bypass governance controls outside this system.
+Canonical external scope: query-only organisational sources accessed via named adapters in `external-sources/`. No writes are permitted.
 
 **Supported source types:**
 
@@ -124,9 +112,7 @@ Agents query external sources through a **Source Query** operation (defined in `
 
 ### 2.4 Scope 4 — Target Project Repository
 
-**What it is:** The software project being built, modified, or analysed by this engagement. It is a separate git repository that exists independently of the framework. The framework points to it; it does not point back to the framework.
-
-**Why it is distinct from the three engagement scopes:** The target project repository is owned by a development team, not by the SDLC framework. It has its own commit history, branching strategy, CI/CD pipelines, and access controls that predate the engagement. The framework must not pollute it with framework files, agent metadata, or engagement artifacts.
+Canonical target-repo scope: separate project-owned git repository referenced by the framework; framework content never enters it.
 
 **Access model:**
 
@@ -138,11 +124,11 @@ Agents query external sources through a **Source Query** operation (defined in `
 | Solution Architect, SwA/PE | **Read-only** | Reads existing code for EP-G reverse architecture reconstruction |
 | All other agents | **No direct access** | Work only from delivered reports and artifacts |
 
-**Configuration:** The target repository path or URL is specified in the engagement profile (`§3` of `sdlc-entry-points.md`) and in `engagements-config.yaml`. A local clone is maintained at `engagements/<id>/target-repo/` (git-ignored from the framework repo — it is a separate checkout, not nested content).
+Configuration: target repo path/URL is defined in engagement profile and `engagements-config.yaml`; local clone is separate and gitignored.
 
-**Delivery repository relationship:** The engagement's `work-repositories/delivery-repository/` does **not** hold code. It holds delivery *metadata*: PR records, branch references, test execution reports, code quality reports, and deployment records that document work done in the target repository. The actual code lives only in the target repository.
+Delivery-repository stores delivery metadata only (PR refs, test/deploy records), never source code.
 
-**Framework isolation guarantee:** No framework file, agent definition, skill file, or engagement artifact is ever committed to the target project repository. The framework and the project are always separate git repositories.
+Isolation guarantee: framework files/skills/artifacts are never committed to target project repositories.
 
 ---
 
@@ -156,65 +142,35 @@ Contains: agent definitions, skill files, framework documents, artifact schemas,
 
 **One framework instance per project.** Clone or fork this repository once per software project you want to work with. Framework files never live inside the target project repository. The target project is a separate git repository pointed to by the engagement configuration (§3.4).
 
+Canonical shape:
+
 ```
-<my-project>-sdlc/                 # Framework instance for one project (clone of sdlc-agents)
-  framework/                       # Cross-cutting specifications and artifact schemas
-  agents/                          # Agent definitions (AGENT.md) and skill files
-  src/                             # Python implementation
-    events/                        # EventStore + Pydantic event models (§4)
-    agents/                        # PydanticAI agent wrappers
-    orchestration/                 # Sprint runner, handoff bus, CQ bus
-    sources/                       # External source adapters
-  tests/                           # Integration tests
-  external-sources/                # Source adapter configuration files (*.config.yaml)
-  enterprise-repository/           # Enterprise architecture data (embedded mode)
-    metamodel/
-    capability/
-    landscape/strategic/
-    landscape/segment/
-    landscape/capability/
-    standards/
-    reference-library/
-    governance-log/
-    requirements/
-    solutions-landscape/
-    knowledge-base/
-  engagements/
-    <engagement-id>/
-      engagement-profile.md        # Includes target-repository configuration (§3.4)
-      workflow.db                  # SQLite event store — canonical, git-tracked binary
-      workflow-events/             # YAML projection — human-readable, git-tracked
-      clarification-log/           # CQ prose records
-      handoff-log/                 # Handoff prose records
-      algedonic-log/               # Algedonic signal records
-      target-repo/                 # Local clone of the target project — .gitignored
-      work-repositories/
-        architecture-repository/
-        technology-repository/
-        project-repository/
-        safety-repository/
-        delivery-repository/       # Delivery METADATA only — no code (see §2.4)
-        qa-repository/
-        devops-repository/
+<project>-sdlc/
+  framework/ agents/ src/ tests/
+  external-sources/
+  enterprise-repository/
+  engagements/<id>/
+    engagement-profile.md
+    workflow.db
+    workflow-events/
+    clarification-log/ handoff-log/ algedonic-log/
+    target-repo/                  # local clone; gitignored in framework repo
+    work-repositories/
+      architecture-repository/
+      technology-repository/
+      project-repository/
+      safety-repository/
+      delivery-repository/        # metadata only, no source code
+      qa-repository/
+      devops-repository/
   enterprise-repository-config.yaml
   engagements-config.yaml
-  CLAUDE.md
-  specs/IMPLEMENTATION_PLAN.md
 ```
 
-Two projects side by side on a developer's machine:
-
-```
-~/work/
-  projectA-sdlc/       ← framework instance for Project A
-    engagements/ENG-001/
-      target-repo/     ← local clone of projectA's code repo (.gitignored in framework)
-  projectB-sdlc/       ← framework instance for Project B
-    engagements/ENG-001/
-      target-repo/     ← local clone of projectB's code repo (.gitignored in framework)
-  projectA/            ← the actual Project A code repository (separate, team-owned)
-  projectB/            ← the actual Project B code repository (separate, team-owned)
-```
+Deployment model reminder:
+- One framework clone per project.
+- Target project code stays in separate project-owned git repositories.
+- Framework files are never committed to target repos.
 
 ### 3.2 Enterprise Repository (configurable)
 

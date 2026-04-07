@@ -54,7 +54,7 @@ Nine specialist agents cover the full SDLC:
 | Project Manager | System 3 (coordinator/supervisor) | All (coordination) |
 | Chief Safety & Compliance Officer | System 2 (regulator) | All phases (gate reviews) |
 
-The Project Manager acts as the LangGraph supervisor node: it deliberates on what to do next, routes work to specialists, batches clarification requests for the user, evaluates phase-transition gates, and manages the sprint review interaction workflow (continue, pause, resume, end). It does not produce architecture artifacts — it coordinates their production.
+The Project Manager acts as the orchestration authority in a nested LangGraph topology: an outer lifecycle graph selects new/resume and entry mode, engagement-type subgraphs (greenfield/warm-start/reverse-architecture) run mostly deterministically, and phase subgraphs coordinate specialist execution (including fan-out where appropriate). PydanticAI is used at leaf specialist nodes for schema-constrained reasoning and tool execution. The PM batches clarification requests, evaluates phase-transition gates, and manages the sprint review interaction workflow (continue, pause, resume, end). It does not produce architecture artifacts — it coordinates their production.
 
 Each agent's mandate, input/output contracts, entry-point behaviour, personality stance, and skill index are specified in `agents/<role>/AGENT.md`.
 
@@ -269,13 +269,14 @@ The engagement dashboard (Stage 5.5) is a local FastAPI web server that provides
 - A live view of engagement progress, produced artifacts, and agent activity
 - A **Queries** tab surfacing open clarification requests for user response, with file upload support
 - A **Review** tab for sprint-end approval workflows — users can mark artifacts as approved, flag items for revision, tag specific agents for corrections, and add comments
+- Configurable review gates by stage and contributing agent (`review-gates` policy); when configured as blocking, downstream dependent stages do not proceed until user approval
 - An **Audit** view showing which agent used which skill to produce which artifact
 
 ---
 
 ## Implementation Status
 
-The framework and ENG-001 reference model are being built incrementally. Current state (2026-04-06):
+The framework and ENG-001 reference model are being built incrementally. Current state (2026-04-09):
 
 | Layer | Status |
 |---|---|
@@ -288,9 +289,11 @@ The framework and ENG-001 reference model are being built incrementally. Current
 | ENG-001 reference model — overview docs + ADRs | Pending |
 | `src/common/model_verifier.py` — BDD-tested verifier for entity/connection/diagram files (71 scenarios); E306/E307 draft-reference checks with targeted `entity_status()`/`connection_status()` lookups; `entity_id_from_path()` formal-id extraction | Complete |
 | `src/common/archimate_types.py` — canonical type registry for all entity, connection, element, and grouping stereotype types; single source of truth imported by verifier and referenced in documentation | Complete |
-| `src/common/model_query.py` — `ModelRepository`: rich query engine for model-entities, connections, and diagrams; `list_artifacts(**filter)` / `search_artifacts(query)` / `read_artifact(id, mode)` framework-aligned API; keyword+synonym search with `SemanticSearchProvider` hook; graph traversal (`find_connections_for`, `find_neighbors`); CLI (`python -m src.common.model_query`); 36 BDD tests | Complete |
+| `src/common/model_query.py` — `ModelRepository`: rich query engine for model-entities, connections, and diagrams; `list_artifacts(**filter)` / `search_artifacts(query)` / `read_artifact(id, mode)` framework-aligned API; record-type prioritization (`prefer_record_type`, `strict_record_type`), aggregate grouping (`count_artifacts_by`), keyword+synonym search with `SemanticSearchProvider` hook, graph traversal (`find_connections_for`, `find_neighbors`); CLI (`python -m src.common.model_query`); BDD coverage maintained | Complete |
+| Framework knowledge retrieval (`src/common/framework_query/`) — query-first, section-scoped framework/spec discovery with section index, deterministic `section_id` reads, section listing (`list_sections`), nearest-section suggestion helper, search/read modes, related-doc scoring, and formal-reference graph traversal (`neighbors`, `path`); CLI (`python -m src.common.framework_query`) | Complete |
 | `src/common/domain_vocabulary.py` — canonical SDLC/ArchiMate domain synonym map; `expand_tokens()` for bidirectional abbreviation expansion; `agent_abbreviations()` and `archimate_prefix_to_type()` lookup tables; shared by `model_query.py`, `LearningStore`, future NLP pipelines | Complete |
-| MCP servers — `sdlc-mcp-model` (model query/construct/validate tool surface) and `sdlc-mcp-registry` (reusable agent/skill discovery surface) | Complete |
+| MCP servers — `sdlc-mcp-model` (model query/construct/validate), `sdlc-mcp-registry` (agent/skill discovery), and `sdlc-mcp-framework` (framework/spec query + graph exploration with resolve-ref, path diagnostics/batch, link hygiene checks, and transparent freshness metadata) | Complete |
+| Wave 0 contract alignment — ERP v2.0 `diagram-catalog` schema refresh (file-first frontmatter, no index-yaml model), orchestration deterministic-vs-agentic decomposition contract, and explicit inter-agent clarification boundary | Complete |
 | Representation selection governance — balanced diagram-vs-matrix policy documented in framework and normalized across role skill runtime-tooling hints | Complete |
 | `src/tools/generate_macros.py` — regenerates `_macros.puml` from entity `§display ###archimate` blocks | Complete |
 | `pyproject.toml` + uv project setup | Complete |
@@ -319,6 +322,8 @@ See `specs/IMPLEMENTATION_PLAN.md` for the detailed stage-by-stage plan and curr
 | Entity Registry Pattern v2.0 | `framework/artifact-registry-design.md` |
 | Diagram conventions and PUML templates | `framework/diagram-conventions.md` |
 | Agent learning protocol | `framework/learning-protocol.md` |
+| Framework knowledge index and retrieval model | `framework/framework-knowledge-index.md` |
+| Runtime tool inventory (authoritative) | `framework/tool-catalog.md` |
 | Agent personalities and conflict stances | `framework/agent-personalities.md` |
 | Compact agent and skill index | `framework/agent-index.md` |
 | Implementation plan and stage status | `specs/IMPLEMENTATION_PLAN.md` |

@@ -254,6 +254,7 @@ class _Ctx:
     artifact: Any = None
     artifact_dict: dict[str, Any] | None = None
     search_result: SearchResult | None = None
+    grouped_counts: dict[str, int] = {}
     summaries: list[ArtifactSummary] = []
     stats: dict[str, Any] = {}
     neighbors: dict[str, set[str]] = {}
@@ -363,7 +364,7 @@ def list_diagrams_by_type(ctx: _Ctx, dtype: str) -> None:
 
 @when(parsers.parse('I get artifact "{artifact_id}"'))
 def get_artifact(ctx: _Ctx, artifact_id: str) -> None:
-    rec = ctx.repo.get_entity(artifact_id)
+    rec: EntityRecord | ConnectionRecord | DiagramRecord | None = ctx.repo.get_entity(artifact_id)
     if rec is None:
         rec = ctx.repo.get_connection(artifact_id)
     if rec is None:
@@ -457,6 +458,23 @@ def search_artifacts_call(ctx: _Ctx, query: str) -> None:
     ctx.search_result = ctx.repo.search_artifacts(query)
 
 
+@when(parsers.parse('I call search_artifacts for "{query}" preferring "{record_type}"'))
+def search_artifacts_prefer_type(ctx: _Ctx, query: str, record_type: str) -> None:
+    ctx.search_result = ctx.repo.search_artifacts(
+        query,
+        prefer_record_type=record_type,  # type: ignore[arg-type]
+    )
+
+
+@when(parsers.parse('I call search_artifacts for "{query}" with strict record_type "{record_type}"'))
+def search_artifacts_strict_type(ctx: _Ctx, query: str, record_type: str) -> None:
+    ctx.search_result = ctx.repo.search_artifacts(
+        query,
+        prefer_record_type=record_type,  # type: ignore[arg-type]
+        strict_record_type=True,
+    )
+
+
 # ---------------------------------------------------------------------------
 # When — stats
 # ---------------------------------------------------------------------------
@@ -465,6 +483,15 @@ def search_artifacts_call(ctx: _Ctx, query: str) -> None:
 @when("I get repository stats")
 def get_stats(ctx: _Ctx) -> None:
     ctx.stats = ctx.repo.stats()
+
+
+@when(parsers.parse('I count artifacts by "{group_by}" for entities only'))
+def count_artifacts_by_entities_only(ctx: _Ctx, group_by: str) -> None:
+    ctx.grouped_counts = ctx.repo.count_artifacts_by(
+        group_by,  # type: ignore[arg-type]
+        include_connections=False,
+        include_diagrams=False,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -652,6 +679,20 @@ def check_top_result(ctx: _Ctx, artifact_id: str) -> None:
     assert top == artifact_id, f"expected top={artifact_id!r}, got {top!r}"
 
 
+@then(parsers.parse('the top search result record_type is "{record_type}"'))
+def check_top_result_record_type(ctx: _Ctx, record_type: str) -> None:
+    assert ctx.search_result is not None
+    assert ctx.search_result.hits, "expected non-empty search results"
+    assert ctx.search_result.hits[0].record_type == record_type
+
+
+@then(parsers.parse('all search results have record_type "{record_type}"'))
+def check_all_results_record_type(ctx: _Ctx, record_type: str) -> None:
+    assert ctx.search_result is not None
+    assert ctx.search_result.hits, "expected non-empty search results"
+    assert all(hit.record_type == record_type for hit in ctx.search_result.hits)
+
+
 @then(parsers.parse("the search result has {n:d} hits"))
 def check_search_hit_count(ctx: _Ctx, n: int) -> None:
     assert ctx.search_result is not None
@@ -687,3 +728,8 @@ def check_stats_layer_count(ctx: _Ctx, layer: str, n: int) -> None:
     assert layers.get(layer, 0) == n, (
         f"expected {n} entities in layer {layer!r}, got {layers.get(layer, 0)}"
     )
+
+
+@then(parsers.parse('grouped count "{key}" is {n:d}'))
+def check_grouped_count(ctx: _Ctx, key: str, n: int) -> None:
+    assert ctx.grouped_counts.get(key) == n

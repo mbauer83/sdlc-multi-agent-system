@@ -478,6 +478,22 @@ Each row in a skill's `## Inputs Required` table that names a prior artifact mus
 
 **Artifact-id assignment:** Artifact-ids are assigned at first draft by the owning agent following the pattern `<TYPE>-<SEQ>` where TYPE is a two-to-four letter abbreviation of the artifact type (e.g., `AV` for Architecture Vision, `BA` for Business Architecture, `SCO` for Safety Constraint Overlay) and SEQ is a zero-padded three-digit sequence within the engagement. The id is recorded in the artifact's frontmatter as `artifact-id:` at creation time and never changed thereafter, even when the artifact is versioned.
 
+### 13.5 Framework/Spec Cross-References (formal)
+
+When citing framework/spec policy sections in AGENT/skill/framework/spec docs, use:
+
+```
+[@DOC:<doc-id>#<section-id>](<relative-path>#<anchor>)
+```
+
+Example:
+`[@DOC:discovery-protocol#2-discovery-scan-procedure](framework/discovery-protocol.md#2-discovery-scan-procedure)`
+
+Rules:
+1. Use section-scoped references for normative claims; avoid file-only references when a specific section governs behavior.
+2. `doc-id` must match frontmatter `doc-id` where available; otherwise use filename stem.
+3. This syntax is machine-parseable and must be preserved to support framework-doc dependency graph indexing.
+
 
 ---
 

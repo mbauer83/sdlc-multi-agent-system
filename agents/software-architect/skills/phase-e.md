@@ -29,17 +29,7 @@ version: 1.0.0
 
 ## Runtime Tooling Hint
 
-
-Representation choice (balanced and mandatory):
-- Use `.puml` diagrams when flow, topology, sequence, trust boundaries, or interaction context is the primary concern.
-- Use matrix artifacts (`model_create_matrix`) for dense many-to-many mappings, coverage, and traceability where node-link readability degrades.
-- Do not replace contextual architecture views with matrices alone: keep a reasonable set of diagrams that preserves end-to-end context for the domain slice.
-- Practical threshold: if a single node-link view would exceed about 25 elements or become edge-dense, keep/author at least one contextual diagram and shift dense cross-reference detail to a matrix.
-
-This skill expresses tool-use intent; concrete tool signatures are runtime-bound by orchestration code.
-
-- `invoke-when` and `trigger-conditions` are intent-level hints; executable phase/state gating is enforced by orchestration code.
-- Keep procedure and outputs strict; if invoked in an unexpected state, fail via pre-condition checks and route through CQ/algedonic paths.
+Diagram and matrix conventions apply only when this skill explicitly produces or updates diagram artifacts; use `framework/diagram-conventions.md` as the source of truth.
 
 ## Inputs Required
 
@@ -164,7 +154,6 @@ Execute D1–D4 per `framework/diagram-conventions.md §5`:
 - **D2:** For each entity that will appear as a participant, verify its `§display ###sequence` subsection exists. If absent on SA-owned entities, raise a `diagram.display-spec-request` handoff; if absent on SwA-owned entities, add via `write_artifact` and run `regenerate_macros()`.
 - **D3:** Load template via `read_framework_doc("framework/diagram-conventions.md §7.sequence")`. Author one sequence diagram per major API flow: entity artifact-ids as participant aliases; synchronous vs. async message notation; `alt`/`opt` blocks for error and auth paths. Include required frontmatter comment block. Write to `technology-repository/diagram-catalog/diagrams/e-sequence-<flow-id>-v1.puml` via `write_artifact`.
 - **D4:** Call `validate_diagram`; fix errors; re-validate before proceeding.
-
 
 ### Step 3 — Provide Input to Risk Register
 

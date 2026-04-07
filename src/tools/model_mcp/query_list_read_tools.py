@@ -5,7 +5,13 @@ from typing import Literal
 
 from mcp.server.fastmcp import FastMCP  # type: ignore[import-not-found]
 
-from src.tools.model_mcp.context import RepoPreset, RepoScope, repo_cached, resolve_repo_roots, roots_key
+from src.tools.model_mcp.context import RepoScope, repo_cached, resolve_repo_roots, roots_key
+
+
+def _project(record: dict[str, object], fields: list[str] | None) -> dict[str, object]:
+    if not fields:
+        return record
+    return {field: record[field] for field in fields if field in record}
 
 
 def register_query_list_read_tools(mcp: FastMCP) -> None:
@@ -24,8 +30,6 @@ def register_query_list_read_tools(mcp: FastMCP) -> None:
     def model_query_list_artifacts(
         *,
         repo_root: str | None = None,
-        repo_preset: RepoPreset | None = None,
-        enterprise_root: str | None = None,
         repo_scope: RepoScope = "both",
         refresh: bool = False,
         artifact_type: str | list[str] | None = None,
@@ -37,12 +41,13 @@ def register_query_list_read_tools(mcp: FastMCP) -> None:
         engagement: str | None = None,
         include_connections: bool = False,
         include_diagrams: bool = False,
-    ) -> list[dict[str, object]]:
+        fields: list[str] | None = None,
+    ) -> list[dict[str, object]]:  # noqa: PLR0913
         roots = resolve_repo_roots(
             repo_scope=repo_scope,
             repo_root=repo_root,
-            repo_preset=repo_preset,
-            enterprise_root=enterprise_root,
+            repo_preset=None,
+            enterprise_root=None,
         )
         key = roots_key(roots)
         repo = repo_cached(key)
@@ -64,7 +69,7 @@ def register_query_list_read_tools(mcp: FastMCP) -> None:
             d = asdict(s)
             d["path"] = str(s.path)
             d["repo_scope"] = repo_scope
-            out.append(d)
+            out.append(_project(d, fields))
         return out
 
     @mcp.tool(
@@ -82,16 +87,14 @@ def register_query_list_read_tools(mcp: FastMCP) -> None:
         *,
         mode: Literal["summary", "full"] = "summary",
         repo_root: str | None = None,
-        repo_preset: RepoPreset | None = None,
-        enterprise_root: str | None = None,
         repo_scope: RepoScope = "both",
         refresh: bool = False,
     ) -> dict[str, object] | None:
         roots = resolve_repo_roots(
             repo_scope=repo_scope,
             repo_root=repo_root,
-            repo_preset=repo_preset,
-            enterprise_root=enterprise_root,
+            repo_preset=None,
+            enterprise_root=None,
         )
         key = roots_key(roots)
         repo = repo_cached(key)

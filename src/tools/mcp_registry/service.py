@@ -4,8 +4,6 @@ import re
 from pathlib import Path
 from typing import Any
 
-import anyio  # type: ignore[import-not-found]
-
 from src.tools.mcp_registry.config import agents_root_path
 from src.tools.mcp_registry.markdown_utils import (
     extract_h3_subsection,
@@ -39,14 +37,8 @@ SKILL_RUNTIME_FRONTMATTER_KEYS: tuple[str, ...] = (
     "complexity-class",
 )
 
-
-async def read_text(path: Path) -> str:
-    async with await anyio.open_file(path, "r", encoding="utf-8") as file:
-        return await file.read()
-
-
 def read_text_sync(path: Path) -> str:
-    return anyio.run(read_text, path)
+    return path.read_text(encoding="utf-8")
 
 
 def agent_dir(root: Path, agent_id: str) -> Path:

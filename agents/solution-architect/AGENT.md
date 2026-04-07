@@ -135,7 +135,7 @@ The SA is the **primary writer** of `engagements/<id>/work-repositories/architec
 - `engagements/<id>/clarification-log/` — open CQs affecting SA work
 - `engagements/<id>/handoff-log/` — incoming and outgoing handoff records
 - `enterprise-repository/` — Architecture Principles baseline; Reference Library; Standards
-- `framework/` — all framework documents (authoritative reference; treat as read-only)
+- `framework/` — query-first framework lookup; read only role/phase-relevant sections (authoritative read-only source)
 
 ---
 

@@ -109,70 +109,14 @@ Every inter-agent handoff supports a bounded feedback cycle:
 
 ### Python Coding Standards
 
-All Python implementation (`src/`) must follow these conventions. They apply to every file authored in Stage 5 onward and are enforced during code review.
+All Python implementation (`src/`) must follow the canonical guidelines in `framework/general_python_coding_guidelines.md`.
 
-**Type system — expressive and mandatory:**
-- Type annotations are **required on all function and method signatures** (parameters and return types). No bare `def f(x)` without annotations.
-- **Modern syntax for built-in collection types (PEP 585/604):** Write `list[str]`, `dict[str, int]`, `tuple[int, ...]`, `set[T]`, `type[X]` directly — never the capitalised `typing` aliases `List`, `Dict`, `Tuple`, `Set`, `FrozenSet`, `Type`. Use `X | Y` instead of `Union[X, Y]`, and `X | None` instead of `Optional[X]`.
-- **Parametric polymorphism — prefer inline type parameter syntax (PEP 695, Python 3.12+):** Write `def f[T](x: T) -> T` and `class Stack[T]: ...` instead of declaring `T = TypeVar('T')` separately. Bounds and constraints are written inline — `[T: SomeBase]` for an upper bound, `[T: (int, float)]` for constraints. Use `[**P]` for a `ParamSpec` parameter and `[*Ts]` for a `TypeVarTuple`. Explicit `TypeVar` declarations are still required only when variance must be stated explicitly (covariant/contravariant) and cannot be inferred by the type checker — this is an edge case; prefer letting inference handle it. Use the `type` statement (PEP 695) for named type aliases: `type Vector = list[float]` — not `TypeAlias` from `typing`.
-- `Protocol` (from `typing`) is still required for structural subtyping — preferred over `ABC` for interface definitions. `overload` (from `typing`) is still required for multi-dispatch signatures. These have no PEP 695 equivalents.
-- Use `TypedDict` or Pydantic `BaseModel` for structured data; never `dict[str, Any]` at a boundary.
-
-**Pythonic style — current best practices:**
-- Prefer **compositional, functional style** over imperative mutation: use comprehensions, `map`/`filter` where readable, generator expressions, and `functools` where appropriate.
-- Use **`dataclasses`** (with `slots=True` where applicable) for lightweight value objects that don't need Pydantic validation.
-- Use **`match`/`case`** (structural pattern matching, PEP 634) for multi-branch dispatch on tagged unions or event types — preferred over long `if/elif` chains.
-- Use `pathlib.Path` throughout; never `os.path` string concatenation.
-- **f-strings** for all string formatting; never `%`-formatting or `.format()`.
-
-**Error handling — monadic, no exceptions for control flow:**
-- Use **`Result`-style returns** via a lightweight `Result[T, E]` type (either a project-local definition or `returns` library) for operations that can fail in expected ways. Do not raise exceptions for expected failure paths (missing artifact, validation failure, CQ not found).
-- Raise exceptions only for **truly unexpected states** (programming errors, unrecoverable I/O failures). Use `assert` only for internal invariants, never for user-facing validation.
-- Avoid bare `except Exception` clauses. If catching broadly, re-raise or log with full context.
-- Pydantic `ValidationError` is acceptable at system boundaries (external input validation); never swallow it silently.
-
-**No magic:**
-- No monkey-patching, no `__getattr__` tricks, no dynamic `setattr` unless implementing a clearly-bounded, well-documented protocol (e.g., Pydantic internals).
-- No `globals()` / `locals()` manipulation.
-- Dependency injection over module-level singletons; pass configuration and dependencies explicitly.
-
-**Domain-centred architecture — layered dependency rule:**
-
-The codebase follows a domain-centred layered architecture (hexagonal / ports-and-adapters style). The dependency rule is strict: **outer layers depend inward; the domain depends on nothing outside itself.**
-
-```
-┌─────────────────────────────────────────────┐
-│  Infrastructure  (src/events/, src/sources/) │  ← depends on Application + Domain + Common
-├─────────────────────────────────────────────┤
-│  Application     (src/agents/, src/orch.)   │  ← depends on Domain + Common
-├─────────────────────────────────────────────┤
-│  Domain          (src/models/, src/domain/) │  ← depends on Common only
-├─────────────────────────────────────────────┤
-│  Common          (src/common/)              │  ← no business or framework dependencies;
-│  logging, validation, parsing, normalisation│    usable by all layers
-└─────────────────────────────────────────────┘
-```
-
-**Cross-cutting concerns** that are genuinely needed at every layer — logging, structured validation helpers, text parsing utilities, normalisation functions — live in `src/common/`. This module has no business-domain knowledge and no infrastructure dependencies; it is pure utility. All layers may import from `src/common/` without violating the dependency rule. What is prohibited is importing *inward* across the business layers (infrastructure importing application logic, application importing infrastructure implementations) or importing framework-specific types into the domain.
-
-- **Domain layer** (`src/models/`, `src/domain/`): Pydantic models, value objects, domain events, aggregate roots, domain services. May import from `src/common/` (e.g., logging, shared validators). No imports from PydanticAI, SQLAlchemy, LangGraph, Anthropic SDK, `pathlib` I/O, or any framework. Domain logic (validation rules, state transitions, constraint checks) lives here and is fully unit-testable without mocking.
-- **Application layer** (`src/agents/`, `src/orchestration/`): orchestrates domain objects; invokes infrastructure via **ports** (abstract `Protocol` interfaces defined in the domain or application layer). Depends on the domain; never directly on infrastructure implementations. Agent skill execution, handoff routing, and CQ lifecycle management live here.
-- **Infrastructure layer** (`src/events/`, `src/sources/`, future `src/dashboard/`): implements the ports — EventStore (SQLite), source adapters (Confluence, Jira, Git), file-system artifact I/O, plantuml CLI subprocess. Infrastructure knows about domain types (it uses them as data shapes) but domain types never know about infrastructure.
-
-**Ports and adapters pattern for all I/O:**
-- Define a `Protocol` (port) in the application or domain layer for every infrastructure capability needed: `ArtifactReader`, `ArtifactWriter`, `EventStore`, `LLMClient`, `SourceAdapter`.
-- Concrete implementations (adapters) live in the infrastructure layer and are injected at composition root (startup / agent factory).
-- This means the entire application and domain can be tested with in-memory fakes implementing the same protocols — no SQLite, no file system, no LLM API calls required.
-
-**Domain representations are the single source of truth:**
-- Pydantic models in `src/models/` are the canonical representation of SDLC artifacts (ArchitectureVision, BusinessArchitecture, LearningEntry, etc.). No parallel dict-based or ORM-mapped representations of the same concepts.
-- EventStore events are also Pydantic models; the SQLite schema is derived from them (via Alembic), not defined independently.
-- If a framework (PydanticAI, LangGraph) requires its own data shape, adapt at the boundary — wrap or map from the domain model; do not let framework types leak into domain or application code.
+This includes type-system rules, style constraints, error-handling policy, domain-centred layering, and ports-and-adapters requirements.
 
 - **Runtime:** Python 3.12+ (required for PEP 695 inline type parameter syntax — `def f[T](...)`), Pydantic v2 for all data models, artifact schemas, and event payloads
-- **Orchestration:** PydanticAI (primary) — provides agent definition, tool use, and structured output natively; avoids heavy framework lock-in while enabling clean composition
+- **Orchestration:** LangGraph (primary control plane) with nested subgraphs for lifecycle, engagement-type, and phase flows; deterministic routing and resumable state transitions
 - **LLM backend:** Anthropic Claude API (claude-sonnet-4-6 for primary agents; claude-haiku-4-5 for lightweight routing/summarisation tasks)
-- **Workflow graph (if needed for complex multi-agent flows):** LangGraph as an optional layer on top of PydanticAI for stateful multi-step orchestration — to be introduced only when the simpler PydanticAI patterns prove insufficient
+- **Leaf reasoning engine:** PydanticAI at leaf nodes only (schema-constrained specialist execution and tool use)
 - **Version control:** Git (all agent definitions, skill files, framework documents, and work-repository schemas are tracked)
 - **Artifact persistence:** File-based work-repositories (git-tracked) per engagement under `engagements/<id>/work-repositories/`
 - **Workflow state persistence:** SQLite event store (`engagements/<id>/workflow.db`) — **canonical, git-tracked**; Pydantic-validated, append-only, managed by the `EventStore` class in `src/events/`; YAML projection in `engagements/<id>/workflow-events/` also git-tracked for human readability and PR review; schema managed by Alembic migrations
@@ -370,7 +314,7 @@ Every skill file must include: `## Inputs Required`, `## Knowledge Adequacy Chec
 
 #### 4.5a — Diagram Conventions Framework
 - [x] `framework/diagram-conventions.md` — authored (§1 authoring model; §2–§4 ontological catalog structure and lifecycle; §5 D1–D6 reuse + authoring protocol; §6 write authority; §7 PUML templates × 6 diagram types; §8 `_macros.puml`; §9 element record format; §10 ID namespace reference table)
-- [x] `framework/artifact-schemas/diagram-catalog.schema.md` — authored (element records per ontological layer, connections records, diagram index, `_macros.puml` validation rules, `catalog_register()` validation rules, examples)
+- [x] `framework/artifact-schemas/diagram-catalog.schema.md` — updated to ERP v2.0 frontmatter model (no `diagrams/index.yaml`; diagram artifacts are file-first `.puml` / `.md` records discovered via ModelRegistry)
 - [x] `framework/algedonic-protocol.md` — ALG-C01–ALG-C04 added (catalog duplicate ID, unauthorised catalog write, broken cross-ontology link, `_macros.puml` out of sync)
 
 #### 4.5b — Artifact Reference Format Extension
@@ -1001,12 +945,19 @@ The following events govern reverse-architecture and user-input persistence. The
   - Layer 3: active skill via `@agent.instructions` calling `SkillLoader.load_instructions(ctx.deps.active_skill_id)`
 - [ ] **`src/agents/skill_loader.py`**: `SkillLoader.load_instructions(skill_id)` — parses skill Markdown file, extracts included sections (Inputs Required, Steps, Algedonic Triggers, Feedback Loop, Outputs); excludes Knowledge Adequacy Check; reads `complexity-class` from frontmatter to select token threshold (simple ≤600, standard ≤1200, complex ≤2000); counts tokens via `tiktoken`; truncation priority if soft cap exceeded: Algedonic Triggers → compact ALG-IDs only; Feedback Loop → termination conditions + iteration count only; Outputs → artifact paths only; **Steps are never truncated**; raises `SkillBudgetExceededError` only above hard cap (complex=2000, standard=1440, simple=720 — 20% over soft cap; indicates a skill that needs splitting, not compressing)
 - [ ] **`src/agents/tools/`**: tool implementations (all tools described in `framework/agent-runtime-spec.md §6`):
-  - `universal_tools.py` — `read_artifact(id_or_path, mode)` (resolves artifact-id → path via ModelRegistry; modes: `summary`=frontmatter+first two §content sections, `full`=entire file); `list_artifacts(**filter)` (queries ModelRegistry in-memory frontmatter cache; returns metadata list without loading bodies; filters: artifact-type, status, domain, safety-relevant, phase-produced, engagement); `search_artifacts(query: str, **filter)` (**primary discovery tool for content-based lookup** — delegates to ModelRegistry FTS5 index; optional semantic tier when available; returns ranked `(ArtifactRecord, snippet)` pairs; agent then selects which to read in full; use when artifact type is uncertain or discovery is by concept rather than metadata); `list_connections(source, target, artifact_type)` (ModelRegistry query scoped to `connections/`; all params optional); `query_event_store`, `emit_event`, `raise_cq`, `raise_algedonic`, `read_framework_doc`, `discover_standards` (reads `technology-repository/coding-standards/` and `enterprise-repository/standards/`; SA/SwA/DE/DO only), `list_target_repositories()` (reads `engagements-config.yaml`; returns all registered repos with id/label/role/domain/primary/clone-path; available to all agents), `query_learnings(phase, artifact_type, domain, expand_related=True)` (per `framework/learning-protocol.md §9` + §12.1–12.2), `record_learning(entry: LearningEntry)` (per §9 + §12.1)
+  - `universal_tools.py` — `read_artifact(id_or_path, mode)` (resolves artifact-id → path via ModelRegistry; modes: `summary`=frontmatter+first two §content sections, `full`=entire file); `list_artifacts(**filter)` (queries ModelRegistry in-memory frontmatter cache; returns metadata list without loading bodies; filters: artifact-type, status, domain, safety-relevant, phase-produced, engagement); `search_artifacts(query: str, **filter)` (**primary discovery tool for content-based lookup** — delegates to ModelRegistry FTS5 index; optional semantic tier when available; returns ranked `(ArtifactRecord, snippet)` pairs; agent then selects which to read in full; use when artifact type is uncertain or discovery is by concept rather than metadata); `list_connections(source, target, artifact_type)` (ModelRegistry query scoped to `connections/`; all params optional); `query_event_store`, `emit_event`, `raise_cq`, `raise_algedonic`, `list_framework_docs(**filter)`, `search_framework_docs(query, **filter)`, `read_framework_doc(doc_id_or_path, section=None, mode="summary")` (query-first framework retrieval per `framework/framework-knowledge-index.md`; `mode="full"` escalation only), `discover_standards` (reads `technology-repository/coding-standards/` and `enterprise-repository/standards/`; SA/SwA/DE/DO only), `list_target_repositories()` (reads `engagements-config.yaml`; returns all registered repos with id/label/role/domain/primary/clone-path; available to all agents), `query_learnings(phase, artifact_type, domain, expand_related=True)` (per `framework/learning-protocol.md §9` + §12.1–12.2), `record_learning(entry: LearningEntry)` (per §9 + §12.1)
   - `write_tools.py` — per-agent path-constrained write tools (RepositoryBoundaryError on violation → ALG-007)
   - `target_repo_tools.py` — **multi-repo aware**: `read_target_repo(path, repo_id=None)` (repo_id=None → primary repo; raises TargetRepoNotFoundError if id not registered); `write_target_repo(path, content, repo_id=None)` (DE and DO only, per their respective access grants); `execute_pipeline(repo_id=None)` (DO only); `scan_target_repo(repo_id=None)` (Discovery Layer 4 single-repo scan — called once per repo by Layer 4 procedure); `list_target_repos()` (alias for `list_target_repositories()` — convenience import in this module). **Backward compatibility:** when `target-repository` (singular) is configured, `repo_id=None` and `repo_id="default"` both refer to it.
   - `pm_tools.py` — PM decision events (all emitted inside the tool call, before returning to the agent): `invoke_specialist(agent_id, skill_id, task)` → emits `specialist.invoked`; `evaluate_gate(gate_id, votes)` → emits `gate.evaluated` + `create_snapshot("gate.evaluated")` on pass; `batch_cqs(cq_ids)` → emits `cq.batched`; `record_decision(rationale)` → emits `decision.recorded`; `trigger_review()` → emits `review.pending`
   - `diagram_tools.py` — Model-driven diagram production per `framework/diagram-conventions.md §5` (D1–D5 protocol): `regenerate_macros(repo_path)` (scans all entity `§display ###archimate` blocks via ModelRegistry; rewrites `_macros.puml`; called automatically by `write_artifact` when an entity's archimate display spec changes — ALG-C04 if count drift detected); `generate_er_content(entity_ids)` (reads each DOB entity's `§display ###er` block; returns PUML class declarations with attribute lists for direct paste into ER diagram); `generate_er_relations(connection_ids)` (reads each er-connection's `§display ###er` block; returns cardinality lines); `validate_diagram(puml_file_path)` (extracts all PUML aliases; checks each against ModelRegistry; verifies each resolved entity has the appropriate `§display ###<language>` section; confirms `!include _macros.puml` present for ArchiMate/use-case diagrams; returns list of validation errors; ALG-C03 on alias with no backing entity — model must be extended, alias must not be removed); `render_diagram(puml_file_path)` (invokes local `plantuml` CLI; writes SVG to the sibling `diagram-catalog/rendered/` directory for files in `diagram-catalog/diagrams/`; never writes to `diagrams/rendered/`; sprint-boundary render only unless on-demand requested by PM). Non-SA agents call `diagram.display-spec-request` handoff when a needed `§display ###<language>` subsection is missing from an entity. **Agents author PUML source text directly via `write_artifact`, following templates from `framework/diagram-conventions.md §7`.**
 - [ ] **`src/agents/learning_store.py`**: `LearningStore` wrapper around LangGraph `BaseStore` (per `framework/learning-protocol.md §12.1`); implements `query()` and `record()` with graph-expansion and optional semantic tier; handles store rebuild from files on startup
+- [x] **`src/common/framework_query/`**: queryable framework/spec index implemented (section-level metadata index + search scoring; optional semantic tier pending). API delivered: `list_docs`, `search_docs`, `read_doc`, `related_docs`; startup scan scope includes `framework/` plus orientation specs (`specs/IMPLEMENTATION_PLAN.md`, `README.md`, `CLAUDE.md`); CLI entrypoint at `python -m src.common.framework_query`.
+- [x] **Framework doc graph extraction**: formal framework/spec references (`[@DOC:<doc-id>#<section-id>](...)`) parsed into directed section graph. APIs delivered: `neighbors()`, `trace_path()`.
+- [~] **Framework index freshness model**: transparent freshness implemented in MCP context with background mtime polling watcher + TTL stale detection + optional caller-forced/manual refresh (`refresh=True` / CLI `refresh`). Remaining parity task: migrate to first-class evented filesystem watcher lifecycle when introduced.
+- [ ] **`src/agents/tools/universal_tools.py`**: implement framework retrieval tools: `list_framework_docs`, `search_framework_docs`, and upgraded `read_framework_doc(section, mode)` with summary-first policy and full-read reason logging.
+- [x] **CLI**: `uv run python -m src.common.framework_query <stats|list|search|read|related>` for deterministic local navigation/debug.
+- [x] **CLI extension**: graph and maintenance commands implemented (`neighbors`, `path`, `refresh`).
+- [x] **MCP surface** (framework-doc discovery): implemented in `src/tools/mcp_framework_server.py` and `src/tools/framework_mcp/` with tools `framework_query_stats`, `framework_query_list_docs`, `framework_query_list_sections`, `framework_query_search_docs`, `framework_query_read_doc` (supports `section_id` + unknown-section suggestions), `framework_query_resolve_ref`, `framework_query_related_docs`, `framework_query_neighbors`, `framework_query_path` (optional diagnostics), `framework_query_path_batch`, `framework_query_missing_links`, `framework_query_validate_refs` backed by the same index as Python/CLI.
 - [ ] **`src/agents/project_manager.py`**: PM agent with `result_type=PMDecision`; all PM skills loaded via SkillLoader
 - [ ] **`src/agents/solution_architect.py`**: SA agent; Discovery Scan tool registered; all SA skills loadable
 - [ ] **`src/agents/software_architect.py`**: SwA agent; Reverse Architecture Reconstruction support for EP-G
@@ -1017,9 +968,22 @@ The following events govern reverse-architecture and user-input persistence. The
 
 #### 5c — Orchestration layer
 
-> Governed by `framework/orchestration-topology.md`. LangGraph graph with PM supervisor + specialist nodes.
+> Governed by `framework/orchestration-topology.md`. Nested LangGraph topology with deterministic control at graph levels and PydanticAI only at specialist leaf nodes.
+
+**Wave 2 contract deepening (completed 2026-04-08):**
+- Added subgraph decomposition matrix (outer lifecycle, engagement-type, phase, specialist leaf) with explicit ownership for branching, suspension/resume, and fan-out/fan-in.
+- Added deterministic-vs-agentic workflow-unit checklist with preconditions, event emission expectations, branch criteria, merge criteria, and suspend/resume invariants.
+- Added minimal Stage 5 node/routing implementation checklist: required state fields consumed/produced, event taxonomy touchpoints, gate ownership, and escalation ownership.
+- Source of truth: `framework/orchestration-topology.md` §2.8, §2.9, §2.10.
+- Formal references:
+  - [@DOC:orchestration-topology#2-8-subgraph-decomposition-matrix-wave-2](../framework/orchestration-topology.md#28-subgraph-decomposition-matrix-wave-2)
+  - [@DOC:orchestration-topology#2-9-deterministic-vs-agentic-checklist-per-workflow-unit-wave-2](../framework/orchestration-topology.md#29-deterministic-vs-agentic-checklist-per-workflow-unit-wave-2)
+  - [@DOC:orchestration-topology#2-10-minimal-stage-5-node-and-routing-implementation-checklist-wave-2](../framework/orchestration-topology.md#210-minimal-stage-5-node-and-routing-implementation-checklist-wave-2)
 
 - [ ] **`src/orchestration/graph_state.py`**: `SDLCGraphState` TypedDict — as specified in orchestration-topology.md §3, extended with: `target_repository_ids: list[str]` (all registered repo IDs for this engagement; populated at `EngagementSession` startup from `engagements-config.yaml`); `primary_repository_id: str | None` (id of the primary repo, or None for single-repo backward compat)
+- [ ] **`src/orchestration/subgraphs/outer_lifecycle.py`**: outer graph entry/resume classification (`new_engagement` vs `resume_engagement`), suspend/resume routing, and engagement completion routing
+- [ ] **`src/orchestration/subgraphs/engagement_types.py`**: engagement-type subgraphs (`ep0_greenfield_subgraph`, `warm_start_subgraph`, `reverse_architecture_subgraph`) with deterministic entry conditions and output contracts
+- [ ] **`src/orchestration/subgraphs/phases.py`**: phase subgraphs with deterministic specialist ordering and optional fan-out/fan-in segments where independence exists
 - [ ] **`src/orchestration/pm_decision.py`**: `PMDecision` Pydantic model — PM's structured output (next_action, specialist_id, skill_id, task_description, reasoning, gate_id)
 - [ ] **`src/orchestration/routing.py`**: all routing functions — `route_from_pm`, `route_after_specialist`, `route_after_gate`, `route_after_cq`, `route_after_algedonic`, `route_after_sprint_close`; algedonic bypass check in every routing function
 - [ ] **`src/orchestration/nodes.py`**: all node implementations; each node function signature includes `event_store: EventStorePort` alongside `state: SDLCGraphState`; lifecycle event responsibilities:
@@ -1162,6 +1126,46 @@ sprint-review:
   auto-approve-after-hours: 48         # auto-approve all pending items after timeout (0 = never)
 ```
 
+**Stage/Agent review-gate policy (required):**
+
+```yaml
+review-gates:
+  default:
+    blocking: false
+  by-stage:
+    phase-a:
+      blocking: true
+      agents: [SA, PO, CSCO]
+    phase-b:
+      blocking: true
+      agents: [SA, PO, CSCO]
+    phase-c:
+      blocking: true
+      agents: [SwA, SA, CSCO]
+    phase-g:
+      blocking: true
+      agents: [DE, DO, QA]
+  overrides:
+    - stage: phase-e
+      agent: PM
+      blocking: true
+```
+
+When `blocking: true`, dependent downstream stage transitions are held until the corresponding review item is approved by the user.
+
+#### 5.5c — Dashboard Review-Control Model (Findability Anchor)
+
+This subsection is the canonical review-control model for dashboard-driven human approval.
+
+1. Policy source: `review-gates` in `engagements-config.yaml`.
+2. Decision unit: `(stage, agent)` with optional per-item override.
+3. Behavior:
+  - `blocking: true` -> downstream dependent workflow nodes must wait for user approval.
+  - `blocking: false` -> workflow may proceed while review remains advisory.
+4. Enforcement point: orchestration layer (`review_processing_node` + stage-transition routing guards), not skill prose.
+5. Required events: `review.pending`, `review.submitted`, `review.correction-routed`, `review.sprint-closed`.
+6. UI contract: dashboard Review view must display per-item decision state and blocking status before submit.
+
 **New / updated views (5.5b):**
 
 | View | URL | Mode | Content |
@@ -1284,6 +1288,80 @@ sprint-review:
 ## Current State & Immediate Next Actions
 
 **Stages 1–4.9e complete. ModelVerifier complete (71 BDD tests). Stage 4.9f partial (4/7 diagrams done). `src/common/model_query.py` complete. Business modeling guidelines (Stage 4.9g pre-work) added to framework. ENG-001 business-layer model rework pending.**
+
+### Completed this session (2026-04-08 — session 14)
+
+- **Wave 2 nested-subgraph contract deepening completed (framework-first):**
+  - Added documentation-level subgraph decomposition matrix to `framework/orchestration-topology.md` with explicit runtime ownership per tier.
+  - Added deterministic-vs-agentic checklist per workflow unit with explicit precondition, event, merge, and suspend/resume invariants.
+  - Added minimal Stage 5 node/routing implementation checklist (state fields, event touchpoints, gate ownership, escalation points) sufficient to author and verify orchestration code without policy ambiguity.
+  - Added implementation-plan traceability note in Stage 5c linking Wave 2 completion to topology sections.
+
+### Completed this session (2026-04-08 — session 13)
+
+- **Wave 1 clarification/coordination semantics completed (contract-first):**
+  - Added shared two-class interaction taxonomy across framework contracts: (1) User-facing Clarification Interaction (CQ) and (2) Agent-directed Coordination Interaction.
+  - Added explicit non-goal boundary: retrieval tool behavior (`list/search/read/count/find`) is not an interaction class and is not CQ-routed.
+  - Added routing contract mapping (initiator, responder, PM routing ownership, required events, suspension behavior) in:
+    - `framework/clarification-protocol.md`
+    - `framework/orchestration-topology.md`
+    - `framework/agent-runtime-spec.md`
+
+### Completed this session (2026-04-08 — session 11)
+
+- **Wave 0 contract alignment completed (framework-first, no diagram-conventions meta-level edits):**
+  - `framework/artifact-schemas/diagram-catalog.schema.md` rewritten from legacy catalog-index model to ERP v2.0 file-first diagram schema.
+  - Explicitly removed legacy assumptions from the schema contract: no `elements/*.yaml`, `connections/*.yaml`, `diagrams/index.yaml`, or `catalog_register()` runtime path.
+  - Added deterministic required frontmatter contract for diagram artifacts and verifier/tooling contract references (`model_create_diagram`, `model_create_matrix`, `model_verify_*`).
+  - `framework/orchestration-topology.md` updated with an agent-phase workflow decomposition contract defining deterministic vs agentic step mapping, decision/suspension handling, and fan-out constraints.
+  - `framework/clarification-protocol.md` updated with explicit inter-agent clarification boundary: no separate agent-to-agent CQ channel; use feedback/handoff + PM arbitration.
+
+- **Framework MCP discovery tooling feedback captured for future refinement:**
+  - Added `docs/framework-tools-improvements.md` with concrete issues and prioritized enhancements from query-first execution (section-id addressing, type-prioritized search, compact projections, aggregate endpoints, unknown-section suggestions).
+
+### Completed this session (2026-04-08 — session 12)
+
+- **Framework/model query improvement wave implemented and validated:**
+  - Framework query engine now supports deterministic section targeting via `section_id` and exposes `list_sections()` + `suggest_sections()` helpers.
+  - Framework MCP surface extended with `framework_query_list_sections`; `framework_query_read_doc` now accepts `section_id` and returns nearest section suggestions on unknown-section errors.
+  - Framework MCP graph/discovery surface deepened with `framework_query_resolve_ref`, `framework_query_path(include_diagnostics)`, `framework_query_path_batch`, `framework_query_missing_links`, and `framework_query_validate_refs`.
+  - Transparent framework-index freshness implemented in MCP context (background mtime poller + TTL stale guard + freshness metadata in responses).
+  - Model query engine now supports record-type prioritization controls for search (`prefer_record_type`, `strict_record_type`) and aggregate grouping via `count_artifacts_by(...)`.
+  - Model MCP surface extended with `model_query_count_artifacts_by`; `model_query_list_artifacts` and `model_query_search_artifacts` now support compact field projection (`fields=[...]`) to reduce large payload friction.
+  - Validation complete with targeted tests and BDD additions: `uv run pytest tests/model/test_framework_query.py tests/model/test_model_query.py tests/tools/test_registry_asyncio_and_mcp_servers.py tests/tools/test_model_query_mcp_improvements.py`.
+
+### Completed this session (2026-04-07 — session 10)
+
+- **Framework-doc tooling implemented end-to-end (query + graph + MCP):**
+  - Refactored monolithic `src/common/framework_query.py` into a small-module package `src/common/framework_query/` (`types.py`, `parsing.py`, `index.py`, `cli.py`, `__init__.py`, `__main__.py`) to satisfy maintainability and file-size limits.
+  - Implemented framework/spec query APIs: `list_docs`, `search_docs`, `read_doc`, `related_docs`, plus graph traversal APIs `neighbors` and `trace_path` over formal `@DOC` references.
+  - Added CLI support: `python -m src.common.framework_query <stats|list|search|read|related|neighbors|path|refresh>`.
+  - Implemented dedicated MCP server `src/tools/mcp_framework_server.py` with tool family `framework_query_*` and graph exploration parity with model-query style traversal.
+
+- **Registry asyncio failure resolved + regression coverage added:**
+  - Fixed nested-event-loop risk in registry service by removing `anyio.run` from sync path reads (`src/tools/mcp_registry/service.py`).
+  - Added regression test that executes registry service calls from inside an active asyncio loop.
+
+- **MCP coverage and config updates completed:**
+  - Added test coverage for tool-surface contracts across model/registry/framework MCP servers and behavior tests for framework MCP tools.
+  - Registered framework MCP server in `.mcp.json` and `.vscode/mcp.json`.
+  - Added script entrypoint `sdlc-mcp-framework` in `pyproject.toml`.
+
+- **Central authoritative tool catalog established:**
+  - Added `framework/tool-catalog.md` as canonical runtime inventory for all MCP servers and tool families.
+  - Linked runtime spec and README status/readme sections to the centralized catalog.
+
+### Completed this session (2026-04-07 — session 9)
+
+- **Documentation remediation started for orchestration + skill clarity:**
+  - Normalized diagramming hints in skill files: removed from non-diagram skills; retained only where skills produce/update diagram artifacts.
+  - Added explicit authoring rule in `CLAUDE.md` requiring diagram hints to be scoped, well-positioned, and minimal.
+  - Clarified `framework/discovery-protocol.md` execution order: core Step 0.L + Layers 1-5 first, then optional Step 0.D/0.S/0.F, then Gap Assessment/CQs.
+  - Updated orchestration target architecture in `framework/orchestration-topology.md` and Stage 5 planning notes to nested LangGraph subgraphs with PydanticAI at specialist leaf nodes.
+  - Added stage/agent review-gate policy model in Stage 5.5 docs so blocking human review can gate downstream dependent stages.
+  - Added query-first framework retrieval architecture doc: `framework/framework-knowledge-index.md` (section-level index model, Python API, CLI, MCP tool surfaces, migration plan).
+  - Updated `framework/agent-runtime-spec.md` and Stage 5b tool planning from broad framework reads to indexed `list/search/read` framework-doc tooling.
+  - Removed broad "read all framework docs" instructions from PM/SA/DE/QA docs; replaced with focused section-scoped retrieval guidance.
 
 ### Completed this session (2026-04-06 — session 8)
 
@@ -1426,7 +1504,7 @@ sprint-review:
 - Change Record (Phase H) is produced by **SA** (not PM). PM produces intake record only.
 - Algedonic triggers in `algedonic-protocol.md` are the canonical list. Skill files reference them by ID (e.g., ALG-001); they do not redefine them.
 - **Diagram authoring:** agents write PUML source text directly; runtime wiring (LangGraph + PydanticAI + MCP) binds concrete write/query/verify tool functions. For model MCP this is `model_create_diagram` (+ `model_query_*`, `model_verify_*`, and `model_create_entity`/`model_create_connection` where required). Diagram/skill docs describe intent and constraints; code owns callable signatures.
-- **Model MCP tool surface is now explicit and grouped by intent.** Discovery/search/filter/query: `model_query_stats`, `model_query_list_artifacts`, `model_query_search_artifacts`, `model_query_read_artifact`, `model_query_find_connections_for`, `model_query_find_neighbors`; validation: `model_verify_file`, `model_verify_all`; deterministic model writing: `model_write_help`, `model_create_entity`, `model_create_connection`, `model_create_diagram` (dry-run first by default).
+- **Model MCP tool surface is now explicit and grouped by intent.** Discovery/search/filter/query: `model_query_stats`, `model_query_list_artifacts` (supports `fields` projection), `model_query_search_artifacts` (supports `prefer_record_type`, `strict_record_type`, and `fields` projection), `model_query_count_artifacts_by`, `model_query_read_artifact`, `model_query_find_connections_for`, `model_query_find_neighbors`; validation: `model_verify_file`, `model_verify_all`; deterministic model writing: `model_write_help`, `model_create_entity`, `model_create_connection`, `model_create_diagram` (dry-run first by default).
 - **Runtime search-space constraints are now explicit and non-optional.** Per-role skill inventories are kept small (target <=12) and runtime injects one skill at a time (`active_skill_id`) rather than a role's full skill corpus. Tool exposure is role-scoped and budgeted (<=30 per agent, preferred 12-26). Complexity classes remain the Layer 3 control: `simple <=600`, `standard <=1200`, `complex <=2000` with hard-stop handling when exceeded.
 - **Reusable skill-core plus code-bound workflow control is now explicit policy.** Skill files are treated as reusable procedural/output contracts; orchestration/routing code is treated as the executable state machine and gate authority. This allows reuse across entry points/profiles without weakening governance.
 - **Stage 4.9 entities/connections/diagrams are living specifications, not a frozen design.** They will and should change during Stage 5 implementation as design decisions are refined. The model-first discipline applies in both directions: (a) forward — Stage 5 code divergences update the entity files first; (b) reverse — reverse-architecture skill output populates entity files which then drive Stage 5 implementation. Requirements (REQ, CST, PRI) are also subject to revision as implementation reveals constraints. The architecture repository always leads the code.

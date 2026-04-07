@@ -215,6 +215,8 @@ All tools are defined in `src/agents/tools/`. Tool event emission is **tool-tran
 
 Agent and skill markdown describes **tooling intent** (discover/search/filter/query/validate/write), not the immutable runtime function signatures. Runtime binding is code-owned in LangGraph + PydanticAI registration (`src/agents/`, `src/orchestration/`, `src/tools/mcp_model_server.py`, `src/tools/model_mcp/`, `src/tools/model_write/`).
 
+The central authoritative runtime tool inventory is maintained in `framework/tool-catalog.md`.
+
 For model entity/connection/diagram workflows, the current canonical MCP tool mapping is:
 
 | Intent | Canonical MCP tools |
@@ -226,6 +228,17 @@ For model entity/connection/diagram workflows, the current canonical MCP tool ma
 | Deterministic model writes | `model_write_help`, `model_create_entity`, `model_create_connection`, `model_create_diagram` |
 
 Legacy/alias names in skills (for example `list_artifacts`, `search_artifacts`, `read_artifact`, `write_artifact`, `validate_diagram`) are compatibility hints, not hard runtime contracts.
+
+### 6.0b Interaction Class Boundary and Routing Contract (Wave 1)
+
+Interaction semantics are shared with `framework/clarification-protocol.md` and executed through orchestration routing in `framework/orchestration-topology.md`.
+
+| Class | Runtime Meaning | Typical Initiator | Typical Responder | Tool/Node Path | Event Contract | Suspension Contract |
+|---|---|---|---|---|---|---|
+| User-facing Clarification Interaction (CQ) | Missing user/domain facts unavailable from discovery and retrieval | Specialist or PM | User | `raise_cq` + `cq_user_node` | `cq.raised`, `cq.batched` (optional), `phase.suspended` / `phase.resumed` (if blocking) | Blocking only when CQ is marked blocking |
+| Agent-directed Coordination Interaction | Structured cross-role feedback, handoff, arbitration, gate/review sequencing | Specialist or PM | Specialist and/or PM | PM decision routing + specialist/gate/review/handoff paths | `handoff.created`, `specialist.invoked`, `specialist.completed`, `decision.recorded`, `gate.evaluated`, `review.pending` | Non-blocking by default; PM can apply explicit hold |
+
+**Boundary (non-interaction):** Retrieval behavior (`list/search/read/count/find`) is tool-use behavior, not an interaction class, and is not CQ-routed.
 
 ### 6.0a Search-Space Guardrails (tools)
 
@@ -266,9 +279,13 @@ When a new capability is needed, add it to an existing tool family where possibl
 
 #### Framework and Standards
 
+Framework retrieval is query-first. Agents should discover relevant docs/sections before reading full content.
+
 | Tool | Function signature | Description |
 |---|---|---|
-| `read_framework_doc` | `(doc_name: str) → str` | Reads any file from `framework/`; cached. Used to load skill templates, protocol references, PUML templates. |
+| `list_framework_docs` | `(**filters) → list[FrameworkDocRecord]` | Lists indexed framework/spec docs by metadata filters (`agent_scope`, `phase_scope`, `topic`, `owner`). Primary step before framework reads. |
+| `search_framework_docs` | `(query: str, **filters) → list[tuple[FrameworkDocRecord, str]]` | FTS/semantic section search across indexed framework/spec docs; returns ranked snippet hits. Primary step when exact doc/section is unknown. |
+| `read_framework_doc` | `(doc_id_or_path: str, section: str \| None = None, mode: Literal["summary","full"] = "summary") → str` | Reads selected framework/spec document section. `full` mode is escalation-only when summary/section context is insufficient. Compatibility alias for existing usage. |
 | `discover_standards` | `() → list[str]` | Reads all files from `technology-repository/coding-standards/` and `enterprise-repository/standards/`; returns contents. **SA, SwA, DE, DO only.** Step 0.S per `framework/discovery-protocol.md §9`. |
 | `list_target_repositories` | `() → list[dict]` | Reads `engagements-config.yaml`; returns all registered repos with `id`, `label`, `role`, `domain`, `primary`, `clone-path`. All agents. |
 
