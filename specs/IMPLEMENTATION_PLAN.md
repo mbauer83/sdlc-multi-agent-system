@@ -865,6 +865,32 @@ The following events govern reverse-architecture and user-input persistence. The
 
 **Contingency — if future skill additions become necessary (Stage 4.8g):** The three reverse-arch skills are `complexity-class: complex` (2000-token soft budget). Any additions to Steps 3 or 4 (e.g. explicit `upload_refs` guidance) are estimated at ≤60 tokens per skill. Truncation priority (`Algedonic Triggers → Feedback Loop → Outputs`; Steps never truncated) provides ~400 tokens of headroom before content loss. All such changes are designed in Stage 4.8g before execution — see below.
 
+#### 4.9i — Application and Infrastructure Architecture Elaboration (Pending)
+
+Purpose: extend the Stage 5 implementation specification with deeper, execution-grade architectural detail for application and technology/infrastructure layers, using paired ArchiMate + sequence views.
+
+- [ ] **Application layer refinement package (ArchiMate):**
+  - Refine component/service/interface boundaries for APP/AIF/ASV entities and their realization/serving/access relations.
+  - Add explicit runtime interaction boundaries for PM orchestration, specialist invocation, CQ routing, and review processing.
+  - Validate APP-to-BSV realization and APP-to-DOB access coverage against current entity/connection files.
+
+- [ ] **Application runtime behavior package (Sequence):**
+  - Author or refine sequence diagrams for core flows: specialist invocation cycle, CQ answer routing/resume, gate evaluation decision path, sprint review correction loop.
+  - Ensure each sequence flow has backing entities/connections and traceable relation to lifecycle/activity workflow nets.
+
+- [ ] **Technology/infrastructure layer refinement package (ArchiMate):**
+  - Model deployment/runtime topology (nodes, system software, environments, data stores, external boundaries) for the actual Stage 5 execution model.
+  - Specify EventStore deployment context, dashboard/runtime hosting boundary, and target-repo/tooling execution context.
+  - Add technology-layer relations required for operational readiness (serving, deployment, communication-path, access where applicable).
+
+- [ ] **Operational behavior package (Sequence):**
+  - Author or refine sequence diagrams for deployment/provisioning, event persistence/snapshot/replay lifecycle, and operational observability/escalation paths.
+  - Confirm sequence participants map to defined application/technology entities (no diagram-only participants).
+
+- [ ] **Cross-layer conformance and verification:**
+  - Run model-first conformance check: business workflow nets -> application services -> technology/infrastructure realization path.
+  - Re-render modified diagrams to canonical `diagram-catalog/rendered/` and run `ModelVerifier.verify_all(...)` after each slice.
+
 ---
 
 ### Stage 5 — Python Implementation Layer
@@ -1292,8 +1318,11 @@ This subsection is the canonical review-control model for dashboard-driven human
 ### Immediate next actions
 
 - Execute pending Stage 4.8g Skill/Agent Alignment Audit checklist (reverse-architecture skills, `write_artifact` wording, discovery Step 0 alignment, runtime/discovery framework docs consistency).
-- Keep phase-token naming only for truly phase-scoped workflow diagrams; continue scope/purpose naming for cross-phase or domain views.
-- Maintain PM-G as a phase-scoped governance net and avoid reintroducing sprint-lifecycle internals owned by `lifecycle-activity-sprint-v1` and `sprint-review-activity-workflow-v1`.
+- Close the remaining Stage 4.9g documentation deliverables (overview docs + ADR updates) to align architecture narratives with the normalized diagram set.
+- Deepen application-layer architecture specification for Stage 5 implementation: produce/refine ArchiMate application views (component decomposition, services, interfaces, data objects) and companion sequence diagrams for core runtime flows (agent invocation, CQ loop, gate evaluation, handoff/rework).
+- Deepen infrastructure/technology-layer specification for Stage 5 implementation: produce/refine ArchiMate technology/deployment views (nodes, system software, environments, runtime boundaries) and companion sequence diagrams for operational flows (deployment, environment provisioning, event persistence, observability/alerts).
+- Add cross-layer traceability checks from business workflow nets to application services and to infrastructure deployment/runtime paths; run `ModelVerifier.verify_all(...)` after each modeling slice.
+- Continue Stage 5 integration focus items tracked in this plan (EventStore/orchestration/tooling completion and integration-test readiness), using the expanded application/infrastructure diagram set as the implementation baseline.
 
 ### Completed this session (2026-04-08 — session 17)
 
