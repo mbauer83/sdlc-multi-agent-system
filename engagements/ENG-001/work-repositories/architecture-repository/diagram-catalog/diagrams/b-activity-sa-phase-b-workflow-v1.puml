@@ -1,0 +1,76 @@
+' ---
+' artifact-id: b-activity-sa-phase-b-workflow-v1
+' artifact-type: diagram
+' diagram-type: activity-bpmn
+' name: "Phase B \u2014 SA Workflow Net"
+' version: 0.1.0
+' status: draft
+' phase-produced: B
+' owner-agent: SA
+' engagement: ENG-001
+' domain: core-platform
+' purpose: Agent-phase workflow net for SA Phase B showing learnings lookup, discovery
+'   scan, bounded CQ, business architecture authoring, safety handoff, and gate readiness.
+' entity-ids-used:
+' - ACT-001
+' - ACT-002
+' - ACT-003
+' - ACT-010
+' - BPR-002
+' - BPR-003
+' - BPR-004
+' ---
+@startuml b-activity-sa-phase-b-workflow-v1
+title Phase B — SA Workflow Net
+
+skinparam activity {
+  BackgroundColor AliceBlue
+  BorderColor SteelBlue
+  DiamondBackgroundColor LightYellow
+  DiamondBorderColor DarkGoldenrod
+  ArrowColor SteelBlue
+  FontSize 11
+}
+skinparam swimlane {
+  BorderColor CadetBlue
+  TitleFontStyle bold
+}
+
+|Solution Architect|
+start
+:Step 0.L Query learnings
+(query_learnings);
+:Discovery Scan Step 0
+Layers 1,2,4;
+if (Need external source?) then (yes)
+  :Layer 3 situational lookup
+(EP-G/user-cited/PM-directed only);
+else (no)
+endif
+:Author BA entities and
+connections (BSV/BPR/BFN/BOB/BEV);
+
+if (Knowledge gap blocks BA?) then (yes)
+  :Raise bounded CQ;
+  |Project Manager|
+  :Batch/route CQ;
+  |User|
+  :Answer CQ;
+  |Solution Architect|
+  :Integrate answer and continue;
+else (no)
+endif
+
+:Produce BA diagrams + matrix;
+:Run model verification;
+:Create handoff to CSCO and PM;
+
+|CSCO Agent|
+:Review safety-relevant
+business processes;
+
+|Project Manager|
+:Evaluate gate readiness
+for Phase B baseline;
+stop
+@enduml

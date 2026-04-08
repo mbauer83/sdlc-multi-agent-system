@@ -40,22 +40,27 @@ Related model truth lives outside the diagram catalog:
 
 Recommended pattern:
 
-`<phase>-<view>-<purpose>-v<major>.puml`
+`<scope>-<view>-<purpose>-v<major>.puml`
+
+Where `<scope>` is:
+
+- an ADM phase token (`a`..`h`) only when the diagram is phase-scoped, or
+- a purpose/scope token when the diagram is cross-phase.
 
 Examples:
 
-- `phase-b-activity-sprint-v1.puml`
-- `phase-c-sequence-cq-lifecycle-v1.puml`
+- `business-archimate-structural-v1.puml`
+- `lifecycle-activity-sprint-v1.puml`
 
 ### 2.2 Matrix diagram filenames
 
 Recommended pattern:
 
-`<phase>-matrix-<purpose>-v<major>.md`
+`<scope>-matrix-<purpose>-v<major>.md`
 
 Example:
 
-- `a-matrix-motivation-driver-requirement-full-v1.md`
+- `motivation-matrix-driver-requirement-full-v1.md`
 
 ---
 

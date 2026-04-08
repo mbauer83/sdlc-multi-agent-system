@@ -83,6 +83,19 @@ Agent-phase workflows are authored as model-level behavior specifications, then 
 - Each workflow unit may be represented by one activity/BPMN diagram at the model level when branching or multi-party coordination is non-trivial.
 - The runtime graph remains the execution authority; diagrams are binding design specifications for node/routing intent, not executable control planes.
 
+Current ENG-001 workflow-net exemplars (phase-scoped, non-trivial units):
+
+- `b-activity-sa-phase-b-workflow-v1` for `(SA, B, SA-PHASE-B)`
+- `c-activity-swa-phase-c-application-workflow-v1` for `(SwA, C, SwA-PHASE-C-APP)`
+- `g-activity-pm-phase-g-governance-workflow-v1` for `(PM, G, PM-PHASE-G)`
+
+Cross-phase control nets remain purpose-scoped (no forced phase prefix), for example:
+
+- `lifecycle-activity-sprint-v1`
+- `cq-activity-lifecycle-v1`
+- `sprint-review-activity-workflow-v1`
+- `specialist-invocation-activity-workflow-v1`
+
 Deterministic vs agentic mapping rules:
 
 1. Deterministic step:
@@ -110,6 +123,19 @@ Discovery/source usage in workflow units:
 - Source scanning policy is phase-and-skill scoped by runtime context and tool contracts.
 - External source breadth is configuration-driven and situative, not unconditional.
 - CQ and feedback handling follows `framework/clarification-protocol.md` routing rules.
+
+Configurable user review gates in workflow units:
+
+- `review-gates` policy may require blocking user approval of agent-phase output artifacts before downstream stage-gates (for example before `BPR-004`) and/or before sprint review interaction.
+- When configured as blocking, orchestration must emit `review.pending` and pause dependent transitions until `review.submitted` is processed.
+- This pre-sprint-review stage gate is distinct from sprint review itself and must be represented in both routing and workflow diagrams.
+- If user approval is not granted at this stage gate, control must route back to the relevant specialist phase-work node for targeted rework, then re-enter the same review gate until approved.
+- User-requested review/rework cycles are intentionally uncapped in routing policy; user can continue requesting corrections until explicit approval or explicit stop/pause decision.
+- "Hold/replan or continue" outcomes (for example after fast-path safety review) must be modeled as explicit branching decisions, not as linear action labels.
+- For fast-path safety escalation, CSCO evaluation and user advisory notes feed PM's explicit decision branch: continue (route back into specialist phase-work), pause (await resume trigger), or stop (terminate engagement path).
+- Automated agent-driven rework cycles should be bounded by explicit max-iteration policy with deterministic overflow path.
+- Workflow-net diagrams must include an explicit specialist-lane rework merge node immediately before specialist skill execution; all targeted-rework branches terminate on this node.
+- Workflow-net diagrams must not place semantically equivalent decision nodes in immediate sequence (for example an approval decision immediately followed by a rework-required decision over the same predicate); keep a single authoritative guard and collapse redundant nodes.
 
 ### 2.7 Interaction Class Routing Contract (Wave 1)
 
@@ -262,14 +288,17 @@ def route_after_specialist(state: SDLCGraphState) -> str:
     """After any specialist run: check algedonics, then return to PM."""
     if state["algedonic_active"]:
         return "algedonic_handler_node"
+    # Includes review-gates policy paths for blocking pre-sprint-review user approval.
     if state["review_pending"]:
         return "review_processing_node"
     return "pm_node"
 
 def route_after_gate(state: SDLCGraphState) -> str:
-    """After gate evaluation — always return to PM (gate result is in EventStore)."""
+    """After gate evaluation — return to PM unless a blocking review-gate is pending."""
     if state["algedonic_active"]:
         return "algedonic_handler_node"
+    if state["review_pending"]:
+        return "review_processing_node"
     return "pm_node"
 
 def route_after_cq(state: SDLCGraphState) -> str:

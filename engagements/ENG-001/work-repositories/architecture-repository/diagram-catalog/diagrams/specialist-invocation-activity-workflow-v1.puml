@@ -1,0 +1,107 @@
+' ---
+' artifact-id: specialist-invocation-activity-workflow-v1
+' artifact-type: diagram
+' diagram-type: activity-bpmn
+' name: "Specialist Invocation — Activity Workflow"
+' version: 0.1.0
+' status: draft
+' phase-produced: G
+' owner-agent: SA
+' engagement: ENG-001
+' domain: core-platform
+' purpose: >
+'   Business-process activity view for specialist invocation and
+'   sub-process execution. Focuses on task specification, work receipt,
+'   CQ/algedonic branches, bounded automated invocation rework,
+'   and deterministic handoff to PM Phase G governance workflow.
+' entity-ids-used:
+'   - ACT-002
+'   - ACT-003
+'   - ACT-010
+'   - BPR-001
+'   - BPR-002
+'   - BPR-201
+'   - BPR-202
+'   - BPR-203
+'   - BPR-005
+'   - BPR-003
+' connection-ids-used:
+'   - BPR-001---BPR-002@@activity-sequence-flow
+'   - BPR-201---BPR-202@@activity-sequence-flow
+'   - BPR-202---BPR-203@@activity-sequence-flow
+' ---
+@startuml specialist-invocation-activity-workflow-v1
+title Specialist Invocation — Activity Workflow
+
+skinparam activity {
+  BackgroundColor AliceBlue
+  BorderColor SteelBlue
+  DiamondBackgroundColor LightYellow
+  DiamondBorderColor DarkGoldenrod
+  ArrowColor SteelBlue
+  FontSize 11
+}
+skinparam swimlane {
+  BorderColor CadetBlue
+  TitleFontStyle bold
+}
+
+|PM Agent|
+start
+:BPR-001 Sprint Planning;
+:BPR-201 Select specialist
+and active skill;
+:Initialize automated invocation
+rework count = 0;
+
+repeat
+|Specialist Agents|
+:BPR-202 Execute skill and
+produce artifacts;
+
+if (Knowledge gap?) then (yes)
+  :Route to BPR-003
+CQ Lifecycle;
+else (no)
+endif
+
+if (Critical risk or safety
+constraint breach?) then (yes)
+  |CSCO Agent|
+  :BPR-005 Algedonic
+Escalation;
+  |PM Agent|
+  :Apply fast-path decision
+or hold;
+  |Specialist Agents|
+else (no)
+endif
+
+:BPR-203 Return completion
+signal to PM;
+
+|PM Agent|
+:Review completion for
+immediate rework request;
+if (Immediate rework required?) then (yes)
+  :Increment automated invocation
+  rework count;
+  if (Automated invocation
+  rework count <= 2?) then (yes)
+    :Send targeted rework request
+    to specialist;
+  else (no)
+    :Escalate unresolved invocation
+    to PM Phase G governance workflow;
+    stop
+  endif
+else (no)
+endif
+repeat while (Immediate rework required?) is (yes)
+
+:Handoff completion packet to
+PM Phase G governance workflow
+(g-activity-pm-phase-g-governance-workflow-v1);
+stop
+
+@enduml

@@ -14,6 +14,7 @@ from .types import WriteResult
 
 
 _ENTITY_ID_PATTERN = re.compile(r"\b([A-Z]+-\d{3})\b")
+_SKILL_ID_LINE_PATTERN = re.compile(r"^skill-id:\s*([^\s]+)\s*$", flags=re.MULTILINE)
 
 
 def _verification_to_dict(path: Path, res) -> dict[str, object]:
@@ -125,6 +126,93 @@ def _linkify_matrix_ids(
     return "\n".join(out_lines), replaced
 
 
+def _build_skill_id_to_relpath(*, repo_root: Path, diagrams_dir: Path) -> dict[str, str]:
+    skill_map: dict[str, str] = {}
+    agents_dir = repo_root / "agents"
+    if not agents_dir.exists():
+        return skill_map
+
+    for skill_file in agents_dir.glob("*/skills/*.md"):
+        try:
+            text = skill_file.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        m = _SKILL_ID_LINE_PATTERN.search(text)
+        if not m:
+            continue
+        skill_id = m.group(1).strip()
+        if not skill_id:
+            continue
+        rel = os.path.relpath(str(skill_file), start=str(diagrams_dir)).replace("\\", "/")
+        skill_map[skill_id] = rel
+
+    return skill_map
+
+
+def _build_diagram_id_to_relpath(*, diagrams_dir: Path, registry: ModelRegistry) -> dict[str, str]:
+    diagram_map: dict[str, str] = {}
+
+    # Prefer registry-backed IDs when available.
+    for artifact_id in registry.diagram_ids():
+        p = registry.find_file_by_id(artifact_id)
+        if p is None:
+            continue
+        rel = os.path.relpath(str(p), start=str(diagrams_dir)).replace("\\", "/")
+        diagram_map[artifact_id] = rel
+
+    # Ensure all local diagram files are discoverable by stem even if not yet indexed.
+    if diagrams_dir.exists():
+        for p in diagrams_dir.glob("*.puml"):
+            if p.name.startswith("_"):
+                continue
+            diagram_map.setdefault(p.stem, p.name)
+        for p in diagrams_dir.glob("*.md"):
+            if p.name.startswith("_"):
+                continue
+            diagram_map.setdefault(p.stem, p.name)
+
+    return diagram_map
+
+
+def _linkify_known_tokens_in_matrix_rows(
+    *,
+    matrix_markdown: str,
+    skill_id_to_relpath: dict[str, str],
+    diagram_id_to_relpath: dict[str, str],
+) -> tuple[str, int]:
+    """Link known skill IDs and diagram artifact IDs inside plain table rows."""
+
+    if not skill_id_to_relpath and not diagram_id_to_relpath:
+        return matrix_markdown, 0
+
+    replaced = 0
+
+    def replace_token_links(line: str, mapping: dict[str, str]) -> str:
+        nonlocal replaced
+        out = line
+        for token in sorted(mapping.keys(), key=len, reverse=True):
+            pattern = re.compile(rf"\b{re.escape(token)}\b")
+
+            def _repl(m: re.Match[str], token_value: str = token) -> str:
+                nonlocal replaced
+                replaced += 1
+                return f"[{token_value}]({mapping[token_value]})"
+
+            out = pattern.sub(_repl, out)
+        return out
+
+    out_lines: list[str] = []
+    for line in matrix_markdown.splitlines():
+        if line.startswith("| ") and not line.startswith("|---") and "](" not in line:
+            linked = replace_token_links(line, skill_id_to_relpath)
+            linked = replace_token_links(linked, diagram_id_to_relpath)
+            out_lines.append(linked)
+        else:
+            out_lines.append(line)
+
+    return "\n".join(out_lines), replaced
+
+
 def create_matrix(
     *,
     repo_root: Path,
@@ -173,6 +261,22 @@ def create_matrix(
         if replaced_count == 0 and ids_for_links:
             warnings.append(
                 "auto_link_entity_ids enabled, but no entity IDs were converted to links; check ID/path resolution."
+            )
+
+        diagrams_dir = repo_root / "diagram-catalog" / "diagrams"
+        skill_links = _build_skill_id_to_relpath(repo_root=repo_root, diagrams_dir=diagrams_dir)
+        diagram_links = _build_diagram_id_to_relpath(
+            diagrams_dir=diagrams_dir,
+            registry=registry,
+        )
+        body_markdown, known_link_replacements = _linkify_known_tokens_in_matrix_rows(
+            matrix_markdown=body_markdown,
+            skill_id_to_relpath=skill_links,
+            diagram_id_to_relpath=diagram_links,
+        )
+        if known_link_replacements == 0:
+            warnings.append(
+                "auto_link_entity_ids enabled, but no skill/diagram references were converted to links."
             )
 
     content = format_matrix_markdown(

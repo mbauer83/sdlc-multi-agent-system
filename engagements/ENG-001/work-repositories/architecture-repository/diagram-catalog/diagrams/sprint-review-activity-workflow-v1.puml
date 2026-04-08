@@ -1,0 +1,88 @@
+' ---
+' artifact-id: sprint-review-activity-workflow-v1
+' artifact-type: diagram
+' diagram-type: activity-bpmn
+' name: "Sprint Review — Activity Workflow"
+' version: 0.1.0
+' status: draft
+' phase-produced: C
+' owner-agent: SA
+' engagement: ENG-001
+' domain: core-platform
+' purpose: >
+'   Business interaction activity view for sprint review and correction loop.
+'   Models BIA-001 staged flow and user-requested correction loop with no
+'   fixed automated cap; user may continue rework-request cycles until
+'   approval or explicit stop/pause decision.
+' entity-ids-used:
+'   - ACT-002
+'   - ACT-001
+'   - ACT-003
+'   - BIA-001
+'   - BIA-101
+'   - BIA-102
+'   - BIA-103
+'   - BPR-004
+' connection-ids-used:
+'   - BIA-101---BIA-102@@activity-sequence-flow
+'   - BIA-102---BIA-103@@activity-sequence-flow
+' ---
+@startuml sprint-review-activity-workflow-v1
+title Sprint Review — Activity Workflow
+
+skinparam activity {
+  BackgroundColor AliceBlue
+  BorderColor SteelBlue
+  DiamondBackgroundColor LightYellow
+  DiamondBorderColor DarkGoldenrod
+  ArrowColor SteelBlue
+  FontSize 11
+}
+skinparam swimlane {
+  BorderColor CadetBlue
+  TitleFontStyle bold
+}
+
+|PM Agent|
+start
+:BPR-004 Gate Evaluation
+passed;
+:Start BIA-001 Sprint
+Review Interaction;
+:BIA-101 Present sprint
+outputs;
+
+|User|
+:BIA-102 Review outputs and
+decide outcome;
+
+if (All items approved?) then (yes)
+  |PM Agent|
+  :BIA-103 Record approval
+and close sprint;
+  stop
+else (no)
+  |PM Agent|
+  repeat
+    :BIA-103 Route correction
+    handoffs;
+    |Specialist Agents|
+    :Revise flagged artifacts;
+    |PM Agent|
+    :Re-open review cycle;
+    |User|
+    :Re-review revised outputs;
+    |PM Agent|
+    :Process updated decisions;
+    if (Approved now?) then (yes)
+      :BIA-103 Record approval
+      and close sprint;
+      stop
+    else (no)
+      :Continue correction loop
+      per user review decision;
+    endif
+  repeat while (Approved now?) is (no)
+endif
+
+@enduml

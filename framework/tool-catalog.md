@@ -55,7 +55,7 @@ Registration: `src/tools/model_mcp/`
 - `model_create_entity`: deterministic entity file create/update
 - `model_create_connection`: deterministic connection file create/update
 - `model_create_diagram`: deterministic PUML diagram file create/update
-- `model_create_matrix`: deterministic matrix diagram markdown create/update
+- `model_create_matrix`: deterministic matrix diagram markdown create/update (supports auto-linking entity IDs plus known skill IDs and local diagram artifact IDs when auto-linking is enabled)
 
 ### 3.4 Watch/Refresh
 

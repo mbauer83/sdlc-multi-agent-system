@@ -113,8 +113,8 @@ Agents author PlantUML source text directly. The model (entity and connection fi
   _archimate-stereotypes.puml     # Shared ArchiMate skinparam + stereotype library (SA-maintained)
 
   diagrams/
-    <phase>-<type>-<subject>[-<domain>]-v<N>.puml   # Viewpoint diagrams
-    <phase>-matrix-<subject>[-<domain>]-v<N>.md     # Cross-reference matrices (dense mappings)
+    <scope>-<type>-<subject>[-<domain>]-v<N>.puml   # Viewpoint diagrams
+    <scope>-matrix-<subject>[-<domain>]-v<N>.md     # Cross-reference matrices (dense mappings)
     ...                                              # Each file carries frontmatter (PUML header for .puml; YAML block for .md)
 
   templates/
@@ -125,6 +125,12 @@ Agents author PlantUML source text directly. The model (entity and connection fi
     <same-stem>.svg               # SVG outputs; committed at sprint boundary
     ...
 ```
+
+Naming rule for `<scope>`:
+
+- Use an ADM phase token (`a`, `b`, `c`, `d`, `e`, `f`, `g`, `h`) only when the diagram is explicitly scoped to that phase's structures and/or behaviors.
+- Otherwise use a purpose/scope token (for example `lifecycle`, `cq`, `sprint-review`, `specialist-invocation`) and avoid phase-prefixed names.
+- Keep `artifact-id`, filename stem, rendered SVG stem, and `@startuml` identifier aligned.
 
 **Rendering path invariant (mandatory):** Rendered SVG output path is always the sibling `diagram-catalog/rendered/` directory of `diagram-catalog/diagrams/`. Rendering into `diagram-catalog/diagrams/rendered/` is invalid and must be removed if found.
 
@@ -243,7 +249,13 @@ For each entity that will appear in the diagram, confirm the required `§display
 
 **D3b — Activity/BPMN diagrams:** swimlane pool labels come from entity `§display ###activity` blocks (`swimlane-label`). Flow arrows come from connection `§display ###activity` blocks.
 
-**D3c:** Write the `.puml` file via `write_artifact`. Filename: `<phase>-<type>-<subject>[-<domain>]-v<N>.puml`.
+Activity/BPMN authoring lint (run before `D4` validation):
+- Decision uniqueness: no duplicate predicate decisions in immediate sequence.
+- Branch usefulness: each decision branch has distinct downstream work/target.
+- Loop minimality: one explicit loopback guard per loop; all rework branches route to that guard's merge/entry target.
+- Loop policy split: user-initiated loops should show explicit continue/approve/stop outcomes without fixed auto-cap; automated agent loops must show max-iteration and overflow target.
+
+**D3c:** Write the `.puml` file via `write_artifact`. Filename: `<scope>-<type>-<subject>[-<domain>]-v<N>.puml`.
 
 **D3d:** Ensure the PUML file begins with the required frontmatter comment block (see §9). The frontmatter is the diagram's registry entry — no separate `index.yaml` exists.
 
@@ -375,6 +387,14 @@ Use synchronous/asynchronous/return semantics exactly as modeled.
 Keep business-layer and application-layer activity scopes separate unless showing a single explicit handoff boundary.
 Always label branch outcomes (`yes/no`, `pass/fail`) and map swimlanes to model entities.
 
+Control-flow normalization rules (mandatory):
+- Use one authoritative decision/guard per predicate in a local control segment (for example a single `Targeted rework required?` loop guard).
+- Do not chain semantically equivalent decisions with immediate convergence (for example `All outputs approved?` followed directly by `Targeted rework required?` with no intervening branch-specific work).
+- If two candidate decision nodes express the same predicate, keep the downstream loop/stage-gate guard and replace the upstream one with a state-derivation activity, or remove the redundant node.
+- Every decision node must have at least one branch-specific action or distinct target before reconvergence; otherwise collapse it.
+- User-requested review/rework loops are not hard-capped in workflow diagrams; users may continue correction cycles until explicit approval or explicit stop/pause outcome.
+- Automated agent-initiated rework loops (for example task-specification retries or fast-path technical rework) should declare bounded iteration counts and explicit overflow handling.
+
 ## 8. Write Authority
 
 | Operation | SA | Non-SA agents |
@@ -398,9 +418,9 @@ The header comment block uses PUML line-comment syntax (`' `). ModelRegistry str
 
 ```plantuml
 ' ---
-' artifact-id: phase-b-archimate-business-v1
+' artifact-id: business-archimate-structural-v1
 ' artifact-type: diagram
-' name: "Business Architecture — Agent Roles and Services"
+' name: "Business Architecture — Structural Viewpoint"
 ' diagram-type: archimate-business
 ' version: 0.1.0
 ' status: draft
@@ -948,7 +968,7 @@ Minimum 3–7 stages per value stream. A VS entity with no stages documented is 
 
 The set of business objects (`BOB-NNN`) and business interfaces (`BIF-NNN`) for an engagement must form a **globally coherent concept map**: every object is traceable to at least one VS stage and is read or written by at least one BPR, BIA, or BSV. Business events (`BEV-NNN`) that trigger process transitions are identified at this step, not later.
 
-**A dedicated concept map diagram (`b-archimate-business-concept-v1.puml`) is always required** — it makes the BOB↔DOB cross-layer mappings and the BEV→BPR→BOB trigger-to-object flow explicit in a single place. File naming: `b-archimate-business-concept-v1.puml`. The diagram must show: all BOB entities with their BPR access connections (access lines), all BEV entities with their BPR triggering connections, and a note listing BOB↔DOB cross-layer associations.
+**A dedicated concept map diagram (`business-archimate-concept-v1.puml`) is always required** — it makes the BOB↔DOB cross-layer mappings and the BEV→BPR→BOB trigger-to-object flow explicit in a single place. File naming: `business-archimate-concept-v1.puml`. The diagram must show: all BOB entities with their BPR access connections (access lines), all BEV entities with their BPR triggering connections, and a note listing BOB↔DOB cross-layer associations.
 
 **BOBs also appear in operational viewpoint diagrams.** Each `BOB-NNN` accessed by a process in the operational cluster must be included in the corresponding operational diagram as well as in the concept map. This is not duplication — the concept map shows the full set and cross-layer mappings; operational diagrams show which objects are relevant to each process cluster. BOBs must NOT appear in structural viewpoint diagrams (structural = functions/roles/services, no objects).
 

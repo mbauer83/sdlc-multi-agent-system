@@ -37,7 +37,7 @@ scenarios("features/diagram_verifier.feature")
 def valid_diagram(tmp_path: Path) -> Path:
     diag_dir = tmp_path / "diagram-catalog" / "diagrams"
     return write_diagram(
-        diag_dir / "phase-c-archimate-application-v1.puml", VALID_ARCHIMATE_DIAGRAM
+        diag_dir / "phase-application-archimate-component-map-v1.puml", VALID_ARCHIMATE_DIAGRAM
     )
 
 
@@ -77,7 +77,7 @@ def diagram_bad_yaml(tmp_path: Path) -> Path:
 def diagram_missing_field(tmp_path: Path) -> Path:
     content = VALID_ARCHIMATE_DIAGRAM.replace("' diagram-type: archimate-application\n", "")
     diag_dir = tmp_path / "diagram-catalog" / "diagrams"
-    return write_diagram(diag_dir / "phase-c-archimate-application-v1.puml", content)
+    return write_diagram(diag_dir / "phase-application-archimate-component-map-v1.puml", content)
 
 
 @given(
@@ -90,7 +90,7 @@ def diagram_unknown_entity(tmp_path: Path) -> Path:
         "' entity-ids-used: [APP-001, APP-016, APP-999]",
     )
     diag_dir = tmp_path / "diagram-catalog" / "diagrams"
-    return write_diagram(diag_dir / "phase-c-archimate-application-v1.puml", content)
+    return write_diagram(diag_dir / "phase-application-archimate-component-map-v1.puml", content)
 
 
 @given(
@@ -103,7 +103,7 @@ def diagram_unknown_connection(tmp_path: Path) -> Path:
         "' connection-ids-used: [APP-001---APP-016@@archimate-serving, APP-001---APP-999@@archimate-serving]",
     )
     diag_dir = tmp_path / "diagram-catalog" / "diagrams"
-    return write_diagram(diag_dir / "phase-c-archimate-application-v1.puml", content)
+    return write_diagram(diag_dir / "phase-application-archimate-component-map-v1.puml", content)
 
 
 @given(
@@ -113,7 +113,7 @@ def diagram_unknown_connection(tmp_path: Path) -> Path:
 def diagram_baselined_draft_entity(tmp_path: Path) -> Path:
     content = VALID_ARCHIMATE_DIAGRAM.replace("' status: draft", "' status: baselined")
     diag_dir = tmp_path / "diagram-catalog" / "diagrams"
-    return write_diagram(diag_dir / "phase-c-archimate-application-v1.puml", content)
+    return write_diagram(diag_dir / "phase-application-archimate-component-map-v1.puml", content)
 
 
 @given(
@@ -123,7 +123,7 @@ def diagram_baselined_draft_entity(tmp_path: Path) -> Path:
 def diagram_draft_draft_entity(tmp_path: Path) -> Path:
     # VALID_ARCHIMATE_DIAGRAM is already draft with APP-001 in entity-ids-used
     diag_dir = tmp_path / "diagram-catalog" / "diagrams"
-    return write_diagram(diag_dir / "phase-c-archimate-application-v1.puml", VALID_ARCHIMATE_DIAGRAM)
+    return write_diagram(diag_dir / "phase-application-archimate-component-map-v1.puml", VALID_ARCHIMATE_DIAGRAM)
 
 
 @given("an ArchiMate diagram that does not include _macros.puml", target_fixture="diagram_file")
@@ -132,7 +132,7 @@ def diagram_no_macros(tmp_path: Path) -> Path:
         "!include ../_macros.puml\n", ""
     ).replace("!include ../_archimate-stereotypes.puml\n", "")
     diag_dir = tmp_path / "diagram-catalog" / "diagrams"
-    return write_diagram(diag_dir / "phase-c-archimate-application-v1.puml", content)
+    return write_diagram(diag_dir / "phase-application-archimate-component-map-v1.puml", content)
 
 
 @given(
@@ -142,28 +142,28 @@ def diagram_no_macros(tmp_path: Path) -> Path:
 def diagram_no_stereotypes(tmp_path: Path) -> Path:
     content = VALID_ARCHIMATE_DIAGRAM.replace("!include ../_archimate-stereotypes.puml\n", "")
     diag_dir = tmp_path / "diagram-catalog" / "diagrams"
-    return write_diagram(diag_dir / "phase-c-archimate-application-v1.puml", content)
+    return write_diagram(diag_dir / "phase-application-archimate-component-map-v1.puml", content)
 
 
 @given("a diagram file without @startuml", target_fixture="diagram_file")
 def diagram_no_startuml(tmp_path: Path) -> Path:
     content = VALID_ARCHIMATE_DIAGRAM.replace("@startuml\n", "")
     diag_dir = tmp_path / "diagram-catalog" / "diagrams"
-    return write_diagram(diag_dir / "phase-c-archimate-application-v1.puml", content)
+    return write_diagram(diag_dir / "phase-application-archimate-component-map-v1.puml", content)
 
 
 @given("a diagram file without @enduml", target_fixture="diagram_file")
 def diagram_no_enduml(tmp_path: Path) -> Path:
     content = VALID_ARCHIMATE_DIAGRAM.replace("@enduml\n", "")
     diag_dir = tmp_path / "diagram-catalog" / "diagrams"
-    return write_diagram(diag_dir / "phase-c-archimate-application-v1.puml", content)
+    return write_diagram(diag_dir / "phase-application-archimate-component-map-v1.puml", content)
 
 
 @given("a diagram file without a visible title line", target_fixture="diagram_file")
 def diagram_no_title(tmp_path: Path) -> Path:
     content = VALID_ARCHIMATE_DIAGRAM.replace("title Application Architecture\n", "")
     diag_dir = tmp_path / "diagram-catalog" / "diagrams"
-    return write_diagram(diag_dir / "phase-c-archimate-application-v1.puml", content)
+    return write_diagram(diag_dir / "phase-application-archimate-component-map-v1.puml", content)
 
 
 @given(

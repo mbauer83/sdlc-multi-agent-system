@@ -1,0 +1,109 @@
+' ---
+' artifact-id: g-activity-pm-phase-g-governance-workflow-v1
+' artifact-type: diagram
+' diagram-type: activity-bpmn
+' name: "Phase G \u2014 PM Governance Workflow Net"
+' version: 0.2.0
+' status: draft
+' phase-produced: G
+' owner-agent: PM
+' engagement: ENG-001
+' domain: core-platform
+' purpose: Agent-phase workflow net for PM Phase G governance including sprint kickoff
+'   handoff intake from specialist-invocation completion, bounded fast-path
+'   algedonic decisions, configurable pre-sprint-review stage-gate artifact
+'   approval with user-driven rework loopback, sprint-review interaction handoff,
+'   and gate/close decisions.
+' entity-ids-used:
+' - ACT-001
+' - ACT-002
+' - ACT-003
+' - ACT-010
+' - BPR-004
+' - BPR-005
+' - BIA-001
+' ---
+@startuml g-activity-pm-phase-g-governance-workflow-v1
+title Phase G — PM Governance Workflow Net
+
+skinparam activity {
+  BackgroundColor AliceBlue
+  BorderColor SteelBlue
+  DiamondBackgroundColor LightYellow
+  DiamondBorderColor DarkGoldenrod
+  ArrowColor SteelBlue
+  FontSize 11
+}
+skinparam swimlane {
+  BorderColor CadetBlue
+  TitleFontStyle bold
+}
+
+|Project Manager|
+start
+:Step 0.L Query learnings
+(query_learnings);
+:Receive specialist completion package
+from specialist-invocation workflow;
+
+if (Algedonic raised for this phase?) then (yes)
+  |CSCO Agent|
+  :Fast-path safety review;
+  |User|
+  :Review CSCO assessment and
+  provide advisory notes;
+  |Project Manager|
+  :Increment fast-path rework
+  iteration count;
+  if (Decision after fast-path review?) then (continue)
+    if (Fast-path rework iteration <= 1?) then (yes)
+      :Request targeted rework via
+      specialist-invocation workflow;
+      :Await revised phase outputs;
+    else (no)
+      :Record hold/replan and
+      require explicit user decision;
+      stop
+    endif
+  elseif (pause)
+    :Record pause decision and
+    await resume trigger;
+    stop
+  else (stop)
+    :Record stop decision and
+    close engagement path;
+    stop
+  endif
+else (no)
+endif
+
+repeat
+  :Collect compliance evidence;
+  :Evaluate review-gates policy for
+  phase-output artifact approval;
+  if (Blocking user review required?) then (yes)
+    |User|
+    :Review phase-output artifacts
+    (pre-sprint-review stage-gate);
+    |Project Manager|
+    :Derive targeted rework requirement
+    from review decision;
+  else (no)
+    |Project Manager|
+    :Set targeted rework required = no;
+  endif
+repeat while (Targeted rework required?) is (yes) not (no)
+
+|Project Manager|
+:Run BPR-004 gate evaluation;
+if (Gate passed?) then (yes)
+  :Trigger BIA-001 Sprint Review
+  Interaction (separate workflow-net:
+  sprint-review-activity-workflow-v1);
+  :Await BIA-001 outcome events and
+  continue PM close/rework routing;
+else (no)
+  :Record hold and replan;
+endif
+stop
+@enduml

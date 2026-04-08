@@ -782,13 +782,13 @@ Enumerate specific connection files. Each is an `.md` file with frontmatter and 
 
 Seven diagrams. Each has a stated **implementation purpose** — what Stage 5 decision or module it specifies. Diagrams are prescribed at the level of content and grouping; the SA authors the actual PUML.
 
-- [x] **`phase-b-archimate-business-v1.puml`** ✅ v0.3.0 — fully connected. Owner: SA. 35 entity IDs, 39 connection IDs (17 assignment + 14 BPR→BSV realization + 7 BPR→CAP realization + 1 BCO-001→BPR-007). Six groups with `<<Grouping>>` stereotypes.
+- [x] **`business-archimate-combined-v1.puml`** ✅ v0.3.0 — fully connected. Owner: SA. 35 entity IDs, 39 connection IDs (17 assignment + 14 BPR→BSV realization + 7 BPR→CAP realization + 1 BCO-001→BPR-007). Six groups with `<<Grouping>>` stereotypes.
   *Purpose:* Defines agent role taxonomy and SDLC process model used in all Stage 5 agent module naming and EventStore event routing.
   *Semantic corrections applied:* ACT-002..ACT-010 → `BusinessRole`; ACT-011 → `BusinessCollaboration` renamed BCO-001 (correct prefix per §4 of artifact-registry-design.md); ACT-001 stays `BusinessActor`. BCO-001 alias corrected to `BCO_001` in `_macros.puml`.
   *Connection additions:* All 6 unconnected specialist roles (ACT-005..010) now assigned to BPR-002; ACT-010 additionally assigned to BPR-004 (gate authority) and BPR-005 (algedonic authority); ACT-002 assigned to BPR-005 (algedonic handler); all 5 orphan BSVs (BSV-004..008) now realized by BPR-002; BPR-008 also realizes BSV-001; all 6 CAPs now realized by appropriate BPRs (cross-layer, rendered in steel blue). No entity remains unconnected.
   *User is head/final authority of Architecture Board* (BCO-001 entity content updated).
 
-- [x] **`phase-c-archimate-application-v1.puml`** ✅ v0.2.0 — layer-boundary and grouping corrections. Owner: SwA. 27+5 entity IDs (27 application-layer + 4 BSV + 1 ACT cross-layer boundary), 32 connection IDs. `skinparam rankdir LR`.
+- [x] **`application-archimate-component-map-v1.puml`** ✅ v0.2.0 — layer-boundary and grouping corrections. Owner: SwA. 27+5 entity IDs (27 application-layer + 4 BSV + 1 ACT cross-layer boundary), 32 connection IDs. `skinparam rankdir LR`.
   *Purpose:* Primary implementation map for Stage 5b — every box is a Python module; every serving connection is a function call boundary.
   *Corrections applied:* `<<Grouping>>` added to all 5 outer containers; cross-layer boundary elements (BSV_001/002/003/009, ACT_001) declared outside groups; 4 APP→BSV cross-layer realization arrows added; APP_020→ACT_001 serving connection added.
   *Grouping — five `<<Grouping>>` rectangles:*
@@ -798,25 +798,25 @@ Seven diagrams. Each has a stated **implementation purpose** — what Stage 5 de
   - **Orchestration** (APP-016 LangGraph, APP-017 Session, APP-018 UIO, APP-019 Promotion; AIF-001) — `src/orchestration/`
   - **Dashboard & Interaction** (APP-020 DashboardServer, APP-021 UserInputGateway; AIF-003, APP-022 TargetRepoManager) — `src/dashboard/ + src/sources/`
 
-- [x] **`phase-c-class-er-v1.puml`** ✅ present and semantically aligned to persisted DOB scope.
+- [x] **`application-class-er-domain-model-v1.puml`** ✅ present and semantically aligned to persisted DOB scope.
   *Purpose:* Pydantic model specification for `src/models/` — field names in this diagram are the authoritative attribute names used in Stage 5 code.
   *Scope:* The eight persisted domain objects that flow through EventStore and define workflow state: DOB-001 (WorkflowEvent), DOB-002 (Engagement), DOB-003 (LearningEntry), DOB-004 (ClarificationRequest), DOB-005 (AlgedonicSignal), DOB-006 (HandoffRecord), DOB-007 (GateOutcome), DOB-008 (ReviewItem). Runtime-only objects (DOB-009 WorkflowState, DOB-010 AgentDeps, DOB-011 PMDecision, DOB-012 SDLCGraphState, DOB-013 ArtifactRecord) are in the model but excluded from this diagram — they have no ER relationships to show.
   *Contents:* Each DOB as a PlantUML class with attribute list (name: type). ER connections with cardinalities per `connections/er/` entries. `DOB-002 Engagement` at top-left as aggregate root; `DOB-001 WorkflowEvent` as the central hub entity.
 
-- [x] **`phase-b-activity-sprint-v1.puml`** ✅ present and aligned to sprint lifecycle + review loop.
+- [x] **`lifecycle-activity-sprint-v1.puml`** ✅ present and aligned to sprint lifecycle + review loop.
   *Purpose:* LangGraph graph topology specification for Stage 5c — every decision diamond maps to a routing function; every action box maps to a node implementation.
   *Contents:* Full ADM sprint lifecycle as UML activity diagram. Start fork: entry point selection (EP-0 through EP-H). Main path: Sprint Planning (BPR-001) → Phase Execution (BPR-002, loop per agent per phase) → Gate Evaluation (BPR-004) → decision: gate passed? → next phase or return. Branches: (1) CQ suspension fork from any phase execution node → await `cq.answered` → resume; (2) Algedonic bypass from any node → ALG handler → resolution → resume or halt; (3) Sprint review branch after each sprint close: decision `sprint-review.enabled?` → if true: `review.pending` → await `review.submitted` → corrections loop → sprint close; if false: direct close. End: Engagement Complete.
   *Swim-lanes:* PM (planning/gating/review), Agent (execution), User (CQ answers/review), EventStore (state writes at each transition).
 
-- [x] **`phase-g-activity-skill-invocation-v1.puml`** ✅ added (session 15).
+- [x] **`specialist-invocation-activity-workflow-v1.puml`** ✅ added (session 15).
   *Purpose:* Business-process activity/BPMN view of Phase G specialist invocation and sub-process execution boundaries.
   *Contents:* Swimlanes for PM, Specialist, and CSCO roles; progression through BPR-001 → BPR-201 → BPR-202 → BPR-203 → BPR-004 with CQ and algedonic branches.
 
-- [x] **`phase-c-activity-cq-lifecycle-v1.puml`** ✅ added (session 15).
+- [x] **`cq-activity-lifecycle-v1.puml`** ✅ added (session 15).
   *Purpose:* Business-process activity/BPMN view of BPR-003 CQ lifecycle (route, await, integrate, resume).
   *Contents:* Swimlanes for Specialist, PM, and User; explicit BPR-301 → BPR-302 → BPR-303 flow with resume handoff back to specialist execution.
 
-- [x] **`phase-c-activity-sprint-review-v1.puml`** ✅ added (session 15).
+- [x] **`sprint-review-activity-workflow-v1.puml`** ✅ added (session 15).
   *Purpose:* Business-interaction activity/BPMN view of BIA-001 sprint review loop.
   *Contents:* Swimlanes for PM, User, Specialist; staged interaction BIA-101 → BIA-102 → BIA-103 and correction loop until approval closure.
 
@@ -1159,6 +1159,8 @@ This subsection is the canonical review-control model for dashboard-driven human
 3. Behavior:
   - `blocking: true` -> downstream dependent workflow nodes must wait for user approval.
   - `blocking: false` -> workflow may proceed while review remains advisory.
+  - For blocking phase-stage gates, any `needs-revision` or non-approved item routes back into the existing specialist phase-work control loop (same CQ/algedonic paths), not into a separate ad-hoc rework branch.
+  - In workflow-net diagrams, this loopback must terminate on the explicit specialist-lane rework merge node immediately before phase skill execution.
 4. Enforcement point: orchestration layer (`review_processing_node` + stage-transition routing guards), not skill prose.
 5. Required events: `review.pending`, `review.submitted`, `review.correction-routed`, `review.sprint-closed`.
 6. UI contract: dashboard Review view must display per-item decision state and blocking status before submit.
@@ -1191,6 +1193,7 @@ This subsection is the canonical review-control model for dashboard-driven human
    - `needs-revision` items: if `agent_tag` present → `handoff.created` to tagged agent with comment as revision instruction; if no tag → PM classifies and routes to accountable agent per RACI matrix.
    - `approved` items: sprint proceeds; `review.sprint-closed` event emitted; `sprint.close` follows.
 6. Revision items re-enter the normal skill invocation cycle. PM may trigger another sprint review if significant revisions were made (determined by PM based on revision scope).
+7. Gate ownership remains PM/CSCO-governed: `BPR-004` gate evaluation is executed by PM orchestration with CSCO vote authority where applicable, never by the user.
 
 **File upload detail (`/uploads` and `/queries` attach):**
 
@@ -1284,7 +1287,64 @@ This subsection is the canonical review-control model for dashboard-driven human
 
 ## Current State & Immediate Next Actions
 
-**Stages 1–4.9f complete. ModelVerifier complete (71 BDD tests). Stage 4.9f diagrams are now 7/7 complete, rendered, and verified (`model_verify_all`: 0 errors, 0 warnings). Slice A framework MCP freshness/path parity is validated by targeted `uv run pytest` tests. `src/common/model_query.py` complete.**
+**Stages 1–4.9f complete. ModelVerifier complete (71 BDD tests). Stage 4.9f core diagrams remain 7/7 complete; diagram naming is now scope-based and workflow-net activity coverage is expanded (core set + additional workflow-net views), rendered, and verified (`model_verify_all`: 0 errors, 0 warnings). Slice A framework MCP freshness/path parity is validated by targeted `uv run pytest` tests. `src/common/model_query.py` complete.**
+
+### Immediate next actions
+
+- Execute pending Stage 4.8g Skill/Agent Alignment Audit checklist (reverse-architecture skills, `write_artifact` wording, discovery Step 0 alignment, runtime/discovery framework docs consistency).
+- Keep phase-token naming only for truly phase-scoped workflow diagrams; continue scope/purpose naming for cross-phase or domain views.
+- Maintain PM-G as a phase-scoped governance net and avoid reintroducing sprint-lifecycle internals owned by `lifecycle-activity-sprint-v1` and `sprint-review-activity-workflow-v1`.
+
+### Completed this session (2026-04-08 — session 17)
+
+- **PM-G workflow cleanup completed (control-flow + labeling):**
+  - Removed duplicate/superfluous decision-node pattern around targeted rework.
+  - Removed redundant intermediate targeted-rework handoff/wait activities in the lower loop.
+  - Preserved semantically correct loop behavior; explicit `no` exit label retained to BPR-004 evaluation path.
+
+- **Diagram naming normalization completed across broader non-phase sets:**
+  - Renamed non-phase-prefixed artifacts in motivation/business/application/usecase families to scope/purpose-based IDs.
+  - Updated frontmatter `artifact-id`, `@startuml` identifiers, in-repo references, and rendered SVG filenames.
+  - Re-rendered canonical outputs to sibling `diagram-catalog/rendered/` only.
+
+- **Validation:**
+  - `ModelVerifier.verify_all(...)` run after renames and PM-G updates: **2016 files, 0 errors**.
+
+### Completed this session (2026-04-08 — session 16)
+
+- **Framework-first naming-contract update completed:**
+  - Updated diagram filename policy from phase-forced to scope-based across framework contracts.
+  - `framework/diagram-conventions.md`: `<scope>-...` pattern with explicit rule: use phase token only when phase-scoped.
+  - Aligned examples in `framework/artifact-registry-design.md`, `framework/repository-conventions.md`, and `framework/artifact-schemas/diagram-catalog.schema.md`.
+
+- **ENG-001 diagram normalization completed (rename + reference sweep):**
+  - Renamed phase-prefixed diagrams to scope-appropriate IDs where needed:
+    - `phase-b-archimate-business-v1` -> `business-archimate-combined-v1`
+    - `phase-application-archimate-component-map-v1` -> `application-archimate-component-map-v1`
+    - `phase-application-class-er-domain-model-v1` -> `application-class-er-domain-model-v1`
+    - `phase-b-activity-sprint-v1` -> `lifecycle-activity-sprint-v1`
+    - `phase-c-activity-cq-lifecycle-v1` -> `cq-activity-lifecycle-v1`
+    - `phase-c-activity-sprint-review-v1` -> `sprint-review-activity-workflow-v1`
+    - `phase-g-activity-skill-invocation-v1` -> `specialist-invocation-activity-workflow-v1`
+  - Updated frontmatter `artifact-id`, `@startuml` identifiers, and in-repo references.
+  - Removed non-canonical rendered leftovers from `diagram-catalog/diagrams/`.
+
+- **Workflow-net modeling expansion (agent-phase focused):**
+  - Added new activity/BPMN workflow nets:
+    - `b-activity-sa-phase-b-workflow-v1.puml`
+    - `c-activity-swa-phase-c-application-workflow-v1.puml`
+    - `g-activity-pm-phase-g-governance-workflow-v1.puml`
+  - Added coverage matrix artifact:
+    - `workflow-net-matrix-agent-phase-skill-coverage-v1.md`
+  - Aligned runtime/authoring guidance in:
+    - `framework/orchestration-topology.md`
+    - `agents/solution-architect/skills/phase-b.md`
+    - `agents/software-architect/skills/phase-c-application.md`
+    - `agents/project-manager/skills/phase-g.md`
+
+- **Validation and rendering:**
+  - Re-rendered modified/new PUML files to canonical sibling `diagram-catalog/rendered/`.
+  - Ran verifier: `uv run ... ModelVerifier.verify_all(...)` -> **2016 files, 0 errors, 0 warnings**.
 
 ### Completed this session (2026-04-08 — session 15)
 
@@ -1294,9 +1354,9 @@ This subsection is the canonical review-control model for dashboard-driven human
 
 - **Slice B completed (Wave 3 Stage 4.9f):**
   - Added business workflow activity/BPMN diagrams:
-    - `phase-g-activity-skill-invocation-v1.puml`
-    - `phase-c-activity-cq-lifecycle-v1.puml`
-    - `phase-c-activity-sprint-review-v1.puml`
+    - `specialist-invocation-activity-workflow-v1.puml`
+    - `cq-activity-lifecycle-v1.puml`
+    - `sprint-review-activity-workflow-v1.puml`
   - Added supporting business-flow model artifacts under `connections/activity/sequence-flow/`.
   - Rendered canonical SVG outputs in sibling `diagram-catalog/rendered/`.
   - Ran `model_verify_all` for engagement scope: 0 errors, 0 warnings.
@@ -1327,9 +1387,6 @@ This subsection is the canonical review-control model for dashboard-driven human
   - Added deterministic required frontmatter contract for diagram artifacts and verifier/tooling contract references (`model_create_diagram`, `model_create_matrix`, `model_verify_*`).
   - `framework/orchestration-topology.md` updated with an agent-phase workflow decomposition contract defining deterministic vs agentic step mapping, decision/suspension handling, and fan-out constraints.
   - `framework/clarification-protocol.md` updated with explicit inter-agent clarification boundary: no separate agent-to-agent CQ channel; use feedback/handoff + PM arbitration.
-
-- **Framework MCP discovery tooling feedback captured for future refinement:**
-  - Added `docs/framework-tools-improvements.md` with concrete issues and prioritized enhancements from query-first execution (section-id addressing, type-prioritized search, compact projections, aggregate endpoints, unknown-section suggestions).
 
 ### Completed this session (2026-04-08 — session 12)
 
@@ -1390,8 +1447,8 @@ This subsection is the canonical review-control model for dashboard-driven human
 - **ENG-001 model implemented for outcome-evidence traceability:**
   - Added entity sets: `OUT-001..002`, `COA-001..002`, `VAL-001..002` with ERP-compliant files and display specs.
   - Added motivation/strategy/business cross-layer connections linking stakeholder intent to operational evidence and value-stream value.
-  - Added new diagram: `a-archimate-motivation-outcome-course-value-traceability-v1.puml` and rendered SVG.
-  - Repaired stale BPR-006 aliases in `b-archimate-business-concept-v1.puml` and `phase-b-archimate-business-v1.puml`.
+  - Added new diagram: `motivation-archimate-outcome-course-value-traceability-v1.puml` and rendered SVG.
+  - Repaired stale BPR-006 aliases in `business-archimate-concept-v1.puml` and `business-archimate-combined-v1.puml`.
   - Full verifier run via `uv run`: **2001 files, 0 errors**.
 
 ### Completed this session (2026-04-06 — session 7)
@@ -1469,11 +1526,11 @@ This subsection is the canonical review-control model for dashboard-driven human
 
 - **`src/common/model_verifier.py` — E306/E307 draft-reference checks**: `ModelRegistry` now provides `entity_status(id)` and `connection_status(id)` — each uses a targeted single-file lookup when the full cache is cold (O(1) cache hit; O(n) walk only on cold miss), avoiding full scans for individual status checks. Bulk access via `entity_statuses()` / `connection_statuses()` triggers one lazy scan and caches results. E306 (baselined diagram references draft entity) and E307 (baselined diagram references draft connection) added to `_check_diagram_references`; both are suppressed for draft diagrams (draft→draft-element is allowed during in-sprint authoring). 2 new BDD scenarios; 71 tests passing.
 
-- **PlantUML alias hyphen-vs-underscore fix**: `phase-c-class-er-v1.puml` corrected: all PUML element aliases changed from `DOB-NNN` (hyphen) to `DOB_NNN` (underscore); PlantUML treats `-` as arithmetic in identifier contexts. `framework/diagram-conventions.md §7.er` template and rule updated to match (was incorrectly specifying hyphenated aliases).
+- **PlantUML alias hyphen-vs-underscore fix**: `application-class-er-domain-model-v1.puml` corrected: all PUML element aliases changed from `DOB-NNN` (hyphen) to `DOB_NNN` (underscore); PlantUML treats `-` as arithmetic in identifier contexts. `framework/diagram-conventions.md §7.er` template and rule updated to match (was incorrectly specifying hyphenated aliases).
 
 - **Entity filename convention** — New format `[TYPEABBR-###].[friendly-name].md` adopted. All 98 entity files renamed; BCO-001 (formerly ACT-011) renamed with correct prefix. `src/common/model_verifier.py` updated: `entity_id_from_path()` public utility added (single point for formal-ID extraction from filename, ignoring friendly-name suffix); `_check_artifact_id_entity()` now validates filename prefix (E104); `ModelRegistry.find_file_by_id()` added. `framework/artifact-registry-design.md §3.0` documents the convention. BDD test suite updated: 33 tests passing.
 - **BCO-001 (Architecture Board) correction** — BusinessCollaboration prefix corrected from `ACT` → `BCO` per artifact-registry-design.md §4. Entity file renamed, frontmatter `artifact-id` updated, alias `BCO_001` in `§display`. Connection `ACT-011---BPR-007.md` renamed to `BCO-001---BPR-007.md`. `_macros.puml` regenerated (`DECL_BCO_001` now correct). BCO-001 entity content updated: User is explicitly head/final authority of the Architecture Board; SA and SwA are participating members.
-- **Phase-B diagram — complete connectivity** — `phase-b-archimate-business-v1.puml` updated to v0.3.0: 9 new assignment connections (all specialist roles now assigned to BPR-002; CSCO additionally to BPR-004/005; PM to BPR-005); all 5 orphan BSVs realised by BPR-002; BPR-008 realises BSV-001; 7 new BPR→CAP realization connections (cross-layer, steel blue). 9 new assignment + 7 new BPR→CAP realization connection files created. Total: 17 assignment + 22 realization connection files. No entity in phase-b is now unconnected. ModelVerifier: 204 files, 0 errors.
+- **Phase-B diagram — complete connectivity** — `business-archimate-combined-v1.puml` updated to v0.3.0: 9 new assignment connections (all specialist roles now assigned to BPR-002; CSCO additionally to BPR-004/005; PM to BPR-005); all 5 orphan BSVs realised by BPR-002; BPR-008 realises BSV-001; 7 new BPR→CAP realization connections (cross-layer, steel blue). 9 new assignment + 7 new BPR→CAP realization connection files created. Total: 17 assignment + 22 realization connection files. No entity in phase-b is now unconnected. ModelVerifier: 204 files, 0 errors.
 - **README + diagram-conventions.md** — Activity diagram description corrected to cover three scopes: (1) external business processes of the client organisation (Phase B), (2) process logic within the software being built (Phase C), (3) ENG-001 meta-level (framework orchestration, binding spec for `src/orchestration/`). `diagram-conventions.md §7.activity-bpmn` updated with separate business-layer and application-layer templates and rules. Version bumped to 2.2.0.
 
 ### Resume at: Stage 5 implementation
@@ -1482,9 +1539,9 @@ This subsection is the canonical review-control model for dashboard-driven human
 
 Completion evidence:
 1. Added remaining activity/BPMN workflow diagrams:
-  - `phase-g-activity-skill-invocation-v1.puml`
-  - `phase-c-activity-cq-lifecycle-v1.puml`
-  - `phase-c-activity-sprint-review-v1.puml`
+  - `specialist-invocation-activity-workflow-v1.puml`
+  - `cq-activity-lifecycle-v1.puml`
+  - `sprint-review-activity-workflow-v1.puml`
 2. Added supporting activity sequence-flow connection artifacts:
   - `BPR-001---BPR-002`, `BPR-201---BPR-202`, `BPR-202---BPR-203`, `BPR-002---BPR-004`
   - `BPR-301---BPR-302`, `BPR-302---BPR-303`
@@ -1495,7 +1552,7 @@ Completion evidence:
 **`src/common/model_query.py` pre-empts Stage 5b `src/common/model_registry.py` (in-memory tier only).** The production Stage 5b model registry adds: SQLite FTS5 full-text index, `watchdog` filesystem listener for incremental refresh, sqlite-vec embedding tier, and thread-safety (`threading.RLock`). `model_query.py`'s `ModelRepository` provides the in-memory query API that the Stage 5b tools delegate to; the interface (`list_artifacts`, `search_artifacts`, `read_artifact`) is already production-ready and will not change.
 
 **Stage 4.9e** — ✅ Complete: 115 connection files (original 89 + 9 new assignment + 7 new BPR→CAP realization).
-**Stage 4.9f** — ✅ Complete: 7/7 diagrams done, semantically corrected, rendered to SVG, verifier clean (0 errors, 0 warnings).
+**Stage 4.9f** — ✅ Complete: core 7/7 diagrams done, semantically corrected, rendered to SVG, verifier clean (0 errors, 0 warnings); additional workflow-net activity views added in session 16.
 **`_macros.puml`** — ✅ Regenerated: 99 macros, BCO_001 alias correct.
 
 **Stage 4.9** — ENG-001 reference model: entity files, connection files, `_macros.puml`, and seven PUML diagrams. Documents the SDLC system itself. Serves as integration test fixture. Entity ownership reflects Stage 4.8h model (SwA owns APP/DOB entities; SA owns motivation/strategy/business entities).

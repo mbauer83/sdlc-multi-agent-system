@@ -1,0 +1,121 @@
+' ---
+' artifact-id: business-archimate-concept-role-skill-phase-delivery-v1
+' artifact-type: diagram
+' diagram-type: archimate-business
+' name: Business Architecture - Role Skill Phase Map (delivery)
+' version: 0.1.0
+' status: draft
+' phase-produced: B
+' owner-agent: SA
+' engagement: ENG-001
+' purpose: Granular mapping of roles to specific skills and ADM phases for delivery
+'   cluster.
+' entity-ids-used:
+' - ACT-005
+' - ACT-006
+' - ACT-007
+' - BOB-107
+' - BOB-108
+' - BOB-109
+' - BOB-110
+' - BOB-111
+' - BOB-208
+' - BOB-209
+' - BOB-210
+' - BOB-211
+' - BOB-212
+' - BOB-213
+' - BOB-214
+' - BOB-226
+' - BOB-227
+' - BOB-228
+' connection-ids-used:
+' - ACT-005---BOB-211@@archimate-association
+' - ACT-005---BOB-212@@archimate-association
+' - ACT-005---BOB-213@@archimate-association
+' - ACT-005---BOB-214@@archimate-association
+' - ACT-006---BOB-208@@archimate-association
+' - ACT-006---BOB-209@@archimate-association
+' - ACT-006---BOB-210@@archimate-association
+' - ACT-007---BOB-226@@archimate-association
+' - ACT-007---BOB-227@@archimate-association
+' - ACT-007---BOB-228@@archimate-association
+' - BOB-208---BOB-108@@archimate-association
+' - BOB-209---BOB-109@@archimate-association
+' - BOB-210---BOB-110@@archimate-association
+' - BOB-211---BOB-107@@archimate-association
+' - BOB-212---BOB-108@@archimate-association
+' - BOB-213---BOB-109@@archimate-association
+' - BOB-214---BOB-110@@archimate-association
+' - BOB-226---BOB-108@@archimate-association
+' - BOB-226---BOB-109@@archimate-association
+' - BOB-227---BOB-110@@archimate-association
+' - BOB-228---BOB-111@@archimate-association
+' ---
+@startuml business-archimate-concept-role-skill-phase-delivery-v1
+!include ../_macros.puml
+!include ../_archimate-stereotypes.puml
+title Business Architecture - Role Skill Phase Map (delivery)
+skinparam groupInheritance 1
+skinparam nodesep 30
+skinparam ranksep 45
+skinparam padding 8
+
+rectangle "ADM Phases" <<BusinessGrouping>> as GRP_PHASE {
+  DECL_BOB_103
+  DECL_BOB_104
+  DECL_BOB_105
+  DECL_BOB_106
+  DECL_BOB_107
+  DECL_BOB_108
+  DECL_BOB_109
+  DECL_BOB_110
+  DECL_BOB_111
+}
+
+rectangle "ACT-005 Skills" <<BusinessGrouping>> as GRP_ACT_005 {
+  DECL_ACT_005
+  DECL_BOB_211
+  DECL_BOB_212
+  DECL_BOB_213
+  DECL_BOB_214
+}
+rectangle "ACT-006 Skills" <<BusinessGrouping>> as GRP_ACT_006 {
+  DECL_ACT_006
+  DECL_BOB_208
+  DECL_BOB_209
+  DECL_BOB_210
+}
+rectangle "ACT-007 Skills" <<BusinessGrouping>> as GRP_ACT_007 {
+  DECL_ACT_007
+  DECL_BOB_226
+  DECL_BOB_227
+  DECL_BOB_228
+}
+
+ACT_005 -[#808080]-> BOB_211 : <<association>>
+BOB_211 -[#B8860B]-> BOB_107 : <<association>>
+ACT_005 -[#808080]-> BOB_212 : <<association>>
+BOB_212 -[#B8860B]-> BOB_108 : <<association>>
+ACT_005 -[#808080]-> BOB_213 : <<association>>
+BOB_213 -[#B8860B]-> BOB_109 : <<association>>
+ACT_005 -[#808080]-> BOB_214 : <<association>>
+BOB_214 -[#B8860B]-> BOB_110 : <<association>>
+ACT_006 -[#808080]-> BOB_208 : <<association>>
+BOB_208 -[#B8860B]-> BOB_108 : <<association>>
+ACT_006 -[#808080]-> BOB_209 : <<association>>
+BOB_209 -[#B8860B]-> BOB_109 : <<association>>
+ACT_006 -[#808080]-> BOB_210 : <<association>>
+BOB_210 -[#B8860B]-> BOB_110 : <<association>>
+ACT_007 -[#808080]-> BOB_226 : <<association>>
+BOB_226 -[#B8860B]-> BOB_108 : <<association>>
+BOB_226 -[#B8860B]-> BOB_109 : <<association>>
+ACT_007 -[#808080]-> BOB_227 : <<association>>
+BOB_227 -[#B8860B]-> BOB_110 : <<association>>
+ACT_007 -[#808080]-> BOB_228 : <<association>>
+BOB_228 -[#B8860B]-> BOB_111 : <<association>>
+note as N1
+  Specific role -> skill-id -> phase mappings
+  generated from skill frontmatter trigger-phases.
+end note
+@enduml

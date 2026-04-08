@@ -1,0 +1,73 @@
+' ---
+' artifact-id: c-activity-swa-phase-c-application-workflow-v1
+' artifact-type: diagram
+' diagram-type: activity-bpmn
+' name: "Phase C \u2014 SwA Application Workflow Net"
+' version: 0.1.0
+' status: draft
+' phase-produced: C
+' owner-agent: SwA
+' engagement: ENG-001
+' domain: core-platform
+' purpose: Agent-phase workflow net for SwA Phase C application architecture including
+'   learnings lookup, BA-driven decomposition, cross-layer traceability, and validation
+'   before gate handoff.
+' entity-ids-used:
+' - ACT-001
+' - ACT-002
+' - ACT-004
+' - BPR-002
+' - BPR-003
+' - BPR-004
+' - BSV-001
+' - BSV-002
+' - BSV-009
+' ---
+@startuml c-activity-swa-phase-c-application-workflow-v1
+title Phase C — SwA Application Workflow Net
+
+skinparam activity {
+  BackgroundColor AliceBlue
+  BorderColor SteelBlue
+  DiamondBackgroundColor LightYellow
+  DiamondBorderColor DarkGoldenrod
+  ArrowColor SteelBlue
+  FontSize 11
+}
+skinparam swimlane {
+  BorderColor CadetBlue
+  TitleFontStyle bold
+}
+
+|Software Architect / PE|
+start
+:Step 0.L Query learnings
+(query_learnings);
+:Discovery Scan Step 0
+(read BA, RR, SCO, DA draft);
+:Derive APP/ASV/IFC entities
+from BA BSV/BPR/BFN;
+:Author cross-layer mappings
+(ASV->BPR, ASV->BSV);
+
+if (Missing business detail?) then (yes)
+  :Raise bounded CQ;
+  |Project Manager|
+  :Route CQ to PO/User;
+  |User|
+  :Answer CQ;
+  |Software Architect / PE|
+  :Integrate answer and continue;
+else (no)
+endif
+
+:Produce c-archimate-application and
+interaction views;
+:Run model verification;
+:Create Phase C handoff for PM + CSCO;
+
+|Project Manager|
+:Evaluate gate readiness
+for Phase C baseline;
+stop
+@enduml

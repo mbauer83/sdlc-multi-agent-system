@@ -38,6 +38,10 @@ Representation choice (balanced and mandatory):
 
 This skill describes tool-use intent. Runtime binding is code-owned.
 
+Workflow-net alignment:
+- Non-trivial `(agent, phase, skill)` execution behavior for this skill is modeled in `b-activity-sa-phase-b-workflow-v1.puml`.
+- Keep Step 0.L and Discovery Step 0 as explicit pre-authoring actions; treat external-source lookup as situative only.
+
 - Discovery/search/filter/query: use model query tools (`model_query_*`) or compatible aliases.
 - Validation: use model verifier tools (`model_verify_file`, `model_verify_all`).
 - Building entities/connections/diagrams: use deterministic model write tools (`model_create_entity`, `model_create_connection`, `model_create_diagram`, `model_create_matrix`) with `dry_run` before writes.
@@ -239,13 +243,13 @@ Produce the dual-viewpoint ArchiMate diagrams per `framework/diagram-conventions
 
 Execute D1–D4 per `framework/diagram-conventions.md §5` for each diagram:
 
-**Structural viewpoint** (`b-archimate-business-structural-v1.puml`):
+**Structural viewpoint** (`business-archimate-structural-v1.puml`):
 - **D1:** `list_artifacts` for BFN, ACT, BCO, BSV, CAP; `list_connections` to verify assignment and realization coverage.
 - **D2:** Verify `§display ###archimate` on all entities. Add missing via `write_artifact`; `regenerate_macros()`.
 - **D3:** Load `read_framework_doc("framework/diagram-conventions.md §7.archimate-business")`. Group by function; roles/actors inside or adjacent to their function grouping; services outside. Include capabilities. Write via `write_artifact`.
 - **D4:** `validate_diagram`; cross-check that every BFN shown has at least one role and one service connection visible.
 
-**Operational viewpoint** (`b-archimate-business-operational-v1.puml`) — or combined if scale permits:
+**Operational viewpoint** (`business-archimate-operational-execution-v1.puml` and `business-archimate-operational-governance-v1.puml`) — or combined if scale permits:
 - **D1:** `list_artifacts` for BPR, BIA, BEV, ACT, BCO, BSV; `list_connections` for assignment, realization, triggering.
 - **D2:** Verify `§display ###archimate` on all entities. Add missing; `regenerate_macros()`.
 - **D3:** Load `read_framework_doc("framework/diagram-conventions.md §7.archimate-business-operational")`. Group by process cluster or VS stage; events connected to the processes they trigger. For decomposed behavior, draw the parent `BPR-nnn` / `BIA-nnn` as the container element and nest stage behaviors inside it with internal `flow`/`triggering` lines (per `framework/diagram-conventions.md §11.9.1a`); do not use outer grouping + duplicate parent nodes. Write via `write_artifact`.

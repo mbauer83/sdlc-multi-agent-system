@@ -87,8 +87,8 @@ architecture-repository/
     _macros.puml         # Auto-generated from entity §display ###archimate blocks
     _archimate-stereotypes.puml
     diagrams/            # Produced engagement diagrams; each .puml begins with header comment frontmatter
-      phase-b-archimate-business-v1.puml
-      phase-c-class-er-v1.puml
+      business-archimate-structural-v1.puml
+      application-class-er-domain-model-v1.puml
     templates/           # Blank per-type stubs; agents copy, rename, and adapt for new diagrams
       archimate-business-template.puml
       class-er-template.puml

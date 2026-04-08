@@ -1,0 +1,104 @@
+' ---
+' artifact-id: lifecycle-activity-sprint-v1
+' artifact-type: diagram
+' diagram-type: activity-bpmn
+' name: "Sprint Lifecycle — SDLC Agile ADM Sprint Flow"
+' version: 0.2.0
+' status: draft
+' phase-produced: B
+' owner-agent: SA
+' engagement: ENG-001
+' domain: core-platform
+' purpose: >
+'   Business-layer activity diagram showing the full SDLC sprint lifecycle:
+'   planning, specialist skill execution, clarification (CQ) handling,
+'   algedonic escalation, gate evaluation, sprint review, and sprint close.
+'   Swimlane participants are business-layer roles (ACT-). ACT-003 represents
+'   all specialist agent roles — any of ACT-003..ACT-010 may occupy this lane
+'   depending on which specialist is invoked for a given sprint.
+'   Primary audience: PM, PO, governance — shows "what the system does" at
+'   the business process level. Application-layer detail (how components
+'   interact) is in the Phase G sequence diagrams.
+' entity-ids-used:
+'   - ACT-001
+'   - ACT-002
+'   - ACT-003
+'   - BPR-001
+'   - BPR-002
+'   - BPR-003
+'   - BPR-004
+'   - BPR-005
+'   - BIA-001
+' ---
+@startuml lifecycle-activity-sprint-v1
+title Sprint Lifecycle — SDLC Agile ADM Sprint Flow
+
+skinparam activity {
+  BackgroundColor AliceBlue
+  BorderColor SteelBlue
+  DiamondBackgroundColor LightYellow
+  DiamondBorderColor DarkGoldenrod
+  ArrowColor SteelBlue
+  FontSize 11
+}
+skinparam swimlane {
+  BorderColor CadetBlue
+  TitleFontStyle bold
+}
+
+' ---------------------------------------------------------------------------
+' Swimlane participants — business-layer roles (ACT-)
+' swimlane-label source: §display ###activity blocks on each entity
+' ACT-001: "User"  |  ACT-002: "PM Agent"  |  ACT-003: "Specialist Agents"
+' ---------------------------------------------------------------------------
+
+|PM Agent|
+' artifact-id: ACT-002
+start
+:Read engagement profile\nand EventStore state;
+:Assess open CQs, pending\nhandoffs, gate outcomes;
+:Determine next specialist(s)\nto invoke (BPR-001);
+:Emit **sprint.started** event;
+
+|PM Agent|
+:Run specialist invocation workflow-net
+(specialist-invocation-activity-workflow-v1)
+for task specification, execution,
+and bounded automated rework;
+
+repeat
+  :Receive **specialist.completed**
+  from specialist-invocation workflow;
+
+repeat while (More specialists\nneeded this sprint?) is (yes)
+-> no;
+
+' ---------------------------------------------------------------------------
+' Gate Evaluation (BPR-004)
+' ---------------------------------------------------------------------------
+:Collect gate votes\nfrom all agents + CSCO;
+
+if (Gate passed?) then (no — failed or deferred)
+  :Record gate outcome\n(**gate.evaluated**);
+  note right: Deferred → re-queue;\nFailed → algedonic escalation
+  stop
+else (yes)
+  :Emit **phase.transitioned**\n(if phase boundary crossed);
+  :Trigger Sprint Review Interaction\n(BIA-001)
+  via sprint-review-activity-workflow-v1
+    (user-requested correction loop; no fixed automated cap);
+endif
+
+:Emit **sprint.close** event;
+:Create sprint-close snapshot;
+
+if (Engagement\ncomplete?) then (yes)
+  :Emit **engagement.completed**;
+  stop
+else (no)
+  :Begin next sprint\n(or resume when paused);
+  note right: Loop back to\nsprint planning
+  stop
+endif
+
+@enduml

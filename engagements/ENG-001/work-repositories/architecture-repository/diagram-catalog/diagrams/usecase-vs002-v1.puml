@@ -1,0 +1,95 @@
+' ---
+' artifact-id: usecase-vs002-v1
+' artifact-type: diagram
+' name: "Value Stream: Brownfield Onboarding — Use Case View"
+' diagram-type: usecase
+' version: 0.1.0
+' status: draft
+' phase-produced: B
+' owner-agent: SA
+' engagement: ENG-001
+' domain: core-platform
+' purpose: >
+'   Stakeholder-facing view of VS-002 (Brownfield Onboarding): the five stages
+'   through which the SDLC multi-agent system delivers value to a user who brings
+'   an existing target system into the framework. Covers entry at EP-G: reverse
+'   architecture, gap assessment, model confirmation, and governance activation.
+'   Intended audience: PO, user / engagement owner, Architecture Board.
+' entity-ids-used:
+'   - VS-002
+'   - ACT-001
+'   - BCO-001
+'   - BSV-001
+'   - BSV-002
+'   - BSV-003
+'   - BSV-004
+'   - BSV-005
+'   - BSV-009
+' ---
+@startuml usecase-vs002-v1
+!include ../_macros.puml
+!include ../_archimate-stereotypes.puml
+title Value Stream: Brownfield Onboarding — Use Case View
+
+left to right direction
+skinparam usecase {
+  BackgroundColor #F0F4FE
+  BorderColor #4682B4
+  ArrowColor #4682B4
+  ActorBorderColor #B8860B
+  ActorBackgroundColor #FEFDF0
+}
+skinparam usecaseBorderThickness 1.5
+skinparam padding 10
+
+' ---------------------------------------------------------------------------
+' Actors
+' ---------------------------------------------------------------------------
+actor "User\n(Engagement Owner)" as ACT_001_uc
+actor "Architecture Board\n(BCO-001)" as BCO_001_uc
+
+' ---------------------------------------------------------------------------
+' VS-002: Brownfield Onboarding — five stages as use cases
+' ---------------------------------------------------------------------------
+rectangle "VS-002: Brownfield Onboarding  [Entry: EP-G]" {
+
+  usecase "**Stage 1**\nSystem Discovery\n──────────────\nBSV-002 App & Tech Architecture\nBSV-005 Requirements Mgmt\n(inferred entity inventory)" as S1
+  usecase "**Stage 2**\nArchitecture Reconstruction\n──────────────\nBSV-001 Business Architecture\nBSV-002 App & Tech Architecture\n(all layers reconstructed)" as S2
+  usecase "**Stage 3**\nGap & Risk Assessment\n──────────────\nBSV-001 Business Architecture\nBSV-004 Safety Governance\n(risk-annotated gap list)" as S3
+  usecase "**Stage 4**\nModel Confirmation\n──────────────\nBSV-009 User Decisions\nBSV-005 Requirements Mgmt\n(user validates inferences)" as S4
+  usecase "**Stage 5**\nGovernance Activation\n──────────────\nBSV-003 Project Coordination\nBSV-004 Safety Governance\n(Phase G live)" as S5
+
+}
+
+' ---------------------------------------------------------------------------
+' Relationships
+' ---------------------------------------------------------------------------
+' User drives the brownfield entry and participates in all stages
+ACT_001_uc --> S1 : triggers\n(provides target repo)
+ACT_001_uc --> S2 : receives\nreconstructed model
+ACT_001_uc --> S3 : receives\ngap assessment
+ACT_001_uc --> S4 : validates\ninferred entities
+ACT_001_uc --> S5 : receives\ngovernance baseline
+
+' Architecture Board is the authority for governance activation
+BCO_001_uc --> S5 : activates\nPhase G governance
+
+' Sequential flow
+S1 .> S2 : <<include>>
+S2 .> S3 : <<include>>
+S3 .> S4 : <<include>>
+S4 .> S5 : <<include>>
+
+note bottom of S4
+  Stage 4 may iterate: user submits corrections,
+  model is updated, re-confirmed until no open CQs.
+  Governed by BEV-004 (Clarification Raised) loop.
+end note
+
+note bottom of S5
+  Stage 5 completion fires BEV-008 (Engagement Completed).
+  After activation, change management runs as
+  ongoing Phase G — no further VS-002 stages.
+end note
+
+@enduml

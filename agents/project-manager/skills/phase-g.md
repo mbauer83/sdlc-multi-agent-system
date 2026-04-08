@@ -31,6 +31,10 @@ version: 1.0.0
 
 This PM skill coordinates workflow and quality gates; it does not directly author architecture diagrams. Apply diagram and matrix conventions only when validating or requesting specialist outputs that include diagram artifacts.
 
+Workflow-net alignment:
+- Non-trivial `(agent, phase, skill)` execution behavior for this skill is modeled in `g-activity-pm-phase-g-governance-workflow-v1.puml`.
+- The skill-level control flow aligns with cross-phase control nets (`lifecycle-activity-sprint-v1`, `cq-activity-lifecycle-v1`, `sprint-review-activity-workflow-v1`, `specialist-invocation-activity-workflow-v1`).
+
 ## Inputs Required
 
 - Implementation Plan (baselined, Phase F output)
@@ -82,15 +86,18 @@ For each Solution Sprint:
 - Monitor CSCO spot-check schedule for safety-relevant components.
 - Track open defects from Defect Register. If Severity-1 defect is raised on a safety-relevant component → ALG-013.
 - Track compliance assessment progress.
+- For fast-path safety escalation, collect CSCO assessment and user advisory notes, then execute explicit branch decision: continue with targeted rework (route back into phase-work), pause pending resume trigger, or stop engagement path.
 
 **Sprint closeout (PM responsibilities):**
 1. Verify no open Severity-1 defects.
 2. Verify QA has signed off on test execution report.
 3. Verify Compliance Assessment is complete (QA + CSCO G authority).
 4. Verify Deployment Record exists (DevOps accountable).
-5. Write Governance Checkpoint Record (see below).
-6. Emit `sprint.closed`.
-7. Execute EventStore commit procedure (per `master-agile-adm.md §Phase 5`).
+5. Evaluate `review-gates` policy for this phase/stage. If blocking user review is required for phase-output artifacts, emit `review.pending` and block progression until `review.submitted` is processed.
+6. Route corrections from review decisions to tagged agents before gate progression.
+7. Write Governance Checkpoint Record (see below).
+8. Emit `sprint.closed`.
+9. Execute EventStore commit procedure (per `master-agile-adm.md §Phase 5`).
 
 ### Governance Checkpoint Record
 

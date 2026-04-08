@@ -66,7 +66,7 @@ engagements/<id>/work-repositories/architecture-repository/
 Filename patterns:
 - Entities: `PREFIX-NNN.friendly-name.md`
 - Connections: `SOURCE(--SOURCE)*---TARGET(--TARGET)*@@artifact-type.md`
-- Diagrams: `<phase>-<type>-<subject>[-<domain>]-v<N>.puml`
+- Diagrams: `<scope>-<type>-<subject>[-<domain>]-v<N>.puml` (use phase token only for phase-scoped views)
 
 ### 2.2 Technology Repository
 

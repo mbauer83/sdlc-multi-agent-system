@@ -33,6 +33,10 @@ version: 1.0.0
 
 Diagram and matrix conventions apply only when this skill explicitly produces or updates diagram artifacts; use `framework/diagram-conventions.md` as the source of truth.
 
+Workflow-net alignment:
+- Non-trivial `(agent, phase, skill)` execution behavior for this skill is modeled in `c-activity-swa-phase-c-application-workflow-v1.puml`.
+- Preserve Step 0.L and Discovery Step 0 as mandatory pre-authoring actions; use external sources only in situative cases from discovery policy.
+
 - Discovery/filter/search/query: use `model_query_*` tools (or runtime aliases).
 - Validation: use `model_verify_file` and `model_verify_all`.
 - Deterministic model building: use `model_create_entity`, `model_create_connection`, and `model_create_diagram` with `dry_run` before commit writes.
@@ -151,7 +155,7 @@ Validate each APP-nnn against the technology-independence constraint:
 Execute D1–D4 per `framework/diagram-conventions.md §5`:
 - **D1:** Call `list_artifacts(artifact_type="application-component")`, `list_artifacts(artifact_type="application-interface")`, and `list_artifacts(artifact_type="application-service")` to identify entities in scope. Use `search_artifacts` for cross-layer entities (BA services BSV-nnn that application services realise).
 - **D2:** For each entity that will appear in the diagram, verify its `§display ###archimate` subsection exists. Add missing subsections via `write_artifact`; run `regenerate_macros()`.
-- **D3:** Load template via `read_framework_doc("framework/diagram-conventions.md §7.archimate-application")`. Author ArchiMate application-layer diagram with entity artifact-ids as PUML aliases. Include required frontmatter comment block. Write to `architecture-repository/diagram-catalog/diagrams/c-archimate-application-v1.puml` via `write_artifact`.
+- **D3:** Load template via `read_framework_doc("framework/diagram-conventions.md §7.archimate-application")`. Author ArchiMate application-layer diagram with entity artifact-ids as PUML aliases. Include required frontmatter comment block. Write to `architecture-repository/diagram-catalog/diagrams/application-archimate-component-map-v1.puml` via `write_artifact`.
 - **D4:** Call `validate_diagram`; fix errors; re-validate before proceeding.
 
 ---
@@ -354,7 +358,7 @@ On trigger: call `record_learning()` with `artifact-type="application-architectu
 | Interface entities (IFC-nnn) | `architecture-repository/model-entities/application/interfaces/` | 1.0.0 | `artifact.baselined` per entity |
 | Application Service entities (ASV-nnn) | `architecture-repository/model-entities/application/services/` | 1.0.0 | `artifact.baselined` per entity |
 | AA Overview | `architecture-repository/overview/aa-overview.md` | — | `artifact.created` |
-| Phase C ArchiMate diagram | `architecture-repository/diagram-catalog/diagrams/c-archimate-application-v1.puml` | — | `artifact.created` |
+| Phase C ArchiMate diagram | `architecture-repository/diagram-catalog/diagrams/application-archimate-component-map-v1.puml` | — | `artifact.created` |
 | Phase C Sequence diagrams | `architecture-repository/diagram-catalog/diagrams/c-sequence-<flow-id>-v1.puml` | — | `artifact.created` |
 | Handoff to SA (AA draft for traceability review) | `engagements/<id>/handoff-log/` | — | `handoff.created` |
 | Handoff to CSCO (Phase C application safety review) | `engagements/<id>/handoff-log/` | — | `handoff.created` |

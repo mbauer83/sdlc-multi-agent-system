@@ -1,0 +1,95 @@
+' ---
+' artifact-id: usecase-vs001-v1
+' artifact-type: diagram
+' name: "Value Stream: Forward SDLC — Use Case View"
+' diagram-type: usecase
+' version: 0.1.0
+' status: draft
+' phase-produced: B
+' owner-agent: SA
+' engagement: ENG-001
+' domain: core-platform
+' purpose: >
+'   Stakeholder-facing view of VS-001 (Forward SDLC): the six stages through which
+'   the SDLC multi-agent system delivers value to the User (engagement owner) and
+'   to the Architecture Board. Each stage is shown as a use-case with the primary
+'   business services (BSV) delivering value at that stage. Intended audience: PO,
+'   user / engagement owner, Architecture Board.
+' entity-ids-used:
+'   - VS-001
+'   - ACT-001
+'   - BCO-001
+'   - BSV-001
+'   - BSV-002
+'   - BSV-003
+'   - BSV-004
+'   - BSV-005
+'   - BSV-006
+'   - BSV-007
+'   - BSV-008
+'   - BSV-009
+' ---
+@startuml usecase-vs001-v1
+!include ../_macros.puml
+!include ../_archimate-stereotypes.puml
+title Value Stream: Forward SDLC — Use Case View
+
+left to right direction
+skinparam usecase {
+  BackgroundColor #FEFDF0
+  BorderColor #B8860B
+  ArrowColor #B8860B
+  ActorBorderColor #4682B4
+  ActorBackgroundColor #EEF4FF
+}
+skinparam usecaseBorderThickness 1.5
+skinparam padding 10
+
+' ---------------------------------------------------------------------------
+' Actors
+' ---------------------------------------------------------------------------
+actor "User\n(Engagement Owner)" as ACT_001_uc
+actor "Architecture Board\n(BCO-001)" as BCO_001_uc
+
+' ---------------------------------------------------------------------------
+' VS-001: Forward SDLC — all six stages as use cases
+' ---------------------------------------------------------------------------
+rectangle "VS-001: Forward SDLC" {
+
+  usecase "**Stage 1**\nEngagement Scoping\n──────────────\nBSV-003 Project Coordination\nBSV-005 Requirements Mgmt" as S1
+  usecase "**Stage 2**\nArchitecture Vision\n──────────────\nBSV-001 Business Architecture\nBSV-003 Project Coordination" as S2
+  usecase "**Stage 3**\nArchitecture Design\n──────────────\nBSV-001 Business Architecture\nBSV-002 App & Tech Architecture\nBSV-005 Requirements Mgmt" as S3
+  usecase "**Stage 4**\nDelivery Planning\n──────────────\nBSV-003 Project Coordination\nBSV-007 Quality Assurance\nBSV-008 Platform Engineering" as S4
+  usecase "**Stage 5**\nSoftware Delivery\n──────────────\nBSV-006 Code Delivery\nBSV-007 Quality Assurance\nBSV-008 Platform Engineering" as S5
+  usecase "**Stage 6**\nArchitecture Promotion\n──────────────\nBSV-001 Business Architecture\nBSV-002 App & Tech Architecture\nBSV-004 Safety Governance" as S6
+
+}
+
+' ---------------------------------------------------------------------------
+' Relationships
+' ---------------------------------------------------------------------------
+' User participates in all 6 stages
+ACT_001_uc --> S1 : initiates
+ACT_001_uc --> S2 : receives\nArchitecture Vision
+ACT_001_uc --> S3 : reviews &\nconfirms design
+ACT_001_uc --> S4 : approves\ndelivery plan
+ACT_001_uc --> S5 : receives\ndelivered software
+ACT_001_uc --> S6 : authorises\npromotion
+
+' Architecture Board participates in Stage 6 (promotion authority)
+BCO_001_uc --> S6 : governs\nenterprise promotion
+
+' Value flows between stages (sequential)
+S1 .> S2 : <<include>>
+S2 .> S3 : <<include>>
+S3 .> S4 : <<include>>
+S4 .> S5 : <<include>>
+S5 .> S6 : <<include>>
+
+note bottom of S6
+  Stage 6 occurs at VS-001 completion.
+  Also triggered by Brownfield engagements
+  that reach full architecture reconstruction.
+end note
+
+@enduml

@@ -89,7 +89,7 @@ VALID_CONNECTION = textwrap.dedent("""\
 
 VALID_ARCHIMATE_DIAGRAM = textwrap.dedent("""\
     ' ---
-    ' artifact-id: phase-c-archimate-application-v1
+    ' artifact-id: phase-application-archimate-component-map-v1
     ' artifact-type: diagram
     ' name: "Application Architecture"
     ' diagram-type: archimate-application
