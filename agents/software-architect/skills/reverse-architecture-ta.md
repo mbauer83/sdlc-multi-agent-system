@@ -50,8 +50,8 @@ Diagram and matrix conventions apply only when this skill explicitly produces or
 |---|---|---|---|
 | EP-G handoff from PM | PM | `handoff.created (handoff_type=ep-g-warm-start-swa)` | Primary trigger; may be concurrent with or precede SA warm-start |
 | Target repository clone(s) | `scan_target_repo()` per registered repo | At least one clone available | IaC, Dockerfiles, CI/CD configs, Kubernetes manifests, package manifests |
-| SA warm-start entities (optional) | `list_artifacts(directory="architecture-repository/")` | Optional — if available, TA reconstruction cross-references APP/DOB entities | SwA proceeds independently if SA warm-start has not yet run |
-| Enterprise technology standards | `list_artifacts(directory="enterprise-repository/standards/")` | Optional — read to identify SIB deviations | Deviations flagged in Gap and Risk Assessment |
+| SA warm-start entities (optional) | `model_query_list_artifacts(...)` (or runtime alias) | Optional — if available, TA reconstruction cross-references APP/DOB entities | SwA proceeds independently if SA warm-start has not yet run |
+| Enterprise technology standards | `model_query_list_artifacts(...)` (or runtime alias) | Optional — read to identify SIB deviations | Deviations flagged in Gap and Risk Assessment |
 | Coding standards | `technology-repository/coding-standards/` | Optional — may not exist pre-EP-G | Absence triggers COD-GAP-001 per `discovery-protocol.md §9` |
 | User-provided docs | User (via PM CQ loop) | Any state — deployment diagrams, runbooks, architecture overviews, infrastructure wiki | SwA queries user in Step 1 |
 | External source artifacts | Configured adapters | Optional | Infrastructure wikis, deployment runbooks, service catalogs |
@@ -108,11 +108,11 @@ Per `framework/discovery-protocol.md §9`:
 
 ### Step 0 — Discovery Scan
 
-**Layer 1 — Engagement state:** Call `list_artifacts(directory="technology-repository/technology/")`. If any technology entities (NOD, SSW, TSV, etc.) exist → load them and note their version/status. If all absent → fresh warm-start.
+**Layer 1 — Engagement state:** Query technology artifacts via `model_query_list_artifacts(...)` (or runtime alias). If any technology entities (NOD, SSW, TSV, etc.) exist → load them and note their version/status. If all absent → fresh warm-start.
 
-Also load SA warm-start entities if available: `list_artifacts(directory="architecture-repository/application/")` for APP-nnn and AIF-nnn that SwA's TA must serve; `list_artifacts(directory="architecture-repository/motivation/")` for CST-nnn constraints.
+Also load SA warm-start entities if available via query tools: application APP/AIF artifacts for TA serving relationships, and motivation constraints (CST) for guardrails.
 
-**Layer 2 — Enterprise repository:** `list_artifacts(directory="enterprise-repository/technology/")` and `enterprise-repository/standards/`. Note any enterprise-mandated platforms, patterns, or SIB-approved components relevant to this domain.
+**Layer 2 — Enterprise repository:** query enterprise technology/standards artifacts via `model_query_list_artifacts(...)` scoped to enterprise. Note any enterprise-mandated platforms, patterns, or SIB-approved components relevant to this domain.
 
 **Layer 3 — External sources:** Query adapters for: "infrastructure", "deployment", "kubernetes", "terraform", "architecture diagram", "service catalog", "runbook". Record results.
 
@@ -203,7 +203,7 @@ Present the proposed technology entity catalogue for user validation before writ
 
 ### Step 4 — Write Technology Entity Files
 
-For each confirmed entity, call `write_artifact` at the correct ERP path:
+For each confirmed entity, create/update via deterministic model writer (`model_create_entity`, `dry_run` first) at the correct ERP path:
 
 | Entity type | Path |
 |---|---|
@@ -223,13 +223,13 @@ Entity frontmatter: `version: 0.1.0`, `status: draft`, `phase-produced: D`, `own
 
 `§display ###archimate` subsection for entities that appear in ArchiMate Technology Layer diagrams.
 
-After writing all entity files, call `regenerate_macros(repo_path="technology-repository/")`.
+After writing all entity files, refresh diagram macros (`regenerate_macros` runtime helper or model-write server macro auto-include path).
 
 ---
 
 ### Step 5 — Write Technology Connection Files
 
-Write typed connection files to `technology-repository/connections/archimate/<type>/`:
+Write typed connection files via deterministic model writer (`model_create_connection`, `dry_run` first) to `technology-repository/connections/archimate/<type>/`:
 
 **Priority connections:**
 1. **ART → NOD realization** (`realization/`): deployable artifact runs on node

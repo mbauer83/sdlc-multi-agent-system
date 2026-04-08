@@ -278,17 +278,17 @@ The engagement dashboard (Stage 5.5) is a local FastAPI web server that provides
 
 ## Implementation Status
 
-The framework and ENG-001 reference model are being built incrementally. Current state (2026-04-09):
+The framework and ENG-001 reference model are being built incrementally. Current state (2026-04-08):
 
 | Layer | Status |
 |---|---|
 | Framework specifications (all `framework/` files) | Complete |
 | Agent and skill files (all `agents/<role>/`) | Complete |
 | ENG-001 reference model — entities (99 files across motivation, strategy, business, application layers; entity types ArchiMate-correct: BusinessRole for agent roles, BusinessCollaboration for Architecture Board) | Complete |
-| ENG-001 reference model — connections (89 files: realization, serving, assignment, composition, access, ER; includes 14 BPR→BSV business-layer realization files) | Complete |
+| ENG-001 reference model — connections (115 files: realization, serving, assignment, composition, access, ER, activity sequence-flow; includes 14 BPR→BSV business-layer realization files plus workflow activity flows) | Complete |
 | ENG-001 reference model — `_macros.puml` (99 macros, auto-generated from entity `§display ###archimate` blocks via `src/tools/generate_macros.py`) | Complete |
 | ENG-001 reference model — diagrams (core Stage 4.9f set 7/7 complete; +3 agent-phase workflow-net activity diagrams added; naming normalized to scope-based IDs and re-rendered; application-layer sequence views deferred) | Complete |
-| ENG-001 reference model — overview docs + ADRs | Pending |
+| ENG-001 reference model — overview docs + ADRs (architecture vision, AA overview, ADR-001..005 in ENG-001 architecture-repository) | Complete |
 | `src/common/model_verifier.py` — BDD-tested verifier for entity/connection/diagram files (71 scenarios); E306/E307 draft-reference checks with targeted `entity_status()`/`connection_status()` lookups; `entity_id_from_path()` formal-id extraction | Complete |
 | `src/common/archimate_types.py` — canonical type registry for all entity, connection, element, and grouping stereotype types; single source of truth imported by verifier and referenced in documentation | Complete |
 | `src/common/model_query.py` — `ModelRepository`: rich query engine for model-entities, connections, and diagrams; `list_artifacts(**filter)` / `search_artifacts(query)` / `read_artifact(id, mode)` framework-aligned API; record-type prioritization (`prefer_record_type`, `strict_record_type`), aggregate grouping (`count_artifacts_by`), keyword+synonym search with `SemanticSearchProvider` hook, graph traversal (`find_connections_for`, `find_neighbors`); CLI (`python -m src.common.model_query`); BDD coverage maintained | Complete |

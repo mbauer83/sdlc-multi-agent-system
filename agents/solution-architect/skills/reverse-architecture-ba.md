@@ -48,7 +48,7 @@ This skill's tool references are intent-level; runtime signatures come from code
 
 | Input | Source | Minimum State | Notes |
 |---|---|---|---|
-| Motivation/strategy entities from SA-REV-PRELIM-A | `list_artifacts(directory="architecture-repository/motivation/")` | At least STK ×2, DRV ×2, CAP ×3 at version 0.1.0 | Hard prerequisite — if absent, invoke SA-REV-PRELIM-A first |
+| Motivation/strategy entities from SA-REV-PRELIM-A | `model_query_list_artifacts(...)` (or runtime alias) | At least STK ×2, DRV ×2, CAP ×3 at version 0.1.0 | Hard prerequisite — if absent, invoke SA-REV-PRELIM-A first |
 | Architecture Vision overview | `architecture-repository/overview/architecture-vision.md` | Version 0.1.0 draft | Provides capability clusters for process decomposition |
 | Codebase and documentation scan | `scan_target_repo()` per registered repo | Clone available | SA looks for service boundaries, domain packages, API controllers, DB schemas, event definitions |
 | User-provided business process documents | User (via PM CQ loop) | Any state | Runbooks, swimlane diagrams, process flow docs, domain model docs, user stories |
@@ -96,9 +96,9 @@ Call `query_learnings(agent="SA", phase="B", artifact_type="business-architectur
 
 ### Step 0 — Discovery Scan
 
-**Layer 1 — Engagement state:** Load all existing motivation/strategy entities via ModelRegistry (`list_artifacts`). Load Architecture Vision overview. Note all CAP-nnn capability clusters — these drive the process decomposition in Step 2.
+**Layer 1 — Engagement state:** Load all existing motivation/strategy entities via `model_query_list_artifacts(...)` (or runtime alias). Load Architecture Vision overview. Note all CAP-nnn capability clusters — these drive the process decomposition in Step 2.
 
-**Layer 2 — Enterprise repository:** Query `list_artifacts(directory="enterprise-repository/business/")`. Note reusable enterprise actors, standard business services, or canonical process templates that apply.
+**Layer 2 — Enterprise repository:** Query enterprise business artifacts via `model_query_list_artifacts(...)` scoped to enterprise. Note reusable enterprise actors, standard business services, or canonical process templates that apply.
 
 **Layer 3 — External sources:** Query configured adapters for: "business process", "domain model", "service catalogue", "user roles", "actor", "workflow". Record all matches with `[source: <adapter-id>]`.
 
@@ -186,7 +186,7 @@ Present the proposed business entity catalogue to the user for validation before
 
 ### Step 4 — Write Business Entity Files
 
-For each confirmed entity, call `write_artifact` at the correct ERP path:
+For each confirmed entity, create/update via deterministic model writer (`model_create_entity`, `dry_run` first) at the correct ERP path:
 
 | Entity type | Path |
 |---|---|
@@ -210,13 +210,13 @@ Entity frontmatter: `version: 0.1.0`, `status: draft`, `phase-produced: B`, `own
 
 For all safety-relevant processes (`BPR-nnn` where `safety-relevant: true`): add a `## Safety Notes` subsection in `§content` describing the safety concern.
 
-After writing all entity files, call `regenerate_macros(repo_path="architecture-repository/")`.
+After writing all entity files, refresh diagram macros (`regenerate_macros` runtime helper or model-write server macro auto-include path).
 
 ---
 
 ### Step 5 — Write Business Connection Files
 
-Infer and write typed ArchiMate connection files. Priority order:
+Infer and write typed ArchiMate connection files via deterministic model writer (`model_create_connection`, `dry_run` first). Priority order:
 
 1. **ACT → ROL assignment** (`connections/archimate/assignment/`): each actor assigned to their role(s)
 2. **ROL → BPR assignment** (`connections/archimate/assignment/`): role assigned to processes they perform

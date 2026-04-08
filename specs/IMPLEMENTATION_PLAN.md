@@ -599,7 +599,7 @@ Every file in this list requires review and likely modification. Do not attempt 
 
 ---
 
-### Stage 4.9 — ENG-001 Architecture Model (Pending — blocked on Stage 4.8h)
+### Stage 4.9 — ENG-001 Architecture Model (Partial — 4.9i pending)
 
 > **Primary purpose: the implementation specification for Stage 5.** The SDLC multi-agent system is modelled as a first-class ERP v2.0 architecture engagement. Entity files, connection files, and diagrams produced here are the definitive architectural plans for all Stage 5 `src/` work. Developers implement one APP entity at a time; Pydantic models in `src/models/` are derived from DOB attribute tables; the LangGraph topology follows the activity diagram. When Stage 5 diverges from these artifacts, the artifacts are updated first. Secondary purpose: integration test fixture for Stage 6.
 >
@@ -824,13 +824,13 @@ Seven diagrams. Each has a stated **implementation purpose** — what Stage 5 de
 
 #### 4.9g — Overview Documents and Decisions
 
-- [ ] `overview/architecture-vision.md` — AV for ENG-001: engagement context (modelling the SDLC system itself); capability clusters (CAP-001 through CAP-006); STK-001 and STK-002; safety classification: Safety-Neutral (no physical actuation, no regulated user data, no financial transactions)
-- [ ] `overview/aa-overview.md` — Application Architecture summary: lists all APP-nnn with `src/` path and one-line function; states the four-layer dependency rule (Common → Domain → Application → Infrastructure); lists all DOB-nnn Pydantic models with their `src/models/` path; lists all AIF-nnn ports with their `Protocol` location
-- [ ] `decisions/ADR-001.md` — `PydanticAI for agent definition` — context: evaluated LangChain, Autogen, raw API; decision: PydanticAI; rationale: structured output via `result_type`, native tool use, minimal magic, first-class Anthropic support; consequences: tighter Pydantic v2 dependency, simpler than alternatives
-- [ ] `decisions/ADR-002.md` — `LangGraph for orchestration graph` — context: PM-as-supervisor pattern requires stateful multi-step routing with conditional branches and interrupt support; decision: LangGraph; rationale: built-in state persistence, interrupt/resume for CQ handling, conditional edge routing, compatible with PydanticAI; consequences: LangGraph version pinning, graph must be rebuilt if topology changes
-- [ ] `decisions/ADR-003.md` — `SQLite EventStore as canonical state` — context: need durable, auditable, ACID workflow state; decision: SQLite via EventStore class; rationale: local-only (CST-002), git-trackable binary, zero-infrastructure, ACID guarantees, replay from scratch gives WorkflowState; consequences: single-process only (no concurrent writer), binary in git (acceptable at engagement scale)
-- [ ] `decisions/ADR-004.md` — `FastAPI + Jinja2 + SSE for dashboard` — context: user interaction surface needed; decision: FastAPI server-side rendering; rationale: no build step, no frontend framework, works with Python-only stack, SSE is standard HTTP (no WebSocket needed for change notifications), POST forms sufficient for CQ/review interaction; consequences: minimal JS budget (two blocks only)
-- [ ] `decisions/ADR-005.md` — `File-based ERP entity storage` — context: need to store architecture model; decision: one `.md` file per entity, organised by ArchiMate layer; rationale: git-native diff and blame, human-readable, no DB schema migration for model changes, ModelRegistry is ephemeral (rebuilt at startup); consequences: startup scan time proportional to entity count; mitigated by watchdog incremental updates
+- [x] `overview/architecture-vision.md` — AV for ENG-001: engagement context (modelling the SDLC system itself); capability clusters (CAP-001 through CAP-006); STK-001 and STK-002; safety classification: Safety-Neutral (no physical actuation, no regulated user data, no financial transactions)
+- [x] `overview/aa-overview.md` — Application Architecture summary: lists all APP-nnn with `src/` path and one-line function; states the four-layer dependency rule (Common → Domain → Application → Infrastructure); lists all DOB-nnn Pydantic models with their `src/models/` path; lists all AIF-nnn ports with their `Protocol` location
+- [x] `decisions/ADR-001.md` — `PydanticAI for agent definition` — context: evaluated LangChain, Autogen, raw API; decision: PydanticAI; rationale: structured output via `result_type`, native tool use, minimal magic, first-class Anthropic support; consequences: tighter Pydantic v2 dependency, simpler than alternatives
+- [x] `decisions/ADR-002.md` — `LangGraph for orchestration graph` — context: PM-as-supervisor pattern requires stateful multi-step routing with conditional branches and interrupt support; decision: LangGraph; rationale: built-in state persistence, interrupt/resume for CQ handling, conditional edge routing, compatible with PydanticAI; consequences: LangGraph version pinning, graph must be rebuilt if topology changes
+- [x] `decisions/ADR-003.md` — `SQLite EventStore as canonical state` — context: need durable, auditable, ACID workflow state; decision: SQLite via EventStore class; rationale: local-only (CST-002), git-trackable binary, zero-infrastructure, ACID guarantees, replay from scratch gives WorkflowState; consequences: single-process only (no concurrent writer), binary in git (acceptable at engagement scale)
+- [x] `decisions/ADR-004.md` — `FastAPI + Jinja2 + SSE for dashboard` — context: user interaction surface needed; decision: FastAPI server-side rendering; rationale: no build step, no frontend framework, works with Python-only stack, SSE is standard HTTP (no WebSocket needed for change notifications), POST forms sufficient for CQ/review interaction; consequences: minimal JS budget (two blocks only)
+- [x] `decisions/ADR-005.md` — `File-based ERP entity storage` — context: need to store architecture model; decision: one `.md` file per entity, organised by ArchiMate layer; rationale: git-native diff and blame, human-readable, no DB schema migration for model changes, ModelRegistry is ephemeral (rebuilt at startup); consequences: startup scan time proportional to entity count; mitigated by watchdog incremental updates
 
 #### 4.9h — Event-Sourcing of Repository Mutations and User Inputs
 
@@ -1271,7 +1271,7 @@ This subsection is the canonical review-control model for dashboard-driven human
 
 ---
 
-### Stage 4.8g — Skill/Agent Alignment Audit (Pending — pre-Stage-5)
+### Stage 4.8g — Skill/Agent Alignment Audit (Complete — 2026-04-08; commit pending)
 
 > **Purpose:** Verify that existing agent and skill files are fully consistent with the revised information-discovery and work-repository interaction plans added in Stage 4.9h and the snapshotting spec. Do not assume alignment — read the files.
 
@@ -1301,28 +1301,44 @@ This subsection is the canonical review-control model for dashboard-driven human
 
 #### Checklist
 
-- [ ] Read and audit 3 reverse-arch skill files (Step 0, 3, 4 focus)
-- [ ] Grep all skill files for `write_artifact`; check for conflicting instructions
-- [ ] Verify Step 0 wording across at least a representative sample of Stage 3 skills
-- [ ] Read `framework/agent-runtime-spec.md §6` tool set spec
-- [ ] Read `framework/discovery-protocol.md §2` and §4 (Layer 4 target-repo scan)
-- [ ] Execute any confirmed changes; update IMPLEMENTATION_PLAN.md findings table when done
+- [x] Read and audit 3 reverse-arch skill files (Step 0, 3, 4 focus)
+- [x] Grep all skill files for `write_artifact`; check for conflicting instructions
+- [x] Verify Step 0 wording across at least a representative sample of Stage 3 skills
+- [x] Read `framework/agent-runtime-spec.md §6` tool set spec
+- [x] Read `framework/discovery-protocol.md §2` and §4 (Layer 4 target-repo scan)
+- [x] Execute any confirmed changes; update IMPLEMENTATION_PLAN.md findings table when done
 - [ ] Commit as part of `stage-4-pre5-alignment`
 
 ---
 
 ## Current State & Immediate Next Actions
 
-**Stages 1–4.9f complete. ModelVerifier complete (71 BDD tests). Stage 4.9f core diagrams remain 7/7 complete; diagram naming is now scope-based and workflow-net activity coverage is expanded (core set + additional workflow-net views), rendered, and verified (`model_verify_all`: 0 errors, 0 warnings). Slice A framework MCP freshness/path parity is validated by targeted `uv run pytest` tests. `src/common/model_query.py` complete.**
+**Stages 1–4.9g complete. ModelVerifier complete (71 BDD tests). Stage 4.9f core diagrams remain 7/7 complete; diagram naming is now scope-based and workflow-net activity coverage is expanded (core set + additional workflow-net views), rendered, and verified (`model_verify_all`: 0 errors, 0 warnings). Stage 4.8g alignment audit is complete with reverse-architecture skill wording adjusted to query-first/model-writer intent. Stage 4.9g overview/ADR documentation is now present in ENG-001 architecture-repository. Slice A framework MCP freshness/path parity is validated by targeted `uv run pytest` tests. `src/common/model_query.py` complete.**
 
 ### Immediate next actions
 
-- Execute pending Stage 4.8g Skill/Agent Alignment Audit checklist (reverse-architecture skills, `write_artifact` wording, discovery Step 0 alignment, runtime/discovery framework docs consistency).
-- Close the remaining Stage 4.9g documentation deliverables (overview docs + ADR updates) to align architecture narratives with the normalized diagram set.
 - Deepen application-layer architecture specification for Stage 5 implementation: produce/refine ArchiMate application views (component decomposition, services, interfaces, data objects) and companion sequence diagrams for core runtime flows (agent invocation, CQ loop, gate evaluation, handoff/rework).
 - Deepen infrastructure/technology-layer specification for Stage 5 implementation: produce/refine ArchiMate technology/deployment views (nodes, system software, environments, runtime boundaries) and companion sequence diagrams for operational flows (deployment, environment provisioning, event persistence, observability/alerts).
 - Add cross-layer traceability checks from business workflow nets to application services and to infrastructure deployment/runtime paths; run `ModelVerifier.verify_all(...)` after each modeling slice.
 - Continue Stage 5 integration focus items tracked in this plan (EventStore/orchestration/tooling completion and integration-test readiness), using the expanded application/infrastructure diagram set as the implementation baseline.
+
+### Completed this session (2026-04-08 — session 18)
+
+- **Stage 4.8g alignment audit closed with targeted edits:**
+  - Audited all three reverse-architecture skills (`SA-REV-PRELIM-A`, `SA-REV-BA`, `SWA-REV-TA`) for Step 0 and model-write wording drift.
+  - Updated legacy `list_artifacts(directory=...)` references in core procedural steps to query-first `model_query_list_artifacts(...)` intent.
+  - Updated Step 4/5 wording in all three skills from direct `write_artifact` signature emphasis to deterministic model writer intent (`model_create_entity` / `model_create_connection`, `dry_run` first) while preserving runtime compatibility guidance.
+
+- **Stage 4.9g documentation deliverables completed:**
+  - Added ENG-001 overview documents:
+    - `overview/architecture-vision.md`
+    - `overview/aa-overview.md`
+  - Added ENG-001 decision records:
+    - `decisions/ADR-001.md` (PydanticAI)
+    - `decisions/ADR-002.md` (LangGraph)
+    - `decisions/ADR-003.md` (SQLite EventStore)
+    - `decisions/ADR-004.md` (FastAPI + Jinja2 + SSE)
+    - `decisions/ADR-005.md` (File-based ERP storage)
 
 ### Completed this session (2026-04-08 — session 17)
 
