@@ -61,7 +61,7 @@ VALID_ENTITY = textwrap.dedent("""\
 
 VALID_CONNECTION = textwrap.dedent("""\
     ---
-    artifact-id: APP-001---APP-016
+    artifact-id: APP-001---APP-016@@archimate-serving
     artifact-type: archimate-serving
     source: APP-001
     target: APP-016
@@ -99,9 +99,10 @@ VALID_ARCHIMATE_DIAGRAM = textwrap.dedent("""\
     ' owner-agent: SwA
     ' engagement: ENG-001
     ' entity-ids-used: [APP-001, APP-016]
-    ' connection-ids-used: [APP-001---APP-016]
+    ' connection-ids-used: [APP-001---APP-016@@archimate-serving]
     ' ---
     @startuml
+    title Application Architecture
     !include ../_macros.puml
     !include ../_archimate-stereotypes.puml
     APP_001 --> APP_016 : <<serving>>
@@ -134,11 +135,11 @@ def verifier_with_two_entities(tmp_path: Path) -> ModelVerifier:
 
 @given("a ModelVerifier with a full registry", target_fixture="verifier")
 def verifier_full(tmp_path: Path) -> ModelVerifier:
-    """Registry with APP-001, APP-016, and connection APP-001---APP-016."""
+    """Registry with APP-001, APP-016, and connection APP-001---APP-016@@archimate-serving."""
     registry = _build_registry(
         tmp_path,
         entities={"APP-001": "application-component", "APP-016": "application-component"},
-        connections={"APP-001---APP-016": "archimate-serving"},
+        connections={"APP-001---APP-016@@archimate-serving": "archimate-serving"},
     )
     return ModelVerifier(registry=registry)
 
@@ -318,14 +319,15 @@ def _build_registry(
         conn_dir = root / "connections" / "archimate" / "serving"
         conn_dir.mkdir(parents=True, exist_ok=True)
         for cid, ctype in connections.items():
-            parts = cid.split("---")
+            endpoint_part = cid.split("@@", 1)[0]
+            source_id, target_id = endpoint_part.split("---", 1)
             (conn_dir / f"{cid}.md").write_text(
                 textwrap.dedent(f"""\
                     ---
                     artifact-id: {cid}
                     artifact-type: {ctype}
-                    source: {parts[0]}
-                    target: {parts[1]}
+                    source: {source_id}
+                    target: {target_id}
                     version: 0.1.0
                     status: draft
                     phase-produced: C

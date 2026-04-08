@@ -73,7 +73,9 @@ def entity_id_from_path(path: Path) -> str:
 
 
 ENTITY_ID_RE = re.compile(r"^[A-Z]+-\d{3}$")
-CONN_ID_RE = re.compile(r"^[A-Z]+-\d{3}(--[A-Z]+-\d{3})*---[A-Z]+-\d{3}(--[A-Z]+-\d{3})*$")
+CONN_ID_RE = re.compile(
+    r"^[A-Z]+-\d{3}(--[A-Z]+-\d{3})*---[A-Z]+-\d{3}(--[A-Z]+-\d{3})*@@[a-z]+(?:-[a-z]+)*$"
+)
 
 ENTITY_TYPES: frozenset[str] = ALL_ENTITY_TYPES
 CONNECTION_TYPES: frozenset[str] = ALL_CONNECTION_TYPES

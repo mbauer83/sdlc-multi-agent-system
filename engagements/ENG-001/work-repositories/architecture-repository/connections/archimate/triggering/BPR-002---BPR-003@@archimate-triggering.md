@@ -1,0 +1,25 @@
+---
+artifact-id: BPR-002---BPR-003@@archimate-triggering
+artifact-type: archimate-triggering
+source: BPR-002
+target: BPR-003
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+engagement: ENG-001
+last-updated: 2026-04-05
+---
+
+<!-- §content -->
+
+Skill Execution (BPR-002) directly triggers CQ Lifecycle (BPR-003) when a knowledge gap is detected during BPR-202. This is an intra-sprint sub-trigger within BFN-002; the CQ is raised and resolved before execution resumes.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Triggering
+direction: source-to-target
+```

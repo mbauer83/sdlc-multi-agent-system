@@ -1,0 +1,25 @@
+---
+artifact-id: APP-022---APP-011@@archimate-serving
+artifact-type: archimate-serving
+source: APP-022
+target: APP-011
+version: 0.1.0
+status: draft
+phase-produced: C
+owner-agent: SwA
+engagement: ENG-001
+last-updated: 2026-04-04
+---
+
+<!-- §content -->
+
+TargetRepoManager (APP-022) serves DE Agent (APP-011). During Phase G implementation, DE Agent is granted read-write access to the target repository through TargetRepoManager via a git worktree per sprint, enabling code changes to be written to the target project.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Serving
+direction: source-to-target
+```

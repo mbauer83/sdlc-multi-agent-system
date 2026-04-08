@@ -1,0 +1,25 @@
+---
+artifact-id: BOB-220---BOB-108@@archimate-association
+artifact-type: archimate-association
+source: BOB-220
+target: BOB-108
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+engagement: ENG-001
+last-updated: '2026-04-06'
+---
+
+<!-- §content -->
+
+PM-RETRO triggered in phase E.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Association
+direction: source-to-target
+```

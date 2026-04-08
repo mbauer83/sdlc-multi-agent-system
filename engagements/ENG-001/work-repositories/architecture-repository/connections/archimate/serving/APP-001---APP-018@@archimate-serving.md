@@ -1,0 +1,25 @@
+---
+artifact-id: APP-001---APP-018@@archimate-serving
+artifact-type: archimate-serving
+source: APP-001
+target: APP-018
+version: 0.1.0
+status: draft
+phase-produced: C
+owner-agent: SwA
+engagement: ENG-001
+last-updated: 2026-04-04
+---
+
+<!-- §content -->
+
+EventStore (APP-001) serves UserInteractionOrchestrator (APP-018). UIO monitors the EventStore event stream for `cq.raised`, `cq.answered`, `review.pending`, and `review.submitted` events to coordinate Dashboard surfacing and agent resume signals.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Serving
+direction: source-to-target
+```

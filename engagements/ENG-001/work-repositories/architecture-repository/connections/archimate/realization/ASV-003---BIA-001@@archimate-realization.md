@@ -1,0 +1,25 @@
+---
+artifact-id: ASV-003---BIA-001@@archimate-realization
+artifact-type: archimate-realization
+source: ASV-003
+target: BIA-001
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+engagement: ENG-001
+last-updated: '2026-04-06'
+---
+
+<!-- §content -->
+
+Sprint Review Service realizes the Sprint Review Interaction execution path.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Realization
+direction: source-to-target
+```

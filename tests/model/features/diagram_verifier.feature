@@ -40,7 +40,7 @@ Feature: Diagram file verification
 
   Scenario: connection-ids-used references unknown connection causes an error
     Given a ModelVerifier with a full registry
-    And a diagram file whose connection-ids-used includes "APP-001---APP-999"
+    And a diagram file whose connection-ids-used includes "APP-001---APP-999@@archimate-serving"
     When I verify the diagram file
     Then the result is invalid
     And error code "E302" is reported
@@ -72,6 +72,13 @@ Feature: Diagram file verification
     When I verify the diagram file
     Then the result is invalid
     And error code "E305" is reported
+
+  Scenario: PUML file missing visible title causes an error
+    Given a ModelVerifier with a full registry
+    And a diagram file without a visible title line
+    When I verify the diagram file
+    Then the result is invalid
+    And error code "E308" is reported
 
   Scenario: Baselined diagram referencing a draft entity causes E306
     Given a ModelVerifier with a full registry

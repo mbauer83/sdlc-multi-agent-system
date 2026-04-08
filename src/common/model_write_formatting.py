@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 import yaml  # type: ignore[import-untyped]
 
 
@@ -191,8 +193,35 @@ def format_diagram_puml(
         header_lines.append("' " + line)
     header_lines.append("' ---")
 
-    body = puml_body.strip("\n") + "\n"
+    body = _ensure_visible_title(puml_body, name)
     return "\n".join(header_lines) + "\n" + body
+
+
+def _ensure_visible_title(puml_body: str, title_text: str) -> str:
+    lines = puml_body.strip("\n").splitlines()
+    if not lines:
+        return puml_body.strip("\n") + "\n"
+
+    has_title = any(
+        (not line.lstrip().startswith("'")) and re.match(r"^\s*title(\s|$)", line, flags=re.IGNORECASE)
+        for line in lines
+    )
+    if has_title:
+        return puml_body.strip("\n") + "\n"
+
+    start_idx = next((i for i, line in enumerate(lines) if line.strip().startswith("@startuml")), 0)
+    insert_idx = start_idx + 1
+    for i in range(start_idx + 1, len(lines)):
+        stripped = lines[i].strip()
+        if not stripped or stripped.startswith("'"):
+            continue
+        if stripped.lower().startswith("!include"):
+            insert_idx = i + 1
+            continue
+        break
+
+    lines.insert(insert_idx, f"title {title_text}")
+    return "\n".join(lines) + "\n"
 
 
 def format_matrix_markdown(

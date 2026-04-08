@@ -1,0 +1,25 @@
+---
+artifact-id: BOB-461---BOB-234@@archimate-association
+artifact-type: archimate-association
+source: BOB-461
+target: BOB-234
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+engagement: ENG-001
+last-updated: '2026-04-06'
+---
+
+<!-- §content -->
+
+SA-REQ-MGMT consumes sprint.started event (for the sprint in which this skill is invoked).
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Association
+direction: source-to-target
+```

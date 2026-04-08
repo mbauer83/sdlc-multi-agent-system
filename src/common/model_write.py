@@ -63,12 +63,16 @@ def allocate_next_entity_id(registry: ModelRegistry, prefix: str) -> str:
     return f"{prefix}-{max_num + 1:03d}"
 
 
-def connection_id_from_endpoints(source: str | list[str], target: str | list[str]) -> str:
+def connection_id_from_endpoints(
+    source: str | list[str],
+    target: str | list[str],
+    artifact_type: str,
+) -> str:
     srcs = source if isinstance(source, list) else [source]
     tgts = target if isinstance(target, list) else [target]
     src_part = "--".join(str(s).strip() for s in srcs if str(s).strip())
     tgt_part = "--".join(str(t).strip() for t in tgts if str(t).strip())
-    return f"{src_part}---{tgt_part}"
+    return f"{src_part}---{tgt_part}@@{artifact_type.strip()}"
 
 
 # ---------------------------------------------------------------------------
@@ -116,7 +120,7 @@ def infer_archimate_connection_ids_from_puml(
 
     # Pattern matches e.g. APP_001 -[#color]-> APP_016 : <<serving>>
     pat = re.compile(
-        r"\b(?P<src>[A-Z]{2,6}_\d{3})\b.*?\b(?P<tgt>[A-Z]{2,6}_\d{3})\b\s*:\s*<<(?P<rel>[A-Za-z]+)>>",
+        r"\b(?P<src>[A-Z]{2,6}_\d{3})\b.*?\b(?P<tgt>[A-Z]{2,6}_\d{3})\b\s*:\s*<<(?P<rel>[A-Z]+)>>",
         flags=re.IGNORECASE,
     )
 
@@ -132,10 +136,10 @@ def infer_archimate_connection_ids_from_puml(
             warnings.append(msg)
             continue
 
-        expected_id = connection_id_from_endpoints(src, tgt)
+        expected_id = connection_id_from_endpoints(src, tgt, conn_type)
         if expected_id not in registry.connection_ids():
             msg = (
-                f"PUML references connection {src} → {tgt} (<<{rel}>>), but no connection artifact '{expected_id}' exists. "
+                f"PUML references connection {src}  {tgt} (<<{rel}>>), but no connection artifact '{expected_id}' exists. "
                 "Create the connection first, or supply connection_ids_used explicitly."
             )
             if mode == "strict":

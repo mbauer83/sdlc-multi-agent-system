@@ -23,20 +23,21 @@
 ' - VAL-001
 ' - VS-001
 ' connection-ids-used:
-' - STK-001---DRV-018
-' - DRV-018---GOL-004
-' - REQ-021---GOL-004
-' - OUT-001---GOL-004
-' - COA-001---OUT-001
-' - CAP-005---COA-001
-' - BIA-001---CAP-005
-' - BIA-001---OUT-001
-' - OUT-001---VAL-001
-' - VAL-001---VS-001
+' - STK-001---DRV-018@@archimate-association
+' - DRV-018---GOL-004@@archimate-influence
+' - REQ-021---GOL-004@@archimate-influence
+' - OUT-001---GOL-004@@archimate-realization
+' - COA-001---OUT-001@@archimate-association
+' - CAP-005---COA-001@@archimate-realization
+' - BIA-001---CAP-005@@archimate-realization
+' - BIA-001---OUT-001@@archimate-realization
+' - OUT-001---VAL-001@@archimate-association
+' - VAL-001---VS-001@@archimate-association
 ' ---
 @startuml a-archimate-motivation-outcome-course-value-traceability-v1
 !include ../_macros.puml
 !include ../_archimate-stereotypes.puml
+title Motivation/Strategy/Business Outcome Evidence Traceability
 
 left to right direction
 skinparam linetype ortho

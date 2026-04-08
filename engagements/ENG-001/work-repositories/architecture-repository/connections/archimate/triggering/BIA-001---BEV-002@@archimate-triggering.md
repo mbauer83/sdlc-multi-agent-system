@@ -1,0 +1,25 @@
+---
+artifact-id: BIA-001---BEV-002@@archimate-triggering
+artifact-type: archimate-triggering
+source: BIA-001
+target: BEV-002
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+engagement: ENG-001
+last-updated: '2026-04-06'
+---
+
+<!-- §content -->
+
+Sprint Review interaction closes sprint on continue decision.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Triggering
+direction: source-to-target
+```

@@ -1,0 +1,25 @@
+---
+artifact-id: BPR-301---BPR-302@@activity-sequence-flow
+artifact-type: activity-sequence-flow
+source: BPR-301
+target: BPR-302
+version: 0.1.0
+status: draft
+phase-produced: C
+owner-agent: SA
+engagement: ENG-001
+last-updated: 2026-04-08
+---
+
+<!-- §content -->
+
+Within CQ Lifecycle, routing a clarification to the user (BPR-301) flows into waiting for user answer (BPR-302).
+
+<!-- §display -->
+
+### activity
+
+```yaml
+flow-type: sequence-flow
+label: route -> await
+```

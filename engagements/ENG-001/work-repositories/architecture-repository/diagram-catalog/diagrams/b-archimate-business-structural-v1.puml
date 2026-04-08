@@ -45,33 +45,34 @@
 '   - BSV-008
 '   - BSV-009
 ' connection-ids-used:
-'   - ACT-002---BFN-001
-'   - BCO-001---BFN-002
-'   - ACT-001---BFN-003
-'   - ACT-002---BFN-003
-'   - ACT-010---BFN-004
-'   - ACT-003---BFN-005
-'   - BCO-001---BFN-005
-'   - BFN-001---CAP-003
-'   - BFN-001---BSV-003
-'   - BFN-001---BSV-009
-'   - BFN-002---CAP-001
-'   - BFN-002---CAP-002
-'   - BFN-002---BSV-001
-'   - BFN-002---BSV-002
-'   - BFN-002---BSV-005
-'   - BFN-002---BSV-006
-'   - BFN-002---BSV-007
-'   - BFN-002---BSV-008
-'   - BFN-003---CAP-005
-'   - BFN-003---BSV-009
-'   - BFN-004---BSV-004
-'   - BFN-005---CAP-004
-'   - BFN-005---CAP-006
+'   - ACT-002---BFN-001@@archimate-assignment
+'   - BCO-001---BFN-002@@archimate-assignment
+'   - ACT-001---BFN-003@@archimate-assignment
+'   - ACT-002---BFN-003@@archimate-assignment
+'   - ACT-010---BFN-004@@archimate-assignment
+'   - ACT-003---BFN-005@@archimate-assignment
+'   - BCO-001---BFN-005@@archimate-assignment
+'   - BFN-001---CAP-003@@archimate-realization
+'   - BFN-001---BSV-003@@archimate-realization
+'   - BFN-001---BSV-009@@archimate-realization
+'   - BFN-002---CAP-001@@archimate-realization
+'   - BFN-002---CAP-002@@archimate-realization
+'   - BFN-002---BSV-001@@archimate-realization
+'   - BFN-002---BSV-002@@archimate-realization
+'   - BFN-002---BSV-005@@archimate-realization
+'   - BFN-002---BSV-006@@archimate-realization
+'   - BFN-002---BSV-007@@archimate-realization
+'   - BFN-002---BSV-008@@archimate-realization
+'   - BFN-003---CAP-005@@archimate-realization
+'   - BFN-003---BSV-009@@archimate-realization
+'   - BFN-004---BSV-004@@archimate-realization
+'   - BFN-005---CAP-004@@archimate-realization
+'   - BFN-005---CAP-006@@archimate-realization
 ' ---
 @startuml b-archimate-business-structural-v1
 !include ../_macros.puml
 !include ../_archimate-stereotypes.puml
+title Business Architecture — Structural Viewpoint
 
 skinparam groupInheritance 1
 skinparam nodesep 30

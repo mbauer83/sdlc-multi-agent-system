@@ -29,6 +29,7 @@
 @startuml b-usecase-vs002-v1
 !include ../_macros.puml
 !include ../_archimate-stereotypes.puml
+title Value Stream: Brownfield Onboarding — Use Case View
 
 left to right direction
 skinparam usecase {

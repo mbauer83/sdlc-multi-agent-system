@@ -1,0 +1,25 @@
+---
+artifact-id: BPR-801---BPR-802@@archimate-flow
+artifact-type: archimate-flow
+source: BPR-801
+target: BPR-802
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+engagement: ENG-001
+last-updated: 2026-04-05
+---
+
+<!-- §content -->
+
+Multi-Source Scan flows into Infer Entities: the annotated evidence corpus is the direct input to entity inference.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Flow
+direction: source-to-target
+```

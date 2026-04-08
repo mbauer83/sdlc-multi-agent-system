@@ -29,15 +29,16 @@
 '   - DOB-009
 '   - DOB-011
 ' connection-ids-used:
-'   - DOB-002---DOB-001
-'   - DOB-004---DOB-001
-'   - DOB-009---DOB-001
-'   - DOB-009---DOB-004
-'   - DOB-009---DOB-005
-'   - DOB-009---DOB-006
-'   - DOB-009---DOB-007
+'   - DOB-002---DOB-001@@er-one-to-many
+'   - DOB-004---DOB-001@@er-one-to-many
+'   - DOB-009---DOB-001@@er-one-to-many
+'   - DOB-009---DOB-004@@er-one-to-many
+'   - DOB-009---DOB-005@@er-one-to-many
+'   - DOB-009---DOB-006@@er-one-to-many
+'   - DOB-009---DOB-007@@er-one-to-many
 ' ---
 @startuml phase-c-class-er-v1
+title Application Data Model — Persisted Domain Objects
 
 skinparam class {
   BackgroundColor LightCyan

@@ -1,0 +1,25 @@
+---
+artifact-id: BOB-340---BOB-232@@archimate-association
+artifact-type: archimate-association
+source: BOB-340
+target: BOB-232
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+engagement: ENG-001
+last-updated: '2026-04-06'
+---
+
+<!-- §content -->
+
+SA-PHASE-C-DATA-REVIEW consumes Data Architecture (DA) draft.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Association
+direction: source-to-target
+```

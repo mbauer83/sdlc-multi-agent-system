@@ -1,0 +1,25 @@
+---
+artifact-id: BFN-001---BSV-003@@archimate-realization
+artifact-type: archimate-realization
+source: BFN-001
+target: BSV-003
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+engagement: ENG-001
+last-updated: 2026-04-05
+---
+
+<!-- §content -->
+
+Engagement Governance (BFN-001) realizes the Project Coordination Service (BSV-003). Sprint planning, gate management, and review facilitation are the organizational activities through which the project coordination service is delivered to the user.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Realization
+direction: source-to-target
+```

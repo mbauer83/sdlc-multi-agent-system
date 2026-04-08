@@ -1,0 +1,25 @@
+---
+artifact-id: BCO-001---BPR-007@@archimate-assignment
+artifact-type: archimate-assignment
+source: BCO-001
+target: BPR-007
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+engagement: ENG-001
+last-updated: 2026-04-04
+---
+
+<!-- §content -->
+
+Architecture Board actor (ACT-011) is assigned to the Enterprise Promotion process (BPR-007). The Architecture Board is the sole role authorised to promote engagement artifacts to the enterprise repository; no engagement agent has write access to enterprise-repository paths.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Assignment
+direction: source-to-target
+```

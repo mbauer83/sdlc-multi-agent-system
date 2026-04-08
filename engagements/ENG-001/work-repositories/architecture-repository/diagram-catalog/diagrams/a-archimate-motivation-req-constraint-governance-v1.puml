@@ -24,18 +24,19 @@
 ' - REQ-019
 ' - REQ-024
 ' connection-ids-used:
-' - REQ-006---CST-004
-' - REQ-007---CST-003
-' - REQ-008---CST-003
-' - REQ-010---CST-003
-' - REQ-015---CST-009
-' - REQ-016---CST-009
-' - REQ-019---CST-003
-' - REQ-024---CST-004
+' - REQ-006---CST-004@@archimate-association
+' - REQ-007---CST-003@@archimate-association
+' - REQ-008---CST-003@@archimate-association
+' - REQ-010---CST-003@@archimate-association
+' - REQ-015---CST-009@@archimate-association
+' - REQ-016---CST-009@@archimate-association
+' - REQ-019---CST-003@@archimate-association
+' - REQ-024---CST-004@@archimate-association
 ' ---
 @startuml a-archimate-motivation-req-constraint-governance-v1
 !include ../_macros.puml
 !include ../_archimate-stereotypes.puml
+title Motivation - Governance Requirement to Constraint Map
 
 top to bottom direction
 skinparam linetype ortho

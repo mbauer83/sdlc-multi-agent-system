@@ -1,0 +1,25 @@
+---
+artifact-id: ASV-001---CAP-003@@archimate-realization
+artifact-type: archimate-realization
+source: ASV-001
+target: CAP-003
+version: 0.1.0
+status: draft
+phase-produced: C
+owner-agent: SwA
+engagement: ENG-001
+last-updated: 2026-04-04
+---
+
+<!-- §content -->
+
+Agent Invocation Service (ASV-001) realizes the Multi-Agent Orchestration capability (CAP-003). ASV-001 encapsulates the build-and-invoke pattern for PydanticAI agents — loading skill instructions, assembling the system prompt, and running the agent — giving the orchestration layer the concrete ability to coordinate multiple specialist agents.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Realization
+direction: source-to-target
+```

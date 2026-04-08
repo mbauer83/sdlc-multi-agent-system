@@ -1,0 +1,25 @@
+---
+artifact-id: ACT-001---BCO-002@@archimate-assignment
+artifact-type: archimate-assignment
+source: ACT-001
+target: BCO-002
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+engagement: ENG-001
+last-updated: 2026-04-05
+---
+
+<!-- §content -->
+
+User (ACT-001) participates in the Sprint Review Board (BCO-002) as the reviewing authority and decision-maker.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Assignment
+direction: source-to-target
+```

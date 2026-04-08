@@ -13,7 +13,7 @@ def _make_repo(tmp_path: Path) -> Path:
 
     write_entity(entity_dir / "APP-001.md", VALID_ENTITY)
     write_entity(entity_dir / "APP-016.md", VALID_ENTITY.replace("artifact-id: APP-001", "artifact-id: APP-016"))
-    write_connection(conn_dir / "APP-001---APP-016.md", VALID_CONNECTION)
+    write_connection(conn_dir / "APP-001---APP-016@@archimate-serving.md", VALID_CONNECTION)
     return repo
 
 

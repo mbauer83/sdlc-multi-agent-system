@@ -25,16 +25,17 @@
 ' - REQ-021
 ' - REQ-023
 ' connection-ids-used:
-' - REQ-015---GOL-007
-' - REQ-017---GOL-006
-' - REQ-018---GOL-005
-' - REQ-020---GOL-004
-' - REQ-021---GOL-001
-' - REQ-023---GOL-003
+' - REQ-015---GOL-007@@archimate-influence
+' - REQ-017---GOL-006@@archimate-influence
+' - REQ-018---GOL-005@@archimate-influence
+' - REQ-020---GOL-004@@archimate-influence
+' - REQ-021---GOL-001@@archimate-influence
+' - REQ-023---GOL-003@@archimate-influence
 ' ---
 @startuml a-archimate-motivation-goal-influence-v1
 !include ../_macros.puml
 !include ../_archimate-stereotypes.puml
+title Motivation - Requirement to Goal Influence
 
 left to right direction
 skinparam linetype ortho

@@ -1,0 +1,25 @@
+---
+artifact-id: BFN-002---BSV-002@@archimate-realization
+artifact-type: archimate-realization
+source: BFN-002
+target: BSV-002
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+engagement: ENG-001
+last-updated: 2026-04-05
+---
+
+<!-- §content -->
+
+Specialist Execution (BFN-002) realizes the Application & Technology Architecture Service (BSV-002) through SwA and DevOps agent skill invocations in Phases C, D, E, F, G.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Realization
+direction: source-to-target
+```

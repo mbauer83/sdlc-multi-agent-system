@@ -26,12 +26,13 @@
 '   - BPR-005
 '   - BPR-003
 ' connection-ids-used:
-'   - BPR-001---BPR-002
-'   - BPR-201---BPR-202
-'   - BPR-202---BPR-203
-'   - BPR-002---BPR-004
+'   - BPR-001---BPR-002@@activity-sequence-flow
+'   - BPR-201---BPR-202@@activity-sequence-flow
+'   - BPR-202---BPR-203@@activity-sequence-flow
+'   - BPR-002---BPR-004@@activity-sequence-flow
 ' ---
 @startuml phase-g-activity-skill-invocation-v1
+title Phase G Activity — Skill Invocation Workflow
 
 skinparam activity {
   BackgroundColor AliceBlue

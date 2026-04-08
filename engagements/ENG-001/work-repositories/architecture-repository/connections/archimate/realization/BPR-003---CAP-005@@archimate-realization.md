@@ -1,0 +1,25 @@
+---
+artifact-id: BPR-003---CAP-005@@archimate-realization
+artifact-type: archimate-realization
+source: BPR-003
+target: CAP-005
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+engagement: ENG-001
+last-updated: 2026-04-04
+---
+
+<!-- §content -->
+
+CQ Lifecycle (BPR-003) realizes the User Interaction capability (CAP-005). The clarification request process is the primary mechanism for bidirectional agent–user information exchange: agents surface questions through the dashboard and resume with user-provided answers.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Realization
+direction: source-to-target
+```

@@ -21,16 +21,17 @@
 ' - STK-004
 ' - STK-005
 ' connection-ids-used:
-' - STK-003---DRV-003
-' - STK-003---DRV-012
-' - STK-004---DRV-004
-' - STK-004---DRV-013
-' - STK-005---DRV-005
-' - STK-005---DRV-014
+' - STK-003---DRV-003@@archimate-association
+' - STK-003---DRV-012@@archimate-association
+' - STK-004---DRV-004@@archimate-association
+' - STK-004---DRV-013@@archimate-association
+' - STK-005---DRV-005@@archimate-association
+' - STK-005---DRV-014@@archimate-association
 ' ---
 @startuml a-archimate-motivation-stakeholder-driver-integration-v1
 !include ../_macros.puml
 !include ../_archimate-stereotypes.puml
+title Motivation - Stakeholder to Driver (Integration Roles)
 
 left to right direction
 skinparam linetype ortho

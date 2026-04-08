@@ -24,18 +24,19 @@
 ' - STK-008
 ' - STK-009
 ' connection-ids-used:
-' - STK-006---DRV-006
-' - STK-006---DRV-015
-' - STK-007---DRV-007
-' - STK-007---DRV-016
-' - STK-008---DRV-008
-' - STK-008---DRV-017
-' - STK-009---DRV-009
-' - STK-009---DRV-018
+' - STK-006---DRV-006@@archimate-association
+' - STK-006---DRV-015@@archimate-association
+' - STK-007---DRV-007@@archimate-association
+' - STK-007---DRV-016@@archimate-association
+' - STK-008---DRV-008@@archimate-association
+' - STK-008---DRV-017@@archimate-association
+' - STK-009---DRV-009@@archimate-association
+' - STK-009---DRV-018@@archimate-association
 ' ---
 @startuml a-archimate-motivation-stakeholder-driver-delivery-v1
 !include ../_macros.puml
 !include ../_archimate-stereotypes.puml
+title Motivation - Stakeholder to Driver (Delivery Roles)
 
 left to right direction
 skinparam linetype ortho

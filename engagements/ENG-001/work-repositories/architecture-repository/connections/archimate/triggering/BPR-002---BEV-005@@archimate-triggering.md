@@ -1,0 +1,25 @@
+---
+artifact-id: BPR-002---BEV-005@@archimate-triggering
+artifact-type: archimate-triggering
+source: BPR-002
+target: BEV-005
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+engagement: ENG-001
+last-updated: '2026-04-05'
+---
+
+<!-- §content -->
+
+Skill execution raises Safety Signal Raised on algedonic triggers.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Triggering
+direction: source-to-target
+```

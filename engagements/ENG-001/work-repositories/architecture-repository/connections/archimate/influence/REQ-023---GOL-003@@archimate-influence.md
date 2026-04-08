@@ -1,0 +1,25 @@
+---
+artifact-id: REQ-023---GOL-003@@archimate-influence
+artifact-type: archimate-influence
+source: REQ-023
+target: GOL-003
+version: 0.1.0
+status: draft
+phase-produced: A
+owner-agent: SA
+engagement: ENG-001
+last-updated: '2026-04-06'
+---
+
+<!-- §content -->
+
+Expanded goal influence mapping.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Influence
+direction: source-to-target
+```

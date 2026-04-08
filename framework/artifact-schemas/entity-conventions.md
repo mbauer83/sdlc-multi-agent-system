@@ -71,7 +71,7 @@ engagement: <engagement-id>
 
 ```yaml
 ---
-artifact-id: <source>(--<source>)*---<target>(--<target>)*
+artifact-id: <source>(--<source>)*---<target>(--<target>)*@@<artifact-type>
 artifact-type: <connection-type>     # From artifact-registry-design.md §5 (e.g. archimate-realization)
 source: <artifact-id> | [<artifact-id>, ...]
 target: <artifact-id> | [<artifact-id>, ...]
@@ -88,7 +88,7 @@ last-updated: <YYYY-MM-DD>
 
 | Field | Validation Rule |
 |---|---|
-| `artifact-id` | Entities: `^[A-Z]+-[0-9]{3}$`; prefix must match entity-type per §4 of artifact-registry-design.md. Connections: `SOURCE(--SOURCE)*---TARGET(--TARGET)*`; must match filename stem. |
+| `artifact-id` | Entities: `^[A-Z]+-[0-9]{3}$`; prefix must match entity-type per §4 of artifact-registry-design.md. Connections: `SOURCE(--SOURCE)*---TARGET(--TARGET)*@@artifact-type`; must match filename stem. |
 | `artifact-type` | Must be a value from the canonical registry in `src/common/archimate_types.py` (`ALL_ENTITY_TYPES` for entities; `ALL_CONNECTION_TYPES` for connections). See §4 of this file for the full table. |
 | `version` | Valid semver |
 | `status` | One of: `draft`, `baselined`, `deprecated` |
@@ -618,11 +618,11 @@ attributes:
 ```
 ```
 
-### 6.4 ArchiMate Connection — `connections/archimate/realization/APP-001---BSV-001.md`
+### 6.4 ArchiMate Connection — `connections/archimate/realization/APP-001---BSV-001@@archimate-realization.md`
 
 ```markdown
 ---
-artifact-id: APP-001---BSV-001
+artifact-id: APP-001---BSV-001@@archimate-realization
 artifact-type: archimate-realization
 source: APP-001
 target: BSV-001
@@ -648,11 +648,11 @@ direction: source-to-target
 ```
 ```
 
-### 6.5 ER Connection — `connections/er/one-to-many/DOB-001---DOB-002.md`
+### 6.5 ER Connection — `connections/er/one-to-many/DOB-001---DOB-002@@er-one-to-many.md`
 
 ```markdown
 ---
-artifact-id: DOB-001---DOB-002
+artifact-id: DOB-001---DOB-002@@er-one-to-many
 artifact-type: er-one-to-many
 source: DOB-001
 target: DOB-002

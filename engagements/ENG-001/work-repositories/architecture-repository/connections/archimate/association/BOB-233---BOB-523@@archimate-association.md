@@ -1,0 +1,25 @@
+---
+artifact-id: BOB-233---BOB-523@@archimate-association
+artifact-type: archimate-association
+source: BOB-233
+target: BOB-523
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+engagement: ENG-001
+last-updated: '2026-04-06'
+---
+
+<!-- §content -->
+
+SA-PHASE-H produces Change Record (business/motivation/strategy layer).
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Association
+direction: source-to-target
+```

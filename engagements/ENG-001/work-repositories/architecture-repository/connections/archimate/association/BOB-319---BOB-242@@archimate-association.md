@@ -1,0 +1,25 @@
+---
+artifact-id: BOB-319---BOB-242@@archimate-association
+artifact-type: archimate-association
+source: BOB-319
+target: BOB-242
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+engagement: ENG-001
+last-updated: '2026-04-06'
+---
+
+<!-- §content -->
+
+SwA-PHASE-C-DATA consumes Architecture Principles Register (PR).
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Association
+direction: source-to-target
+```

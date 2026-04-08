@@ -1,0 +1,25 @@
+---
+artifact-id: APP-004---APP-007@@archimate-serving
+artifact-type: archimate-serving
+source: APP-004
+target: APP-007
+version: 0.1.0
+status: draft
+phase-produced: C
+owner-agent: SwA
+engagement: ENG-001
+last-updated: 2026-04-04
+---
+
+<!-- §content -->
+
+SkillLoader (APP-004) serves PM Agent (APP-007). When AgentFactory builds the PM Agent, SkillLoader injects the PM master skill instructions as the Layer 3 system prompt component, scoping the agent's behaviour to the active sprint task.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Serving
+direction: source-to-target
+```

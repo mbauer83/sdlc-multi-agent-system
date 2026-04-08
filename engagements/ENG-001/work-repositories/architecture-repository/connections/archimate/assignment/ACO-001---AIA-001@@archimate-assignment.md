@@ -1,0 +1,25 @@
+---
+artifact-id: ACO-001---AIA-001@@archimate-assignment
+artifact-type: archimate-assignment
+source: ACO-001
+target: AIA-001
+version: 0.1.0
+status: draft
+phase-produced: C
+owner-agent: SwA
+engagement: ENG-001
+last-updated: 2026-04-04
+---
+
+<!-- §content -->
+
+Skill Execution Collaboration (ACO-001) is assigned to the Skill Execution interaction (AIA-001). This is the standard ArchiMate active-structure → behavior assignment: the collaboration (structural element grouping ASV-001, ASV-002, ASV-005) is the executing body responsible for performing the structured interaction sequence. The assignment expresses "ACO-001 performs AIA-001."
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Assignment
+direction: source-to-target
+```

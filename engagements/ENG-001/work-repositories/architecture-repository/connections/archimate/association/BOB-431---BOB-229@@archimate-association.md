@@ -1,0 +1,25 @@
+---
+artifact-id: BOB-431---BOB-229@@archimate-association
+artifact-type: archimate-association
+source: BOB-431
+target: BOB-229
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+engagement: ENG-001
+last-updated: '2026-04-06'
+---
+
+<!-- §content -->
+
+SA-PHASE-A consumes Scoping Interview answers (EP-0) or user input document (EP-A/B).
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Association
+direction: source-to-target
+```

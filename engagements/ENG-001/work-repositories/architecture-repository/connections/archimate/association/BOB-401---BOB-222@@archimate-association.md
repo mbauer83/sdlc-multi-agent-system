@@ -1,0 +1,25 @@
+---
+artifact-id: BOB-401---BOB-222@@archimate-association
+artifact-type: archimate-association
+source: BOB-401
+target: BOB-222
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+engagement: ENG-001
+last-updated: '2026-04-06'
+---
+
+<!-- §content -->
+
+PO-PHASE-B consumes RTM Skeleton.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Association
+direction: source-to-target
+```

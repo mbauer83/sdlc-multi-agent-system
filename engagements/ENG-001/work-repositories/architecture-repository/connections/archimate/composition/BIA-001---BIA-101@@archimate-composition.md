@@ -1,0 +1,25 @@
+---
+artifact-id: BIA-001---BIA-101@@archimate-composition
+artifact-type: archimate-composition
+source: BIA-001
+target: BIA-101
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+engagement: ENG-001
+last-updated: '2026-04-05'
+---
+
+<!-- §content -->
+
+BIA-001 is composed of staged interaction BIA-101.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Composition
+direction: source-to-target
+```

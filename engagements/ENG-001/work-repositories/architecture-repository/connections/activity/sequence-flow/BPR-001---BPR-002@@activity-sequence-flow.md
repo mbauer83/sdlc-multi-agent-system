@@ -1,0 +1,25 @@
+---
+artifact-id: BPR-001---BPR-002@@activity-sequence-flow
+artifact-type: activity-sequence-flow
+source: BPR-001
+target: BPR-002
+version: 0.1.0
+status: draft
+phase-produced: G
+owner-agent: SA
+engagement: ENG-001
+last-updated: 2026-04-08
+---
+
+<!-- §content -->
+
+Sprint Planning (BPR-001) flows into Skill Execution (BPR-002) as the primary operational progression for phase-level delivery.
+
+<!-- §display -->
+
+### activity
+
+```yaml
+flow-type: sequence-flow
+label: plan -> execute
+```

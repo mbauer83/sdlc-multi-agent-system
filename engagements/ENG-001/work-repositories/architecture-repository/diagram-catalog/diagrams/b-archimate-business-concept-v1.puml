@@ -41,25 +41,26 @@
 '   - BPR-007
 '   - BPR-008
 ' connection-ids-used:
-'   - BEV-001---BPR-001
-'   - BEV-002---BPR-001
-'   - BEV-002---BIA-001
-'   - BEV-003---BPR-001
-'   - BEV-004---BPR-003
-'   - BEV-005---BPR-005
-'   - BEV-006---BIA-001
-'   - BEV-007---BPR-008
-'   - BPR-001---BOB-002
-'   - BPR-002---BOB-001
-'   - BPR-002---BOB-002
-'   - BPR-002---BOB-006
-'   - BPR-003---BOB-003
-'   - BPR-004---BOB-004
-'   - BPR-005---BOB-005
+'   - BEV-001---BPR-001@@archimate-triggering
+'   - BEV-002---BPR-001@@archimate-triggering
+'   - BEV-002---BIA-001@@archimate-triggering
+'   - BEV-003---BPR-001@@archimate-triggering
+'   - BEV-004---BPR-003@@archimate-triggering
+'   - BEV-005---BPR-005@@archimate-triggering
+'   - BEV-006---BIA-001@@archimate-triggering
+'   - BEV-007---BPR-008@@archimate-triggering
+'   - BPR-001---BOB-002@@archimate-access
+'   - BPR-002---BOB-001@@archimate-access
+'   - BPR-002---BOB-002@@archimate-access
+'   - BPR-002---BOB-006@@archimate-access
+'   - BPR-003---BOB-003@@archimate-access
+'   - BPR-004---BOB-004@@archimate-access
+'   - BPR-005---BOB-005@@archimate-access
 ' ---
 @startuml b-archimate-business-concept-v1
 !include ../_macros.puml
 !include ../_archimate-stereotypes.puml
+title Business Architecture — Business Concept Map
 
 skinparam groupInheritance 1
 skinparam nodesep 40

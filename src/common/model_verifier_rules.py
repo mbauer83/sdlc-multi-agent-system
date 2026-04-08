@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 from typing import Literal
 
 from src.common.model_verifier_registry import ModelRegistry
@@ -62,7 +63,7 @@ def check_artifact_id_connection(fm: dict, path: Path, result: VerificationResul
             Severity.ERROR,
             "E201",
             "connection artifact-id '"
-            f"{aid}' does not match SOURCE(--SOURCE)*---TARGET(--TARGET)* pattern",
+            f"{aid}' does not match SOURCE(--SOURCE)*---TARGET(--TARGET)*@@artifact-type pattern",
             loc,
         ))
 
@@ -314,6 +315,16 @@ def check_puml_structure(content: str, fm: dict, result: VerificationResult, loc
         result.issues.append(Issue(Severity.ERROR, "E304", "@startuml marker is missing", loc))
     if "@enduml" not in content:
         result.issues.append(Issue(Severity.ERROR, "E305", "@enduml marker is missing", loc))
+
+    body_lines = [line for line in content.splitlines() if not line.lstrip().startswith("'")]
+    has_visible_title = any(re.match(r"^\s*title(\s|$)", line, flags=re.IGNORECASE) for line in body_lines)
+    if not has_visible_title:
+        result.issues.append(Issue(
+            Severity.ERROR,
+            "E308",
+            "Diagram must include a visible title line (for example: 'title <diagram name>')",
+            loc,
+        ))
 
     diagram_type = str(fm.get("diagram-type", ""))
     if "archimate" in diagram_type or "usecase" in diagram_type:

@@ -16,7 +16,7 @@ Three artifact categories are distinguished:
 | Category | Description | Has `§display` | ID scheme |
 |---|---|---|---|
 | **Model entity** | An ArchiMate element instance (any layer/aspect). Can appear in diagrams. | Yes | `PREFIX-NNN` |
-| **Model connection** | A typed relationship between model entities. Can appear in diagrams. | Yes | `SOURCE(--SOURCE)*---TARGET(--TARGET)*` |
+| **Model connection** | A typed relationship between model entities. Can appear in diagrams. | Yes | `SOURCE(--SOURCE)*---TARGET(--TARGET)*@@artifact-type` |
 | **Repository content** | Non-diagrammable artifact (decision record, learning, diagram file, doc). | No | `PREFIX-NNN` or filename |
 
 The `artifact-type` value determines the category via the framework lookup table in §4–§5.
@@ -65,7 +65,7 @@ engagements/<id>/work-repositories/architecture-repository/
 
 Filename patterns:
 - Entities: `PREFIX-NNN.friendly-name.md`
-- Connections: `SOURCE(--SOURCE)*---TARGET(--TARGET)*.md`
+- Connections: `SOURCE(--SOURCE)*---TARGET(--TARGET)*@@artifact-type.md`
 - Diagrams: `<phase>-<type>-<subject>[-<domain>]-v<N>.puml`
 
 ### 2.2 Technology Repository
@@ -266,13 +266,13 @@ target: BSV-001
 ---
 ```
 
-The `source` and `target` fields accept either a single artifact-id string or a YAML list. The `artifact-id` is always the filename stem: sources joined by `--`, separated from targets by `---`, targets joined by `--`.
+The `source` and `target` fields accept either a single artifact-id string or a YAML list. The `artifact-id` is always the filename stem: sources joined by `--`, separated from targets by `---`, targets joined by `--`, then suffixed with `@@artifact-type`.
 
 ### 3.4 Frontmatter Field Rules — Model Connections
 
 | Field | Rule |
 |---|---|
-| `artifact-id` | Format: `SOURCE(--SOURCE)*---TARGET(--TARGET)*`; must match filename stem |
+| `artifact-id` | Format: `SOURCE(--SOURCE)*---TARGET(--TARGET)*@@artifact-type`; must match filename stem |
 | `artifact-type` | Must be a value from §5 |
 | `source` | Single artifact-id string or YAML list |
 | `target` | Single artifact-id string or YAML list |

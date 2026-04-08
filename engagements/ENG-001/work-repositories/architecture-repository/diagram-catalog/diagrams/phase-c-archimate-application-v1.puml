@@ -51,43 +51,44 @@
 '   - ASV-003
 '   - ASV-004
 ' connection-ids-used:
-'   - APP-001---APP-016
-'   - APP-001---APP-017
-'   - APP-001---APP-018
-'   - APP-001---APP-021
-'   - APP-002---APP-004
-'   - APP-002---APP-005
-'   - APP-003---APP-007
-'   - APP-003---APP-008
-'   - APP-003---APP-009
-'   - APP-004---APP-007
-'   - APP-004---APP-008
-'   - APP-004---APP-009
-'   - APP-004---APP-010
-'   - APP-004---APP-011
-'   - APP-004---APP-012
-'   - APP-004---APP-013
-'   - APP-004---APP-014
-'   - APP-004---APP-015
-'   - APP-006---APP-016
-'   - APP-016---APP-007
-'   - APP-016---APP-008
-'   - APP-016---APP-009
-'   - APP-016---APP-017
-'   - APP-016---APP-018
-'   - APP-020---ACT-001
-'   - APP-022---APP-008
-'   - APP-022---APP-009
-'   - APP-022---APP-011
-'   - ASV-001---BSV-001
-'   - ASV-001---BSV-002
-'   - ASV-001---BSV-003
-'   - ASV-003---BSV-009
-'   - ASV-004---BSV-009
+'   - APP-001---APP-016@@archimate-serving
+'   - APP-001---APP-017@@archimate-serving
+'   - APP-001---APP-018@@archimate-serving
+'   - APP-001---APP-021@@archimate-serving
+'   - APP-002---APP-004@@archimate-serving
+'   - APP-002---APP-005@@archimate-serving
+'   - APP-003---APP-007@@archimate-serving
+'   - APP-003---APP-008@@archimate-serving
+'   - APP-003---APP-009@@archimate-serving
+'   - APP-004---APP-007@@archimate-serving
+'   - APP-004---APP-008@@archimate-serving
+'   - APP-004---APP-009@@archimate-serving
+'   - APP-004---APP-010@@archimate-serving
+'   - APP-004---APP-011@@archimate-serving
+'   - APP-004---APP-012@@archimate-serving
+'   - APP-004---APP-013@@archimate-serving
+'   - APP-004---APP-014@@archimate-serving
+'   - APP-004---APP-015@@archimate-serving
+'   - APP-006---APP-016@@archimate-serving
+'   - APP-016---APP-007@@archimate-composition
+'   - APP-016---APP-008@@archimate-composition
+'   - APP-016---APP-009@@archimate-composition
+'   - APP-016---APP-017@@archimate-serving
+'   - APP-016---APP-018@@archimate-composition
+'   - APP-020---ACT-001@@archimate-serving
+'   - APP-022---APP-008@@archimate-serving
+'   - APP-022---APP-009@@archimate-serving
+'   - APP-022---APP-011@@archimate-serving
+'   - ASV-001---BSV-001@@archimate-realization
+'   - ASV-001---BSV-002@@archimate-realization
+'   - ASV-001---BSV-003@@archimate-realization
+'   - ASV-003---BSV-009@@archimate-realization
+'   - ASV-004---BSV-009@@archimate-realization
 ' ---
 @startuml phase-c-archimate-application-v1
 !include ../_macros.puml
 !include ../_archimate-stereotypes.puml
+title Application Architecture — Component Map
 
 skinparam groupInheritance 1
 skinparam nodesep 20

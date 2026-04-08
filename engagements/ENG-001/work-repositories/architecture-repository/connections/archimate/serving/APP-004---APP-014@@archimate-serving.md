@@ -1,0 +1,25 @@
+---
+artifact-id: APP-004---APP-014@@archimate-serving
+artifact-type: archimate-serving
+source: APP-004
+target: APP-014
+version: 0.1.0
+status: draft
+phase-produced: C
+owner-agent: SwA
+engagement: ENG-001
+last-updated: 2026-04-04
+---
+
+<!-- §content -->
+
+SkillLoader (APP-004) serves SM Agent (APP-014). SkillLoader injects the active Sales & Marketing Manager skill instructions as Layer 3 when building the SM Agent for Phase A market analysis tasks.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Serving
+direction: source-to-target
+```

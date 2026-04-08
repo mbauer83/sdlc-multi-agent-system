@@ -55,7 +55,7 @@ def create_connection(
     engagement = engagement_id_from_repo_root(repo_root)
     last = last_updated or today_iso()
 
-    cid = connection_id_from_endpoints(source, target)
+    cid = connection_id_from_endpoints(source, target, artifact_type)
     path = repo_root / "connections" / info.conn_lang / info.conn_dir / f"{cid}.md"
 
     display_lang = info.conn_lang

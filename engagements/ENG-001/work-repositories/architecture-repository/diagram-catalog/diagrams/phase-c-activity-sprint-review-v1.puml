@@ -22,10 +22,11 @@
 '   - BIA-103
 '   - BPR-004
 ' connection-ids-used:
-'   - BIA-101---BIA-102
-'   - BIA-102---BIA-103
+'   - BIA-101---BIA-102@@activity-sequence-flow
+'   - BIA-102---BIA-103@@activity-sequence-flow
 ' ---
 @startuml phase-c-activity-sprint-review-v1
+title Phase C Activity — Sprint Review Workflow
 
 skinparam activity {
   BackgroundColor AliceBlue

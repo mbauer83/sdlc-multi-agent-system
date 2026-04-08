@@ -17,12 +17,13 @@
 ' - REQ-014
 ' - REQ-023
 ' connection-ids-used:
-' - REQ-014---CST-006
-' - REQ-023---CST-012
+' - REQ-014---CST-006@@archimate-association
+' - REQ-023---CST-012@@archimate-association
 ' ---
 @startuml a-archimate-motivation-req-constraint-safety-v1
 !include ../_macros.puml
 !include ../_archimate-stereotypes.puml
+title Motivation - Safety Requirement to Constraint Map
 
 top to bottom direction
 skinparam linetype ortho

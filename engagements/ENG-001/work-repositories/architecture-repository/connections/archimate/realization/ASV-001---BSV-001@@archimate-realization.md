@@ -1,0 +1,25 @@
+---
+artifact-id: ASV-001---BSV-001@@archimate-realization
+artifact-type: archimate-realization
+source: ASV-001
+target: BSV-001
+version: 0.1.0
+status: draft
+phase-produced: C
+owner-agent: SwA
+engagement: ENG-001
+last-updated: 2026-04-04
+---
+
+<!-- §content -->
+
+Agent Invocation Service (ASV-001) realizes the Business Architecture Service (BSV-001) at the application layer. The service provides the runtime interface through which the SA agent is dispatched to execute Phase A, B, and H skills — which is the concrete application-layer mechanism that delivers the business architecture service to consumers. BPR-002 (Skill Execution) is the corresponding business-layer realizer.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Realization
+direction: source-to-target
+```

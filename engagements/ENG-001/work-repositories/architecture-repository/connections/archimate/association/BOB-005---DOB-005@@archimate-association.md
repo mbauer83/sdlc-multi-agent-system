@@ -1,0 +1,25 @@
+---
+artifact-id: BOB-005---DOB-005@@archimate-association
+artifact-type: archimate-association
+source: BOB-005
+target: DOB-005
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+engagement: ENG-001
+last-updated: 2026-04-05
+---
+
+<!-- §content -->
+
+Algedonic Signal (BOB-005) corresponds to AlgedonicSignal (DOB-005). The business escalation record is the DOB-005 instance carrying signal id, severity, trigger condition, raising agent, phase, and resolution status.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Association
+direction: source-to-target
+```

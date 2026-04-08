@@ -22,10 +22,11 @@
 '   - BPR-302
 '   - BPR-303
 ' connection-ids-used:
-'   - BPR-301---BPR-302
-'   - BPR-302---BPR-303
+'   - BPR-301---BPR-302@@activity-sequence-flow
+'   - BPR-302---BPR-303@@activity-sequence-flow
 ' ---
 @startuml phase-c-activity-cq-lifecycle-v1
+title Phase C Activity — CQ Lifecycle
 
 skinparam activity {
   BackgroundColor AliceBlue

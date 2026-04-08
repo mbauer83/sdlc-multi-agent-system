@@ -1,0 +1,25 @@
+---
+artifact-id: BFN-003---BSV-009@@archimate-realization
+artifact-type: archimate-realization
+source: BFN-003
+target: BSV-009
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+engagement: ENG-001
+last-updated: 2026-04-05
+---
+
+<!-- §content -->
+
+Human Collaboration (BFN-003) realizes the User Decisions Service (BSV-009). CQ answers and sprint review decisions produced through this function are the concrete output of BSV-009.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Realization
+direction: source-to-target
+```

@@ -1,0 +1,25 @@
+---
+artifact-id: BPR-004---BSV-003@@archimate-realization
+artifact-type: archimate-realization
+source: BPR-004
+target: BSV-003
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+engagement: ENG-001
+last-updated: 2026-04-04
+---
+
+<!-- §content -->
+
+Gate Evaluation (BPR-004) realizes the Project Coordination Service (BSV-003). Phase gate reviews — where the PM agent aggregates specialist votes and determines phase transition — are a key coordination activity delivered as part of the project coordination service.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Realization
+direction: source-to-target
+```

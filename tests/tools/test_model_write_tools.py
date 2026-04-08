@@ -161,8 +161,9 @@ def diagram_inferred_ids(diagram_result: dict[str, object], repo_with_entities_a
 
     # Ensure the frontmatter contains the inferred ids.
     content = p.read_text(encoding="utf-8")
+    assert "title Test Diagram" in content
     assert "entity-ids-used" in content
     assert "APP-001" in content
     assert "APP-016" in content
     assert "connection-ids-used" in content
-    assert "APP-001---APP-016" in content
+    assert "APP-001---APP-016@@archimate-serving" in content

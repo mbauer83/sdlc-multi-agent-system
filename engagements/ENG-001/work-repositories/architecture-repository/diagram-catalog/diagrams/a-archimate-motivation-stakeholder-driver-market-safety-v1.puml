@@ -18,14 +18,15 @@
 ' - STK-010
 ' - STK-011
 ' connection-ids-used:
-' - STK-010---DRV-010
-' - STK-010---DRV-019
-' - STK-011---DRV-011
-' - STK-011---DRV-020
+' - STK-010---DRV-010@@archimate-association
+' - STK-010---DRV-019@@archimate-association
+' - STK-011---DRV-011@@archimate-association
+' - STK-011---DRV-020@@archimate-association
 ' ---
 @startuml a-archimate-motivation-stakeholder-driver-market-safety-v1
 !include ../_macros.puml
 !include ../_archimate-stereotypes.puml
+title Motivation - Stakeholder to Driver (Market and Safety Roles)
 
 left to right direction
 skinparam linetype ortho

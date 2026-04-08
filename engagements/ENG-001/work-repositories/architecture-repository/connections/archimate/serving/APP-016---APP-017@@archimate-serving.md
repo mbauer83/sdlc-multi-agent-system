@@ -1,0 +1,25 @@
+---
+artifact-id: APP-016---APP-017@@archimate-serving
+artifact-type: archimate-serving
+source: APP-016
+target: APP-017
+version: 0.1.0
+status: draft
+phase-produced: C
+owner-agent: SwA
+engagement: ENG-001
+last-updated: 2026-04-04
+---
+
+<!-- §content -->
+
+LangGraph Orchestrator (APP-016) serves EngagementSession (APP-017). EngagementSession initiates and manages graph execution via `graph.stream()`, receiving event deltas from the orchestrator as the ADM sprint progresses through its phases.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Serving
+direction: source-to-target
+```

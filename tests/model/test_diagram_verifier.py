@@ -94,13 +94,13 @@ def diagram_unknown_entity(tmp_path: Path) -> Path:
 
 
 @given(
-    'a diagram file whose connection-ids-used includes "APP-001---APP-999"',
+    'a diagram file whose connection-ids-used includes "APP-001---APP-999@@archimate-serving"',
     target_fixture="diagram_file",
 )
 def diagram_unknown_connection(tmp_path: Path) -> Path:
     content = VALID_ARCHIMATE_DIAGRAM.replace(
-        "' connection-ids-used: [APP-001---APP-016]",
-        "' connection-ids-used: [APP-001---APP-016, APP-001---APP-999]",
+        "' connection-ids-used: [APP-001---APP-016@@archimate-serving]",
+        "' connection-ids-used: [APP-001---APP-016@@archimate-serving, APP-001---APP-999@@archimate-serving]",
     )
     diag_dir = tmp_path / "diagram-catalog" / "diagrams"
     return write_diagram(diag_dir / "phase-c-archimate-application-v1.puml", content)
@@ -159,6 +159,13 @@ def diagram_no_enduml(tmp_path: Path) -> Path:
     return write_diagram(diag_dir / "phase-c-archimate-application-v1.puml", content)
 
 
+@given("a diagram file without a visible title line", target_fixture="diagram_file")
+def diagram_no_title(tmp_path: Path) -> Path:
+    content = VALID_ARCHIMATE_DIAGRAM.replace("title Application Architecture\n", "")
+    diag_dir = tmp_path / "diagram-catalog" / "diagrams"
+    return write_diagram(diag_dir / "phase-c-archimate-application-v1.puml", content)
+
+
 @given(
     "an architecture repository with one valid entity and one invalid connection",
     target_fixture="repo_path",
@@ -168,10 +175,10 @@ def repo_with_mixed_files(tmp_path: Path) -> Path:
     write_entity(entity_dir / "APP-001.md", VALID_ENTITY)
     # Invalid: artifact-id does not match filename stem
     bad_conn = VALID_CONNECTION.replace(
-        "artifact-id: APP-001---APP-016", "artifact-id: APP-001---APP-999"
+        "artifact-id: APP-001---APP-016@@archimate-serving", "artifact-id: APP-001---APP-999@@archimate-serving"
     )
     conn_dir = tmp_path / "connections" / "archimate" / "serving"
-    write_connection(conn_dir / "APP-001---APP-016.md", bad_conn)
+    write_connection(conn_dir / "APP-001---APP-016@@archimate-serving.md", bad_conn)
     return tmp_path
 
 

@@ -1,0 +1,25 @@
+---
+artifact-id: BIA-001---OUT-001@@archimate-realization
+artifact-type: archimate-realization
+source: BIA-001
+target: OUT-001
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+engagement: ENG-001
+last-updated: '2026-04-06'
+---
+
+<!-- §content -->
+
+Sprint Review Interaction realization path supplies outcome evidence for predictable throughput.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Realization
+direction: source-to-target
+```

@@ -1,0 +1,25 @@
+---
+artifact-id: BPR-004---BEV-003@@archimate-triggering
+artifact-type: archimate-triggering
+source: BPR-004
+target: BEV-003
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+engagement: ENG-001
+last-updated: '2026-04-05'
+---
+
+<!-- §content -->
+
+Gate evaluation emits Gate Passed when criteria pass.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Triggering
+direction: source-to-target
+```

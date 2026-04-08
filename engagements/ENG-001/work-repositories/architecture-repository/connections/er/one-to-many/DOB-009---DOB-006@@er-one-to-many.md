@@ -1,0 +1,26 @@
+---
+artifact-id: DOB-009---DOB-006@@er-one-to-many
+artifact-type: er-one-to-many
+source: DOB-009
+target: DOB-006
+version: 0.1.0
+status: draft
+phase-produced: C
+owner-agent: SwA
+engagement: ENG-001
+last-updated: 2026-04-04
+---
+
+<!-- §content -->
+
+WorkflowState (DOB-009) contains many pending HandoffRecords (DOB-006). The `pending_handoffs` field in WorkflowState tracks handoffs that have been emitted by a specialist node but not yet consumed by the receiving agent's node; entries are removed when the target node processes them.
+
+<!-- §display -->
+
+### er
+
+```yaml
+source-cardinality: "1"
+target-cardinality: "0..*"
+label: "has pending"
+```

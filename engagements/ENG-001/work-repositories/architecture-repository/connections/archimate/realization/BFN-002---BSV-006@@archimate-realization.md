@@ -1,0 +1,25 @@
+---
+artifact-id: BFN-002---BSV-006@@archimate-realization
+artifact-type: archimate-realization
+source: BFN-002
+target: BSV-006
+version: 0.1.0
+status: draft
+phase-produced: B
+owner-agent: SA
+engagement: ENG-001
+last-updated: 2026-04-05
+---
+
+<!-- §content -->
+
+Specialist Execution (BFN-002) realizes the Code Delivery Service (BSV-006) through the Implementing Developer agent's Phase G skill invocations.
+
+<!-- §display -->
+
+### archimate
+
+```yaml
+relationship-type: Realization
+direction: source-to-target
+```
