@@ -24,6 +24,7 @@
 ' - APP-001---APP-018@@archimate-serving
 ' - APP-001---APP-021@@archimate-serving
 ' - APP-016---APP-018@@archimate-composition
+' - APP-020---APP-021@@archimate-serving
 ' ---
 @startuml runtime-sequence-cq-routing-resume-v1
 title CQ Routing and Resume (Application Runtime)
@@ -41,14 +42,23 @@ APP_007 -> APP_001: record_event(cq.batched)
 APP_016 -> APP_001: record_event(phase.suspended)
 
 APP_020 -> APP_001: query open CQs
-APP_021 -> APP_001: record_event(cq.answered, upload_refs?)
-APP_018 -> APP_001: query cq.answered
-APP_018 -> APP_001: record_event(cq.routed)
-APP_016 -> APP_001: record_event(phase.resumed)
-APP_016 -> APP_008: resume specialist with CQ answer payload
+APP_020 -> APP_021: delegate CQ answer submission payload
+APP_021 -> APP_001: record_event(cq.answered, event_id, cq_id, upload_refs?)
+APP_018 -> APP_001: query cq.answered by cq_id
+APP_018 -> APP_001: check_dedup(event_id)
+alt event_id already processed
+	APP_018 -> APP_001: record_event(decision.recorded, decision="duplicate-cq-answer-ignored")
+else first-seen event_id
+	APP_018 -> APP_001: record_event(cq.routed, correlation_id=cq_id)
+	APP_016 -> APP_001: record_event(phase.resumed, correlation_id=cq_id)
+	APP_016 -> APP_008: resume specialist with CQ answer payload
+end
 
 note right of APP_018
 Mapped to BPR-003 and cq_user_node
 suspend/resume event contract.
+Best-practice control points:
+- idempotent CQ answer processing via canonical event_id dedup
+- correlation_id=cq_id propagation for replay/audit
 end note
 @enduml

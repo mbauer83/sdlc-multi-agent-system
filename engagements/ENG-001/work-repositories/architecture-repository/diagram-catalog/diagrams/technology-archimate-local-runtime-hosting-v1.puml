@@ -1,0 +1,58 @@
+' ---
+' artifact-id: technology-archimate-local-runtime-hosting-v1
+' artifact-type: diagram
+' diagram-type: archimate-technology
+' name: "Technology Architecture \u2014 Local Runtime Hosting"
+' version: 0.1.0
+' status: draft
+' phase-produced: C
+' owner-agent: SwA
+' engagement: ENG-001
+' domain: runtime
+' purpose: Stage 4.9i infrastructure elaboration view showing local host/runtime stack
+'   and technology services serving core application runtime components.
+' entity-ids-used:
+' - APP-001
+' - APP-016
+' - APP-020
+' - NOD-001
+' - SSW-001
+' - TSV-001
+' connection-ids-used:
+' - NOD-001---SSW-001@@archimate-composition
+' - SSW-001---TSV-001@@archimate-serving
+' - TSV-001---APP-001@@archimate-serving
+' - TSV-001---APP-016@@archimate-serving
+' - TSV-001---APP-020@@archimate-serving
+' ---
+@startuml technology-archimate-local-runtime-hosting-v1
+!include ../_macros.puml
+!include ../_archimate-stereotypes.puml
+title Technology Architecture - Local Runtime Hosting
+
+skinparam rankdir LR
+skinparam nodesep 30
+skinparam ranksep 30
+
+rectangle "Local Runtime Host\n[NOD-001]" as NOD_001 <<TechnologyNode>>
+rectangle "Python Runtime and UV Toolchain\n[SSW-001]" as SSW_001 <<SystemSoftware>>
+rectangle "Local File and Process Service\n[TSV-001]" as TSV_001 <<TechnologyService>>
+
+rectangle "EventStore\n[APP-001]" as APP_001 <<ApplicationComponent>>
+rectangle "LangGraph Orchestrator\n[APP-016]" as APP_016 <<ApplicationComponent>>
+rectangle "DashboardServer\n[APP-020]" as APP_020 <<ApplicationComponent>>
+
+NOD_001 *-[#2E7D32]- SSW_001 : <<composition>>
+SSW_001 -[#5C6BC0]-> TSV_001 : <<serving>>
+TSV_001 -[#0078A0]-> APP_001 : <<serving>>
+TSV_001 -[#0078A0]-> APP_016 : <<serving>>
+TSV_001 -[#0078A0]-> APP_020 : <<serving>>
+
+note bottom
+4.9i infrastructure baseline:
+- Local-first operation is modeled as technology services
+  serving application runtime components.
+- Safety-relevant control loops retain fail-safe behavior at the
+  application layer while depending on this runtime substrate.
+end note
+@enduml

@@ -151,14 +151,7 @@ def _build_skill_id_to_relpath(*, repo_root: Path, diagrams_dir: Path) -> dict[s
 
 def _build_diagram_id_to_relpath(*, diagrams_dir: Path, registry: ModelRegistry) -> dict[str, str]:
     diagram_map: dict[str, str] = {}
-
-    # Prefer registry-backed IDs when available.
-    for artifact_id in registry.diagram_ids():
-        p = registry.find_file_by_id(artifact_id)
-        if p is None:
-            continue
-        rel = os.path.relpath(str(p), start=str(diagrams_dir)).replace("\\", "/")
-        diagram_map[artifact_id] = rel
+    _ = registry
 
     # Ensure all local diagram files are discoverable by stem even if not yet indexed.
     if diagrams_dir.exists():
@@ -169,6 +162,10 @@ def _build_diagram_id_to_relpath(*, diagrams_dir: Path, registry: ModelRegistry)
         for p in diagrams_dir.glob("*.md"):
             if p.name.startswith("_"):
                 continue
+            fm = _read_frontmatter(p)
+            artifact_id = str(fm.get("artifact-id", "")).strip()
+            if artifact_id:
+                diagram_map.setdefault(artifact_id, p.name)
             diagram_map.setdefault(p.stem, p.name)
 
     return diagram_map

@@ -167,3 +167,28 @@ def diagram_inferred_ids(diagram_result: dict[str, object], repo_with_entities_a
     assert "APP-016" in content
     assert "connection-ids-used" in content
     assert "APP-001---APP-016@@archimate-serving" in content
+
+
+def test_model_create_matrix_writes_without_registry_diagram_ids(repo_root: Path) -> None:
+    _write_min_entity(repo_root, "APP-001", "application-component", "EventStore")
+
+    result = tools.model_create_matrix(
+        name="Matrix Create Regression",
+        purpose="Ensure matrix creation does not require ModelRegistry.diagram_ids().",
+        matrix_markdown=(
+            "| Application Component | Sequence |\n"
+            "|---|---|\n"
+            "| APP-001 | runtime-sequence-cq-routing-resume-v1 |\n"
+        ),
+        phase_produced="C",
+        owner_agent="SwA",
+        artifact_id="matrix-create-regression-v1",
+        dry_run=False,
+        repo_root=str(repo_root),
+        repo_scope="engagement",
+    )
+
+    assert result.get("wrote") is True
+    verification = result.get("verification")
+    assert isinstance(verification, dict)
+    assert verification.get("valid") is True

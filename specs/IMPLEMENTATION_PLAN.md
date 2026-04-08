@@ -599,7 +599,7 @@ Every file in this list requires review and likely modification. Do not attempt 
 
 ---
 
-### Stage 4.9 — ENG-001 Architecture Model (Partial — 4.9i pending)
+### Stage 4.9 — ENG-001 Architecture Model (Complete — 4.9i delivered)
 
 > **Primary purpose: the implementation specification for Stage 5.** The SDLC multi-agent system is modelled as a first-class ERP v2.0 architecture engagement. Entity files, connection files, and diagrams produced here are the definitive architectural plans for all Stage 5 `src/` work. Developers implement one APP entity at a time; Pydantic models in `src/models/` are derived from DOB attribute tables; the LangGraph topology follows the activity diagram. When Stage 5 diverges from these artifacts, the artifacts are updated first. Secondary purpose: integration test fixture for Stage 6.
 >
@@ -865,31 +865,43 @@ The following events govern reverse-architecture and user-input persistence. The
 
 **Contingency — if future skill additions become necessary (Stage 4.8g):** The three reverse-arch skills are `complexity-class: complex` (2000-token soft budget). Any additions to Steps 3 or 4 (e.g. explicit `upload_refs` guidance) are estimated at ≤60 tokens per skill. Truncation priority (`Algedonic Triggers → Feedback Loop → Outputs`; Steps never truncated) provides ~400 tokens of headroom before content loss. All such changes are designed in Stage 4.8g before execution — see below.
 
-#### 4.9i — Application and Infrastructure Architecture Elaboration (Pending)
+#### 4.9i — Application and Infrastructure Architecture Elaboration (Complete)
 
 Purpose: extend the Stage 5 implementation specification with deeper, execution-grade architectural detail for application and technology/infrastructure layers, using paired ArchiMate + sequence views.
 
-- [ ] **Application layer refinement package (ArchiMate):**
+- [x] **Application layer refinement package (ArchiMate):**
   - Refine component/service/interface boundaries for APP/AIF/ASV entities and their realization/serving/access relations.
   - Add explicit runtime interaction boundaries for PM orchestration, specialist invocation, CQ routing, and review processing.
   - Validate APP-to-BSV realization and APP-to-DOB access coverage against current entity/connection files.
+  - 2026-04-08 remediation: explicit DashboardServer -> UserInputGateway serving boundary modeled (`APP-020---APP-021@@archimate-serving`) and propagated to component map/runtime-boundary views.
+  - 2026-04-08 remediation: explicit EventStore -> DashboardServer read-side serving boundary modeled (`APP-001---APP-020@@archimate-serving`) for local developer-machine runtime query paths (open CQ/review scope + event stream reads).
 
-- [ ] **Application runtime behavior package (Sequence):**
+- [x] **Application runtime behavior package (Sequence):**
   - Author or refine sequence diagrams for core flows: specialist invocation cycle, CQ answer routing/resume, gate evaluation decision path, sprint review correction loop.
   - Ensure each sequence flow has backing entities/connections and traceable relation to lifecycle/activity workflow nets.
+  - 2026-04-08 remediation: CQ and sprint-review runtime sequences now explicitly show APP-020 -> APP-021 delegation path; runtime traceability matrix frontmatter corrected for APP-017 + connection completeness.
+  - 2026-04-08 adequacy review: added `runtime-sequence-algedonic-escalation-fastpath-v1.puml` and updated gate-evaluation/runtime-boundary views to explicitly model safety fast-path escalation and CSCO decisioning control flow.
+  - 2026-04-08 prioritization pass (best-practice aligned): added explicit idempotency/dedup semantics (canonical `event_id`), correlation continuity (`invocation_id`/`correlation_id`), and fail-safe timeout branches for safety-critical decision points in CQ/gate/algedonic runtime sequences.
 
-- [ ] **Technology/infrastructure layer refinement package (ArchiMate):**
+- [x] **Technology/infrastructure layer refinement package (ArchiMate):**
   - Model deployment/runtime topology (nodes, system software, environments, data stores, external boundaries) for the actual Stage 5 execution model.
   - Specify EventStore deployment context, dashboard/runtime hosting boundary, and target-repo/tooling execution context.
   - Add technology-layer relations required for operational readiness (serving, deployment, communication-path, access where applicable).
+  - 2026-04-08 baseline slice: added local runtime topology entities [@NOD-001 v0.1.0](../engagements/ENG-001/work-repositories/architecture-repository/model-entities/technology/nodes/NOD-001.local-runtime-host.md), [@SSW-001 v0.1.0](../engagements/ENG-001/work-repositories/architecture-repository/model-entities/technology/system-software/SSW-001.python-runtime-and-uv-toolchain.md), and [@TSV-001 v0.1.0](../engagements/ENG-001/work-repositories/architecture-repository/model-entities/technology/services/TSV-001.local-file-and-process-service.md).
+  - 2026-04-08 baseline slice: added infrastructure-to-application serving/composition connections [@NOD-001---SSW-001@@archimate-composition v0.1.0](../engagements/ENG-001/work-repositories/architecture-repository/connections/archimate/composition/NOD-001---SSW-001@@archimate-composition.md), [@SSW-001---TSV-001@@archimate-serving v0.1.0](../engagements/ENG-001/work-repositories/architecture-repository/connections/archimate/serving/SSW-001---TSV-001@@archimate-serving.md), [@TSV-001---APP-001@@archimate-serving v0.1.0](../engagements/ENG-001/work-repositories/architecture-repository/connections/archimate/serving/TSV-001---APP-001@@archimate-serving.md), [@TSV-001---APP-016@@archimate-serving v0.1.0](../engagements/ENG-001/work-repositories/architecture-repository/connections/archimate/serving/TSV-001---APP-016@@archimate-serving.md), and [@TSV-001---APP-020@@archimate-serving v0.1.0](../engagements/ENG-001/work-repositories/architecture-repository/connections/archimate/serving/TSV-001---APP-020@@archimate-serving.md).
+  - 2026-04-08 baseline slice: added companion views [@technology-archimate-local-runtime-hosting-v1 v0.1.0](../engagements/ENG-001/work-repositories/architecture-repository/diagram-catalog/diagrams/technology-archimate-local-runtime-hosting-v1.puml) and [@technology-matrix-runtime-hosting-traceability-v1 v0.1.0](../engagements/ENG-001/work-repositories/architecture-repository/diagram-catalog/diagrams/technology-matrix-runtime-hosting-traceability-v1.md).
 
-- [ ] **Operational behavior package (Sequence):**
+- [x] **Operational behavior package (Sequence):**
   - Author or refine sequence diagrams for deployment/provisioning, event persistence/snapshot/replay lifecycle, and operational observability/escalation paths.
   - Confirm sequence participants map to defined application/technology entities (no diagram-only participants).
+  - 2026-04-08 completion slice: added [@technology-sequence-runtime-bootstrap-provisioning-v1 v0.1.0](../engagements/ENG-001/work-repositories/architecture-repository/diagram-catalog/diagrams/technology-sequence-runtime-bootstrap-provisioning-v1.puml) for local host/runtime bootstrap and provisioning flow.
+  - 2026-04-08 completion slice: added [@technology-sequence-event-persistence-snapshot-replay-escalation-v1 v0.1.0](../engagements/ENG-001/work-repositories/architecture-repository/diagram-catalog/diagrams/technology-sequence-event-persistence-snapshot-replay-escalation-v1.puml) for event persistence/snapshot/replay lifecycle and fail-safe escalation observability path.
 
-- [ ] **Cross-layer conformance and verification:**
+- [x] **Cross-layer conformance and verification:**
   - Run model-first conformance check: business workflow nets -> application services -> technology/infrastructure realization path.
   - Re-render modified diagrams to canonical `diagram-catalog/rendered/` and run `ModelVerifier.verify_all(...)` after each slice.
+  - 2026-04-08 completion slice: conformance evidence consolidated across `runtime-matrix-business-to-application-traceability-v1.md` + `technology-matrix-runtime-hosting-traceability-v1.md` and paired application/technology sequences.
+  - 2026-04-08 completion slice: rendered new technology operational sequences and re-ran full repository verification with zero errors/warnings.
 
 ---
 
@@ -1317,11 +1329,99 @@ This subsection is the canonical review-control model for dashboard-driven human
 
 **Blocker update (2026-04-08, session 20):** the session-19 `E201` surge was a stale incremental verifier-state artifact, not an active regex/rule defect. Forced full verification confirms ENG-001 baseline at **2022 files, 0 errors, 0 warnings**. Incremental state now includes verifier-engine signature invalidation, so rule-engine changes force a full recompute instead of replaying stale cached issues.
 
+**Validation update (2026-04-08, session 22):** `model_verify_all` now returns **2024 files, 0 errors, 0 warnings** after the application-layer runtime-boundary remediation slice.
+
+**Validation update (2026-04-08, session 23):** after application-architecture adequacy improvements (algedonic fast-path sequence, orchestrator->CSCO composition mapping, APP-015->BPR-005 realization, and runtime matrix escalation row), `model_verify_all` returns **2027 files, 0 errors, 0 warnings**.
+
+**Validation update (2026-04-08, session 26):** after Stage 4.9i technology baseline additions (NOD-001/SSW-001/TSV-001 entities, serving/composition relations, and hosting diagram+matrix views), `model_verify_all` returns **2037 files, 0 errors, 0 warnings**.
+
 ### Immediate next actions
 
-- Verify incremental and full-mode verifier parity remains stable after engine-signature invalidation (`tests/model/test_model_verifier_incremental.py`, `tests/model/test_connection_verifier.py`, full `verify_all`).
-- After verifier baseline is restored, resume Stage 4.9i deepening (application + infrastructure/technology views) and maintain per-slice verify/render checkpoints.
+- Stage 4.9i is complete; carry the resulting application + technology baseline directly into Stage 5 implementation tasks.
 - Continue Stage 5 integration focus items tracked in this plan (EventStore/orchestration/tooling completion and integration-test readiness), using the expanded application/infrastructure diagram set as the implementation baseline.
+- Implement modeled control-loop reliability semantics in code: event_id-based idempotent dedup across runtime event consumers, correlation-id propagation, and fail-safe timeout behavior for safety votes/escalations.
+
+### Completed this session (2026-04-08 — session 25)
+
+- **Priority-filtered best-practice propagation (solution-architecture quality):**
+  - Applied runtime-sequence refinements only where risk impact is high:
+    - event_id-based dedup path (CQ flow exemplar) in `runtime-sequence-cq-routing-resume-v1.puml`
+    - invocation correlation continuity (`invocation_id`) in `runtime-sequence-specialist-invocation-cycle-v1.puml`
+    - fail-closed timeout behavior for safety vote absence in `runtime-sequence-gate-evaluation-decision-path-v1.puml`
+    - fail-safe timeout-to-containment branch + `correlation_id` in `runtime-sequence-algedonic-escalation-fastpath-v1.puml`
+  - Propagated the same controls into architecture narrative and traceability matrix:
+    - `overview/aa-overview.md`
+    - `runtime-matrix-business-to-application-traceability-v1.md`
+  - Codified these controls in framework guidance:
+    - `framework/diagram-conventions.md` (`§7.sequence` runtime quality controls)
+
+### Completed this session (2026-04-08 — session 26)
+
+- **Stage 4.9i infrastructure baseline elaboration (technology layer):**
+  - Added technology entities for local runtime substrate:
+    - `NOD-001.local-runtime-host.md`
+    - `SSW-001.python-runtime-and-uv-toolchain.md`
+    - `TSV-001.local-file-and-process-service.md`
+  - Added technology/application relation set:
+    - `NOD-001---SSW-001@@archimate-composition.md`
+    - `SSW-001---TSV-001@@archimate-serving.md`
+    - `TSV-001---APP-001@@archimate-serving.md`
+    - `TSV-001---APP-016@@archimate-serving.md`
+    - `TSV-001---APP-020@@archimate-serving.md`
+  - Added companion infrastructure views:
+    - `technology-archimate-local-runtime-hosting-v1.puml`
+    - `technology-matrix-runtime-hosting-traceability-v1.md`
+  - Updated `overview/aa-overview.md` with explicit technology baseline mapping.
+  - Validation checkpoint:
+    - `model_verify_all` (ENG-001 scope) -> **2037 files, 0 errors, 0 warnings**.
+
+### Completed this session (2026-04-08 — session 27)
+
+- **Stage 4.9i operational behavior + conformance closure:**
+  - Added technology operational sequence views:
+    - `technology-sequence-runtime-bootstrap-provisioning-v1.puml`
+    - `technology-sequence-event-persistence-snapshot-replay-escalation-v1.puml`
+  - Completed 4.9i checklist closure:
+    - operational behavior package marked complete
+    - cross-layer conformance + verification package marked complete
+  - Re-rendered new sequence diagrams to canonical `diagram-catalog/rendered/`.
+  - Validation checkpoint:
+    - full `ModelVerifier.verify_all(...)` (ENG-001 scope) -> **0 errors, 0 warnings**.
+
+### Completed this session (2026-04-08 — session 22)
+
+- **Application-layer adequacy remediation (local developer-machine runtime):**
+  - Added explicit read-side serving relation `APP-001---APP-020@@archimate-serving` to model EventStore-backed dashboard query paths.
+  - Propagated runtime boundary semantics across:
+    - `application-archimate-component-map-v1.puml`
+    - `runtime-archimate-application-interaction-boundaries-v1.puml`
+    - `runtime-sequence-cq-routing-resume-v1.puml`
+    - `runtime-sequence-sprint-review-correction-loop-v1.puml`
+    - `runtime-matrix-business-to-application-traceability-v1.md`
+  - Re-rendered modified PUML diagrams to `diagram-catalog/rendered/`.
+- **Validation checkpoint:**
+  - `model_verify_all` (ENG-001 scope) -> **2024 files, 0 errors, 0 warnings**.
+
+### Completed this session (2026-04-08 — session 23)
+
+- **Application-architecture adequacy review and remediation (problem/solution-space):**
+  - Added explicit safety fast-path control-loop coverage in application runtime:
+    - new diagram `runtime-sequence-algedonic-escalation-fastpath-v1.puml`
+    - updated `runtime-sequence-gate-evaluation-decision-path-v1.puml` for orchestrator-led CSCO safety vote invocation
+  - Added model relations to remove traceability blind spots:
+    - `APP-016---APP-015@@archimate-composition`
+    - `APP-015---BPR-005@@archimate-realization`
+  - Updated cross-layer matrix `runtime-matrix-business-to-application-traceability-v1.md` with a dedicated BPR-005 escalation row and links to realization + runtime-sequence evidence.
+  - Updated runtime/application boundary diagrams to include CSCO composition in runtime topology.
+- **Validation checkpoint:**
+  - `model_verify_all` (ENG-001 scope) -> **2027 files, 0 errors, 0 warnings**.
+
+### Completed this session (2026-04-08 — session 24)
+
+- **Solution-architecture propagation audit completed:**
+  - Framework guidance updated in `framework/diagram-conventions.md` to require a conditional algedonic fast-path runtime sequence whenever safety escalation behavior is modeled.
+  - ENG-001 application architecture narrative updated in `overview/aa-overview.md` with explicit runtime control-path table including algedonic escalation traceability.
+  - Stage 4.9i artifacts, overview docs, and rendered diagrams now reflect a consistent application-layer control architecture across CQ/review/gate/algedonic paths.
 
 ### Completed this session (2026-04-08 — session 20)
 

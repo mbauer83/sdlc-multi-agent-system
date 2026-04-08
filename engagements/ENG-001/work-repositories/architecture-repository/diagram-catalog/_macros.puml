@@ -639,3 +639,10 @@
 !define DECL_DOB_013 rectangle "ArtifactRecord" <<DataObject>> as DOB_013
 !define DECL_ACO_001 rectangle "Skill Execution Collaboration" <<ApplicationCollaboration>> as ACO_001
 !define DECL_AIA_001 rectangle "Skill Execution" <<ApplicationInteraction>> as AIA_001
+
+' ---------------------------------------------------------------------------
+' Technology
+' ---------------------------------------------------------------------------
+!define DECL_NOD_001 rectangle "Local Runtime Host" <<Node>> as NOD_001
+!define DECL_TSV_001 rectangle "Local File and Process Service" <<TechnologyService>> as TSV_001
+!define DECL_SSW_001 rectangle "Python Runtime and UV Toolchain" <<SystemSoftware>> as SSW_001

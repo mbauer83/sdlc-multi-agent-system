@@ -37,16 +37,18 @@ database "EventStore\nAPP-001" as APP_001
 APP_016 -> APP_007: request gate evaluation context
 loop for each required reviewer input
   APP_007 -> APP_008: request review recommendation(s)
-  APP_007 -> APP_015: collect safety/governance vote(s)
+  APP_016 -> APP_015: request safety/governance vote(s)
+  APP_015 --> APP_007: return safety recommendation(s)
 end
 APP_007 -> APP_001: record_event(gate.evaluated)
 
-alt gate passed
+alt gate passed with CSCO vote present
   APP_016 -> APP_001: record_event(phase.transitioned)
   APP_016 -> APP_001: create_snapshot("gate.evaluated")
   APP_016 -> APP_017: continue next phase iteration
   APP_017 -> APP_001: record_event(sprint.started) [if new sprint]
-else gate failed or deferred
+else CSCO vote missing/timeout or gate failed/deferred
+  APP_016 -> APP_001: record_event(algedonic.escalated, reason="gate-safety-vote-timeout")
   APP_016 -> APP_001: record_event(decision.recorded)
   APP_016 -> APP_008: route rework package to producing specialist
   APP_016 -> APP_017: retain current phase / route rework
@@ -57,5 +59,6 @@ Mapped to BPR-004 gate evaluation and
 PM tool contract evaluate_gate().
 Reviewer roster is phase/gate-policy dependent;
 CSCO is mandatory for safety/governance checks.
+Safety default is fail-closed when CSCO safety vote is unavailable.
 end note
 @enduml

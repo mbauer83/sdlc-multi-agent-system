@@ -36,10 +36,10 @@ database "EventStore\nAPP-001" as APP_001
 APP_016 -> APP_007: request PMDecision(next_action)
 APP_007 -> APP_004: load_instructions(skill_id)
 APP_007 -> APP_006: resolve specialist instance(agent_id)
-APP_007 -> APP_001: record_event(specialist.invoked)
-APP_016 -> APP_008: invoke specialist(skill_id, task, deps)
+APP_007 -> APP_001: record_event(specialist.invoked, invocation_id)
+APP_016 -> APP_008: invoke specialist(skill_id, task, deps, invocation_id)
 
-APP_008 -> APP_001: record_event(artifact.created|artifact.updated)
+APP_008 -> APP_001: record_event(artifact.created|artifact.updated, invocation_id)
 opt specialist needs clarification
   APP_008 -> APP_001: record_event(cq.raised)
   note right of APP_008
@@ -48,7 +48,7 @@ opt specialist needs clarification
   end note
 end
 APP_008 --> APP_016: specialist output
-APP_016 -> APP_001: record_event(specialist.completed)
+APP_016 -> APP_001: record_event(specialist.completed, invocation_id)
 APP_016 -> APP_001: check_snapshot_interval()
 alt periodic threshold reached
   APP_016 -> APP_001: create_snapshot("periodic")
@@ -57,5 +57,8 @@ end
 note right of APP_016
 Mapped to BPR-002 execution lane and
 Stage 5 emitter hierarchy.
+Quality controls:
+- invocation_id supports replay-safe correlation
+- specialist.completed carries same invocation_id
 end note
 @enduml

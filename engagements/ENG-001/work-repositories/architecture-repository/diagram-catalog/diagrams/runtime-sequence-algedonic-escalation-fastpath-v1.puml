@@ -1,0 +1,61 @@
+' ---
+' artifact-id: runtime-sequence-algedonic-escalation-fastpath-v1
+' artifact-type: diagram
+' diagram-type: sequence
+' name: "Application Runtime Sequence — Algedonic Escalation Fast-Path"
+' version: 0.1.0
+' status: draft
+' phase-produced: C
+' owner-agent: SwA
+' engagement: ENG-001
+' domain: core-platform
+' purpose: 'Phase C application runtime safety slice: explicit fast-path escalation from raised algedonic signal to CSCO decisioning and immediate orchestration control action.'
+' entity-ids-used:
+' - APP-001
+' - APP-007
+' - APP-008
+' - APP-015
+' - APP-016
+' - BPR-005
+' - BEV-005
+' connection-ids-used:
+' - APP-001---APP-016@@archimate-serving
+' - APP-016---APP-007@@archimate-composition
+' - APP-016---APP-008@@archimate-composition
+' - APP-016---APP-015@@archimate-composition
+' - APP-015---BPR-005@@archimate-realization
+' ---
+@startuml runtime-sequence-algedonic-escalation-fastpath-v1
+title Algedonic Escalation Fast-Path (Application Runtime)
+
+participant "Specialist Agent\nAPP-008" as APP_008
+participant "LangGraph Orchestrator\nAPP-016" as APP_016
+participant "PM Agent\nAPP-007" as APP_007
+participant "CSCO Agent\nAPP-015" as APP_015
+database "EventStore\nAPP-001" as APP_001
+
+APP_008 -> APP_001: record_event(algedonic.raised, severity, context)
+APP_016 -> APP_007: request emergency coordination context
+APP_016 -> APP_015: invoke safety escalation review
+APP_015 -> APP_001: record_event(decision.recorded, decision="contain|continue", correlation_id)
+
+alt severity S1 / containment required
+  APP_016 -> APP_001: record_event(phase.suspended, correlation_id)
+  APP_007 -> APP_001: record_event(review.pending)
+else severity S2 / controlled continuation
+  APP_016 -> APP_008: route containment or corrective handoff
+  APP_016 -> APP_001: record_event(decision.recorded, decision="continue-with-constraints", correlation_id)
+else CSCO decision timeout/unavailable
+  APP_016 -> APP_001: record_event(phase.suspended, correlation_id)
+  APP_016 -> APP_001: record_event(algedonic.escalated, reason="csco-decision-timeout", correlation_id)
+end
+
+APP_016 -> APP_001: create_snapshot("algedonic.raised")
+
+note right of APP_015
+Mapped to BPR-005 Algedonic Escalation and
+BEV-005 Safety Signal Raised semantics.
+Fail-safe control: on missing CSCO decision in time,
+runtime defaults to containment/suspend path.
+end note
+@enduml

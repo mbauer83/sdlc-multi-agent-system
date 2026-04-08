@@ -18,6 +18,7 @@ import os
 from mcp.server.fastmcp import FastMCP  # type: ignore[import-not-found]
 
 from src.tools.model_mcp import (
+    auto_start_default_watcher,
     install_call_tool_normalizer,
     normalize_incoming_tool_name,
     register_query_tools,
@@ -59,6 +60,9 @@ _MESSAGE_PATH = os.getenv("SDLC_MCP_MESSAGE_PATH", "/messages/")
 _STREAMABLE_HTTP_PATH = os.getenv("SDLC_MCP_STREAMABLE_HTTP_PATH", "/mcp")
 _JSON_RESPONSE = os.getenv("SDLC_MCP_JSON_RESPONSE", "1") in {"1", "true", "TRUE", "yes", "YES"}
 _STATELESS_HTTP = os.getenv("SDLC_MCP_STATELESS_HTTP", "1") in {"1", "true", "TRUE", "yes", "YES"}
+_WATCH_AUTO_START = os.getenv("SDLC_MCP_MODEL_WATCH_AUTO_START", "1") in {"1", "true", "TRUE", "yes", "YES"}
+_WATCH_INTERVAL_S = float(os.getenv("SDLC_MCP_MODEL_WATCH_INTERVAL_S", "2.0"))
+_WATCH_SCOPE = os.getenv("SDLC_MCP_MODEL_WATCH_SCOPE", "both")
 
 
 mcp = FastMCP(
@@ -112,6 +116,16 @@ def main() -> None:
         help="Optional mount path for SSE transport (advanced)",
     )
     args = parser.parse_args()
+
+    if _WATCH_AUTO_START:
+        try:
+            watch_result = auto_start_default_watcher(
+                interval_s=_WATCH_INTERVAL_S,
+                repo_scope=_WATCH_SCOPE if _WATCH_SCOPE in {"engagement", "enterprise", "both"} else "both",
+            )
+            logger.info("model watcher auto-start result: %s", watch_result)
+        except Exception:  # noqa: BLE001
+            logger.exception("failed to auto-start model watcher")
 
     mcp.run(transport=args.transport)
 

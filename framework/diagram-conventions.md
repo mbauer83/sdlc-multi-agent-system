@@ -72,9 +72,12 @@ Lifecycle rules:
 | C (AA) | Domain data model | ER (class) | Developers, DBAs — persisted data structures |
 | C (AA) | CQ lifecycle | Sequence | Developers — how CQ resolution works at runtime |
 | C (AA) | Sprint review | Sequence | Architects, PM — how review decisions are processed |
+| C/G (AA/IG) | Algedonic fast-path escalation *(conditional)* | Sequence | Architects, PM, CSCO — emergency safety escalation decisioning and control actions |
 | G (IG) | Skill invocation | Sequence | Developers — how a single skill is invoked end-to-end |
 
 These are minima for a greenfield engagement. Any sprint — including those working on extensions or changes to existing systems — may produce any combination of: model entity/connection additions or modifications, updates to existing baseline diagrams (version increment), new work-package-scoped target diagrams, and additional diagrams for viewpoints not previously covered. The decision rule above (update vs. create) governs which output is appropriate in each case.
+
+Conditional rule for safety-governance engagements: if the model includes algedonic escalation behavior (for example BEV-005/BPR-005 or equivalent fast-path safety process), produce and maintain at least one application runtime sequence that shows the end-to-end escalation control loop (signal raised -> CSCO safety evaluation -> PM/orchestration branch action).
 
 ### 0.4 Cross-diagram consistency
 
@@ -382,6 +385,12 @@ Aliases must use underscores (`DOB_001`), never hyphens.
 
 Participants come from entity `§display ###sequence`; messages come from `connections/sequence/*`.
 Use synchronous/asynchronous/return semantics exactly as modeled.
+When modeling safety-governance fast-path behavior, the sequence must include explicit branch outcomes (continue/pause/stop or equivalent) and identify the CSCO decision path as a first-class participant interaction.
+
+Runtime quality controls (mandatory for orchestration/application-runtime sequences):
+- **Idempotent resume/integration points:** when an event-producing action can be retried, include an explicit dedup key path in the sequence using the canonical event identity (for example `event_id`) and show duplicate handling.
+- **Correlation continuity:** decision and lifecycle events that belong to the same control episode (for example CQ, gate, algedonic) must carry a stable correlation key (for example `cq_id`/`invocation_id`/`correlation_id`) in the sequence narrative.
+- **Fail-safe timeout branch for safety decisions:** if a modeled control step depends on a safety/governance decision and that decision can be unavailable/late, include an explicit timeout/unavailable branch with a conservative default (fail-closed containment/suspend/rework).
 
 ### §7.activity-bpmn — Activity / BPMN-Overlay Process Diagram
 

@@ -35,6 +35,7 @@
 ' - APP-001---APP-018@@archimate-serving
 ' - APP-001---APP-021@@archimate-serving
 ' - APP-020---ACT-001@@archimate-serving
+' - APP-020---APP-021@@archimate-serving
 ' ---
 @startuml runtime-archimate-application-interaction-boundaries-v1
 !include ../_macros.puml
@@ -69,6 +70,7 @@ rectangle "Persistence Runtime" <<ApplicationGrouping>> as GRP_STATE {
 
 APP_016 *-[#2E7D32]- APP_007 : <<composition>>
 APP_016 *-[#2E7D32]- APP_008 : <<composition>>
+APP_016 *-[#2E7D32]- APP_015 : <<composition>>
 APP_016 *-[#2E7D32]- APP_018 : <<composition>>
 APP_016 -[#2E7D32]-> APP_017 : <<serving>>
 
@@ -77,7 +79,9 @@ APP_006 -[#5C6BC0]-> APP_016 : <<serving>>
 
 APP_001 -[#0078A0]-> APP_016 : <<serving>>
 APP_001 -[#0078A0]-> APP_018 : <<serving>>
+APP_001 -[#0078A0]-> APP_020 : <<serving>>
 APP_001 -[#0078A0]-> APP_021 : <<serving>>
+APP_020 -[#8D4E00]-> APP_021 : <<serving>>
 
 ACTOR_ACT_001 as ACT_001
 APP_020 -[#8D4E00]-> ACT_001 : <<serving>>
@@ -86,8 +90,8 @@ note bottom
 Model-backed runtime boundaries:
 - Orchestration control: APP-016/017/018
 - Agent invocation runtime: APP-007/008 + APP-004/006
-- User interaction entry: APP-020 serving ACT-001
-- Event-sourced persistence path: APP-001 serving orchestration and interaction components
+- User interaction entry: APP-020 serving ACT-001 and delegating writes to APP-021
+- Event-sourced persistence path: APP-001 serving orchestration and dashboard interaction components
 
 Exemplar scoping note:
 - APP-008 is shown as the SA specialist exemplar for this Phase C slice.

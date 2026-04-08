@@ -30,6 +30,23 @@ references:
   - APP-020
   - APP-021
   - APP-022
+  - NOD-001
+  - SSW-001
+  - TSV-001
+  - BPR-005
+  - BEV-005
+  - runtime-sequence-algedonic-escalation-fastpath-v1
+  - technology-archimate-local-runtime-hosting-v1
+  - technology-matrix-runtime-hosting-traceability-v1
+  - technology-sequence-runtime-bootstrap-provisioning-v1
+  - technology-sequence-event-persistence-snapshot-replay-escalation-v1
+  - APP-016---APP-015@@archimate-composition
+  - APP-015---BPR-005@@archimate-realization
+  - NOD-001---SSW-001@@archimate-composition
+  - SSW-001---TSV-001@@archimate-serving
+  - TSV-001---APP-001@@archimate-serving
+  - TSV-001---APP-016@@archimate-serving
+  - TSV-001---APP-020@@archimate-serving
   - AIF-001
   - AIF-002
   - AIF-003
@@ -112,6 +129,28 @@ Common -> Domain -> Application -> Infrastructure
 | AIF-004 | [@AIF-004 v0.1.0](../model-entities/application/interfaces/AIF-004.artifact-read-writer-port.md) | `src/common/ports.py` |
 | AIF-005 | [@AIF-005 v0.1.0](../model-entities/application/interfaces/AIF-005.diagram-tools-port.md) | `src/common/ports.py` |
 | AIF-006 | [@AIF-006 v0.1.0](../model-entities/application/interfaces/AIF-006.learning-store-port.md) | `src/agents/learning_store.py` |
+
+## Runtime Control Paths (Validated)
+
+| Scenario | Primary runtime sequence | Key model-backed control path |
+|---|---|---|
+| Specialist invocation | [runtime-sequence-specialist-invocation-cycle-v1](../diagram-catalog/diagrams/runtime-sequence-specialist-invocation-cycle-v1.puml) | APP-016 composes PM/specialist node flow and records lifecycle events in APP-001 with invocation_id correlation for replay-safe traceability |
+| CQ suspend/resume | [runtime-sequence-cq-routing-resume-v1](../diagram-catalog/diagrams/runtime-sequence-cq-routing-resume-v1.puml) | APP-020 delegates writes to APP-021; APP-018 applies canonical event_id dedup before APP-016 resumes specialist on answered CQ |
+| Gate evaluation | [runtime-sequence-gate-evaluation-decision-path-v1](../diagram-catalog/diagrams/runtime-sequence-gate-evaluation-decision-path-v1.puml) | APP-016 orchestrates PM and CSCO decisioning branch before transition/rework; safety vote timeout defaults to fail-closed escalation/rework |
+| Sprint review correction loop | [runtime-sequence-sprint-review-correction-loop-v1](../diagram-catalog/diagrams/runtime-sequence-sprint-review-correction-loop-v1.puml) | Review decision loop routed via APP-007/APP-016 with EventStore-backed checkpoints |
+| Algedonic fast-path escalation | [runtime-sequence-algedonic-escalation-fastpath-v1](../diagram-catalog/diagrams/runtime-sequence-algedonic-escalation-fastpath-v1.puml) | [@APP-016---APP-015@@archimate-composition v0.1.0](../connections/archimate/composition/APP-016---APP-015@@archimate-composition.md) + [@APP-015---BPR-005@@archimate-realization v0.1.0](../connections/archimate/realization/APP-015---BPR-005@@archimate-realization.md); CSCO timeout path explicitly suspends/escalates (fail-safe containment default) |
+
+## Technology Baseline (4.9i)
+
+| Technology entity | Connection path | Served runtime component(s) |
+|---|---|---|
+| [@NOD-001 v0.1.0](../model-entities/technology/nodes/NOD-001.local-runtime-host.md) | [@NOD-001---SSW-001@@archimate-composition v0.1.0](../connections/archimate/composition/NOD-001---SSW-001@@archimate-composition.md) | [@SSW-001 v0.1.0](../model-entities/technology/system-software/SSW-001.python-runtime-and-uv-toolchain.md) |
+| [@SSW-001 v0.1.0](../model-entities/technology/system-software/SSW-001.python-runtime-and-uv-toolchain.md) | [@SSW-001---TSV-001@@archimate-serving v0.1.0](../connections/archimate/serving/SSW-001---TSV-001@@archimate-serving.md) | [@TSV-001 v0.1.0](../model-entities/technology/services/TSV-001.local-file-and-process-service.md) |
+| [@TSV-001 v0.1.0](../model-entities/technology/services/TSV-001.local-file-and-process-service.md) | [@TSV-001---APP-001@@archimate-serving v0.1.0](../connections/archimate/serving/TSV-001---APP-001@@archimate-serving.md), [@TSV-001---APP-016@@archimate-serving v0.1.0](../connections/archimate/serving/TSV-001---APP-016@@archimate-serving.md), [@TSV-001---APP-020@@archimate-serving v0.1.0](../connections/archimate/serving/TSV-001---APP-020@@archimate-serving.md) | [@APP-001 v0.1.0](../model-entities/application/components/APP-001.event-store.md), [@APP-016 v0.1.0](../model-entities/application/components/APP-016.langgraph-orchestrator.md), [@APP-020 v0.1.0](../model-entities/application/components/APP-020.dashboard-server.md) |
+
+Reference views: [technology-archimate-local-runtime-hosting-v1](../diagram-catalog/diagrams/technology-archimate-local-runtime-hosting-v1.puml), [technology-matrix-runtime-hosting-traceability-v1](../diagram-catalog/diagrams/technology-matrix-runtime-hosting-traceability-v1.md).
+
+Operational behavior views: [technology-sequence-runtime-bootstrap-provisioning-v1](../diagram-catalog/diagrams/technology-sequence-runtime-bootstrap-provisioning-v1.puml), [technology-sequence-event-persistence-snapshot-replay-escalation-v1](../diagram-catalog/diagrams/technology-sequence-event-persistence-snapshot-replay-escalation-v1.puml).
 
 ## Notes
 - This file is the narrative handoff companion for Phase C application architecture.

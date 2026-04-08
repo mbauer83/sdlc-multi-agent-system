@@ -1,16 +1,18 @@
 from __future__ import annotations
 
+import hashlib
 import threading
 import time
 from pathlib import Path
+from typing import Any
 
 from mcp.server.fastmcp import FastMCP  # type: ignore[import-not-found]
 
 from src.tools.model_mcp.context import RepoPreset, RepoScope, clear_caches_for_repo, resolve_repo_roots
 
 
-def _repo_mtime_fingerprint(repo_path: Path) -> float:
-    max_mtime = 0.0
+def _repo_state_fingerprint(repo_path: Path) -> str:
+    digest = hashlib.blake2b(digest_size=16)
     for sub in ("model-entities", "connections", "diagram-catalog/diagrams"):
         root = repo_path / sub
         if not root.exists():
@@ -18,14 +20,22 @@ def _repo_mtime_fingerprint(repo_path: Path) -> float:
         for p in root.rglob("*"):
             try:
                 if p.is_file():
-                    max_mtime = max(max_mtime, p.stat().st_mtime)
+                    st = p.stat()
+                    rel = p.relative_to(repo_path).as_posix()
+                    digest.update(rel.encode("utf-8"))
+                    digest.update(str(int(st.st_mtime_ns)).encode("ascii"))
+                    digest.update(str(int(st.st_size)).encode("ascii"))
             except OSError:
                 continue
-    return max_mtime
+    return digest.hexdigest()
 
 
-def _roots_mtime_fingerprint(roots: list[Path]) -> float:
-    return max((_repo_mtime_fingerprint(r) for r in roots), default=0.0)
+def _roots_state_fingerprint(roots: list[Path]) -> str:
+    digest = hashlib.blake2b(digest_size=16)
+    for root in roots:
+        digest.update(str(root.resolve()).encode("utf-8"))
+        digest.update(_repo_state_fingerprint(root).encode("ascii"))
+    return digest.hexdigest()
 
 
 def _roots_key(roots: list[Path]) -> str:
@@ -40,7 +50,7 @@ _watch_state: dict[str, dict[str, object]] = {}
 
 def _watcher_loop(roots: list[Path], interval_s: float, stop: threading.Event) -> None:
     repo_key = _roots_key(roots)
-    last_fp = _roots_mtime_fingerprint(roots)
+    last_fp = _roots_state_fingerprint(roots)
     with _watch_lock:
         _watch_state[repo_key] = {
             "repo_roots": [str(r) for r in roots],
@@ -53,9 +63,9 @@ def _watcher_loop(roots: list[Path], interval_s: float, stop: threading.Event) -
 
     while not stop.is_set():
         time.sleep(interval_s)
-        fp = _roots_mtime_fingerprint(roots)
+        fp = _roots_state_fingerprint(roots)
         if fp != last_fp:
-            clear_caches_for_repo(roots[0])
+            clear_caches_for_repo(roots)
             last_fp = fp
             with _watch_lock:
                 st = _watch_state.get(repo_key, {})
@@ -69,6 +79,54 @@ def _watcher_loop(roots: list[Path], interval_s: float, stop: threading.Event) -
         st = _watch_state.get(repo_key, {})
         st["running"] = False
         _watch_state[repo_key] = st
+
+
+def _start_watcher(roots: list[Path], *, interval_s: float) -> dict[str, Any]:
+    repo_key = _roots_key(roots)
+
+    with _watch_lock:
+        if repo_key in _watch_threads and _watch_threads[repo_key].is_alive():
+            return {"repo_roots": [str(r) for r in roots], "started": False, "reason": "already_running"}
+
+        fp = _roots_state_fingerprint(roots)
+        _watch_state[repo_key] = {
+            "repo_roots": [str(r) for r in roots],
+            "interval_s": interval_s,
+            "running": True,
+            "last_fingerprint": fp,
+            "last_refresh_time": None,
+            "refresh_count": 0,
+        }
+        stop = threading.Event()
+        t = threading.Thread(
+            target=_watcher_loop,
+            args=(roots, interval_s, stop),
+            daemon=True,
+            name=f"model-repo-watch:{repo_key}",
+        )
+        _watch_stop[repo_key] = stop
+        _watch_threads[repo_key] = t
+        t.start()
+        state = dict(_watch_state.get(repo_key, {}))
+
+    return {"repo_roots": [str(r) for r in roots], "started": True, "state": state}
+
+
+def auto_start_default_watcher(
+    *,
+    interval_s: float = 2.0,
+    repo_root: str | None = None,
+    repo_preset: RepoPreset | None = None,
+    enterprise_root: str | None = None,
+    repo_scope: RepoScope = "both",
+) -> dict[str, Any]:
+    roots = resolve_repo_roots(
+        repo_scope=repo_scope,
+        repo_root=repo_root,
+        repo_preset=repo_preset,
+        enterprise_root=enterprise_root,
+    )
+    return _start_watcher(roots, interval_s=interval_s)
 
 
 def register_watch_tools(mcp: FastMCP) -> None:
@@ -95,7 +153,7 @@ def register_watch_tools(mcp: FastMCP) -> None:
             repo_preset=repo_preset,
             enterprise_root=enterprise_root,
         )
-        clear_caches_for_repo(roots[0])
+        clear_caches_for_repo(roots)
         return {
             "repo_roots": [str(p) for p in roots],
             "repo_scope": repo_scope,
@@ -127,34 +185,7 @@ def register_watch_tools(mcp: FastMCP) -> None:
             repo_preset=repo_preset,
             enterprise_root=enterprise_root,
         )
-        repo_key = _roots_key(roots)
-
-        with _watch_lock:
-            if repo_key in _watch_threads and _watch_threads[repo_key].is_alive():
-                return {"repo_root": repo_key, "started": False, "reason": "already_running"}
-
-            fp = _roots_mtime_fingerprint(roots)
-            _watch_state[repo_key] = {
-                "repo_roots": [str(r) for r in roots],
-                "interval_s": interval_s,
-                "running": True,
-                "last_fingerprint": fp,
-                "last_refresh_time": None,
-                "refresh_count": 0,
-            }
-            stop = threading.Event()
-            t = threading.Thread(
-                target=_watcher_loop,
-                args=(roots, interval_s, stop),
-                daemon=True,
-                name=f"model-repo-watch:{repo_key}",
-            )
-            _watch_stop[repo_key] = stop
-            _watch_threads[repo_key] = t
-            t.start()
-            state = dict(_watch_state.get(repo_key, {}))
-
-        return {"repo_roots": [str(r) for r in roots], "started": True, "state": state}
+        return _start_watcher(roots, interval_s=interval_s)
 
     @mcp.tool(
         name="model_tools_watch_status",

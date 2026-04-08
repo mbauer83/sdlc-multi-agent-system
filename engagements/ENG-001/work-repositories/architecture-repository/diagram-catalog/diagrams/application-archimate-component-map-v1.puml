@@ -76,6 +76,7 @@
 '   - APP-016---APP-017@@archimate-serving
 '   - APP-016---APP-018@@archimate-composition
 '   - APP-020---ACT-001@@archimate-serving
+'   - APP-020---APP-021@@archimate-serving
 '   - APP-022---APP-008@@archimate-serving
 '   - APP-022---APP-009@@archimate-serving
 '   - APP-022---APP-011@@archimate-serving
@@ -180,6 +181,7 @@ rectangle "Dashboard & Interaction\nsrc/dashboard/ + src/sources/" <<Application
 APP_001 -[#0078A0]-> APP_016 : <<serving>>
 APP_001 -[#0078A0]-> APP_017 : <<serving>>
 APP_001 -[#0078A0]-> APP_018 : <<serving>>
+APP_001 -[#0078A0]-> APP_020 : <<serving>>
 APP_001 -[#0078A0]-> APP_021 : <<serving>>
 
 ' ---------------------------------------------------------------------------
@@ -215,6 +217,7 @@ APP_006 -[#5C6BC0]-> APP_016 : <<serving>>
 APP_016 *-[#2E7D32]- APP_007 : <<composition>>
 APP_016 *-[#2E7D32]- APP_008 : <<composition>>
 APP_016 *-[#2E7D32]- APP_009 : <<composition>>
+APP_016 *-[#2E7D32]- APP_015 : <<composition>>
 APP_016 *-[#2E7D32]- APP_018 : <<composition>>
 
 ' ---------------------------------------------------------------------------
@@ -233,6 +236,7 @@ APP_022 -[#8D4E00]-> APP_011 : <<serving>> (read-write)
 ' Serving: DashboardServer → User  (cross-layer: application → business)
 ' ---------------------------------------------------------------------------
 APP_020 -[#8D4E00]-> ACT_001 : <<serving>>
+APP_020 -[#8D4E00]-> APP_021 : <<serving>>
 
 ' ---------------------------------------------------------------------------
 ' Realization: Application Services → Business Services (cross-layer)

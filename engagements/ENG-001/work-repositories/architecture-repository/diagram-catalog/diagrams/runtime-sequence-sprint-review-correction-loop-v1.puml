@@ -23,6 +23,7 @@
 ' - APP-001---APP-021@@archimate-serving
 ' - APP-016---APP-018@@archimate-composition
 ' - APP-001---APP-018@@archimate-serving
+' - APP-020---APP-021@@archimate-serving
 ' ---
 @startuml runtime-sequence-sprint-review-correction-loop-v1
 title Sprint Review Correction Loop (Application Runtime)
@@ -39,6 +40,7 @@ APP_007 -> APP_001: record_event(review.pending)
 
 loop until all review items approved
   APP_020 -> APP_001: query pending review scope
+  APP_020 -> APP_021: delegate review submission payload
   APP_021 -> APP_001: record_event(review.submitted)
   APP_018 -> APP_001: query review.submitted
   APP_018 -> APP_007: forward review payload for decisioning

@@ -116,8 +116,8 @@ def verifier_for(roots_key_str: str, *, include_registry: bool) -> ModelVerifier
     return ModelVerifier(None)
 
 
-def clear_caches_for_repo(_: Path) -> None:
-    # Simple compatibility behavior: clear all caches.
+def clear_caches_for_repo(_: Path | list[Path]) -> None:
+    # Compatibility behavior: clear all caches regardless of which mounted root changed.
     repo_cached.cache_clear()
     registry_cached.cache_clear()
 

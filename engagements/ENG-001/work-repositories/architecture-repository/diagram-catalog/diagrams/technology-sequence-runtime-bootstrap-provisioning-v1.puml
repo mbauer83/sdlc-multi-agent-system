@@ -1,0 +1,47 @@
+' ---
+' artifact-id: technology-sequence-runtime-bootstrap-provisioning-v1
+' artifact-type: diagram
+' diagram-type: sequence
+' name: "Technology Runtime Sequence \u2014 Local Bootstrap and Provisioning"
+' version: 0.1.0
+' status: draft
+' phase-produced: C
+' owner-agent: SwA
+' engagement: ENG-001
+' domain: runtime
+' purpose: 'Stage 4.9i operational behavior: local runtime bootstrap/provisioning path
+'   from host runtime initialization to orchestrator/dashboard readiness.'
+' entity-ids-used:
+' - APP-001
+' - APP-016
+' - APP-020
+' - NOD-001
+' - SSW-001
+' - TSV-001
+' ---
+@startuml technology-sequence-runtime-bootstrap-provisioning-v1
+title Local Runtime Bootstrap and Provisioning (Operational Sequence)
+
+participant "Local Runtime Host\nNOD-001" as NOD_001
+participant "Python Runtime and UV Toolchain\nSSW-001" as SSW_001
+participant "Local File and Process Service\nTSV-001" as TSV_001
+database "EventStore\nAPP-001" as APP_001
+participant "LangGraph Orchestrator\nAPP-016" as APP_016
+participant "DashboardServer\nAPP-020" as APP_020
+
+NOD_001 -> SSW_001: initialize Python 3.12 runtime + uv env
+SSW_001 -> TSV_001: start local file/process service endpoint
+TSV_001 -> APP_001: provision sqlite storage path + snapshot directory
+APP_001 -> APP_001: open db + verify migrations baseline
+TSV_001 -> APP_016: start orchestrator process and graph wiring
+APP_016 -> APP_001: replay_from_latest_snapshot()
+APP_016 -> APP_001: record_event(engagement.started)
+APP_016 -> APP_001: create_snapshot("engagement.started")
+TSV_001 -> APP_020: start local dashboard server
+APP_020 -> APP_001: query progress/open-cq/review state
+
+note right of APP_016
+Operational readiness sequence over
+NOD-001/SSW-001/TSV-001 technology baseline.
+end note
+@enduml
