@@ -6,12 +6,12 @@ from typing import Literal
 
 from src.common.model_verifier_registry import ModelRegistry
 from src.common.model_verifier_types import (
-    CONN_ID_RE,
     DIAGRAM_ARTIFACT_TYPES,
     ENTITY_ID_RE,
     Issue,
     Severity,
     VerificationResult,
+    connection_artifact_id_matches_shape,
     entity_id_from_path,
 )
 
@@ -58,7 +58,7 @@ def check_artifact_id_connection(fm: dict, path: Path, result: VerificationResul
         return
     aid = str(fm["artifact-id"])
 
-    if not CONN_ID_RE.match(aid):
+    if not connection_artifact_id_matches_shape(aid):
         result.issues.append(Issue(
             Severity.ERROR,
             "E201",

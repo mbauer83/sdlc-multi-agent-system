@@ -56,6 +56,7 @@ class VerifierRuntimeConfig:
 @dataclass
 class IncrementalState:
     schema_version: int
+    engine_signature: str
     include_diagrams: bool
     git_head: str | None
     snapshots: dict[str, dict[str, int | str]]
@@ -73,9 +74,40 @@ def entity_id_from_path(path: Path) -> str:
 
 
 ENTITY_ID_RE = re.compile(r"^[A-Z]+-\d{3}$")
-CONN_ID_RE = re.compile(
-    r"^[A-Z]+-\d{3}(--[A-Z]+-\d{3})*---[A-Z]+-\d{3}(--[A-Z]+-\d{3})*@@[a-z]+(?:-[a-z]+)*$"
-)
+CONN_ID_ALLOWED_CHARS_RE = re.compile(r"^[A-Za-z0-9@-]+$")
+
+
+def connection_artifact_id_matches_shape(artifact_id: str) -> bool:
+    if not CONN_ID_ALLOWED_CHARS_RE.match(artifact_id):
+        return False
+    source_target, relation_suffix = _split_once(artifact_id, "@@")
+    if source_target is None or relation_suffix is None:
+        return False
+    if not _is_valid_relation_suffix(relation_suffix):
+        return False
+    source_part, target_part = _split_once(source_target, "---")
+    if source_part is None or target_part is None:
+        return False
+    return _is_valid_connection_side(source_part) and _is_valid_connection_side(target_part)
+
+
+def _split_once(value: str, separator: str) -> tuple[str | None, str | None]:
+    parts = value.split(separator)
+    if len(parts) != 2:
+        return None, None
+    left, right = parts
+    if not left or not right:
+        return None, None
+    return left, right
+
+
+def _is_valid_connection_side(side: str) -> bool:
+    return all(ENTITY_ID_RE.match(token) for token in side.split("--"))
+
+
+def _is_valid_relation_suffix(value: str) -> bool:
+    parts = value.split("-")
+    return all(part.isalpha() and part.islower() for part in parts)
 
 ENTITY_TYPES: frozenset[str] = ALL_ENTITY_TYPES
 CONNECTION_TYPES: frozenset[str] = ALL_CONNECTION_TYPES

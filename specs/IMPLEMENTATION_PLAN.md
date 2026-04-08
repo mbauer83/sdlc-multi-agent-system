@@ -1315,15 +1315,25 @@ This subsection is the canonical review-control model for dashboard-driven human
 
 **Stages 1–4.9g complete. ModelVerifier complete (71 BDD tests). Stage 4.9f core diagrams remain 7/7 complete; diagram naming is now scope-based and workflow-net activity coverage is expanded (core set + additional workflow-net views), rendered, and verified (`model_verify_all`: 0 errors, 0 warnings). Stage 4.8g alignment audit is complete with reverse-architecture skill wording adjusted to query-first/model-writer intent. Stage 4.9g overview/ADR documentation is now present in ENG-001 architecture-repository. Slice A framework MCP freshness/path parity is validated by targeted `uv run pytest` tests. `src/common/model_query.py` complete.**
 
-**New blocker (2026-04-08, session 19):** connection `@@` contract hardening landed (`E203` suffix check + `E205` source/target composition check), but current `E201` shape matching is over-strict against existing ENG-001 connection IDs. Full engagement verification now reports **2022 files, 1369 errors, 0 warnings** (primarily `E201` on valid-looking connection artifact IDs such as `BPR-001---BPR-002@@activity-sequence-flow`).
+**Blocker update (2026-04-08, session 20):** the session-19 `E201` surge was a stale incremental verifier-state artifact, not an active regex/rule defect. Forced full verification confirms ENG-001 baseline at **2022 files, 0 errors, 0 warnings**. Incremental state now includes verifier-engine signature invalidation, so rule-engine changes force a full recompute instead of replaying stale cached issues.
 
 ### Immediate next actions
 
-- **Unblock verifier first (priority 0):** patch `E201` connection artifact-id shape validation to accept canonical ERP IDs used in ENG-001 (including hyphenated artifact prefixes and type suffixes after `@@`).
-- Re-run `uv run pytest tests/model/test_connection_verifier.py` and add/adjust tests for the corrected `E201` shape behavior (without weakening `E203`/`E205`).
-- Re-run full engagement verification (`model_verify_all`) and confirm error count returns to expected baseline before continuing architecture elaboration.
+- Verify incremental and full-mode verifier parity remains stable after engine-signature invalidation (`tests/model/test_model_verifier_incremental.py`, `tests/model/test_connection_verifier.py`, full `verify_all`).
 - After verifier baseline is restored, resume Stage 4.9i deepening (application + infrastructure/technology views) and maintain per-slice verify/render checkpoints.
 - Continue Stage 5 integration focus items tracked in this plan (EventStore/orchestration/tooling completion and integration-test readiness), using the expanded application/infrastructure diagram set as the implementation baseline.
+
+### Completed this session (2026-04-08 — session 20)
+
+- **Incremental verifier cache invalidation hardened:**
+  - `src/common/model_verifier_incremental.py`: added `verifier_engine_signature()` and persisted signature in state payload.
+  - `src/common/model_verifier.py`: incremental-mode fallback now forces full verify when cached `engine_signature` differs.
+  - `src/common/model_verifier_types.py`: `IncrementalState` now carries `engine_signature`.
+  - `tests/model/test_model_verifier_incremental.py`: added regression case proving stale cache invalidation on engine-signature mismatch.
+
+- **Verifier baseline revalidated:**
+  - `uv run pytest tests/model/test_connection_verifier.py` -> **14 passed**.
+  - `SDLC_MODEL_VERIFY_MODE=full ... ModelVerifier.verify_all(...)` (ENG-001 scope) -> **2022 files, 0 errors, 0 warnings**.
 
 ### Completed this session (2026-04-08 — session 19)
 

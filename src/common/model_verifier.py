@@ -17,6 +17,7 @@ from src.common.model_verifier_incremental import (
     save_incremental_state,
     serialize_result,
     state_file_path,
+    verifier_engine_signature,
 )
 from src.common.model_verifier_parsing import parse_frontmatter, parse_puml_frontmatter, read_file
 from src.common.model_verifier_registry import ModelRegistry
@@ -200,34 +201,23 @@ class ModelVerifier:
         state_path = state_file_path(repo_path, include_diagrams=include_diagrams, state_dir=cfg.state_dir)
         prev = load_incremental_state(state_path)
         head = git_head(repo_path)
+        engine_sig = verifier_engine_signature()
 
-        if prev is None or prev.include_diagrams != include_diagrams or prev.git_head != head:
+        if self._incremental_requires_full(prev, include_diagrams=include_diagrams, head=head, engine_sig=engine_sig):
             mode = "full"
             results = self._verify_all_full(repo_path, include_diagrams=include_diagrams)
         else:
-            changed, deleted = detect_changed_paths(inv, prev)
-            if deleted:
-                mode = "full"
-                results = self._verify_all_full(repo_path, include_diagrams=include_diagrams)
-            elif not changed:
-                mode = "incremental-cached"
-                cached = _results_from_state(prev, inv)
-                results = cached if cached is not None else self._verify_all_full(repo_path, include_diagrams=include_diagrams)
-            else:
-                total = len(inv.ordered_paths)
-                changed_ratio = (len(changed) / total) if total > 0 else 1.0
-                too_large = changed_ratio >= cfg.changed_ratio_threshold or len(changed) >= cfg.changed_count_threshold
-                if too_large:
-                    mode = "full"
-                    results = self._verify_all_full(repo_path, include_diagrams=include_diagrams)
-                else:
-                    mode = "incremental"
-                    impacted = expand_impacted_paths(inv, changed)
-                    fresh = self._verify_inventory_subset(inv, impacted)
-                    results = _merge_results(prev, inv, fresh)
+            mode, results = self._verify_from_existing_incremental_state(
+                prev,
+                inv,
+                repo_path=repo_path,
+                include_diagrams=include_diagrams,
+                cfg=cfg,
+            )
 
         state = IncrementalState(
             schema_version=1,
+            engine_signature=engine_sig,
             include_diagrams=include_diagrams,
             git_head=head,
             snapshots=inv.snapshots,
@@ -238,6 +228,58 @@ class ModelVerifier:
         if cfg.log_mode:
             print(f"[ModelVerifier] mode={mode} include_diagrams={include_diagrams} files={len(results)}")
         return results
+
+    def _incremental_requires_full(
+        self,
+        prev: IncrementalState | None,
+        *,
+        include_diagrams: bool,
+        head: str | None,
+        engine_sig: str,
+    ) -> bool:
+        if prev is None:
+            return True
+        if prev.include_diagrams != include_diagrams:
+            return True
+        if prev.git_head != head:
+            return True
+        return prev.engine_signature != engine_sig
+
+    def _verify_from_existing_incremental_state(
+        self,
+        prev: IncrementalState,
+        inv: FileInventory,
+        *,
+        repo_path: Path,
+        include_diagrams: bool,
+        cfg: VerifierRuntimeConfig,
+    ) -> tuple[str, list[VerificationResult]]:
+        changed, deleted = detect_changed_paths(inv, prev)
+        if deleted:
+            return "full", self._verify_all_full(repo_path, include_diagrams=include_diagrams)
+        if not changed:
+            cached = _results_from_state(prev, inv)
+            if cached is not None:
+                return "incremental-cached", cached
+            return "full", self._verify_all_full(repo_path, include_diagrams=include_diagrams)
+        if self._incremental_change_set_too_large(inv, changed, cfg):
+            return "full", self._verify_all_full(repo_path, include_diagrams=include_diagrams)
+        impacted = expand_impacted_paths(inv, changed)
+        fresh = self._verify_inventory_subset(inv, impacted)
+        return "incremental", _merge_results(prev, inv, fresh)
+
+    def _incremental_change_set_too_large(
+        self,
+        inv: FileInventory,
+        changed: set[str],
+        cfg: VerifierRuntimeConfig,
+    ) -> bool:
+        total = len(inv.ordered_paths)
+        changed_ratio = (len(changed) / total) if total > 0 else 1.0
+        return (
+            changed_ratio >= cfg.changed_ratio_threshold
+            or len(changed) >= cfg.changed_count_threshold
+        )
 
     def _verify_inventory_subset(self, inv: FileInventory, relpaths: set[str]) -> list[VerificationResult]:
         worker_count = resolve_worker_count()
