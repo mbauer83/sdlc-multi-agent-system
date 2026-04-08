@@ -97,6 +97,12 @@ architecture-repository/
   overview/              # Phase overview documents (av-overview.md, ba-overview.md, etc.)
 ```
 
+**Connection filename and artifact-id contract (ERP v2.0):**
+- Connection files use `<artifact-id>.md` where artifact-id is `SOURCE(--SOURCE)*---TARGET(--TARGET)*@@artifact-type`.
+- The `@@artifact-type` suffix is mandatory and must match frontmatter `artifact-type` exactly.
+- The source/target segments in artifact-id must match frontmatter `source` and `target` exactly (list order preserved when lists are used).
+- Example: `connections/archimate/serving/APP-001---APP-016@@archimate-serving.md`.
+
 **Technology Repository** (`technology-repository/`) — same `model-entities/` / `connections/` / `diagram-catalog/` layout; entity layer is `model-entities/technology/<aspect>/`. Also contains:
 
 ```

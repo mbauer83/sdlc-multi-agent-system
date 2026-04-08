@@ -181,7 +181,7 @@ Every interface must appear in at least one Application Interaction Diagram (Ste
 Execute D1–D4 per `framework/diagram-conventions.md §5`:
 - **D1:** Call `list_artifacts(artifact_type="application-component")` and `list_artifacts(artifact_type="application-interface")` to identify component lifelines and interface boundaries. Use `search_artifacts` for cross-layer participants (BA actors ACT-nnn that initiate flows).
 - **D2:** For each entity appearing as a participant, verify its `§display ###sequence` subsection. Add missing subsections; run `regenerate_macros()`.
-- **D3:** Load template via `read_framework_doc("framework/diagram-conventions.md §7.sequence")`. For each key interaction flow, author a sequence diagram. Write to `architecture-repository/diagram-catalog/diagrams/c-sequence-<flow-id>-v1.puml` via `write_artifact`.
+- **D3:** Load template via `read_framework_doc("framework/diagram-conventions.md §7.sequence")`. For each key interaction flow, author a sequence diagram. Use purpose-scoped filenames such as `architecture-repository/diagram-catalog/diagrams/runtime-sequence-<flow-id>-v1.puml` (phase token only when the sequence itself is phase-scoped) and write via `write_artifact`.
 - **D4:** Call `validate_diagram`; fix errors.
 
 ---
@@ -359,7 +359,7 @@ On trigger: call `record_learning()` with `artifact-type="application-architectu
 | Application Service entities (ASV-nnn) | `architecture-repository/model-entities/application/services/` | 1.0.0 | `artifact.baselined` per entity |
 | AA Overview | `architecture-repository/overview/aa-overview.md` | — | `artifact.created` |
 | Phase C ArchiMate diagram | `architecture-repository/diagram-catalog/diagrams/application-archimate-component-map-v1.puml` | — | `artifact.created` |
-| Phase C Sequence diagrams | `architecture-repository/diagram-catalog/diagrams/c-sequence-<flow-id>-v1.puml` | — | `artifact.created` |
+| Phase C Sequence diagrams | `architecture-repository/diagram-catalog/diagrams/runtime-sequence-<flow-id>-v1.puml` | — | `artifact.created` |
 | Handoff to SA (AA draft for traceability review) | `engagements/<id>/handoff-log/` | — | `handoff.created` |
 | Handoff to CSCO (Phase C application safety review) | `engagements/<id>/handoff-log/` | — | `handoff.created` |
 | Phase C gate vote (combined AA+DA) | EventStore | — | `gate.vote_cast` (emitted after DA also baselined — see `phase-c-data.md`) |

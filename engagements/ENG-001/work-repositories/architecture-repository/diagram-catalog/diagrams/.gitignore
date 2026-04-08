@@ -1,0 +1,2 @@
+# Rendered outputs must live in sibling ../rendered/, never nested here.
+rendered/

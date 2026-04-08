@@ -1,0 +1,96 @@
+' ---
+' artifact-id: runtime-archimate-application-interaction-boundaries-v1
+' artifact-type: diagram
+' diagram-type: archimate-application
+' name: "Application Architecture \u2014 Runtime Interaction Boundaries"
+' version: 0.2.0
+' status: draft
+' phase-produced: C
+' owner-agent: SwA
+' engagement: ENG-001
+' domain: core-platform
+' purpose: 'Phase C application refinement view: explicit runtime interaction boundaries
+'   for PM orchestration, specialist invocation, CQ routing, and review processing with
+'   model-backed relations only.'
+' entity-ids-used:
+' - ACT-001
+' - APP-001
+' - APP-004
+' - APP-006
+' - APP-007
+' - APP-008
+' - APP-016
+' - APP-017
+' - APP-018
+' - APP-020
+' - APP-021
+' connection-ids-used:
+' - APP-016---APP-007@@archimate-composition
+' - APP-016---APP-008@@archimate-composition
+' - APP-016---APP-018@@archimate-composition
+' - APP-016---APP-017@@archimate-serving
+' - APP-004---APP-007@@archimate-serving
+' - APP-006---APP-016@@archimate-serving
+' - APP-001---APP-016@@archimate-serving
+' - APP-001---APP-018@@archimate-serving
+' - APP-001---APP-021@@archimate-serving
+' - APP-020---ACT-001@@archimate-serving
+' ---
+@startuml runtime-archimate-application-interaction-boundaries-v1
+!include ../_macros.puml
+!include ../_archimate-stereotypes.puml
+title Application Architecture - Runtime Interaction Boundaries
+
+skinparam rankdir LR
+skinparam nodesep 25
+skinparam ranksep 30
+
+rectangle "Orchestration Runtime" <<ApplicationGrouping>> as GRP_ORCH {
+  DECL_APP_016
+  DECL_APP_017
+  DECL_APP_018
+}
+
+rectangle "Agent Invocation Runtime" <<ApplicationGrouping>> as GRP_AGENTIC {
+  DECL_APP_007
+  DECL_APP_008
+  DECL_APP_004
+  DECL_APP_006
+}
+
+rectangle "User Interaction Runtime" <<ApplicationGrouping>> as GRP_UI {
+  DECL_APP_020
+  DECL_APP_021
+}
+
+rectangle "Persistence Runtime" <<ApplicationGrouping>> as GRP_STATE {
+  DECL_APP_001
+}
+
+APP_016 *-[#2E7D32]- APP_007 : <<composition>>
+APP_016 *-[#2E7D32]- APP_008 : <<composition>>
+APP_016 *-[#2E7D32]- APP_018 : <<composition>>
+APP_016 -[#2E7D32]-> APP_017 : <<serving>>
+
+APP_004 -[#5C6BC0]-> APP_007 : <<serving>>
+APP_006 -[#5C6BC0]-> APP_016 : <<serving>>
+
+APP_001 -[#0078A0]-> APP_016 : <<serving>>
+APP_001 -[#0078A0]-> APP_018 : <<serving>>
+APP_001 -[#0078A0]-> APP_021 : <<serving>>
+
+ACTOR_ACT_001 as ACT_001
+APP_020 -[#8D4E00]-> ACT_001 : <<serving>>
+
+note bottom
+Model-backed runtime boundaries:
+- Orchestration control: APP-016/017/018
+- Agent invocation runtime: APP-007/008 + APP-004/006
+- User interaction entry: APP-020 serving ACT-001
+- Event-sourced persistence path: APP-001 serving orchestration and interaction components
+
+Exemplar scoping note:
+- APP-008 is shown as the SA specialist exemplar for this Phase C slice.
+- PM invocation is role-polymorphic via AgentRegistry; the same pattern applies to other specialist agents (for example APP-009/010/011/012/014/015).
+end note
+@enduml

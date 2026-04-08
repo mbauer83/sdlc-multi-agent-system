@@ -61,7 +61,7 @@ if (Missing business detail?) then (yes)
 else (no)
 endif
 
-:Produce c-archimate-application and
+:Produce runtime-scoped archimate-application and
 interaction views;
 :Run model verification;
 :Create Phase C handoff for PM + CSCO;

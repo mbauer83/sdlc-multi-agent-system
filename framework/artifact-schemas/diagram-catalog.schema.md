@@ -47,6 +47,10 @@ Where `<scope>` is:
 - an ADM phase token (`a`..`h`) only when the diagram is phase-scoped, or
 - a purpose/scope token when the diagram is cross-phase.
 
+Important:
+- Do not use the producing ADM phase as filename scope for cross-phase/runtime views.
+- `phase-produced` records production provenance; it does not determine diagram naming scope.
+
 Examples:
 
 - `business-archimate-structural-v1.puml`

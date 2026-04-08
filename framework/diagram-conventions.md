@@ -130,6 +130,7 @@ Naming rule for `<scope>`:
 
 - Use an ADM phase token (`a`, `b`, `c`, `d`, `e`, `f`, `g`, `h`) only when the diagram is explicitly scoped to that phase's structures and/or behaviors.
 - Otherwise use a purpose/scope token (for example `lifecycle`, `cq`, `sprint-review`, `specialist-invocation`) and avoid phase-prefixed names.
+- Do not use a phase token merely because the artifact is produced during that phase. `phase-produced` in frontmatter is provenance metadata, not naming scope.
 - Keep `artifact-id`, filename stem, rendered SVG stem, and `@startuml` identifier aligned.
 
 **Rendering path invariant (mandatory):** Rendered SVG output path is always the sibling `diagram-catalog/rendered/` directory of `diagram-catalog/diagrams/`. Rendering into `diagram-catalog/diagrams/rendered/` is invalid and must be removed if found.

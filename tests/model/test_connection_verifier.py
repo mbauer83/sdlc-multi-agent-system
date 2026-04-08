@@ -48,6 +48,32 @@ def conn_bad_format(tmp_path: Path) -> Path:
     return write_connection(conn_dir / "app001---app016.md", content)
 
 
+@given(
+    "a connection file with mismatched artifact-id suffix and artifact-type",
+    target_fixture="conn_file",
+)
+def conn_bad_suffix_mismatch(tmp_path: Path) -> Path:
+    content = VALID_CONNECTION.replace(
+        "artifact-id: APP-001---APP-016@@archimate-serving",
+        "artifact-id: APP-001---APP-016@@archimate-realization",
+    )
+    conn_dir = tmp_path / "connections" / "archimate" / "serving"
+    return write_connection(conn_dir / "APP-001---APP-016@@archimate-realization.md", content)
+
+
+@given(
+    "a connection file whose artifact-id is inconsistent with source and target fields",
+    target_fixture="conn_file",
+)
+def conn_bad_id_vs_source_target(tmp_path: Path) -> Path:
+    content = VALID_CONNECTION.replace(
+        "artifact-id: APP-001---APP-016@@archimate-serving",
+        "artifact-id: APP-016---APP-001@@archimate-serving",
+    )
+    conn_dir = tmp_path / "connections" / "archimate" / "serving"
+    return write_connection(conn_dir / "APP-016---APP-001@@archimate-serving.md", content)
+
+
 @given('a connection file whose source is "APP-999"', target_fixture="conn_file")
 def conn_unknown_source(tmp_path: Path) -> Path:
     content = (

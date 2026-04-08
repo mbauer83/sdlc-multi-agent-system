@@ -24,6 +24,20 @@ Feature: Connection file verification
     Then the result is invalid
     And error code "E201" is reported
 
+  Scenario: artifact-id suffix must match artifact-type
+    Given a ModelVerifier with a registry containing "APP-001" and "APP-016"
+    And a connection file with mismatched artifact-id suffix and artifact-type
+    When I verify the connection file
+    Then the result is invalid
+    And error code "E203" is reported
+
+  Scenario: artifact-id must match source-target composition
+    Given a ModelVerifier with a registry containing "APP-001" and "APP-016"
+    And a connection file whose artifact-id is inconsistent with source and target fields
+    When I verify the connection file
+    Then the result is invalid
+    And error code "E205" is reported
+
   Scenario: Source referencing unknown entity causes an error
     Given a ModelVerifier with a registry containing "APP-001" and "APP-016"
     And a connection file whose source is "APP-999"

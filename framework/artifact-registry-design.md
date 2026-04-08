@@ -268,6 +268,18 @@ target: BSV-001
 
 The `source` and `target` fields accept either a single artifact-id string or a YAML list. The `artifact-id` is always the filename stem: sources joined by `--`, separated from targets by `---`, targets joined by `--`, then suffixed with `@@artifact-type`.
 
+Connection artifact-id contract is strict and verifier-enforced:
+- Shape must match `SOURCE(--SOURCE)*---TARGET(--TARGET)*@@artifact-type`.
+- The `@@...` suffix must exactly equal frontmatter `artifact-type`.
+- The pre-suffix source/target segments must exactly match frontmatter `source` and `target` (including list ordering when lists are used).
+- `artifact-id` must exactly match the filename stem.
+
+Violation mapping in `ModelVerifier`:
+- `E201`: invalid connection artifact-id shape.
+- `E202`: artifact-id and filename stem mismatch.
+- `E203`: suffix does not match `artifact-type`.
+- `E205`: artifact-id source/target composition does not match frontmatter fields.
+
 ### 3.4 Frontmatter Field Rules — Model Connections
 
 | Field | Rule |

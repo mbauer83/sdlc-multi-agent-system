@@ -1,0 +1,64 @@
+' ---
+' artifact-id: runtime-sequence-sprint-review-correction-loop-v1
+' artifact-type: diagram
+' diagram-type: sequence
+' name: "Application Runtime Sequence \u2014 Sprint Review Correction Loop"
+' version: 0.2.0
+' status: draft
+' phase-produced: C
+' owner-agent: SwA
+' engagement: ENG-001
+' domain: core-platform
+' purpose: Phase C runtime behavior baseline for review.pending to iterative correction
+'   routing and closure, including sprint-close snapshot after review completion.
+' entity-ids-used:
+' - APP-001
+' - APP-007
+' - APP-008
+' - APP-016
+' - APP-018
+' - APP-020
+' - APP-021
+' connection-ids-used:
+' - APP-001---APP-021@@archimate-serving
+' - APP-016---APP-018@@archimate-composition
+' - APP-001---APP-018@@archimate-serving
+' ---
+@startuml runtime-sequence-sprint-review-correction-loop-v1
+title Sprint Review Correction Loop (Application Runtime)
+
+participant "LangGraph Orchestrator\nAPP-016" as APP_016
+participant "PM Agent\nAPP-007" as APP_007
+participant "Dashboard Server\nAPP-020" as APP_020
+participant "UserInputGateway\nAPP-021" as APP_021
+participant "UserInteractionOrchestrator\nAPP-018" as APP_018
+participant "Specialist Agent\nAPP-008" as APP_008
+database "EventStore\nAPP-001" as APP_001
+
+APP_007 -> APP_001: record_event(review.pending)
+
+loop until all review items approved
+  APP_020 -> APP_001: query pending review scope
+  APP_021 -> APP_001: record_event(review.submitted)
+  APP_018 -> APP_001: query review.submitted
+  APP_018 -> APP_007: forward review payload for decisioning
+
+  alt submission contains needs-revision/rejected items
+    APP_007 -> APP_001: record_event(review.correction-routed)
+    APP_007 -> APP_016: request correction routing
+    APP_016 -> APP_008: route correction handoff(s)
+    APP_008 -> APP_001: record_event(artifact.updated)
+    APP_007 -> APP_001: record_event(review.pending)
+  else all items approved
+    APP_007 -> APP_001: record_event(decision.recorded)
+    APP_016 -> APP_001: record_event(review.sprint-closed)
+    APP_016 -> APP_001: record_event(sprint.close)
+    APP_016 -> APP_001: create_snapshot("sprint.close")
+  end
+end
+
+note right of APP_016
+Mapped to BIA-001 interaction loop and
+review_processing_node closure contract.
+end note
+@enduml

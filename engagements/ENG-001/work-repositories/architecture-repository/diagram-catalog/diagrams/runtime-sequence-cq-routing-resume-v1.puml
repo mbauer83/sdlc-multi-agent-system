@@ -1,0 +1,54 @@
+' ---
+' artifact-id: runtime-sequence-cq-routing-resume-v1
+' artifact-type: diagram
+' diagram-type: sequence
+' name: "Application Runtime Sequence \u2014 CQ Routing and Resume"
+' version: 0.2.0
+' status: draft
+' phase-produced: C
+' owner-agent: SwA
+' engagement: ENG-001
+' domain: core-platform
+' purpose: 'Phase C runtime behavior baseline for CQ lifecycle: specialist raises CQ,
+'   PM batches, orchestration suspends/resumes phase, dashboard captures answer, and
+'   routing resumes specialist execution.'
+' entity-ids-used:
+' - APP-001
+' - APP-007
+' - APP-008
+' - APP-016
+' - APP-018
+' - APP-020
+' - APP-021
+' connection-ids-used:
+' - APP-001---APP-018@@archimate-serving
+' - APP-001---APP-021@@archimate-serving
+' - APP-016---APP-018@@archimate-composition
+' ---
+@startuml runtime-sequence-cq-routing-resume-v1
+title CQ Routing and Resume (Application Runtime)
+
+participant "Specialist Agent\nAPP-008" as APP_008
+participant "PM Agent\nAPP-007" as APP_007
+participant "Dashboard Server\nAPP-020" as APP_020
+participant "UserInputGateway\nAPP-021" as APP_021
+participant "UserInteractionOrchestrator\nAPP-018" as APP_018
+participant "LangGraph Orchestrator\nAPP-016" as APP_016
+database "EventStore\nAPP-001" as APP_001
+
+APP_008 -> APP_001: record_event(cq.raised)
+APP_007 -> APP_001: record_event(cq.batched)
+APP_016 -> APP_001: record_event(phase.suspended)
+
+APP_020 -> APP_001: query open CQs
+APP_021 -> APP_001: record_event(cq.answered, upload_refs?)
+APP_018 -> APP_001: query cq.answered
+APP_018 -> APP_001: record_event(cq.routed)
+APP_016 -> APP_001: record_event(phase.resumed)
+APP_016 -> APP_008: resume specialist with CQ answer payload
+
+note right of APP_018
+Mapped to BPR-003 and cq_user_node
+suspend/resume event contract.
+end note
+@enduml

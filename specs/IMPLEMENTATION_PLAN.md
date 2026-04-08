@@ -1315,12 +1315,34 @@ This subsection is the canonical review-control model for dashboard-driven human
 
 **Stages 1–4.9g complete. ModelVerifier complete (71 BDD tests). Stage 4.9f core diagrams remain 7/7 complete; diagram naming is now scope-based and workflow-net activity coverage is expanded (core set + additional workflow-net views), rendered, and verified (`model_verify_all`: 0 errors, 0 warnings). Stage 4.8g alignment audit is complete with reverse-architecture skill wording adjusted to query-first/model-writer intent. Stage 4.9g overview/ADR documentation is now present in ENG-001 architecture-repository. Slice A framework MCP freshness/path parity is validated by targeted `uv run pytest` tests. `src/common/model_query.py` complete.**
 
+**New blocker (2026-04-08, session 19):** connection `@@` contract hardening landed (`E203` suffix check + `E205` source/target composition check), but current `E201` shape matching is over-strict against existing ENG-001 connection IDs. Full engagement verification now reports **2022 files, 1369 errors, 0 warnings** (primarily `E201` on valid-looking connection artifact IDs such as `BPR-001---BPR-002@@activity-sequence-flow`).
+
 ### Immediate next actions
 
-- Deepen application-layer architecture specification for Stage 5 implementation: produce/refine ArchiMate application views (component decomposition, services, interfaces, data objects) and companion sequence diagrams for core runtime flows (agent invocation, CQ loop, gate evaluation, handoff/rework).
-- Deepen infrastructure/technology-layer specification for Stage 5 implementation: produce/refine ArchiMate technology/deployment views (nodes, system software, environments, runtime boundaries) and companion sequence diagrams for operational flows (deployment, environment provisioning, event persistence, observability/alerts).
-- Add cross-layer traceability checks from business workflow nets to application services and to infrastructure deployment/runtime paths; run `ModelVerifier.verify_all(...)` after each modeling slice.
+- **Unblock verifier first (priority 0):** patch `E201` connection artifact-id shape validation to accept canonical ERP IDs used in ENG-001 (including hyphenated artifact prefixes and type suffixes after `@@`).
+- Re-run `uv run pytest tests/model/test_connection_verifier.py` and add/adjust tests for the corrected `E201` shape behavior (without weakening `E203`/`E205`).
+- Re-run full engagement verification (`model_verify_all`) and confirm error count returns to expected baseline before continuing architecture elaboration.
+- After verifier baseline is restored, resume Stage 4.9i deepening (application + infrastructure/technology views) and maintain per-slice verify/render checkpoints.
 - Continue Stage 5 integration focus items tracked in this plan (EventStore/orchestration/tooling completion and integration-test readiness), using the expanded application/infrastructure diagram set as the implementation baseline.
+
+### Completed this session (2026-04-08 — session 19)
+
+- **Connection `@@` contract hardening delivered in verifier + tests + docs:**
+  - `src/common/model_verifier_rules.py`: added `E203` (`@@suffix` must equal frontmatter `artifact-type`) and `E205` (artifact-id source/target composition must match frontmatter `source`/`target`).
+  - `tests/model/test_connection_verifier.py` + `tests/model/features/connection_verifier.feature`: added scenario coverage for `E203` and `E205`.
+  - Contract docs aligned in:
+    - `framework/artifact-registry-design.md`
+    - `framework/artifact-schemas/entity-conventions.md`
+    - `framework/repository-conventions.md`
+
+- **Runtime application interaction boundary clarification completed:**
+  - Kept `APP-008` as SA-specific entity (no generic conversion).
+  - Annotated `runtime-archimate-application-interaction-boundaries-v1.puml` to explicitly mark SA as exemplar for this slice and note role-polymorphic invocation behavior.
+  - Re-rendered `runtime-archimate-application-interaction-boundaries-v1.svg` after annotation.
+
+- **Evidence captured:**
+  - `uv run pytest tests/model/test_connection_verifier.py` -> **14 passed**.
+  - `model_verify_all` (ENG-001 architecture-repository scope) -> **2022 files, 1369 errors, 0 warnings** (known `E201` over-strictness blocker).
 
 ### Completed this session (2026-04-08 — session 18)
 

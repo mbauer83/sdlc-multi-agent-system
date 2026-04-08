@@ -648,6 +648,18 @@ direction: source-to-target
 ```
 ```
 
+Connection artifact-id rules (normative):
+- Use `SOURCE(--SOURCE)*---TARGET(--TARGET)*@@artifact-type`.
+- Keep `@@artifact-type` identical to frontmatter `artifact-type`.
+- Keep `SOURCE/TARGET` segments identical to frontmatter `source`/`target` values.
+- Keep the artifact-id identical to the filename stem.
+
+Verifier checks:
+- `E201`: invalid connection artifact-id shape.
+- `E202`: filename stem mismatch.
+- `E203`: `@@suffix` does not match `artifact-type`.
+- `E205`: source/target composition in artifact-id does not match frontmatter.
+
 ### 6.5 ER Connection — `connections/er/one-to-many/DOB-001---DOB-002@@er-one-to-many.md`
 
 ```markdown

@@ -67,6 +67,40 @@ def check_artifact_id_connection(fm: dict, path: Path, result: VerificationResul
             loc,
         ))
 
+    if "@@" in aid and "artifact-type" in fm and fm["artifact-type"] is not None:
+        suffix = aid.rsplit("@@", 1)[1]
+        artifact_type = str(fm["artifact-type"])
+        if suffix != artifact_type:
+            result.issues.append(Issue(
+                Severity.ERROR,
+                "E203",
+                (
+                    f"connection artifact-id suffix '@@{suffix}' must match artifact-type "
+                    f"'{artifact_type}'"
+                ),
+                loc,
+            ))
+
+    if all(k in fm and fm[k] is not None for k in ("source", "target", "artifact-type")):
+        source_val = fm["source"]
+        target_val = fm["target"]
+
+        source_ids = tuple(str(x) for x in source_val) if isinstance(source_val, list) else (str(source_val),)
+        target_ids = tuple(str(x) for x in target_val) if isinstance(target_val, list) else (str(target_val),)
+        expected = (
+            f"{'--'.join(source_ids)}---{'--'.join(target_ids)}@@{str(fm['artifact-type'])}"
+        )
+        if aid != expected:
+            result.issues.append(Issue(
+                Severity.ERROR,
+                "E205",
+                (
+                    f"artifact-id '{aid}' is inconsistent with source/target/artifact-type; "
+                    f"expected '{expected}'"
+                ),
+                loc,
+            ))
+
     if aid != path.stem:
         result.issues.append(Issue(
             Severity.ERROR,
