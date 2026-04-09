@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from pathlib import Path
-from typing import Any, Type
+from typing import Any
 
 from pydantic import ValidationError
 
@@ -305,6 +305,93 @@ class EventStore:
                 "INSERT INTO snapshots (snapshot_at, timestamp, state) VALUES (?, datetime('now'), ?)",
                 (snapshot_at, state.model_dump_json()),
             )
+
+    # ------------------------------------------------------------------
+    # Public snapshot API
+    # ------------------------------------------------------------------
+
+    def create_snapshot(self, trigger: str) -> str:
+        """
+        Force-write a snapshot at the current event head.
+        Returns the snapshot_at event_id.
+        trigger is recorded in the snapshot_at field as a tag suffix.
+        """
+        row = self._conn.execute(
+            "SELECT event_id FROM events ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+        last_event_id = row[0] if row else "none"
+        snapshot_at = f"{last_event_id}@{trigger}"
+        state = self.replay_state()
+        with self._conn:
+            self._conn.execute(
+                "INSERT INTO snapshots (snapshot_at, timestamp, state) VALUES (?, datetime('now'), ?)",
+                (snapshot_at, state.model_dump_json()),
+            )
+        return snapshot_at
+
+    def replay_from_latest_snapshot(self) -> tuple[WorkflowState, int]:
+        """
+        Fast-path replay: load the most recent snapshot, then replay only
+        the delta events that occurred after it. Returns (state, delta_count).
+        Falls back to full replay if no snapshot exists.
+        """
+        from .replay import replay_events  # lazy to avoid circular import
+
+        snap_row = self._conn.execute(
+            "SELECT snapshot_at, state FROM snapshots ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+
+        if snap_row is None:
+            state = self.replay_state()
+            total = self._conn.execute("SELECT COUNT(*) FROM events").fetchone()[0]
+            return state, total
+
+        snapshot_at_tag, state_json = snap_row
+        # snapshot_at_tag may be "ENG-001-EV-000042@gate.evaluated" — extract the event_id
+        base_event_id = snapshot_at_tag.split("@")[0]
+
+        # Find the row id of the anchor event
+        anchor_row = self._conn.execute(
+            "SELECT id FROM events WHERE event_id = ?", (base_event_id,)
+        ).fetchone()
+        anchor_id = anchor_row[0] if anchor_row else 0
+
+        delta_rows = self._conn.execute(
+            "SELECT event_type, payload FROM events WHERE id > ? ORDER BY id ASC",
+            (anchor_id,),
+        ).fetchall()
+
+        base_state = WorkflowState.model_validate_json(state_json)
+        if not delta_rows:
+            return base_state, 0
+
+        from .replay import apply_events_to_state
+        delta_events = [(r[0], json.loads(r[1])) for r in delta_rows]
+        state = apply_events_to_state(base_state, delta_events)
+        return state, len(delta_rows)
+
+    def check_snapshot_interval(self) -> bool:
+        """
+        Return True if 100 or more events have been appended since the last snapshot.
+        Called by orchestration layer after every append to decide periodic snapshots.
+        """
+        snap_row = self._conn.execute(
+            "SELECT snapshot_at FROM snapshots ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+        if snap_row is None:
+            return self._sequence >= 100
+
+        base_event_id = snap_row[0].split("@")[0]
+        anchor_row = self._conn.execute(
+            "SELECT id FROM events WHERE event_id = ?", (base_event_id,)
+        ).fetchone()
+        if anchor_row is None:
+            return self._sequence >= 100
+
+        delta_count = self._conn.execute(
+            "SELECT COUNT(*) FROM events WHERE id > ?", (anchor_row[0],)
+        ).fetchone()[0]
+        return delta_count >= 100
 
     def close(self) -> None:
         self._conn.close()

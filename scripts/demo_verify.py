@@ -87,6 +87,21 @@ def verify_outputs(
     return report
 
 
+def check_framework_infra(engagement_id: str, engagement_path: Path) -> VerificationReport:
+    """
+    Verify that core framework infrastructure components work correctly.
+    Does not require an LLM API key — all checks are pure Python.
+    Run before the agent invocation step to catch wiring regressions early.
+    """
+    report = VerificationReport()
+    report.checks.append(_check_event_store(engagement_id, engagement_path))
+    report.checks.append(_check_agent_registry())
+    report.checks.append(_check_learning_store(engagement_id, engagement_path))
+    report.checks.append(_check_graph_state())
+    report.checks.append(_check_pm_decision())
+    return report
+
+
 def print_report(report: VerificationReport) -> bool:
     """Print the verification report and return True if all checks passed."""
     print("\n" + "═" * 60)
@@ -188,6 +203,147 @@ def _check_artifact_events(event_store: "EventStore") -> CheckResult:
         "Artifact events in EventStore", True,
         f"{len(events)} artifact event(s) recorded",
     )
+
+
+def _check_event_store(engagement_id: str, engagement_path: Path) -> CheckResult:
+    """Verify EventStore: append, snapshot, incremental replay, interval check."""
+    try:
+        import tempfile
+        from src.events.event_store import EventStore
+        from src.events.models.phase import PhaseEnteredPayload
+
+        with tempfile.TemporaryDirectory() as tmp:
+            store = EventStore(engagement_id, db_path=Path(tmp) / "test.db")
+            env = store.append(
+                PhaseEnteredPayload(
+                    phase_id="A",  # type: ignore[arg-type]
+                    iteration_type="context",
+                    iteration_number=1,
+                    trigger="initial",
+                ),
+                actor="test",
+            )
+            assert env.event_id.startswith(engagement_id), "event_id prefix mismatch"
+
+            snap_id = store.create_snapshot(trigger="test")
+            assert "@test" in snap_id, "snapshot trigger not in snap_id"
+
+            state, delta = store.replay_from_latest_snapshot()
+            assert delta == 0, f"expected 0 delta after snapshot, got {delta}"
+            assert state.engagement_id == engagement_id
+
+            below_interval = not store.check_snapshot_interval()
+            assert below_interval, "interval check should be False with 1 event"
+
+            store.close()
+
+        return CheckResult("EventStore (append/snapshot/replay/interval)", True,
+                           "append → create_snapshot → replay_from_latest_snapshot → check_snapshot_interval all pass")
+    except Exception as exc:  # noqa: BLE001
+        return CheckResult("EventStore (append/snapshot/replay/interval)", False, str(exc))
+
+
+def _check_agent_registry() -> CheckResult:
+    """Verify agent registry: get_agent returns correct type for all roles."""
+    try:
+        from pathlib import Path
+        from pydantic_ai import Agent
+        from src.agents import AGENT_IDS, get_agent
+        from src.models.llm_config import LLMConfig
+
+        agents_root = Path(__file__).resolve().parent.parent / "agents"
+        cfg = LLMConfig(primary_model="test", routing_model="test")
+
+        built: list[str] = []
+        for agent_id in AGENT_IDS:
+            agent = get_agent(agent_id, agents_root=agents_root, llm_config=cfg)
+            assert isinstance(agent, Agent), f"{agent_id}: expected Agent, got {type(agent)}"
+            built.append(agent_id)
+
+        return CheckResult("Agent registry (all 9 roles)", True,
+                           f"Built: {', '.join(built)}")
+    except Exception as exc:  # noqa: BLE001
+        return CheckResult("Agent registry (all 9 roles)", False, str(exc))
+
+
+def _check_learning_store(engagement_id: str, engagement_path: Path) -> CheckResult:
+    """Verify LearningStore: record then query without an LLM."""
+    try:
+        import tempfile
+        from pathlib import Path
+        from datetime import datetime, timezone
+        from src.agents.learning_store import LearningStore
+        from src.models.learning import LearningEntry
+
+        with tempfile.TemporaryDirectory() as tmp:
+            agents_root = Path(tmp) / "agents" / "solution-architect"
+            agents_root.mkdir(parents=True)
+
+            store = LearningStore(
+                engagement_id=engagement_id,
+                agent_role="SA",
+                agents_root=Path(tmp) / "agents",
+            )
+            entry = LearningEntry(
+                learning_id="",
+                agent="SA",
+                phase="A",
+                artifact_type="architecture-vision",
+                entry_type="correction",
+                importance="S2",
+                applicability="this-engagement",
+                generated_at_phase="A",
+                trigger_text="Test trigger",
+                correction_text="Test correction text for demo verify.",
+            )
+            lid = store.record(entry)
+            assert lid, "record() returned empty learning_id"
+
+            results = store.query(phase="A", artifact_type="architecture-vision")
+            assert len(results) >= 1, f"query returned {len(results)} results, expected ≥1"
+
+        return CheckResult("LearningStore (record + query)", True,
+                           f"Recorded {lid[:12]}…; query returned {len(results)} result(s)")
+    except Exception as exc:  # noqa: BLE001
+        return CheckResult("LearningStore (record + query)", False, str(exc))
+
+
+def _check_graph_state() -> CheckResult:
+    """Verify SDLCGraphState.initial_state() produces correct structure."""
+    try:
+        from src.orchestration.graph_state import initial_state
+        state = initial_state("ENG-TEST", target_repository_ids=["repo-1"])
+        assert state["engagement_id"] == "ENG-TEST"
+        assert state["pm_decision"] is None
+        assert state["algedonic_active"] is False
+        assert state["target_repository_ids"] == ["repo-1"]
+        return CheckResult("SDLCGraphState.initial_state()", True,
+                           "engagement_id, pm_decision, algedonic_active, target_repository_ids all correct")
+    except Exception as exc:  # noqa: BLE001
+        return CheckResult("SDLCGraphState.initial_state()", False, str(exc))
+
+
+def _check_pm_decision() -> CheckResult:
+    """Verify PMDecision model validates correctly."""
+    try:
+        from src.orchestration.pm_decision import PMDecision
+        d = PMDecision(
+            next_action="invoke_specialist",
+            specialist_id="SA",
+            skill_id="SA-PHASE-A",
+            task_description="Produce Architecture Vision",
+            reasoning="Phase A not yet started",
+        )
+        assert d.next_action == "invoke_specialist"
+        assert d.gate_id is None
+
+        import json
+        roundtrip = PMDecision.model_validate_json(d.model_dump_json())
+        assert roundtrip == d
+        return CheckResult("PMDecision model (validate + round-trip)", True,
+                           "invoke_specialist decision validates and round-trips via JSON")
+    except Exception as exc:  # noqa: BLE001
+        return CheckResult("PMDecision model (validate + round-trip)", False, str(exc))
 
 
 def _check_model_verifier(arch_repo: Path) -> CheckResult:

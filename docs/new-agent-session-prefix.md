@@ -78,7 +78,7 @@ Execution constraints:
 
 Per-task workflow:
 1) From the following tasklist-description, build a tool-use plan for discovering and ingesting sufficient but minimal context from the framework-docs, architecture models & diagrams.
-2) Execute this tool-use plan, building a picture of the current state of planning- and implementation for this multi-agent SDLC project in relation to the tasklist. (Also read the sections about current state and next steps towards the end of specs/IMPLEMENTATION_PLAN.md)
+2) Execute this tool-use plan, building a picture of the current state of planning- and implementation for this multi-agent SDLC project in relation to the tasklist. (Also read the sections about current state and next steps towards the end of specs/IMPLEMENTATION_PLAN.md). Only a brief summary of this should be shown in the output - the full picture should inform the action-plan.
 3) Formulate an action-plan for the task list and present it for feedback from the user, proceeding (potentially with change requests) only if the user confirms. The action plan should only involve the smallest safe changes in correct dependency order (framework/contracts before ENG-001 model/diagrams when needed), and note that validation should happen as needed and at least at the end of an authoring iteration which may involve one or more files. If risks or gaps remain that cannot sensibly be addressed in a single session, these should be noted.
 
 Clarification rule:

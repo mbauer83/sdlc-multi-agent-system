@@ -187,7 +187,7 @@ These files are the canonical orientation documents. If they drift from reality,
 
 - Python 3.12+, Pydantic v2 (models, artifact schemas, event payloads) — 3.12 required for PEP 695 inline type parameters
 - PydanticAI for agent definition and tool use
-- Anthropic Claude API (claude-sonnet-4-6 for primary agents; claude-haiku-4-5 for routing/summarisation)
+- Configurable LLM provider via `LLMConfig` (`src/models/llm_config.py`); PydanticAI `provider:model-id` convention (default `anthropic:claude-sonnet-4-6` primary, `anthropic:claude-haiku-4-5` routing); provider SDKs are optional extras
 - LangGraph optional for complex stateful orchestration
 - SQLite (per-engagement event store via EventStore class); Alembic for schema migrations
 - File-based work-repositories (git-tracked) for artifact storage

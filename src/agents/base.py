@@ -90,20 +90,22 @@ def build_agent(
     agent_id: str,
     agents_root: Path,
     llm_config: LLMConfig | None = None,
-) -> Agent[AgentDeps, str]:
+    result_type: type | None = None,
+) -> Any:
     """
     Build a PydanticAI Agent for the given agent_id.
 
     The returned agent has:
     - Static system prompt: Layer 1 + Layer 2
     - Dynamic Layer 3 via @agent.instructions (SkillLoader)
-    - result_type: str (agents return natural-language output for now;
-      PM will return PMDecision in a later stage)
+    - result_type: str by default; pass result_type=PMDecision for the PM
+      supervisor node (returns structured routing decisions).
 
     Provider is determined by llm_config.primary_model (PydanticAI
     'provider:model-id' string).  Defaults to LLMConfig.from_env() when
     no config is supplied.
     """
+    from typing import Any as _Any  # avoid re-export confusion
     cfg = llm_config or LLMConfig.from_env()
     spec = load_agent_spec(agent_id, agents_root)
     skill_loader = SkillLoader(agents_root)
@@ -115,11 +117,15 @@ def build_agent(
         else spec.layer1
     )
 
-    agent: Agent[AgentDeps, str] = Agent(
+    extra: dict[str, _Any] = dict(cfg.extra_params)
+    if result_type is not None:
+        extra["result_type"] = result_type
+
+    agent: Any = Agent(
         model=cfg.primary_model,
         system_prompt=static_system_prompt,
         deps_type=AgentDeps,
-        **cfg.extra_params,
+        **extra,
     )
 
     @agent.system_prompt

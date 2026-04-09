@@ -36,3 +36,13 @@ class CycleIterationTypeChangedPayload(BaseEventPayload):
     reason: str
 
 EventRegistry.register("cycle.iteration-type-changed", CycleIterationTypeChangedPayload)
+
+
+class EngagementCompletedPayload(BaseEventPayload):
+    """Emitted by engagement_complete_node when the engagement finishes."""
+    model_config = ConfigDict(frozen=True)
+    cycle_id: str
+    summary: str = ""
+    promoted_artifacts: list[str] = []
+
+EventRegistry.register("engagement.completed", EngagementCompletedPayload)

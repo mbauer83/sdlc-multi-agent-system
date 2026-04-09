@@ -115,7 +115,7 @@ This includes type-system rules, style constraints, error-handling policy, domai
 
 - **Runtime:** Python 3.12+ (required for PEP 695 inline type parameter syntax — `def f[T](...)`), Pydantic v2 for all data models, artifact schemas, and event payloads
 - **Orchestration:** LangGraph (primary control plane) with nested subgraphs for lifecycle, engagement-type, and phase flows; deterministic routing and resumable state transitions
-- **LLM backend:** Anthropic Claude API (claude-sonnet-4-6 for primary agents; claude-haiku-4-5 for lightweight routing/summarisation tasks)
+- **LLM backend:** Configurable LLM provider via `LLMConfig` (`src/models/llm_config.py`); uses PydanticAI `provider:model-id` string convention (e.g. `anthropic:claude-sonnet-4-6`, `openai:gpt-4o`, `ollama:llama3.1`); default primary `anthropic:claude-sonnet-4-6`, routing `anthropic:claude-haiku-4-5`; provider SDKs are optional extras in `pyproject.toml`
 - **Leaf reasoning engine:** PydanticAI at leaf nodes only (schema-constrained specialist execution and tool use)
 - **Version control:** Git (all agent definitions, skill files, framework documents, and work-repository schemas are tracked)
 - **Artifact persistence:** File-based work-repositories (git-tracked) per engagement under `engagements/<id>/work-repositories/`
@@ -165,7 +165,7 @@ Every skill file must include: `## Inputs Required`, `## Knowledge Adequacy Chec
 Implemented alongside other `universal_tools.py` additions in Stage 5b:
 
 - [ ] `src/tools/universal_tools.py` — add `query_learnings()` and `record_learning()` (spec below; see also Stage 5b tool list)
-- [ ] `src/models/learning.py` — `LearningEntry` Pydantic model (fields: `learning_id`, `agent`, `phase`, `artifact_type`, `trigger_event`, `error_type`, `importance`, `applicability`, `generated_at_phase`, `generated_at_sprint`, `generated_at_engagement`, `promoted`, `synthesis_superseded`, `synthesised_from`, `related: list[str]`, `trigger_text`, `correction_text`, `context_text`)
+- [x] `src/models/learning.py` — `LearningEntry` Pydantic model (fields: `learning_id`, `agent`, `phase`, `artifact_type`, `trigger_event`, `error_type`, `importance`, `applicability`, `generated_at_phase`, `generated_at_sprint`, `generated_at_engagement`, `promoted`, `synthesis_superseded`, `synthesised_from`, `related: list[str]`, `trigger_text`, `correction_text`, `context_text`)
 - [ ] EventStore event models — add `learning.created`, `learning.synthesised`, `learning.promoted` to `src/events/`
 
 **`query_learnings` spec:** See `framework/learning-protocol.md §9` and §12.1–12.2. Reads from LangGraph `BaseStore` (runtime) and falls back to file-based index on cold start. Applies metadata filter, graph expansion (`related` links), and optional semantic supplement tier (enterprise corpus ≥ 50 entries + `sqlite-vec` available). Returns top 5 `## Correction` texts.
@@ -283,7 +283,7 @@ Implemented alongside other `universal_tools.py` additions in Stage 5b:
   - `target_repo_tools.py` — **multi-repo aware**: `read_target_repo(path, repo_id=None)` (repo_id=None → primary repo; raises TargetRepoNotFoundError if id not registered); `write_target_repo(path, content, repo_id=None)` (DE and DO only, per their respective access grants); `execute_pipeline(repo_id=None)` (DO only); `scan_target_repo(repo_id=None)` (Discovery Layer 4 single-repo scan — called once per repo by Layer 4 procedure); `list_target_repos()` (alias for `list_target_repositories()` — convenience import in this module). **Backward compatibility:** when `target-repository` (singular) is configured, `repo_id=None` and `repo_id="default"` both refer to it.
   - `pm_tools.py` — PM decision events (all emitted inside the tool call, before returning to the agent): `invoke_specialist(agent_id, skill_id, task)` → emits `specialist.invoked`; `evaluate_gate(gate_id, votes)` → emits `gate.evaluated` + `create_snapshot("gate.evaluated")` on pass; `batch_cqs(cq_ids)` → emits `cq.batched`; `record_decision(rationale)` → emits `decision.recorded`; `trigger_review()` → emits `review.pending`
   - `diagram_tools.py` — Model-driven diagram production per `framework/diagram-conventions.md §5` (D1–D5 protocol): `regenerate_macros(repo_path)` (scans all entity `§display ###archimate` blocks via ModelRegistry; rewrites `_macros.puml`; called automatically by `write_artifact` when an entity's archimate display spec changes — ALG-C04 if count drift detected); `generate_er_content(entity_ids)` (reads each DOB entity's `§display ###er` block; returns PUML class declarations with attribute lists for direct paste into ER diagram); `generate_er_relations(connection_ids)` (reads each er-connection's `§display ###er` block; returns cardinality lines); `validate_diagram(puml_file_path)` (extracts all PUML aliases; checks each against ModelRegistry; verifies each resolved entity has the appropriate `§display ###<language>` section; confirms `!include _macros.puml` present for ArchiMate/use-case diagrams; returns list of validation errors; ALG-C03 on alias with no backing entity — model must be extended, alias must not be removed); `render_diagram(puml_file_path)` (invokes local `plantuml` CLI; writes SVG to the sibling `diagram-catalog/rendered/` directory for files in `diagram-catalog/diagrams/`; never writes to `diagrams/rendered/`; sprint-boundary render only unless on-demand requested by PM). Non-SA agents call `diagram.display-spec-request` handoff when a needed `§display ###<language>` subsection is missing from an entity. **Agents author PUML source text directly via `write_artifact`, following templates from `framework/diagram-conventions.md §7`.**
-- [ ] **`src/agents/learning_store.py`**: `LearningStore` wrapper around LangGraph `BaseStore` (per `framework/learning-protocol.md §12.1`); implements `query()` and `record()` with graph-expansion and optional semantic tier; handles store rebuild from files on startup
+- [x] **`src/agents/learning_store.py`**: `LearningStore` wrapper around LangGraph `BaseStore` (per `framework/learning-protocol.md §12.1`); implements `query()` and `record()` with graph-expansion and optional semantic tier; handles store rebuild from files on startup
 - [x] **`src/common/framework_query/`**: queryable framework/spec index implemented (section-level metadata index + search scoring; optional semantic tier pending). API delivered: `list_docs`, `search_docs`, `read_doc`, `related_docs`; startup scan scope includes `framework/` plus orientation specs (`specs/IMPLEMENTATION_PLAN.md`, `README.md`, `CLAUDE.md`); CLI entrypoint at `python -m src.common.framework_query`.
 - [x] **Framework doc graph extraction**: formal framework/spec references (`[@DOC:<doc-id>#<section-id>](...)`) parsed into directed section graph. APIs delivered: `neighbors()`, `trace_path()`.
 - [~] **Framework index freshness model**: transparent freshness implemented in MCP context with background mtime polling watcher + TTL stale detection + optional caller-forced/manual refresh (`refresh=True` / CLI `refresh`). Remaining parity task: migrate to first-class evented filesystem watcher lifecycle when introduced.
@@ -291,13 +291,10 @@ Implemented alongside other `universal_tools.py` additions in Stage 5b:
 - [x] **CLI**: `uv run python -m src.common.framework_query <stats|list|search|read|related>` for deterministic local navigation/debug.
 - [x] **CLI extension**: graph and maintenance commands implemented (`neighbors`, `path`, `refresh`).
 - [x] **MCP surface** (framework-doc discovery): implemented in `src/tools/mcp_framework_server.py` and `src/tools/framework_mcp/` with tools `framework_query_stats`, `framework_query_list_docs`, `framework_query_list_sections`, `framework_query_search_docs`, `framework_query_read_doc` (supports `section_id` + unknown-section suggestions), `framework_query_resolve_ref`, `framework_query_related_docs`, `framework_query_neighbors`, `framework_query_path` (optional diagnostics), `framework_query_path_batch`, `framework_query_missing_links`, `framework_query_validate_refs` backed by the same index as Python/CLI.
-- [ ] **`src/agents/project_manager.py`**: PM agent with `result_type=PMDecision`; all PM skills loaded via SkillLoader
-- [ ] **`src/agents/solution_architect.py`**: SA agent; Discovery Scan tool registered; all SA skills loadable
-- [ ] **`src/agents/software_architect.py`**: SwA agent; Reverse Architecture Reconstruction support for EP-G
-- [ ] **`src/agents/devops_platform.py`**: DO agent; pipeline execution tools
-- [ ] **`src/agents/implementing_developer.py`**: DE agent; target-repo write tools
-- [ ] **`src/agents/qa_engineer.py`**: QA agent; Compliance Assessment co-production tools
-- [ ] **`src/agents/__init__.py`**: `AGENT_REGISTRY: dict[str, Agent]` — pre-built agent instances for all roles
+- [x] **`src/agents/roles.py`**: per-role builder functions `build_pm_agent`, `build_sa_agent`, `build_swa_agent`, `build_de_agent`, `build_do_agent`, `build_qa_agent`, `build_po_agent`, `build_smm_agent`, `build_csco_agent` — each calls `build_agent()`, registers universal tools + role-appropriate write tool + PM decision tools (PM only). Replaces individual per-role `.py` modules (unified pattern).
+- [x] **`src/agents/__init__.py`**: `AGENT_IDS`, `get_agent(agent_id, root, llm_config)` lazy singleton cache, `_build_for_id()` dispatcher. `AGENT_REGISTRY` populated on demand.
+- [ ] **`src/agents/tools/target_repo_tools.py`**: multi-repo aware target-repo tools (blocked on `TargetRepoManager` from Stage 5d)
+- [ ] **`src/agents/tools/diagram_tools.py`**: `regenerate_macros`, `validate_diagram`, `render_diagram` (blocked on diagram production sprint)
 
 #### 5c — Orchestration layer
 
@@ -392,6 +389,7 @@ Implemented alongside other `universal_tools.py` additions in Stage 5b:
 | Artifact Browser | `/artifacts` | Tree view by work-repository and ArchiMate layer; each entity file shows: type, version, status, owner-agent, produced-by-skill; inline SVG for diagram files |
 | Artifact Detail | `/artifacts/<path>` | Full rendered markdown; frontmatter as metadata table; provenance badge (agent → skill → sprint → phase); `[@artifact-id]` references as hyperlinks; associated diagrams rendered inline |
 | Diagram Browser | `/diagrams` | All `.puml` diagrams from diagram-catalog; rendered SVG inline; element stats; link to producing artifact |
+| Model Explorer | `/model` | Multi-mode architecture model exploration (see §5.5d below) |
 | Handoff Log | `/handoffs` | Inter-agent handoffs: from, to, artifact, version, acknowledged status |
 | Algedonic Log | `/algedonic` | Algedonic signals: trigger ID, severity, status (active/resolved), escalation target |
 | Agent Status | `/agents` | Per-agent: active phase, last event, open CQs, pending handoffs, skills active this sprint |
@@ -571,6 +569,42 @@ This subsection is the canonical review-control model for dashboard-driven human
 
 ---
 
+#### 5.5d — Model Explorer (Architecture Model Navigation)
+
+**Purpose:** Let users efficiently explore the full architecture model — entities, connections, and documents — without relying solely on diagrams. Diagrams are good for narrative context; the Model Explorer is for density, traceability, and discovery.
+
+**Four navigation modes (all read-only, backed by ModelRegistry):**
+
+| Mode | UI pattern | Description |
+|---|---|---|
+| Tree | Collapsible sidebar tree | Grouped by layer (motivation → strategy → business → application → technology → implementation); each node = one entity; click → detail panel. Filter by: layer, artifact-type, status, owner-agent. |
+| Table / Strict search | Filterable sortable table | All entities and connections as rows; columns: artifact-id, name, type, layer, status, owner-agent, version; sort by any column; strict keyword filter on name/type/id; multi-select rows to open graph view centred on selection. |
+| Semantic search | Search box + ranked results | Free-text query delegated to `ModelRepository.search_artifacts()`; returns ranked hits with snippet; click result → detail panel; optionally restrict to layer or type. |
+| Graph explorer | Interactive force-directed graph | D3.js (single `<script src="d3.min.js">` from a local vendor copy — not a CDN); nodes = entities; edges = connections coloured by type (serving/composition/flow etc.); click node → detail panel; double-click → expand neighbours; filter panel (layer, connection-type). Strict JS budget: one vendor file (`static/d3.v7.min.js`, vendored at setup) + one app file (`static/graph.js`, <300 LoC). No npm, no build step. |
+
+**Detail panel** (shared by all modes): renders entity or connection as formatted HTML; frontmatter table; `§content` markdown; `[@artifact-id]` links navigate to that entity in-panel; inline diagram SVG if entity appears in a diagram; "connections" tab listing in/out connections with neighbour previews.
+
+**Implementation tasks (5.5d):**
+
+- [ ] `src/dashboard/model_explorer.py` — `ModelExplorerData`: builds tree, table, and graph data structures from `ModelRepository`; `graph_data()` returns `{nodes, edges}` JSON for D3; `search(query, filters)` delegates to ModelRepository; all computed once per request (no long-lived cache needed at this scale)
+- [ ] `src/dashboard/server.py` — add routes: `GET /model` (tree/table default), `GET /model/search`, `GET /model/graph`, `GET /model/<artifact_id>` (detail panel fragment for HTMX-style inline load or full page)
+- [ ] `src/dashboard/templates/model_explorer.html` — three-panel layout: left sidebar (tree), centre (table or graph canvas), right (detail panel); tab bar switching table/graph
+- [ ] `src/dashboard/templates/model_detail.html` — entity/connection detail fragment; reused in all modes
+- [ ] `src/dashboard/static/graph.js` — D3 force-directed graph: load `/model/graph` JSON; render nodes+edges; click/double-click handlers; filter panel wired to DOM checkboxes; pan+zoom via `d3.zoom()`
+- [ ] `src/dashboard/static/d3.v7.min.js` — vendored D3 v7 (download at setup time via `scripts/vendor_assets.py`; never fetched at runtime)
+- [ ] `scripts/vendor_assets.py` — one-time script: downloads `d3.v7.min.js` from official release archive into `src/dashboard/static/`; checksums verified; no network calls at server startup
+
+**Constraints:**
+
+- All data served from ModelRepository (same index used by MCP model server). No separate database.
+- Graph view: nodes capped at 200 for render performance; excess nodes shown in table with "Load more in graph" affordance.
+- No CDN calls. D3 is vendored locally. No npm, no build step.
+- Graph JS budget: one vendor file + one app file, app file ≤300 LoC.
+- Semantic search falls back gracefully when FTS5 tier is not yet populated (returns empty with "index not ready" notice).
+- The detail panel must work for both entities and connections; connection detail shows source/target entity summaries inline.
+
+---
+
 ### Stage 5.6 — LLM Provider Configuration System
 
 Replace scattered hardcoded model strings with a structured configuration layer so the LLM provider can be changed via config. PydanticAI's own `provider:model-id` string convention (`anthropic:claude-sonnet-4-6`, `openai:gpt-4o`, `ollama:llama3.1`, etc.) is the portability mechanism — no additional abstraction layer is needed. Provider SDKs move to optional extras; PydanticAI itself and LangGraph remain core dependencies. Use PydanticAI's built-in `TestModel` for API-free tests.
@@ -591,23 +625,23 @@ Replace scattered hardcoded model strings with a structured configuration layer 
 
 #### 5.6-B — Architecture Model and Documentation Corrections
 
-- [ ] **`AIF-002.llm-client-port.md`** — update `§content`: the provider boundary is provided by PydanticAI's model string convention; `LLMConfig` configures provider selection; no separate port protocol is implemented. Update Properties table: `Implemented by: PydanticAI Agent`, `Provider config: LLMConfig (DOB-015)`. Remove references to `src/agents/protocols.py` and "swappable test double".
+- [x] **`AIF-002.llm-client-port.md`** — update `§content`: the provider boundary is provided by PydanticAI's model string convention; `LLMConfig` configures provider selection; no separate port protocol is implemented. Update Properties table: `Implemented by: PydanticAI Agent`, `Provider config: LLMConfig (DOB-015)`. Remove references to `src/agents/protocols.py` and "swappable test double".
 
-- [ ] **`CST-001.no-framework-lock-in.md`** — update scope: LLM provider is swappable via `LLMConfig`; PydanticAI (agent execution) and LangGraph (orchestration) are deliberate framework choices used for their respective capabilities.
+- [x] **`CST-001.no-framework-lock-in.md`** — update scope: LLM provider is swappable via `LLMConfig`; PydanticAI (agent execution) and LangGraph (orchestration) are deliberate framework choices used for their respective capabilities.
 
-- [ ] **`APP-005.agent-factory.md`** — `| LLM backend | claude-sonnet-4-6 ... |` → `| LLM backend | LLMConfig (default: anthropic:claude-sonnet-4-6 primary, anthropic:claude-haiku-4-5 routing) |`
+- [x] **`APP-005.agent-factory.md`** — `| LLM backend | claude-sonnet-4-6 ... |` → `| LLM backend | LLMConfig (default: anthropic:claude-sonnet-4-6 primary, anthropic:claude-haiku-4-5 routing) |`
 
-- [ ] **`APP-007.pm-agent.md`**, **`APP-008.sa-agent.md`**, **`APP-009.swa-agent.md`** — `| LLM | claude-sonnet-4-6 |` → `| LLM | LLMConfig.primary_model |`
+- [x] **`APP-007.pm-agent.md`**, **`APP-008.sa-agent.md`**, **`APP-009.swa-agent.md`** — `| LLM | claude-sonnet-4-6 |` → `| LLM | LLMConfig.primary_model |`
 
-- [ ] **New entity `DOB-015.llm-config.md`** — `artifact-type: data-object`; `owner-agent: SwA`; fields: `primary_model`, `routing_model`, `extra_params`; references `AIF-002`
+- [x] **New entity `DOB-015.llm-config.md`** — `artifact-type: data-object`; `owner-agent: SwA`; fields: `primary_model`, `routing_model`, `extra_params`; references `AIF-002`
 
-- [ ] **`specs/IMPLEMENTATION_PLAN.md` technology stack** — replace "Anthropic Claude API (claude-sonnet-4-6 ...)" with "Configurable LLM provider via `LLMConfig` (PydanticAI `provider:model-id` format; default `anthropic:claude-sonnet-4-6` / `anthropic:claude-haiku-4-5`)"
+- [x] **`specs/IMPLEMENTATION_PLAN.md` technology stack** — replace "Anthropic Claude API (claude-sonnet-4-6 ...)" with "Configurable LLM provider via `LLMConfig` (PydanticAI `provider:model-id` format; default `anthropic:claude-sonnet-4-6` / `anthropic:claude-haiku-4-5`)"
 
-- [ ] **`CLAUDE.md` technology stack** — same generalisation; `src/agents/` is adapter-layer code where PydanticAI imports are correct
+- [x] **`CLAUDE.md` technology stack** — same generalisation; `src/agents/` is adapter-layer code where PydanticAI imports are correct
 
-- [ ] **`general_python_coding_guidelines.md`** — add: "`src/agents/` is adapter-layer code; PydanticAI imports (`Agent`, `RunContext`) are permitted throughout `src/agents/` and prohibited in `src/models/`, `src/events/`, and `src/orchestration/` business logic."
+- [x] **`general_python_coding_guidelines.md`** — add: "`src/agents/` is adapter-layer code; PydanticAI imports (`Agent`, `RunContext`) are permitted throughout `src/agents/` and prohibited in `src/models/`, `src/events/`, and `src/orchestration/` business logic."
 
-- [ ] **Run `ModelVerifier.verify_all()`** on updated entities — 0 errors before commit
+- [x] **Run `ModelVerifier.verify_all()`** on updated entities — 0 errors (2050 files); DOB-015 added to component map (v0.3.0) + serving connection DOB-015→APP-005 created
 
 **Commit as `stage-5.6b-model-and-docs`**
 
@@ -633,14 +667,20 @@ Replace scattered hardcoded model strings with a structured configuration layer 
 - `src/agents/tools/`: `universal_tools.py`, `escalation_tools.py`, `learning_tools.py`, `write_tools.py` (path-boundary enforcement + ALG-007 signalling).
 - `src/orchestration/`: `graph_state.py` (SDLCGraphState TypedDict), `session.py` (EngagementSession MVP — boot + single-agent invoke). CLI: `python -m src.orchestration.session`.
 - Full stack smoke test: EngagementSession + EventStore + AgentSpec + SkillLoader + tool registration all wire correctly.
-- `scripts/demo_setup.py` + `scripts/demo_teardown.py`: scenario-based integration test CLI (TaskFlow API Phase A); scaffold + agent run + automated verification. Supporting modules: `scripts/_demo_taskflow.py` (scenario assets), `scripts/demo_scaffold.py` (engagement + target-repo creation), `scripts/demo_verify.py` (7-check verification suite). Run: `uv run python scripts/demo_setup.py`; tear down: `uv run python scripts/demo_teardown.py --yes`.
-- Stage 5.6-A: `src/models/llm_config.py` (LLMConfig with cascade load), `src/models/__init__.py`; `build_agent()` now accepts `llm_config: LLMConfig`; `EngagementSession.invoke_specialist()` calls `LLMConfig.load()`; `anthropic` moved to optional extra in pyproject.toml; `[openai]` and `[ollama]` extras added; `engagements-config.yaml` top-level `llm:` block; `--model` flag in demo_setup.py.
+- `scripts/demo_setup.py` + `scripts/demo_teardown.py`: scenario-based integration test CLI (TaskFlow API Phase A); scaffold + agent run + automated verification.
+- Stage 5.6-A: `src/models/llm_config.py` (LLMConfig with cascade load), `src/models/__init__.py`; `build_agent()` now accepts `llm_config: LLMConfig`; provider extras in pyproject.toml; `engagements-config.yaml` `llm:` block; `--model` flag in demo_setup.py.
+
+**Completed this session (2026-04-09, continued):**
+- Stage 5.6-B: AIF-002, CST-001, APP-005/007/008/009 entity corrections; DOB-015 (LLMConfig) created via MCP; DOB-015→APP-005 serving connection; component map updated (v0.3.0); general_python_coding_guidelines.md + CLAUDE.md + IMPLEMENTATION_PLAN.md tech stacks updated; ModelVerifier 0 errors (2050 files).
+- Stage 5b: `src/models/learning.py` (LearningEntry Pydantic model); `src/agents/learning_store.py` (LearningStore wrapping LangGraph BaseStore with file-durable tier + graph expansion); `src/agents/tools/pm_tools.py` (5 PM decision tools + register_pm_tools); `src/events/models/specialist.py`, `decision.py`, `review.py` (missing event payload models); `src/events/models/cq.py` + CQBatchedPayload; `src/agents/roles.py` (per-role build_*_agent factory functions for all 9 roles); `src/agents/__init__.py` (AGENT_REGISTRY + get_agent() lazy cache). All 119 tests pass.
+- Stage 5.5d added: Model Explorer requirement (tree/table/semantic-search/graph-explorer modes; D3 graph vendored; detail panel) added to dashboard spec.
+- Stage 5a: `src/events/event_store.py` — public snapshot API (`create_snapshot`, `replay_from_latest_snapshot`, `check_snapshot_interval`) fully implemented; `src/events/export.py` — `write_event_yaml` uses PyYAML serialisation; `import_from_yaml()` implemented (disaster-recovery YAML→SQLite rebuild). `src/events/replay_builder.py` — data-driven dispatch (`_HANDLERS` dict replaces match/case; `StateBuilder.from_state()` + `_CycleBuilder.from_state()` enable O(delta) incremental replay); `src/events/replay.py` — thin loop architecture (`_run_events` + two initialisation strategies, no duplicated dispatch). APP-001 entity updated to match actual public API.
+- Stage 5c: `src/orchestration/pm_decision.py` (PMDecision structured output model); `src/orchestration/graph_state.py` aligned with spec (`pm_decision: PMDecision | None`, `algedonic_active: bool`, `current_agent`, `current_skill`; flat fields removed); `src/orchestration/routing.py` (all 7 routing functions per spec); `src/orchestration/nodes.py` (`build_node_fns(session)` factory — all 15 nodes as closures over EngagementSession); `src/orchestration/graph.py` (`build_sdlc_graph(session)` — full compiled graph). `src/agents/base.py` — added `result_type` param to `build_agent()` for typed PM structured output. `src/events/models/cycle.py` — added `EngagementCompletedPayload`. Demo updated: 4-step flow with framework infrastructure check (5/5 checks: EventStore, agent registry, LearningStore, SDLCGraphState, PMDecision) that runs without an LLM key. All 119 tests pass; ModelVerifier 0 errors (2050 files).
 
 **Immediate next items:**
-- Stage 5.6-B: update AIF-002, CST-001, APP-005/007/008/009 entities; create DOB-015.llm-config.md; update CLAUDE.md and general_python_coding_guidelines.md tech stack; run ModelVerifier.
-- Stage 5b remaining: `src/agents/learning_store.py` (MementoStore wrapping LangGraph BaseStore); extend `query_learnings()` with `skill_id`+`entry_type`; `get_memento_state()`/`save_memento_state()` tools in universal_tools.py.
-- Stage 5b remaining: per-role agent modules (`src/agents/solution_architect.py`, `project_manager.py`, etc.) — register role-specific tools and build pre-wired Agent instances in `AGENT_REGISTRY`.
-- Stage 5c: `src/orchestration/nodes.py`, `routing.py`, `graph.py` — full LangGraph graph with PM supervisor loop and phase subgraphs.
+- Stage 5a remaining: Alembic migration baseline.
+- Stage 5b remaining: `get_memento_state()`/`save_memento_state()` tools in `universal_tools.py` (MementoStore integration); `src/agents/tools/target_repo_tools.py` stub (multi-repo scan + worktree, blocked on TargetRepoManager from 5d).
+- Stage 5c remaining: PM agent `result_type=PMDecision` wiring needs end-to-end validation with a live LLM; `build_sdlc_graph` integration test (graph compile + single PM→SA→gate cycle).
 - Stage 5d: `src/sources/target_repo.py` (TargetRepoManager with worktree support), external source adapters.
 - Stage 5e: Add Layer 1-5 envelope to remaining ~37 skill files that only have Step 0.L + Step 0.M.
 

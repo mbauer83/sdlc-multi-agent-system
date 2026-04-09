@@ -38,3 +38,11 @@ class CQClosedPayload(BaseEventPayload):
     resolution: Literal["answered", "withdrawn", "superseded"]
 
 EventRegistry.register("cq.closed", CQClosedPayload)
+
+
+class CQBatchedPayload(BaseEventPayload):
+    model_config = ConfigDict(frozen=True)
+    cq_ids: list[str]
+    target: str   # "user" | agent role name
+
+EventRegistry.register("cq.batched", CQBatchedPayload)

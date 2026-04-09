@@ -3,7 +3,7 @@
 ' artifact-type: diagram
 ' name: "Application Architecture — Component Map"
 ' diagram-type: archimate-application
-' version: 0.2.0
+' version: 0.3.0
 ' status: draft
 ' phase-produced: C
 ' owner-agent: SwA
@@ -50,6 +50,7 @@
 '   - ASV-001
 '   - ASV-003
 '   - ASV-004
+'   - DOB-015
 ' connection-ids-used:
 '   - APP-001---APP-016@@archimate-serving
 '   - APP-001---APP-017@@archimate-serving
@@ -57,6 +58,7 @@
 '   - APP-001---APP-021@@archimate-serving
 '   - APP-002---APP-004@@archimate-serving
 '   - APP-002---APP-005@@archimate-serving
+'   - DOB-015---APP-005@@archimate-serving
 '   - APP-003---APP-007@@archimate-serving
 '   - APP-003---APP-008@@archimate-serving
 '   - APP-003---APP-009@@archimate-serving
@@ -137,6 +139,7 @@ rectangle "Agent Runtime\nsrc/agents/ (infrastructure)" <<ApplicationGrouping>> 
   DECL_AIF_004
   DECL_AIF_005
   DECL_AIF_006
+  DECL_DOB_015
 }
 
 ' ---------------------------------------------------------------------------
@@ -189,6 +192,7 @@ APP_001 -[#0078A0]-> APP_021 : <<serving>>
 ' ---------------------------------------------------------------------------
 APP_002 -[#0078A0]-> APP_004 : <<serving>>
 APP_002 -[#0078A0]-> APP_005 : <<serving>>
+DOB_015 -[#5C6BC0]-> APP_005 : <<serving>>
 APP_003 -[#0078A0]-> APP_007 : <<serving>>
 APP_003 -[#0078A0]-> APP_008 : <<serving>>
 APP_003 -[#0078A0]-> APP_009 : <<serving>>

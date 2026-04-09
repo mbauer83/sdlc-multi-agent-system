@@ -14,6 +14,25 @@
 #     target-repositories: [{id: ..., label: ..., role: ..., domain: ..., primary: ..., ...}, ...]
 #   See framework/artifact-schemas/repository-map.schema.md for the repository role taxonomy.
 
+    - id: ENG-DEMO
+      name: "TaskFlow API — Phase A Demo"
+      path: engagements/ENG-DEMO/
+      entry-point: EP-0
+      cycle-level: capability
+      status: active
+
+      target-repository:
+        url: null
+        default-branch: main
+        local-clone-path: engagements/ENG-DEMO/target-repos/taskflow-api/
+        access:
+          implementing-developer: read-write
+          devops-platform-engineer: read-write
+          qa-engineer: read-only
+          solution-architect: read-only
+          software-architect: read-only
+          all-others: none
+
 # ---------------------------------------------------------------------------
 # LLM provider configuration (optional — see src/models/llm_config.py)
 # Resolution order: SDLC_PRIMARY_MODEL env var > per-engagement llm: block >

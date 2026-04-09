@@ -2,12 +2,14 @@
 SDLCGraphState: the shared state threaded through every LangGraph node.
 
 Governed by framework/orchestration-topology.md §3.
-Extended with multi-repo fields per Stage 5c spec.
 
-All fields are plain Python types (strings, lists, dicts) so they survive
-LangGraph's JSON serialization without a custom serializer. Pydantic models
-(WorkflowState etc.) are stored separately in the EventStore — only their
-IDs or serialized summaries live in graph state.
+Carries only what routing functions need to select the next node.
+Rich engagement state (open CQs, gate history, artifact registry, phase
+visit counts) lives in WorkflowState (DOB-009), rebuilt from EventStore
+via replay_from_latest_snapshot() and passed to agents via AgentDeps.
+
+All fields are optional (total=False) so nodes only return the keys they
+actually mutate — LangGraph merges returned dicts onto the prior state.
 """
 
 from __future__ import annotations
@@ -17,97 +19,68 @@ from typing import Annotated, Any
 from langgraph.graph import add_messages
 from typing_extensions import TypedDict
 
+from .pm_decision import PMDecision
+
 
 class SDLCGraphState(TypedDict, total=False):
     """
     Mutable state passed through the LangGraph SDLC workflow graph.
-
-    Required fields are declared; optional fields use total=False so nodes
-    only need to return the keys they actually mutate.
     """
 
     # -----------------------------------------------------------------------
-    # Engagement identity
+    # Engagement identity (set once at session start; never mutated)
     # -----------------------------------------------------------------------
-    engagement_id: str          # e.g. "ENG-001"
-    entry_point: str            # "EP-0" | "EP-A" | ... | "EP-H"
+    engagement_id: str           # e.g. "ENG-001"
 
     # -----------------------------------------------------------------------
-    # Phase and sprint tracking
+    # Current execution context (set by nodes; read by routing functions)
     # -----------------------------------------------------------------------
-    current_phase: str          # "Prelim" | "A" | "B" | ... | "H" | "RM"
-    current_cycle_id: str       # ID of the active ADM cycle
-    current_sprint_id: str | None  # None between sprints
-
-    phase_visit_counts: dict[str, int]  # {"A": 1, "B": 2, ...}
+    current_agent: str | None    # agent role currently executing, e.g. "SA"
+    current_skill: str | None    # skill ID currently loaded, e.g. "SA-PHASE-A"
 
     # -----------------------------------------------------------------------
-    # Multi-repo support (Stage 5c)
+    # PM decision — routing functions read next_action from here
     # -----------------------------------------------------------------------
-    target_repository_ids: list[str]    # all registered repo IDs
-    primary_repository_id: str | None   # primary repo ID; None for single-repo
+    pm_decision: PMDecision | None
 
     # -----------------------------------------------------------------------
-    # Specialist routing (PM decision output)
+    # Output from most recent specialist invocation
     # -----------------------------------------------------------------------
-    next_agent_id: str | None       # which specialist to invoke next
-    next_skill_id: str | None       # which skill to load for that specialist
-    task_description: str           # human-readable task for the specialist
-    pm_reasoning: str               # PM's reasoning (audit only)
+    last_specialist_output: str | None
 
     # -----------------------------------------------------------------------
-    # Specialist output
+    # Multi-repo context (populated from engagement config at session start)
     # -----------------------------------------------------------------------
-    last_specialist_output: str     # raw text output from last specialist
-    last_specialist_agent: str      # which agent produced it
+    target_repository_ids: list[str]
+    primary_repository_id: str | None
 
     # -----------------------------------------------------------------------
-    # Gate tracking
+    # Lifecycle flags (set/cleared by infrastructure nodes; checked by routing)
     # -----------------------------------------------------------------------
-    pending_gate: str | None        # gate transition string e.g. "A→B"
-    gate_votes: dict[str, str]      # agent_id → "pass" | "conditional" | "veto"
+    review_pending: bool     # True when sprint review awaits user submission
+    algedonic_active: bool   # True when an active S1/S2 algedonic signal exists
 
     # -----------------------------------------------------------------------
-    # CQ / algedonic flags
-    # -----------------------------------------------------------------------
-    suspended: bool                 # True while waiting for CQ answer
-    open_cq_ids: list[str]         # CQ IDs pending user answer
-    open_algedonic_ids: list[str]  # active algedonic signal IDs
-    review_pending: bool            # True when awaiting sprint review
-
-    # -----------------------------------------------------------------------
-    # Message history (LangGraph managed)
+    # Message history (LangGraph managed — append-only via add_messages)
     # -----------------------------------------------------------------------
     messages: Annotated[list[Any], add_messages]
 
 
 def initial_state(
     engagement_id: str,
-    entry_point: str = "EP-0",
     target_repository_ids: list[str] | None = None,
     primary_repository_id: str | None = None,
 ) -> SDLCGraphState:
     """Return a fresh SDLCGraphState for a new engagement."""
     return SDLCGraphState(
         engagement_id=engagement_id,
-        entry_point=entry_point,
-        current_phase="Prelim",
-        current_cycle_id="",
-        current_sprint_id=None,
-        phase_visit_counts={},
+        current_agent=None,
+        current_skill=None,
+        pm_decision=None,
+        last_specialist_output=None,
         target_repository_ids=target_repository_ids or [],
         primary_repository_id=primary_repository_id,
-        next_agent_id=None,
-        next_skill_id=None,
-        task_description="",
-        pm_reasoning="",
-        last_specialist_output="",
-        last_specialist_agent="",
-        pending_gate=None,
-        gate_votes={},
-        suspended=False,
-        open_cq_ids=[],
-        open_algedonic_ids=[],
         review_pending=False,
+        algedonic_active=False,
         messages=[],
     )

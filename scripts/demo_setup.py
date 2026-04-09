@@ -1,5 +1,5 @@
 """
-ENG-DEMO setup: scaffold, run, and verify the TaskFlow API Phase A scenario.
+ENG-DEMO setup: scaffold, infra-check, run, and verify the TaskFlow API Phase A scenario.
 
 Benchmark Scenario
 ------------------
@@ -44,7 +44,7 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 from scripts.demo_scaffold import ENGAGEMENT_ID, scaffold_demo
-from scripts.demo_verify import print_report, verify_outputs
+from scripts.demo_verify import check_framework_infra, print_report, verify_outputs
 
 _TASK = (
     "You are the Solution Architect for the TaskFlow API project. "
@@ -84,7 +84,7 @@ async def _run(args: argparse.Namespace) -> int:
     _print_banner(engagement_id)
 
     # 1. Scaffold
-    print("── Step 1/3: Scaffolding engagement and target repository ──")
+    print("── Step 1/4: Scaffolding engagement and target repository ──")
     engagement_path = scaffold_demo(_REPO_ROOT, engagement_id, verbose)
     print(f"  Engagement ready at: {engagement_path}\n")
 
@@ -92,12 +92,20 @@ async def _run(args: argparse.Namespace) -> int:
         os.environ["SDLC_PRIMARY_MODEL"] = args.model
         print(f"  Using model: {args.model}\n")
 
+    # 2. Framework infrastructure check (no LLM required)
+    print("── Step 2/4: Framework infrastructure check ────────────────")
+    infra_report = check_framework_infra(engagement_id, engagement_path)
+    all_infra_passed = print_report(infra_report)
+    if not all_infra_passed:
+        print("  [ERROR] Framework infrastructure checks failed — aborting.", file=sys.stderr)
+        return 2
+
     if args.skip_run:
         print("  [--skip-run] Skipping agent invocation and verification.")
         return 0
 
-    # 2. Run SA agent
-    print("── Step 2/3: Running SA agent (SA-PHASE-A) ─────────────────")
+    # 3. Run SA agent
+    print("── Step 3/4: Running SA agent (SA-PHASE-A) ─────────────────")
     print("  (Requires ANTHROPIC_API_KEY; may take 60-120 s)\n")
     from src.orchestration.session import EngagementSession
 
@@ -118,8 +126,8 @@ async def _run(args: argparse.Namespace) -> int:
     print("\n── Agent output (truncated to 1000 chars) ───────────────────")
     print(output[:1000] + ("…" if len(output) > 1000 else ""))
 
-    # 3. Verify
-    print("\n── Step 3/3: Verifying outputs ──────────────────────────────")
+    # 4. Verify
+    print("\n── Step 4/4: Verifying outputs ──────────────────────────────")
     report = verify_outputs(engagement_path, session.event_store)
     all_passed = print_report(report)
 

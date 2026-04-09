@@ -2,14 +2,22 @@
 Mutable state builders for event replay.
 
 Internal to the events package. Public entry point is replay.replay_events().
+
+Event dispatch is data-driven: _HANDLERS maps event_type strings to lambda
+expressions that forward to the appropriate StateBuilder method.  Adding a
+new state-changing event type requires one entry in _HANDLERS — no match/case
+branch and no changes to dispatch().
 """
 
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any
+from typing import TYPE_CHECKING, Any, Callable
 
 from .models.state import ArtifactRecord, CycleState, GateRecord, WorkflowState
+
+if TYPE_CHECKING:
+    pass  # kept for potential future Protocol imports
 
 
 # ---------------------------------------------------------------------------
@@ -35,6 +43,17 @@ class _CycleBuilder:
         self.open_cqs: list[str] = []
         self.open_algedonics: list[str] = []
 
+    @classmethod
+    def from_state(cls, state: CycleState) -> "_CycleBuilder":
+        """Reconstruct a mutable builder from a frozen CycleState snapshot."""
+        builder = cls(state.cycle_id, state.iteration_type, state.parent_cycle_id)
+        builder.current_phase = state.current_phase
+        builder.phase_visit_counts = dict(state.phase_visit_counts)
+        builder.active_sprints = list(state.active_sprints)
+        builder.open_cqs = list(state.open_cqs)
+        builder.open_algedonics = list(state.open_algedonics)
+        return builder
+
     def to_cycle_state(self) -> CycleState:
         return CycleState(
             cycle_id=self.cycle_id,
@@ -51,6 +70,13 @@ class _CycleBuilder:
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Handler type alias
+# ---------------------------------------------------------------------------
+
+type _HandlerFn = Callable[["StateBuilder", dict[str, Any], str | None, str], None]
+
 
 def _first_cycle_id(cycles: dict[str, _CycleBuilder]) -> str | None:
     return next(iter(cycles), None)
@@ -82,6 +108,21 @@ class StateBuilder:
         self.cycles: dict[str, _CycleBuilder] = {}
         self.gate_history: list[GateRecord] = []
         self.artifact_registry: dict[str, ArtifactRecord] = {}
+
+    @classmethod
+    def from_state(cls, state: WorkflowState) -> "StateBuilder":
+        """
+        Reconstruct a mutable builder from a frozen WorkflowState snapshot.
+        Enables O(delta) incremental replay: seed from snapshot, then apply
+        only the events that occurred after the snapshot point.
+        """
+        builder = cls(state.engagement_id)
+        builder.cycles = {
+            c.cycle_id: _CycleBuilder.from_state(c) for c in state.active_cycles
+        }
+        builder.gate_history = list(state.gate_history)
+        builder.artifact_registry = dict(state.artifact_registry)
+        return builder
 
     # ------------------------------------------------------------------
     # Cycle events
@@ -237,6 +278,42 @@ class StateBuilder:
             _remove_if_present(cycle.open_algedonics, p["signal_id"])
 
     # ------------------------------------------------------------------
+    # Dispatch: data-driven routing via module-level _HANDLERS table.
+    # replay.py calls this in a thin loop; no dispatch logic lives there.
+    # ------------------------------------------------------------------
+
+    #: Known events that carry no WorkflowState change (audit-only).
+    #: Not used for dispatch — just documents which types are intentional no-ops.
+    AUDIT_ONLY: frozenset[str] = frozenset({
+        "phase.exited",
+        "phase.return-triggered",
+        "sprint.suspended",
+        "gate.evaluated",
+        "handoff.issued",
+        "handoff.acknowledged",
+        "source.queried",
+        "artifact.promoted",
+        "cq.assumption-made",
+        "cq.answered",
+        "algedonic.acknowledged",
+    })
+
+    def dispatch(
+        self,
+        event_type: str,
+        payload: dict[str, Any],
+        cycle_id: str | None,
+        last_event_id: str,
+    ) -> None:
+        """
+        Route one event to the appropriate mutation handler via _HANDLERS.
+        AUDIT_ONLY events and unknown future types are both silent no-ops
+        (forward-compatible).
+        """
+        if handler := _HANDLERS.get(event_type):
+            handler(self, payload, cycle_id, last_event_id)
+
+    # ------------------------------------------------------------------
     # Finalise
     # ------------------------------------------------------------------
 
@@ -249,3 +326,50 @@ class StateBuilder:
             gate_history=list(self.gate_history),
             artifact_registry=dict(self.artifact_registry),
         )
+
+
+# ---------------------------------------------------------------------------
+# Handler table — the single authoritative map of event-type → mutation.
+#
+# Every handler has the same four-argument signature so _HANDLERS is
+# homogeneously typed and dispatch() needs no per-event branching:
+#
+#   b  — StateBuilder   the mutable builder being updated
+#   p  — dict           raw payload dict from the event envelope
+#   c  — str | None     cycle_id extracted from the envelope (None if absent)
+#   e  — str            last_event_id at the time of dispatch (used as
+#                       the "evaluated_at" anchor for gate records)
+#
+# Parameters the handler method does not need are prefixed with _ (_c, _e)
+# to signal intentional non-use without suppressing linter warnings.
+#
+# Defined after StateBuilder so the forward reference in _HandlerFn resolves.
+# ---------------------------------------------------------------------------
+
+_HANDLERS: dict[str, _HandlerFn] = {
+    # Cycle lifecycle
+    "cycle.initiated":              lambda b, p, _c, _e: b.on_cycle_initiated(p),
+    "cycle.closed":                 lambda b, p, _c, _e: b.on_cycle_closed(p),
+    "cycle.iteration-type-changed": lambda b, p, _c, _e: b.on_cycle_iteration_type_changed(p),
+    # Phase lifecycle
+    "phase.entered":                lambda b, p, c, _e: b.on_phase_entered(p, c),
+    "phase.suspended":              lambda b, p, c, _e: b.on_phase_suspended(p, c),
+    "phase.resumed":                lambda b, p, c, _e: b.on_phase_resumed(p, c),
+    # Sprint lifecycle
+    "sprint.opened":                lambda b, p, c, _e: b.on_sprint_opened(p, c),
+    "sprint.closed":                lambda b, p, c, _e: b.on_sprint_closed(p, c),
+    # Gate outcomes — record against the event_id, not the cycle_id
+    "gate.passed":                  lambda b, p, _c, e: b.on_gate_passed(p, e),
+    "gate.held":                    lambda b, p, _c, e: b.on_gate_held(p, e),
+    "gate.escalated":               lambda b, p, _c, e: b.on_gate_escalated(p, e),
+    # Artifact lifecycle
+    "artifact.drafted":             lambda b, p, _c, _e: b.on_artifact_drafted(p),
+    "artifact.baselined":           lambda b, p, _c, _e: b.on_artifact_baselined(p),
+    "artifact.superseded":          lambda b, p, _c, _e: b.on_artifact_superseded(p),
+    # Clarification questions
+    "cq.raised":                    lambda b, p, c, _e: b.on_cq_raised(p, c),
+    "cq.closed":                    lambda b, p, _c, _e: b.on_cq_closed(p),
+    # Algedonic signals
+    "algedonic.raised":             lambda b, p, c, _e: b.on_algedonic_raised(p, c),
+    "algedonic.resolved":           lambda b, p, _c, _e: b.on_algedonic_resolved(p),
+}

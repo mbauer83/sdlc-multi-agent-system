@@ -9,6 +9,8 @@ All Python implementation (`src/`) must follow these conventions. They apply to 
 - Parametric polymorphism - prefer inline type parameter syntax (PEP 695, Python 3.12+): write `def f[T](x: T) -> T` and `class Stack[T]: ...` instead of declaring `T = TypeVar('T')` separately. Bounds and constraints are written inline - `[T: SomeBase]` for an upper bound, `[T: (int, float)]` for constraints. Use `[**P]` for a `ParamSpec` parameter and `[*Ts]` for a `TypeVarTuple`. Explicit `TypeVar` declarations are still required only when variance must be stated explicitly (covariant/contravariant) and cannot be inferred by the type checker - this is an edge case; prefer letting inference handle it. Use the `type` statement (PEP 695) for named type aliases: `type Vector = list[float]` - not `TypeAlias` from `typing`.
 - `Protocol` (from `typing`) is still required for structural subtyping - preferred over `ABC` for interface definitions. `overload` (from `typing`) is still required for multi-dispatch signatures. These have no PEP 695 equivalents.
 - Use `TypedDict` or Pydantic `BaseModel` for structured data; never `dict[str, Any]` at a boundary.
+- Avoid loose typing unless explicitly appropriate
+- Use type-checking and linting / formatting according to current best practices.
 
 ## Pythonic style - current best practices
 
@@ -51,7 +53,7 @@ The codebase follows a domain-centred layered architecture (hexagonal / ports-an
 Cross-cutting concerns that are genuinely needed at every layer - logging, structured validation helpers, text parsing utilities, normalisation functions - live in `src/common/`. This module has no business-domain knowledge and no infrastructure dependencies; it is pure utility. All layers may import from `src/common/` without violating the dependency rule. What is prohibited is importing inward across the business layers (infrastructure importing application logic, application importing infrastructure implementations) or importing framework-specific types into the domain.
 
 - Domain layer (`src/models/`, `src/domain/`): Pydantic models, value objects, domain events, aggregate roots, domain services. May import from `src/common/` (for example, logging, shared validators). No imports from PydanticAI, SQLAlchemy, LangGraph, Anthropic SDK, `pathlib` I/O, or any framework. Domain logic (validation rules, state transitions, constraint checks) lives here and is fully unit-testable without mocking.
-- Application layer (`src/agents/`, `src/orchestration/`): orchestrates domain objects; invokes infrastructure via ports (abstract `Protocol` interfaces defined in the domain or application layer). Depends on the domain; never directly on infrastructure implementations. Agent skill execution, handoff routing, and CQ lifecycle management live here.
+- Application layer (`src/agents/`, `src/orchestration/`): orchestrates domain objects; invokes infrastructure via ports (abstract `Protocol` interfaces defined in the domain or application layer). Depends on the domain; never directly on infrastructure implementations. Agent skill execution, handoff routing, and CQ lifecycle management live here. **`src/agents/` is adapter-layer code — PydanticAI imports (`Agent`, `RunContext`, `Tool`) are permitted throughout `src/agents/` and prohibited in `src/models/`, `src/events/`, and `src/orchestration/` business logic.**
 - Infrastructure layer (`src/events/`, `src/sources/`, future `src/dashboard/`): implements the ports - EventStore (SQLite), source adapters (Confluence, Jira, Git), file-system artifact I/O, plantuml CLI subprocess. Infrastructure knows about domain types (it uses them as data shapes) but domain types never know about infrastructure.
 
 ## Ports and adapters pattern for all I/O
@@ -65,3 +67,9 @@ Cross-cutting concerns that are genuinely needed at every layer - logging, struc
 - Pydantic models in `src/models/` are the canonical representation of SDLC artifacts (ArchitectureVision, BusinessArchitecture, LearningEntry, etc.). No parallel dict-based or ORM-mapped representations of the same concepts.
 - EventStore events are also Pydantic models; the SQLite schema is derived from them (via Alembic), not defined independently.
 - If a framework (PydanticAI, LangGraph) requires its own data shape, adapt at the boundary - wrap or map from the domain model; do not let framework types leak into domain or application code.
+
+
+## Keep files manageable
+
+- Soft limit: 250 LoC
+- Hard limit: 350 LoC
