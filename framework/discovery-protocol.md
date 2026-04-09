@@ -1,9 +1,9 @@
 # Discovery Protocol
 
-**Version:** 1.1.0  
+**Version:** 1.2.0  
 **Status:** Approved  
 **Owner:** Project Manager  
-**Last Updated:** 2026-04-07
+**Last Updated:** 2026-04-09
 
 ---
 
@@ -31,22 +31,40 @@ Execution gating is owned by orchestration code, not skill prose.
 ## 2. Discovery Scan Procedure
 
 Run in this order:
-1. Step 0.L (Learnings Lookup)
-2. Layers 1-5
-3. Optional Step 0.D, 0.S, and/or 0.F when applicable
-4. Gap Assessment (Section 3)
-5. Execution confidence decision: proceed or raise CQ fallback (Section 4)
+1. Step 0.L (Learnings Lookup — corrections + skill-amendments; episodic on revisit)
+2. Step 0.M (Memento Recall)
+3. Layers 1-5
+4. Optional Step 0.D, 0.S, and/or 0.F when applicable
+5. Gap Assessment (Section 3)
+6. Execution confidence decision: proceed or raise CQ fallback (Section 4)
+
+End-of-skill close (after primary output is produced):
+7. `save_memento_state(phase, key_decisions, open_threads)` — always, unconditional
+8. `record_learning(entry_type="episodic", ...)` — if a significant discovery or key decision occurred (governed by `framework/learning-protocol.md §13.3`)
+9. `record_learning(...)` — if a §3.1/§3.2 trigger was met (governed by `framework/learning-protocol.md §3–§4`)
 
 ### Step 0.L — Learnings Lookup
 
-Execute before Layer 1.
+Execute before Step 0.M and Layer 1.
 
-1. Query role/phase/output learnings (`query_learnings(...)`).
-2. Include enterprise learnings if available.
-3. Rank by importance then recency; cap to 5 entries.
-4. Inject returned corrections into working context.
+1. Query role/phase/output learnings:
+   - `query_learnings(phase, artifact_type, domain)` — retrieves corrections and calibrations. Include enterprise and cross-role indexes (see `framework/learning-protocol.md §5` for full retrieval procedure).
+   - `query_learnings(skill_id=<active_skill_id>, entry_type="skill-amendment")` — same tool, different filter shape: retrieves skill-specific procedure amendments by exact skill-id match. Prepend to working context before general corrections; cap at 3 per skill-id. (A separate tool was deliberately not created — see `framework/learning-protocol.md §9` design rationale.)
+   - If `phase_visit_count > 0`: `query_learnings(phase, entry_type="episodic")` — retrieves prior episode summaries for this phase.
+2. Rank by importance then recency; apply combined N=5 cap across corrections + episodic (skill-amendments are capped separately at 3).
+3. Inject returned corrections, amendments, and episode summaries into working context.
 
-Purpose: learned corrections shape interpretation of all subsequent artifacts.
+Purpose: learned corrections and continuity context shape interpretation of all subsequent artifacts.
+
+### Step 0.M — Memento Recall
+
+Execute after Step 0.L, before Layer 1. Always run; returns nothing on first invocation for this phase.
+
+1. Call `get_memento_state(phase=<current_phase>)`.
+2. If state is returned: inject `key_decisions` and `open_threads` into working context as **"Prior invocation state for this phase:"** followed by numbered lists.
+3. If no state exists (first invocation for this phase): skip injection; proceed to Layer 1.
+
+Purpose: carry forward the agent's key decisions and open threads from the previous invocation in this phase. Complements Step 0.L (corrections) with ephemeral continuity context. Governed by `framework/learning-protocol.md §13`.
 
 ### Layer 1 — Engagement State
 
@@ -203,7 +221,7 @@ When revisiting a phase (`phase_visit_count > 1`):
 
 ## 6. Skill File Requirement
 
-Every phase-starting or non-EP-0-entry skill must begin procedure with a discovery step.
+Every phase-starting or non-EP-0-entry skill must begin procedure with a discovery step and end with a memory close step.
 
 Minimum template:
 
@@ -211,9 +229,16 @@ Minimum template:
 ### Step 0 — Discovery Scan
 
 Execute `framework/discovery-protocol.md §2`.
-Complete Step 0.L + Layers 1-5.
+Complete Step 0.L (corrections + skill-amendments; add episodic if phase_visit_count > 0) + Step 0.M + Layers 1-5.
 Apply 0.D/0.S/0.F only when applicable.
 Produce internal Gap Assessment before Step 1.
+
+### End-of-Skill Memory Close
+
+After producing primary output artifacts, execute in order:
+1. `save_memento_state(phase, key_decisions, open_threads)` — always, unconditional.
+2. `record_learning(entry_type="episodic", ...)` — if a significant discovery, constraint revelation, or key decision occurred (governed by `framework/learning-protocol.md §13.3`).
+3. `record_learning(...)` — if a §3.1/§3.2 trigger was met (governed by `framework/learning-protocol.md §3–§4`).
 ```
 
 ---
@@ -233,7 +258,7 @@ Produce internal Gap Assessment before Step 1.
 
 ## 8. Optional-Step Quick Rules
 
-For Step 0.D (diagram), Step 0.S (standards), and Step 0.F (framework):
+Step 0.L and Step 0.M are **mandatory** for every skill invocation. For Step 0.D (diagram), Step 0.S (standards), and Step 0.F (framework):
 1. Run only when applicable to the current skill/task.
 2. Use query-first retrieval, then section-scoped reads.
 3. Treat missing mandatory inputs as discovery gaps and raise CQ only when blocking.

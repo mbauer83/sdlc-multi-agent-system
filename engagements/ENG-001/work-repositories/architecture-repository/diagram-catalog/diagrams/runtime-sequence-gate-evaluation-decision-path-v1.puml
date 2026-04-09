@@ -34,24 +34,24 @@ participant "CSCO Agent\nAPP-015" as APP_015
 participant "EngagementSession\nAPP-017" as APP_017
 database "EventStore\nAPP-001" as APP_001
 
-APP_016 -> APP_007: request gate evaluation context
+APP_016 -> APP_007: evaluate_gate_readiness(gate_id, phase_id, context_ref)
 loop for each required reviewer input
-  APP_007 -> APP_008: request review recommendation(s)
-  APP_016 -> APP_015: request safety/governance vote(s)
-  APP_015 --> APP_007: return safety recommendation(s)
+  APP_007 -> APP_008: provide_reviewer_recommendation(gate_id)
+  APP_016 -> APP_015: request_safety_vote(gate_id, context_ref)
+  APP_015 --> APP_007: return_safety_vote(vote, rationale)
 end
-APP_007 -> APP_001: record_event(gate.evaluated)
+APP_007 -> APP_001: append_event(event_type="gate.evaluated", gate_id, decision)
 
 alt gate passed with CSCO vote present
-  APP_016 -> APP_001: record_event(phase.transitioned)
-  APP_016 -> APP_001: create_snapshot("gate.evaluated")
-  APP_016 -> APP_017: continue next phase iteration
-  APP_017 -> APP_001: record_event(sprint.started) [if new sprint]
+  APP_016 -> APP_001: append_event(event_type="phase.transitioned", gate_id, to_phase_id)
+  APP_016 -> APP_001: create_snapshot(trigger="gate.evaluated")
+  APP_016 -> APP_017: start_next_phase_iteration(to_phase_id)
+  APP_017 -> APP_001: append_event(event_type="sprint.started", sprint_id) [if new sprint]
 else CSCO vote missing/timeout or gate failed/deferred
-  APP_016 -> APP_001: record_event(algedonic.escalated, reason="gate-safety-vote-timeout")
-  APP_016 -> APP_001: record_event(decision.recorded)
-  APP_016 -> APP_008: route rework package to producing specialist
-  APP_016 -> APP_017: retain current phase / route rework
+  APP_016 -> APP_001: append_event(event_type="algedonic.escalated", reason="gate-safety-vote-timeout", gate_id)
+  APP_016 -> APP_001: append_event(event_type="decision.recorded", decision="rework-required", gate_id)
+  APP_016 -> APP_008: dispatch_rework_package(target_specialist_id, rework_scope)
+  APP_016 -> APP_017: retain_current_phase_and_track_rework(gate_id)
 end
 
 note right of APP_007

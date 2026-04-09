@@ -36,26 +36,26 @@ participant "UserInteractionOrchestrator\nAPP-018" as APP_018
 participant "Specialist Agent\nAPP-008" as APP_008
 database "EventStore\nAPP-001" as APP_001
 
-APP_007 -> APP_001: record_event(review.pending)
+APP_007 -> APP_001: append_event(event_type="review.pending", sprint_id)
 
 loop until all review items approved
-  APP_020 -> APP_001: query pending review scope
-  APP_020 -> APP_021: delegate review submission payload
-  APP_021 -> APP_001: record_event(review.submitted)
-  APP_018 -> APP_001: query review.submitted
-  APP_018 -> APP_007: forward review payload for decisioning
+  APP_020 -> APP_001: query_pending_review_scope(sprint_id)
+  APP_020 -> APP_021: submit_review_decision(review_id, decision_outcome, review_rationale, evidence_attachment_refs)
+  APP_021 -> APP_001: append_event(event_type="review.submitted", review_id, decision_outcome)
+  APP_018 -> APP_001: query_latest_event(event_type="review.submitted", review_id)
+  APP_018 -> APP_007: evaluate_review_submission(review_id, review_submission_event_ref)
 
   alt submission contains needs-revision/rejected items
-    APP_007 -> APP_001: record_event(review.correction-routed)
-    APP_007 -> APP_016: request correction routing
-    APP_016 -> APP_008: route correction handoff(s)
-    APP_008 -> APP_001: record_event(artifact.updated)
-    APP_007 -> APP_001: record_event(review.pending)
+    APP_007 -> APP_001: append_event(event_type="review.correction-routed", review_id)
+    APP_007 -> APP_016: request_correction_routing(review_id, affected_artifacts)
+    APP_016 -> APP_008: dispatch_correction_handoffs(review_id, affected_artifacts)
+    APP_008 -> APP_001: append_event(event_type="artifact.updated", artifact_id, review_id)
+    APP_007 -> APP_001: append_event(event_type="review.pending", sprint_id)
   else all items approved
-    APP_007 -> APP_001: record_event(decision.recorded)
-    APP_016 -> APP_001: record_event(review.sprint-closed)
-    APP_016 -> APP_001: record_event(sprint.close)
-    APP_016 -> APP_001: create_snapshot("sprint.close")
+    APP_007 -> APP_001: append_event(event_type="decision.recorded", decision="review-approved", review_id)
+    APP_016 -> APP_001: append_event(event_type="review.sprint-closed", sprint_id)
+    APP_016 -> APP_001: append_event(event_type="sprint.close", sprint_id)
+    APP_016 -> APP_001: create_snapshot(trigger="sprint.close")
   end
 end
 

@@ -1,0 +1,41 @@
+' ---
+' artifact-id: technology-sequence-event-persistence-snapshot-policy-v1
+' artifact-type: diagram
+' diagram-type: sequence
+' name: "Technology Runtime Sequence \u2014 Event Persistence and Snapshot Policy"
+' version: 0.1.0
+' status: draft
+' phase-produced: C
+' owner-agent: SwA
+' engagement: ENG-001
+' domain: runtime
+' purpose: Operational scenario focused on event recording and periodic/situative snapshot
+'   policy evaluation without replay or escalation semantics.
+' entity-ids-used:
+' - APP-001
+' - APP-016
+' ---
+@startuml technology-sequence-event-persistence-snapshot-policy-v1
+title Event Persistence and Snapshot Policy (Operational Scenario)
+
+participant "LangGraph Orchestrator\nAPP-016" as APP_016
+database "EventStore\nAPP-001" as APP_001
+
+APP_016 -> APP_001: append_event(event_type, event_id, correlation_id)
+APP_016 -> APP_001: should_create_periodic_snapshot()
+
+alt periodic threshold reached
+  APP_016 -> APP_001: create_snapshot(trigger="periodic")
+else no periodic snapshot due
+  APP_001 --> APP_016: no_snapshot_required()
+end
+
+opt situative checkpoint trigger
+  APP_016 -> APP_001: create_snapshot(trigger in {"engagement.started","gate.evaluated","sprint.close"})
+end
+
+note right of APP_001
+Scenario scope: persistence and snapshot policy only.
+Replay hydration and observability reads are modeled separately.
+end note
+@enduml

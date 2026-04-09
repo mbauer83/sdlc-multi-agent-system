@@ -213,6 +213,7 @@ Before D1, choose the artifact form intentionally:
 - Use a matrix `.md` when the objective is coverage, traceability, dependency mapping, or many-to-many relationship inspection across large ID sets.
 - Default rule for dense mappings: if the same artifact would exceed ~25 nodes or become edge-dense enough to harm readability, produce a matrix first and add/keep only the minimal supporting diagrams needed for topology.
 - If a rendered diagram still has overlapping edge lanes after one layout pass, stop tuning and decompose into thematic sub-diagrams plus a full-coverage matrix.
+- For sequence diagrams, decompose by operational concern: if flows have different triggers or execution contexts (for example write-time policy, startup replay, read-side observability, governance escalation), model them as separate sequences.
 - Coverage guardrail: matrices must not become a substitute for architectural context. Keep a reasonable set of diagrams per domain slice so end-to-end behavior, boundaries, and interaction structure remain visible.
 
 For matrix authoring, use `model_create_matrix` with ID-based markdown and enabled auto-linking so cells resolve to model entities.
@@ -388,9 +389,15 @@ Use synchronous/asynchronous/return semantics exactly as modeled.
 When modeling safety-governance fast-path behavior, the sequence must include explicit branch outcomes (continue/pause/stop or equivalent) and identify the CSCO decision path as a first-class participant interaction.
 
 Runtime quality controls (mandatory for orchestration/application-runtime sequences):
+- **API label quality:** message labels must read like role-appropriate operation contracts, not prose. Use verb-led names with explicit parameters (for example `append_event(event_type, correlation_id)`), keep naming consistent per participant role, and avoid ambiguous shorthand like "do X / do Y" or mixed free-text signatures.
+- **Command-query separation in labels:** mutating operations should use command semantics (`append_`, `create_`, `dispatch_`, `submit_`); read operations should use query semantics (`query_`, `get_`, `is_`, `should_`). Avoid combining multiple operations into one message label.
+- **Parameter name intelligibility:** avoid generic placeholder parameter names (for example `window`, `context`, `spec`, `deps`, `result_ref`, `status_filter`) when they hide business meaning. Prefer domain-explicit names (for example `phase_visit_interval`, `review_decision_state_filter`, `dependency_artifact_refs`) that indicate entity/context without opening implementation internals.
+- **Avoid opaque aggregate query naming:** do not use vague labels such as `query_*_bundle(...)` when the payload spans distinct business concerns. Prefer explicit role-functional read-model queries (for example clarification, review, timeline, checkpoint). If a single endpoint is retained for transport efficiency, model it as an explicit facade/orchestrator call that composes those named sub-queries.
 - **Idempotent resume/integration points:** when an event-producing action can be retried, include an explicit dedup key path in the sequence using the canonical event identity (for example `event_id`) and show duplicate handling.
 - **Correlation continuity:** decision and lifecycle events that belong to the same control episode (for example CQ, gate, algedonic) must carry a stable correlation key (for example `cq_id`/`invocation_id`/`correlation_id`) in the sequence narrative.
 - **Fail-safe timeout branch for safety decisions:** if a modeled control step depends on a safety/governance decision and that decision can be unavailable/late, include an explicit timeout/unavailable branch with a conservative default (fail-closed containment/suspend/rework).
+- **No implied causality across independent scenarios:** do not place independently triggered concerns in one linear timeline. If two flows are not causally required in every run, split into separate sequence diagrams and cross-reference them.
+- **Cross-layer traceability and relevance:** each runtime/operational sequence must state the user-visible feature or control objective it supports and include frontmatter `connection-ids-used` that anchor the sequence to modeled relationships. For user-facing observability flows, include the serving path to the user boundary (for example APP -> ACT) and identify the related business process/interaction IDs in the diagram narrative or companion overview.
 
 ### §7.activity-bpmn — Activity / BPMN-Overlay Process Diagram
 

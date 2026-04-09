@@ -37,21 +37,21 @@ participant "UserInteractionOrchestrator\nAPP-018" as APP_018
 participant "LangGraph Orchestrator\nAPP-016" as APP_016
 database "EventStore\nAPP-001" as APP_001
 
-APP_008 -> APP_001: record_event(cq.raised)
-APP_007 -> APP_001: record_event(cq.batched)
-APP_016 -> APP_001: record_event(phase.suspended)
+APP_008 -> APP_001: append_event(event_type="cq.raised", cq_id, invocation_id)
+APP_007 -> APP_001: append_event(event_type="cq.batched", cq_batch_id)
+APP_016 -> APP_001: append_event(event_type="phase.suspended", correlation_id=cq_batch_id)
 
-APP_020 -> APP_001: query open CQs
-APP_020 -> APP_021: delegate CQ answer submission payload
-APP_021 -> APP_001: record_event(cq.answered, event_id, cq_id, upload_refs?)
-APP_018 -> APP_001: query cq.answered by cq_id
-APP_018 -> APP_001: check_dedup(event_id)
+APP_020 -> APP_001: query_open_clarification_requests(status="open")
+APP_020 -> APP_021: submit_cq_answer(cq_id, answer_text, evidence_attachment_refs)
+APP_021 -> APP_001: append_event(event_type="cq.answered", event_id, cq_id, evidence_attachment_refs)
+APP_018 -> APP_001: query_latest_event(event_type="cq.answered", cq_id)
+APP_018 -> APP_001: is_duplicate_event(event_id)
 alt event_id already processed
-	APP_018 -> APP_001: record_event(decision.recorded, decision="duplicate-cq-answer-ignored")
+	APP_018 -> APP_001: append_event(event_type="decision.recorded", decision="duplicate-cq-answer-ignored", cq_id)
 else first-seen event_id
-	APP_018 -> APP_001: record_event(cq.routed, correlation_id=cq_id)
-	APP_016 -> APP_001: record_event(phase.resumed, correlation_id=cq_id)
-	APP_016 -> APP_008: resume specialist with CQ answer payload
+	APP_018 -> APP_001: append_event(event_type="cq.routed", correlation_id=cq_id)
+	APP_016 -> APP_001: append_event(event_type="phase.resumed", correlation_id=cq_id)
+	APP_016 -> APP_008: resume_specialist_with_cq_answer(cq_id, cq_answer_payload_ref)
 end
 
 note right of APP_018

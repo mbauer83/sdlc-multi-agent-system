@@ -1,8 +1,8 @@
 ---
 document: learning-protocol
-version: 1.1.0
-status: Approved — Stage 4.6 (updated Stage 5 design)
-last-updated: 2026-04-03
+version: 1.2.0
+status: Approved — Stage 4.9 (extended with episodic/skill-amendment types + Memento State)
+last-updated: 2026-04-09
 ---
 
 # Learning Protocol
@@ -34,7 +34,20 @@ The design draws on foundational LLM agent memory research and validated product
 - **A-MEM graph connectivity** (Adaptive Memory for Agents, 2025): Structured learnings maintain explicit `related` links to other entries, forming a lightweight traversal graph. This allows `query_learnings` to optionally "expand" a result set by following related-entry pointers when the primary filter returns < 3 results.
 - **Memory consolidation as first-class operation**: Synthesis is not only a sprint-boundary activity — it must also be triggered when the unsynced index grows beyond 20 entries to prevent context-bloat at retrieval time.
 
-**Memory type coverage (gap analysis):** The current learning protocol addresses **procedural memory** (corrections, calibrations, heuristics — "when X, do Y"). MIRIX (2026) and Mem0 identify three additional memory types not currently addressed: *episodic* (what specifically happened in past engagements), *semantic* (domain facts about the client's industry/system), and *resource* (shared documents, reference files). These are out of scope for this protocol version — they are addressed by the enterprise repository, engagement profile, and external source adapters respectively. Future protocol versions may formalise episodic retrieval (past engagement outcomes) and semantic caching (domain-fact extraction from CQ answers).
+**Memory type coverage:** The learning protocol addresses **procedural memory** (corrections, calibrations, heuristics — "when X, do Y"). MIRIX (2026) and Mem0 identify additional memory types: *episodic* (what specifically happened), *semantic* (domain facts), and *resource* (reference files). This protocol version (v1.2.0) formalises **episodic memory** as `entry-type: episodic` (§2.4) and the complementary **ephemeral continuity layer** as `MementoState` (§13). *Semantic* and *resource* memory remain deferred — addressed by the enterprise repository, engagement profile, and external source adapters respectively.
+
+**Five-tier memory architecture** (complete picture for Stage 5):
+
+| Tier | Name | Semantics | Scope | Provided by |
+|---|---|---|---|---|
+| 0 | Conversation Buffer | Transient | Within one `agent.run()` call | PydanticAI `message_history` + LangGraph `SqliteSaver` |
+| 1 | Engagement State | Append-only | Full engagement, cross-session | EventStore → `WorkflowState` → `AgentDeps` |
+| 2 | Memento State | Overwrite (single slot) | Per-(agent, phase, engagement) | `MementoStore` — see §13 |
+| 3a | Procedural Learning | Accumulate | Per-engagement + enterprise | `LearningStore` — corrections, skill-amendments (this section) |
+| 3b | Episodic Learning | Accumulate | Per-engagement + enterprise | `LearningStore` — episodic entries (§2.4) |
+| 4 | Enterprise Knowledge | Accumulate, promoted | Cross-engagement global | Enterprise `LearningStore` — promoted entries (§7) |
+
+Tiers 0 and 1 are provided by the framework/library layer; no agent action is required. Tiers 2–4 are agent-driven via the memory tools (§9, §13).
 
 **Design invariants that hold despite evolution:**
 - The system does **not** require a vector database for normal operation. Retrieval is primarily metadata-filtered (phase, artifact type, applicability), which is deterministic, transparent, and appropriate for the structured, ontologically-rich context of SDLC work.
@@ -64,10 +77,14 @@ The sequence number `NNN` is assigned at creation time; it is never reused. The 
 ---
 learning-id: <ROLE>-L-<NNN>         # Immutable identifier; role-prefixed
 agent: <ROLE>                        # CSCO | SA | SwA | DE | DO | QA | PM | PO | SM
+entry-type: correction               # correction (default) | skill-amendment | episodic — see §2.4
+skill-id: null                       # Required for skill-amendment; e.g. SWA-PHASE-C-APP. Null otherwise.
 phase: [<phase>, ...]                # ADM phases this applies to; one or more
-artifact-type: <type>                # Artifact class where the mistake occurred (e.g., architecture-vision, sco, ta, ac)
-trigger-event: <event-type>          # feedback-revision | algedonic | incorrectly-raised-cq | gate-veto
-error-type: <type>                   # omission | wrong-inference | wrong-scope | protocol-skip | calibration
+artifact-type: <type>                # Artifact class where the mistake/episode occurred (e.g., architecture-vision, sco, ta, ac)
+trigger-event: <event-type>          # correction/skill-amendment: feedback-revision | algedonic | incorrectly-raised-cq | gate-veto
+                                     # episodic: discovery | decision | constraint-revealed | integration-finding
+error-type: <type>                   # correction/skill-amendment: omission | wrong-inference | wrong-scope | protocol-skip | calibration
+                                     # episodic: null (not applicable)
 importance: <S1|S2|S3>               # S1=critical (algedonic/user-escalation), S2=significant (revision required), S3=minor
 applicability: <scope>               # domain-agnostic | domain:<specific-domain> (e.g., domain:healthcare, domain:finance)
 generated-at:
@@ -100,8 +117,11 @@ Not injected at retrieval time — authoring context only.>
 
 ```yaml
 - learning-id: CSCO-L-001
+  entry-type: correction            # correction | skill-amendment | episodic
+  skill-id: null                    # Required for skill-amendment only
   phase: [A]
   artifact-type: safety-constraint-overlay
+  trigger-event: feedback-revision
   error-type: omission
   importance: S2
   applicability: domain-agnostic
@@ -111,6 +131,20 @@ Not injected at retrieval time — authoring context only.>
   related: []           # IDs of related entries in this index (or enterprise index) — used by §12 expansion
   synthesis-superseded: null  # Set to synthesis entry ID when this entry is superseded
 ```
+
+### 2.4 Entry Type Semantics
+
+The `entry-type` field classifies the nature of the entry. **Backwards-compatible default: `correction`** when absent.
+
+| `entry-type` | Description | `error-type` | `skill-id` | Retrieved by | Context cap | Body section |
+|---|---|---|---|---|---|---|
+| `correction` | Error-triggered: what went wrong and what to do instead. Default type. | Required | null | Step 0.L — phase+artifact_type filter | N=5 (shared with episodic) | `## Correction` |
+| `skill-amendment` | Procedure-level micro-correction for a specific skill. Supplements the official skill definition without replacing it. | Required | Required | Step 0.L — exact `skill_id` filter, **same `query_learnings` tool** (see §9 design note) | 3 per skill-id (separate cap from general N=5) | `## Correction` |
+| `episodic` | Significant outcome or discovery: what happened and why it matters. Not error-triggered. | null | null | Step 0.L — phase filter, only when `phase_visit_count > 0` | N=5 (shared with corrections) | `## Episode` |
+
+**`entry-type: episodic` body:** Replace `## Trigger` / `## Correction` with a single `## Episode` section: 2–4 sentences describing what was found or decided and why it matters for future invocations of this phase. First-person, present-relevance framing: "During Layer 4 scan, found 3 external payment integrations — more than the AV scoped for Phase C. This expanded constraint scope was captured in CST-005."
+
+**`entry-type: skill-amendment` body:** Follows the same `## Trigger` / `## Correction` format as `correction` entries, but scoped to a specific skill step. The `Correction` section names the skill step it amends: "In step 3 of SWA-PHASE-C-APP, before querying APP-nnn components, first verify..."
 
 **`artifact-type` assignment rule:** Use the PRIMARY OUTPUT artifact of the skill, not the artifact reviewed or consumed as input. In the example above, CSCO is producing the `safety-constraint-overlay` (Phase A SCO baseline) when the mistake occurred — the AV was the input artifact being reviewed. The correction text describes what to examine in the input AV, but the learning is tagged by CSCO's output so that `query_learnings(artifact_type="safety-constraint-overlay")` retrieves it at the start of the next CSCO gate review skill. Had it been tagged `architecture-vision`, it would never be retrieved by CSCO's Step 0.L.
 
@@ -205,19 +239,18 @@ Avoid: vague generalizations ("be more careful"), references to specific engagem
 
 > ### Step 0.L — Learnings Lookup
 >
-> 1. Call `query_learnings(phase=<current_phase>, artifact_type=<primary_artifact>, domain=<engagement_domain>)`. The tool reads `<role-repo>/learnings/index.yaml`, filters entries, and returns the `correction-summary` texts for entries that pass ALL of:
->    - `phase` contains the current ADM phase (or is empty — applicable to all phases)
->    - `applicability` is `domain-agnostic`, OR `domain:<engagement_domain>` matches the engagement profile
->    - `importance` ≥ S2 (unless total results < 3, in which case include S3)
->    - Not `promoted: enterprise-superseded` (see §7)
-> 2. Additionally call `query_learnings` against `enterprise-repository/knowledge-base/learnings/` (if it exists) with the same filter. Enterprise learnings supplement role-specific ones.
-> 3. Sort results: S1 first, then S2, then by recency (most recent sprint first). Cap at **5 entries total** (role-specific + enterprise combined) to avoid context bloat.
-> 4. Prepend the matching `Correction` texts (full, not correction-summary) to the agent's working context as: **"Learnings from prior work relevant to this task:"** followed by a numbered list. If no entries match: skip (no section added).
-> 5. Proceed to Layer 1 — Engagement State.
+> 1. **Skill amendments (first):** Call `query_learnings(skill_id=<active_skill_id>, entry_type="skill-amendment")`. Cap at 3. Prepend any returned Correction texts as **"Skill-specific amendments:"** before general corrections.
+> 2. **General corrections:** Call `query_learnings(phase=<current_phase>, artifact_type=<primary_artifact>, domain=<engagement_domain>)`. Filters: `phase` matches, `applicability` matches, `importance` ≥ S2 (or S3 if < 3 results), not superseded/deprecated, `entry_type` in `{correction, null}` (excludes episodic and skill-amendment from this call).
+>    - Additionally call against `enterprise-repository/knowledge-base/learnings/` with the same filter.
+>    - Additionally call against `project-repository/knowledge-base/cross-role-learnings/index.yaml` (§12.4).
+> 3. **Episodic context (revisit only):** If `workflow_state.phase_visit_counts[current_phase] > 0`: call `query_learnings(phase=<current_phase>, entry_type="episodic")`. Returns episode summaries from prior visits.
+> 4. Sort combined results (corrections + episodic): S1 first, then S2, then recency. Cap at **5 total** (corrections + episodic combined; skill-amendments are separate).
+> 5. Prepend to working context as: **"Learnings from prior work relevant to this task:"** followed by a numbered list. If no entries match: skip.
+> 6. Proceed to Step 0.M.
 
-**Why first, before discovery:** Learnings shape how the agent interprets what it reads. A learning that says "when AV describes an 'internal' system, check for employee PII handling" changes how the agent reads the AV during Layer 1. Inserting it after discovery would miss this interpretive benefit.
+**N=5 cap rationale:** Based on Reflexion and ExpeL empirical findings — more than 5 prepended corrections degrade task-focus and introduce confirmation bias. Skill-amendments are separate (hard cap 3) because they are procedure-specific, not general corrections; mixing them into the N=5 pool would crowd out phase-level corrections.
 
-**N=5 cap rationale:** Based on Reflexion and ExpeL empirical findings — more than 5 prepended corrections begin to degrade task-focus and introduce confirmation bias. If more than 5 relevant entries exist, the synthesis step (§6) should have consolidated them into fewer, higher-quality heuristics.
+**Why first, before discovery:** Learnings shape how the agent interprets what it reads. A learning that says "when AV describes an 'internal' system, check for employee PII handling" changes how the agent reads the AV during Layer 1. Inserting it after discovery would miss this interpretive benefit. Skill-amendments are first within Step 0.L because procedure-level amendments must be active before the agent encounters the artifacts that trigger those procedures.
 
 ---
 
@@ -334,28 +367,45 @@ The `### Learning Generation` subsection is the authoring specification; the run
 
 ## 9. Tool Specification (for Stage 5b implementation)
 
-### `query_learnings(phase, artifact_type, domain, expand_related=True) → list[str]`
+### `query_learnings(phase, artifact_type, domain, skill_id, entry_type, expand_related) → list[str]`
 
-- Reads `<role-repo>/learnings/index.yaml` and (optionally) `enterprise-repository/knowledge-base/learnings/index.yaml`
-- Applies filters: phase match, applicability match, importance ≥ S2 (or S3 if results < 3), not deprecated/superseded
-- **Graph expansion (§12):** If primary filter returns < 3 results AND `expand_related=True`, traverse `related` pointers of matching entries to collect additional candidates; apply the same filters to candidates; add up to 2 expanded entries to the result set
-- **Semantic supplement (§12):** If primary + expanded results < 3 AND enterprise corpus ≥ 50 entries AND `sqlite-vec` is available: run embedding similarity against the enterprise index using the current task context as query; add top-1 result if relevance score > 0.75
-- Sorts: S1 first, then S2, then recency descending
-- Caps results at 5 total (role-specific + enterprise + expanded combined)
-- For each matching entry: reads the full `Correction` section from the entry file
-- Returns list of Correction texts (not the full entries)
+**Signature:**
+```python
+query_learnings(
+    phase: str | None = None,
+    artifact_type: str | None = None,
+    domain: str | None = None,
+    skill_id: str | None = None,        # exact skill-id filter for skill-amendment retrieval
+    entry_type: str | None = None,      # "correction" | "skill-amendment" | "episodic" | None (all)
+    expand_related: bool = True,
+) → list[str]
+```
+
+- Reads role-repo, enterprise, and cross-role learning indexes
+- Applies AND-semantics across all non-None filters: phase match, applicability match, importance ≥ S2 (or S3 if < 3), not deprecated/superseded, `entry_type` match if provided, `skill_id` match if provided
+- **Retrieval caps** (enforced after filtering and sorting):
+  - General call (no `skill_id`): cap 5, shared across corrections and episodic
+  - Skill-amendment call (`skill_id` set, `entry_type="skill-amendment"`): cap 3 per skill-id; separate from the N=5 cap
+- **Graph expansion (§12.3):** If non-skill-amendment results < 3 AND `expand_related=True`: traverse `related` pointers; add up to 2 qualifying expanded entries
+- **Semantic supplement (§12.2):** Enterprise corpus ≥ 50, `sqlite-vec` available, results < 3: add top-1 cosine > 0.75 result
+- For each matching entry: reads the full `Correction` section (or `Episode` section for episodic entries) from the entry file
+- Returns list of texts (not the full entries)
+
+**Design rationale — unified tool, not split by entry-type:** `skill-amendment` retrieval uses the same `query_learnings` tool with `skill_id` + `entry_type` parameters rather than a separate tool. The underlying operation is identical: filter the learning index, read matching entry bodies, return texts. A separate tool would inflate the agent tool surface (counted toward the ≤30 cap) purely due to filter key difference, not operational difference. This is the same principle as SQL using `WHERE` clauses rather than per-filter operations.
 
 ### `record_learning(entry: LearningEntry) → str`
 
-- `LearningEntry` is a Pydantic model matching the §2.2 schema
-- Validates all required fields; raises `LearningSchemaError` if invalid
+- `LearningEntry` is a Pydantic model matching the §2.2 schema (including `entry-type` and `skill-id`)
+- For `entry_type="episodic"`: validates `episode-type` (not `error-type`); reads `## Episode` body section
+- For `entry_type="skill-amendment"`: validates `skill-id` is present
+- Validates all required fields per entry-type; raises `LearningSchemaError` if invalid
 - Assigns next sequence number from index
 - Writes entry file via `write_artifact` (path-constrained to role's learnings/ directory)
 - Appends to `index.yaml`
-- Emits `learning.created` EventStore event
+- Emits `learning.created` EventStore event with `entry_type` in payload
 - Returns assigned `learning-id`
 
-Both tools are registered in `universal_tools.py` and available to all agents. `record_learning` uses the path-constraint from `write_tools.py` — agents can only write to their own role repository's learnings/ directory.
+Both tools are registered in `universal_tools.py` and available to all agents.
 
 ---
 
@@ -461,3 +511,104 @@ Cross-role entries use the same format as regular learnings. They are authored b
 ### 12.5 Consolidation Trigger
 
 The existing sprint-boundary synthesis trigger (§6.1) is supplemented by a **growth trigger**: if `index.yaml` has more than 20 entries that are not `synthesis-superseded`, PM is alerted at the next sprint planning check-in to request synthesis from the affected agent. This prevents index bloat that would degrade the N=5 cap's effectiveness. The alert is an `algedonic`-adjacent signal routed to PM's decision queue (not a full ALG signal — it is informational, not urgent).
+
+---
+
+## 13. Memento State — Ephemeral Continuity Memory
+
+### 13.1 Purpose
+
+Memento State is the agent's short-term continuity scratchpad. It bridges invocations of the same agent in the same phase within an engagement — carrying forward key decisions and open threads so subsequent invocations do not start from scratch.
+
+**Coverage in the five-tier architecture (§1):** Tiers 0 and 1 are already handled by PydanticAI `message_history` (within-run) and EventStore (structural state). But when a specialist is invoked again — in a new `agent.run()` call, possibly in a new session — neither tier provides reasoning continuity. Tier 2 (MementoState) fills that gap.
+
+**When it matters most:**
+- Phase revisits (`phase_visit_count > 0`): the agent needs to know what reasoning led to the previous conclusion, not just what artifacts were written.
+- CQ resolution cycles: state captured before suspension is available on resume without re-reading the full EventStore.
+- Discovery-heavy phases: preserving key inference threads avoids redundant re-scanning.
+
+### 13.2 Data Format
+
+```yaml
+# Stored in MementoStore (APP-023):
+# Namespace: (engagement_id, agent_role, "memento"), Key: current_phase
+phase: <current_phase>
+invocation_id: <from_AgentDeps — links to EventStore for full event history if needed>
+skill_id: <active_skill_id>
+key_decisions:
+  - "Scoped Phase C strictly to orchestration layer; excluded frontend pending Phase D."
+  - "Inferred target repo uses event-sourcing from projector class naming conventions."
+open_threads:
+  - "APP-019 PromotionOrchestrator relationships to enterprise repo — not yet fully resolved."
+partial_context: |
+  Layer 4 found 3 repos; primary confirmed as api-core. Mobile repo excluded from Phase C scope.
+  Auth library shared across repos — undocumented inter-repo contract; flagged as gap.
+recorded_at: <ISO timestamp>
+```
+
+**Content budget: ≤ 250 tokens total.** Agents must distil, not dump — `key_decisions` and `open_threads` are bullet-point lists (max 3 items each); `partial_context` is a condensed prose digest (max 100 tokens).
+
+### 13.3 Write Procedure — End-of-Skill Close
+
+Call `save_memento_state(phase, key_decisions, open_threads, partial_context)` at the **end of every skill execution**, before checking for learning trigger conditions. This is a transparent tool call; skill procedure steps do not need to name it explicitly.
+
+**Also consider `record_learning(entry_type="episodic", ...)` when ANY of:**
+- A significant discovery was made that changes the engagement's understanding (new constraint revealed, unexpected integration found, assumption invalidated by Layer 4 scan).
+- A key architectural decision was reached that future phases or agents should know about.
+- An unexpected interaction pattern was observed (cross-role visibility via §12.4).
+
+Episodic entries are accumulated (not overwritten) and survive across sprints. Memento state is overwritten on every invocation. Use episodic entries for outcomes worth preserving; use memento state for current reasoning context.
+
+### 13.4 Read Procedure — Step 0.M
+
+Step 0.M executes after Step 0.L and before Layer 1:
+
+```python
+state: MementoState | None = get_memento_state(phase=current_phase)
+```
+
+If state is returned: inject as **"Prior invocation state for this phase:"** followed by `key_decisions` and `open_threads` as numbered lists. Omit `partial_context` unless Layer 1 discovery would benefit from the condensed narrative.
+
+If None (first invocation for this phase in this engagement): proceed directly to Layer 1 without injection.
+
+### 13.5 Storage Backend
+
+Implemented using **LangGraph BaseStore** — same infrastructure as LearningStore (§12.1), different namespace:
+
+```python
+# APP-023 MementoStore wraps LangGraph BaseStore
+# Namespace: (engagement_id, agent_role, "memento")
+# Key:       current_phase   — e.g. "C", "B"
+# Value:     MementoState (Pydantic model, serialised to JSON by the store)
+# Semantics: OVERWRITE (single slot per namespace+key — not accumulated)
+# Backend:   SQLiteStore reusing workflow.db (same file as EventStore + LearningStore)
+```
+
+`APP-023 MementoStore` is a separate model entity from `APP-003 LearningStore` because their semantics differ (overwrite vs accumulate) and their interfaces differ (`AIF-007 MementoPort` vs `AIF-006 LearningStorePort`). They share the BaseStore runtime infrastructure.
+
+### 13.6 Tool Specification
+
+```python
+get_memento_state(phase: str) → MementoState | None
+```
+- Reads from MementoStore namespace `(engagement_id, agent_role, "memento")` with key `phase`.
+- Returns `None` if no state exists for this phase.
+- Call in Step 0.M of every skill invocation.
+
+```python
+save_memento_state(
+    phase: str,
+    key_decisions: list[str],   # max 3 items, each ≤ 30 tokens
+    open_threads: list[str],    # max 3 items, each ≤ 20 tokens
+    partial_context: str = "",  # condensed prose digest, ≤ 100 tokens
+) → None
+```
+- Overwrites the MementoStore slot for `(engagement_id, agent_role, "memento", phase)`.
+- Emits `memento.saved` EventStore event (informational; not replayed at session start).
+- Call at end of every skill execution before learning checks.
+
+Both tools are registered in `universal_tools.py` alongside `query_learnings` and `record_learning`.
+
+### 13.7 Relationship to EventStore
+
+MementoState is **not** a substitute for the EventStore. The EventStore is the canonical, append-only structural record — MementoState is a volatile working scratchpad. If detailed reasoning history is needed (e.g., during audit or promotion), read the EventStore. MementoState provides convenience for common-case re-invocation; it is always reconstructible from EventStore + artifact files if lost.

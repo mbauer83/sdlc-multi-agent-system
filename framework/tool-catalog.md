@@ -113,7 +113,24 @@ Graph model:
 
 ---
 
-## 6. Naming and Compatibility
+## 6. Agent PydanticAI Memory Tools
+
+Registration: `src/agents/tools/universal_tools.py` (available to all agents; not MCP tools).
+
+These implement the runtime Tier 2–3b memory layer (see `framework/learning-protocol.md §1`).
+
+| Tool | Description |
+|---|---|
+| `query_learnings` | Unified LearningStore retrieval. Two call patterns per Step 0.L: skill-amendment by `skill_id` (cap 3) and general corrections + episodic by `phase+artifact_type+domain` (cap N=5). Single tool, not split by entry-type — see §9 design rationale. |
+| `record_learning` | Write a new learning entry (`correction \| skill-amendment \| episodic`). Path-constrained to role's `learnings/` directory. Emits `learning.created`. |
+| `get_memento_state` | Read ephemeral MementoState for `(agent, phase)` from MementoStore (APP-023). Step 0.M. Returns `None` on first invocation for this phase. |
+| `save_memento_state` | Overwrite MementoState slot for `(agent, phase)`. Called unconditionally at end of every skill execution before learning checks. Emits `memento.saved`. |
+
+Full signatures: `framework/agent-runtime-spec.md §6.1`. Protocol: `framework/learning-protocol.md §9, §13`.
+
+---
+
+## 7. Naming and Compatibility
 
 1. Canonical runtime names are exactly the names listed in this catalog.
 2. Incoming names may be normalized by separator suffix extraction (`-`, `:`, `.`, `/`) when bridges namespace tools.
@@ -121,7 +138,7 @@ Graph model:
 
 ---
 
-## 7. Change Control
+## 8. Change Control
 
 When adding/removing/changing tools:
 1. Update code registration and tests first.

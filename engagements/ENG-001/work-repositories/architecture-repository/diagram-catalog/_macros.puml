@@ -613,12 +613,14 @@
 !define DECL_APP_020 rectangle "DashboardServer" <<ApplicationComponent>> as APP_020
 !define DECL_APP_021 rectangle "UserInputGateway" <<ApplicationComponent>> as APP_021
 !define DECL_APP_022 rectangle "TargetRepoManager" <<ApplicationComponent>> as APP_022
+!define DECL_APP_023 rectangle "MementoStore" <<ApplicationComponent>> as APP_023
 !define DECL_AIF_001 rectangle "EventStorePort" <<ApplicationInterface>> as AIF_001
 !define DECL_AIF_002 rectangle "LLMClientPort" <<ApplicationInterface>> as AIF_002
 !define DECL_AIF_003 rectangle "SourceAdapterPort" <<ApplicationInterface>> as AIF_003
 !define DECL_AIF_004 rectangle "ArtifactReadWriterPort" <<ApplicationInterface>> as AIF_004
 !define DECL_AIF_005 rectangle "DiagramToolsPort" <<ApplicationInterface>> as AIF_005
 !define DECL_AIF_006 rectangle "LearningStorePort" <<ApplicationInterface>> as AIF_006
+!define DECL_AIF_007 rectangle "MementoPort" <<ApplicationInterface>> as AIF_007
 !define DECL_ASV_001 rectangle "Agent Invocation Service" <<ApplicationService>> as ASV_001
 !define DECL_ASV_002 rectangle "Artifact I/O Service" <<ApplicationService>> as ASV_002
 !define DECL_ASV_003 rectangle "Sprint Review Service" <<ApplicationService>> as ASV_003
@@ -637,6 +639,7 @@
 !define DECL_DOB_011 rectangle "PMDecision" <<DataObject>> as DOB_011
 !define DECL_DOB_012 rectangle "SDLCGraphState" <<DataObject>> as DOB_012
 !define DECL_DOB_013 rectangle "ArtifactRecord" <<DataObject>> as DOB_013
+!define DECL_DOB_014 rectangle "MementoState" <<DataObject>> as DOB_014
 !define DECL_ACO_001 rectangle "Skill Execution Collaboration" <<ApplicationCollaboration>> as ACO_001
 !define DECL_AIA_001 rectangle "Skill Execution" <<ApplicationInteraction>> as AIA_001
 

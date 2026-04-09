@@ -895,7 +895,7 @@ Purpose: extend the Stage 5 implementation specification with deeper, execution-
   - Author or refine sequence diagrams for deployment/provisioning, event persistence/snapshot/replay lifecycle, and operational observability/escalation paths.
   - Confirm sequence participants map to defined application/technology entities (no diagram-only participants).
   - 2026-04-08 completion slice: added [@technology-sequence-runtime-bootstrap-provisioning-v1 v0.1.0](../engagements/ENG-001/work-repositories/architecture-repository/diagram-catalog/diagrams/technology-sequence-runtime-bootstrap-provisioning-v1.puml) for local host/runtime bootstrap and provisioning flow.
-  - 2026-04-08 completion slice: added [@technology-sequence-event-persistence-snapshot-replay-escalation-v1 v0.1.0](../engagements/ENG-001/work-repositories/architecture-repository/diagram-catalog/diagrams/technology-sequence-event-persistence-snapshot-replay-escalation-v1.puml) for event persistence/snapshot/replay lifecycle and fail-safe escalation observability path.
+  - 2026-04-08 refinement slice: replaced mixed sequence with decomposed operational scenarios [@technology-sequence-event-persistence-snapshot-policy-v1 v0.1.0](../engagements/ENG-001/work-repositories/architecture-repository/diagram-catalog/diagrams/technology-sequence-event-persistence-snapshot-policy-v1.puml), [@technology-sequence-replay-hydration-on-resume-v1 v0.1.0](../engagements/ENG-001/work-repositories/architecture-repository/diagram-catalog/diagrams/technology-sequence-replay-hydration-on-resume-v1.puml), and [@technology-sequence-observability-query-path-v1 v0.1.0](../engagements/ENG-001/work-repositories/architecture-repository/diagram-catalog/diagrams/technology-sequence-observability-query-path-v1.puml) to avoid false linear causality between independent triggers.
 
 - [x] **Cross-layer conformance and verification:**
   - Run model-first conformance check: business workflow nets -> application services -> technology/infrastructure realization path.
@@ -1335,11 +1335,21 @@ This subsection is the canonical review-control model for dashboard-driven human
 
 **Validation update (2026-04-08, session 26):** after Stage 4.9i technology baseline additions (NOD-001/SSW-001/TSV-001 entities, serving/composition relations, and hosting diagram+matrix views), `model_verify_all` returns **2037 files, 0 errors, 0 warnings**.
 
+**Validation update (2026-04-09, session 28):** after holistic memory architecture additions (DOB-014/APP-023/AIF-007 entities + 4 connections + AIF-006 orphan fix + specialist invocation sequence update), `model_verify_all` returns **2048 files, 0 errors, 0 warnings**.
+
 ### Immediate next actions
 
-- Stage 4.9i is complete; carry the resulting application + technology baseline directly into Stage 5 implementation tasks.
-- Continue Stage 5 integration focus items tracked in this plan (EventStore/orchestration/tooling completion and integration-test readiness), using the expanded application/infrastructure diagram set as the implementation baseline.
-- Implement modeled control-loop reliability semantics in code: event_id-based idempotent dedup across runtime event consumers, correlation-id propagation, and fail-safe timeout behavior for safety votes/escalations.
+- Stage 4.9 memory architecture extension complete (session 28). Memory design decisions resolved:
+  - Official agent-phase skills stay as static markdown with deterministic routing — NOT converted to memento-skills.
+  - Five-tier memory architecture defined (Tier 0 conversation buffer through Tier 4 enterprise knowledge).
+  - `query_learnings()` extended with `skill_id` + `entry_type` params (unified tool — no separate skill-amendment tool).
+  - `entry-type: episodic` and `entry-type: skill-amendment` added to LearningEntry schema.
+  - `MementoState` (DOB-014), `MementoStore` (APP-023), `MementoPort` (AIF-007) added to model.
+  - Discovery protocol updated: Step 0.M added; end-of-skill close template added to §6.
+- Continue Stage 5 integration focus items: EventStore/orchestration/tooling completion and integration-test readiness.
+- Stage 5 implementation now includes `src/agents/memento_store.py` (MementoStore wrapper around LangGraph BaseStore).
+- Outstanding retroactive: add Step 0.M + end-of-skill close to Stage 3 skill files (alongside the existing Step 0 envelope item, deferred to 5e).
+- Implement modeled control-loop reliability semantics in code: event_id-based idempotent dedup, correlation-id propagation, fail-safe timeout branches.
 
 ### Completed this session (2026-04-08 — session 25)
 
@@ -1380,7 +1390,9 @@ This subsection is the canonical review-control model for dashboard-driven human
 - **Stage 4.9i operational behavior + conformance closure:**
   - Added technology operational sequence views:
     - `technology-sequence-runtime-bootstrap-provisioning-v1.puml`
-    - `technology-sequence-event-persistence-snapshot-replay-escalation-v1.puml`
+    - `technology-sequence-event-persistence-snapshot-policy-v1.puml`
+    - `technology-sequence-replay-hydration-on-resume-v1.puml`
+    - `technology-sequence-observability-query-path-v1.puml`
   - Completed 4.9i checklist closure:
     - operational behavior package marked complete
     - cross-layer conformance + verification package marked complete

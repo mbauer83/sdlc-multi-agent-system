@@ -1,0 +1,35 @@
+' ---
+' artifact-id: technology-sequence-replay-hydration-on-resume-v1
+' artifact-type: diagram
+' diagram-type: sequence
+' name: "Technology Runtime Sequence \u2014 Replay Hydration on Resume"
+' version: 0.1.0
+' status: draft
+' phase-produced: C
+' owner-agent: SwA
+' engagement: ENG-001
+' domain: runtime
+' purpose: Operational scenario focused on startup/resume replay hydration and orchestrator
+'   state initialization from the latest snapshot/event tail.
+' entity-ids-used:
+' - APP-001
+' - APP-016
+' - APP-017
+' ---
+@startuml technology-sequence-replay-hydration-on-resume-v1
+title Replay Hydration on Startup/Resume (Operational Scenario)
+
+participant "EngagementSession\nAPP-017" as APP_017
+database "EventStore\nAPP-001" as APP_001
+participant "LangGraph Orchestrator\nAPP-016" as APP_016
+
+APP_017 -> APP_001: replay_from_latest_snapshot()
+APP_001 --> APP_017: replay_result(workflow_state, unapplied_event_tail)
+APP_017 -> APP_016: hydrate_graph_state(replay_result)
+APP_016 -> APP_001: append_event(event_type="phase.resumed", correlation_id)
+
+note right of APP_017
+Scenario scope: replay bootstrap/resume behavior.
+No governance vote/escalation path is implied here.
+end note
+@enduml

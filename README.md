@@ -278,16 +278,16 @@ The engagement dashboard (Stage 5.5) is a local FastAPI web server that provides
 
 ## Implementation Status
 
-The framework and ENG-001 reference model are being built incrementally. Current state (2026-04-08):
+The framework and ENG-001 reference model are being built incrementally. Current state (2026-04-09):
 
 | Layer | Status |
 |---|---|
-| Framework specifications (all `framework/` files) | Complete |
+| Framework specifications (all `framework/` files) — including five-tier memory architecture: discovery-protocol.md v1.2.0 (Step 0.M Memento Recall + End-of-Skill Memory Close), learning-protocol.md v1.2.0 (three entry types + unified `query_learnings()` + §13 MementoState), agent-runtime-spec.md §6.1 memory tools, tool-catalog.md §6 PydanticAI memory tools | Complete |
 | Agent and skill files (all `agents/<role>/`) | Complete |
-| ENG-001 reference model — entities (616 files across motivation, strategy, business, application, and technology layers; entity types ArchiMate-correct including BusinessRole for agent roles and technology-node/system-software/technology-service runtime substrate elements) | Complete |
-| ENG-001 reference model — connections (1378 files across ArchiMate, activity, and ER languages; includes workflow-net/business realization sets and Stage 4.9i technology-serving/runtime-hosting relations) | Complete |
+| ENG-001 reference model — entities (619 files across motivation, strategy, business, application, and technology layers; entity types ArchiMate-correct including BusinessRole for agent roles and technology-node/system-software/technology-service runtime substrate elements; +3 Stage 4.9j: DOB-014 MementoState data-object, APP-023 MementoStore application-component, AIF-007 MementoPort application-interface) | Complete |
+| ENG-001 reference model — connections (1382 files across ArchiMate, activity, and ER languages; includes workflow-net/business realization sets and Stage 4.9i technology-serving/runtime-hosting relations; +4 Stage 4.9j: APP-023→AIF-007 serving, APP-023→DOB-014 access, APP-023→APP-003 association, APP-003→AIF-006 serving) | Complete |
 | ENG-001 reference model — `_macros.puml` (99 macros, auto-generated from entity `§display ###archimate` blocks via `src/tools/generate_macros.py`) | Complete |
-| ENG-001 reference model — diagrams (45 artifacts total; core Stage 4.9f set 7/7 complete; +3 agent-phase workflow-net activity diagrams added; naming normalized to scope-based IDs and re-rendered; application runtime sequence views refined with explicit dashboard write-boundary delegation, algedonic fast-path escalation coverage, event_id-based idempotent routing, correlation-id continuity, and fail-safe timeout branches; Stage 4.9i completed with technology hosting baseline plus operational sequence coverage for bootstrap/provisioning and event persistence/snapshot/replay/escalation observability) | Complete |
+| ENG-001 reference model — diagrams (45 artifacts total; core Stage 4.9f set 7/7 complete; +3 agent-phase workflow-net activity diagrams added; naming normalized to scope-based IDs and re-rendered; application runtime sequence views refined with explicit dashboard write-boundary delegation, algedonic fast-path escalation coverage, event_id-based idempotent routing, correlation-id continuity, and fail-safe timeout branches; Stage 4.9i completed with technology hosting baseline plus operational sequence coverage for bootstrap/provisioning and event persistence/snapshot/replay/escalation observability; Stage 4.9j: specialist-invocation-cycle v0.3.0 — full memory layer calls including Step 0.L/0.M and End-of-Skill Memory Close with APP-003/APP-023) | Complete |
 | ENG-001 reference model — overview docs + ADRs (architecture vision, AA overview, ADR-001..005 in ENG-001 architecture-repository) | Complete |
 | `src/common/model_verifier.py` — BDD-tested verifier for entity/connection/diagram files (71 scenarios); E306/E307 draft-reference checks with targeted `entity_status()`/`connection_status()` lookups; `entity_id_from_path()` formal-id extraction | Complete |
 | `src/common/archimate_types.py` — canonical type registry for all entity, connection, element, and grouping stereotype types; single source of truth imported by verifier and referenced in documentation | Complete |
@@ -300,7 +300,7 @@ The framework and ENG-001 reference model are being built incrementally. Current
 | `src/tools/generate_macros.py` — regenerates `_macros.puml` from entity `§display ###archimate` blocks | Complete |
 | `pyproject.toml` + uv project setup | Complete |
 | `docs/puml-bug-reports.md` — confirmed PlantUML 1.2025.x bugs (PB-001..PB-005) with reproduction cases and workarounds | Complete |
-| `src/` Python implementation (EventStore, agents, orchestration, dashboard) | Pending |
+| `src/` Python implementation (EventStore, agents, orchestration, dashboard) — Stage 5 pending items include: `src/agents/memento_store.py` (MementoStore wrapping LangGraph BaseStore), extend `query_learnings()` with `skill_id`+`entry_type` params, `get_memento_state()`/`save_memento_state()` in `universal_tools.py`, update `learning-entry.schema.md` | Pending |
 
 **ArchiMate diagram conventions** (`framework/diagram-conventions.md`): §10 covers PlantUML compatibility constraints (PB-001..PB-005 workarounds, DECL_ two-token macro convention); §11 covers ArchiMate semantic constraints (layer boundary rule, active structure type rules, layer-aligned grouping stereotypes with prohibition on inline color overrides). For business operational decomposition (`§11.9.1a`), staged processes/interactions are diagrammed as nested parent containers (`BPR-NNN` / `BIA-NNN` as container element) with internal stage `flow`/`triggering`; parent→stage composition remains mandatory as connection files even when external composition arrows are omitted in the operational view. Decomposition stage count is explicitly domain-dependent: use a manageable number of stages, and split into additional top-level behaviors when separation of concerns requires it.
 

@@ -29,16 +29,16 @@ database "EventStore\nAPP-001" as APP_001
 participant "LangGraph Orchestrator\nAPP-016" as APP_016
 participant "DashboardServer\nAPP-020" as APP_020
 
-NOD_001 -> SSW_001: initialize Python 3.12 runtime + uv env
-SSW_001 -> TSV_001: start local file/process service endpoint
-TSV_001 -> APP_001: provision sqlite storage path + snapshot directory
-APP_001 -> APP_001: open db + verify migrations baseline
-TSV_001 -> APP_016: start orchestrator process and graph wiring
+NOD_001 -> SSW_001: initialize_python_runtime(python_version="3.12", env_manager="uv")
+SSW_001 -> TSV_001: start_local_process_service(endpoint_profile="default")
+TSV_001 -> APP_001: provision_eventstore_storage(db_path, snapshot_dir)
+APP_001 -> APP_001: open_eventstore_and_verify_migrations()
+TSV_001 -> APP_016: start_orchestrator_runtime(graph_profile="default")
 APP_016 -> APP_001: replay_from_latest_snapshot()
-APP_016 -> APP_001: record_event(engagement.started)
-APP_016 -> APP_001: create_snapshot("engagement.started")
-TSV_001 -> APP_020: start local dashboard server
-APP_020 -> APP_001: query progress/open-cq/review state
+APP_016 -> APP_001: append_event(event_type="engagement.started")
+APP_016 -> APP_001: create_snapshot(trigger="engagement.started")
+TSV_001 -> APP_020: start_dashboard_server(bind_address)
+APP_020 -> APP_001: query_runtime_bootstrap_readiness()
 
 note right of APP_016
 Operational readiness sequence over

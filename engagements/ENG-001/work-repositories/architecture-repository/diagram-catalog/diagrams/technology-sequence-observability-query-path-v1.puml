@@ -1,0 +1,52 @@
+' ---
+' artifact-id: technology-sequence-observability-query-path-v1
+' artifact-type: diagram
+' diagram-type: sequence
+' name: "Technology Runtime Sequence \u2014 Observability Query Path"
+' version: 0.1.0
+' status: draft
+' phase-produced: C
+' owner-agent: SwA
+' engagement: ENG-001
+' domain: runtime
+' purpose: Operational scenario focused on role-specific dashboard read-model queries
+'   against EventStore for clarification status, sprint-review scope, phase/gate
+'   lifecycle timeline, and latest checkpoint state.
+' entity-ids-used:
+' - APP-001
+' - APP-020
+' connection-ids-used:
+' - APP-001---APP-020@@archimate-serving
+' - APP-020---ACT-001@@archimate-serving
+' ---
+@startuml technology-sequence-observability-query-path-v1
+title Observability Query Path (Operational Scenario)
+
+participant "DashboardServer\nAPP-020" as APP_020
+database "EventStore\nAPP-001" as APP_001
+
+APP_020 -> APP_001: query_open_clarification_requests(phase_visit_interval, clarification_state_filter)
+APP_001 --> APP_020: clarification_request_status_list(open_or_pending_answer)
+APP_020 -> APP_001: query_pending_sprint_review_scope(sprint_id, review_decision_state_filter)
+APP_001 --> APP_020: sprint_review_queue(pending_or_needs_revision_decision)
+APP_020 -> APP_001: query_phase_gate_timeline(phase_transition_interval)
+APP_001 --> APP_020: phase_gate_timeline_entries()
+APP_020 -> APP_001: query_latest_checkpoint_state()
+APP_001 --> APP_020: latest_checkpoint_state(snapshot_ref, updated_at)
+APP_020 -> APP_020: assemble_review_and_control_monitoring_view()
+
+note right of APP_020
+Scenario scope: read-side observability only (no writes).
+Dashboard observability features covered:
+- open clarification requests and answer status
+- pending sprint-review scope and decision state
+- phase/gate lifecycle timeline and latest checkpoint
+Design rule: prefer explicit read-model queries over opaque bundle names.
+If one transport endpoint is required for UI efficiency, model it as
+an orchestrating facade that composes these domain queries.
+Business relevance:
+- supports BPR-003 clarification lifecycle monitoring
+- supports BIA-001 sprint-review interaction monitoring
+No replay/bootstrap or decision-control sequence is implied.
+end note
+@enduml

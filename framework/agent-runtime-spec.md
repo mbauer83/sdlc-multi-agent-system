@@ -267,8 +267,10 @@ When a new capability is needed, add it to an existing tool family where possibl
 
 | Tool | Function signature | Description |
 |---|---|---|
-| `query_learnings` | `(phase: str, artifact_type: str, domain: str \| None, expand_related: bool = True) → list[str]` | Retrieves top-5 correction texts from `LearningStore`. Applies metadata filter, graph expansion via `related` links, and optional semantic tier. Call as Step 0.L before any Discovery Scan. Governed by `framework/learning-protocol.md §9`. |
-| `record_learning` | `(entry: LearningEntry) → str` | Validates entry against schema (9 rules); assigns `<ROLE>-L-NNN` id; writes to `LearningStore` AND file; emits `learning.created`. Call in `## Feedback Loop` on feedback-triggered revision. Governed by `framework/learning-protocol.md §8`. |
+| `query_learnings` | `(phase, artifact_type, domain, skill_id, entry_type, expand_related) → list[str]` | Unified learning retrieval from `LearningStore`. Called twice in Step 0.L: (1) `skill_id+entry_type="skill-amendment"` for skill-specific amendments (cap 3); (2) `phase+artifact_type+domain` for general corrections + episodic (cap 5). Governed by `framework/learning-protocol.md §9`. |
+| `record_learning` | `(entry: LearningEntry) → str` | Validates entry (supports `entry_type` in `{correction,skill-amendment,episodic}`); assigns `<ROLE>-L-NNN`; writes to `LearningStore` AND file; emits `learning.created`. Governed by `framework/learning-protocol.md §8–§9`. |
+| `get_memento_state` | `(phase: str) → MementoState \| None` | Reads ephemeral continuity state for current `(agent, phase)` from `MementoStore`. Returns `None` on first invocation for this phase. Call as Step 0.M immediately after Step 0.L. Governed by `framework/learning-protocol.md §13`. |
+| `save_memento_state` | `(phase, key_decisions, open_threads, partial_context) → None` | Overwrites MementoStore slot for `(agent, phase)`; emits `memento.saved`. Call at end of every skill execution before learning checks. Governed by `framework/learning-protocol.md §13`. |
 
 #### Interaction and Escalation
 

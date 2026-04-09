@@ -39,7 +39,10 @@ references:
   - technology-archimate-local-runtime-hosting-v1
   - technology-matrix-runtime-hosting-traceability-v1
   - technology-sequence-runtime-bootstrap-provisioning-v1
-  - technology-sequence-event-persistence-snapshot-replay-escalation-v1
+  - technology-sequence-event-persistence-snapshot-policy-v1
+  - technology-sequence-replay-hydration-on-resume-v1
+  - technology-sequence-observability-query-path-v1
+  - APP-001---APP-020@@archimate-serving
   - APP-016---APP-015@@archimate-composition
   - APP-015---BPR-005@@archimate-realization
   - NOD-001---SSW-001@@archimate-composition
@@ -139,6 +142,7 @@ Common -> Domain -> Application -> Infrastructure
 | Gate evaluation | [runtime-sequence-gate-evaluation-decision-path-v1](../diagram-catalog/diagrams/runtime-sequence-gate-evaluation-decision-path-v1.puml) | APP-016 orchestrates PM and CSCO decisioning branch before transition/rework; safety vote timeout defaults to fail-closed escalation/rework |
 | Sprint review correction loop | [runtime-sequence-sprint-review-correction-loop-v1](../diagram-catalog/diagrams/runtime-sequence-sprint-review-correction-loop-v1.puml) | Review decision loop routed via APP-007/APP-016 with EventStore-backed checkpoints |
 | Algedonic fast-path escalation | [runtime-sequence-algedonic-escalation-fastpath-v1](../diagram-catalog/diagrams/runtime-sequence-algedonic-escalation-fastpath-v1.puml) | [@APP-016---APP-015@@archimate-composition v0.1.0](../connections/archimate/composition/APP-016---APP-015@@archimate-composition.md) + [@APP-015---BPR-005@@archimate-realization v0.1.0](../connections/archimate/realization/APP-015---BPR-005@@archimate-realization.md); CSCO timeout path explicitly suspends/escalates (fail-safe containment default) |
+| Observability read path | [technology-sequence-observability-query-path-v1](../diagram-catalog/diagrams/technology-sequence-observability-query-path-v1.puml) | [@APP-001---APP-020@@archimate-serving v0.1.0](../connections/archimate/serving/APP-001---APP-020@@archimate-serving.md) + [@APP-020---ACT-001@@archimate-serving v0.1.0](../connections/archimate/serving/APP-020---ACT-001@@archimate-serving.md); dashboard read model is composed from explicit queries for clarification status, sprint-review scope, phase/gate timeline, and latest checkpoint state (business relevance: BPR-003 and BIA-001 monitoring) |
 
 ## Technology Baseline (4.9i)
 
@@ -150,7 +154,7 @@ Common -> Domain -> Application -> Infrastructure
 
 Reference views: [technology-archimate-local-runtime-hosting-v1](../diagram-catalog/diagrams/technology-archimate-local-runtime-hosting-v1.puml), [technology-matrix-runtime-hosting-traceability-v1](../diagram-catalog/diagrams/technology-matrix-runtime-hosting-traceability-v1.md).
 
-Operational behavior views: [technology-sequence-runtime-bootstrap-provisioning-v1](../diagram-catalog/diagrams/technology-sequence-runtime-bootstrap-provisioning-v1.puml), [technology-sequence-event-persistence-snapshot-replay-escalation-v1](../diagram-catalog/diagrams/technology-sequence-event-persistence-snapshot-replay-escalation-v1.puml).
+Operational behavior views: [technology-sequence-runtime-bootstrap-provisioning-v1](../diagram-catalog/diagrams/technology-sequence-runtime-bootstrap-provisioning-v1.puml), [technology-sequence-event-persistence-snapshot-policy-v1](../diagram-catalog/diagrams/technology-sequence-event-persistence-snapshot-policy-v1.puml), [technology-sequence-replay-hydration-on-resume-v1](../diagram-catalog/diagrams/technology-sequence-replay-hydration-on-resume-v1.puml), [technology-sequence-observability-query-path-v1](../diagram-catalog/diagrams/technology-sequence-observability-query-path-v1.puml).
 
 ## Notes
 - This file is the narrative handoff companion for Phase C application architecture.

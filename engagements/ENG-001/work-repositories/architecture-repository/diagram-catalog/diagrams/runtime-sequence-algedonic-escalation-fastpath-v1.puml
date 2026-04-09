@@ -34,23 +34,23 @@ participant "PM Agent\nAPP-007" as APP_007
 participant "CSCO Agent\nAPP-015" as APP_015
 database "EventStore\nAPP-001" as APP_001
 
-APP_008 -> APP_001: record_event(algedonic.raised, severity, context)
-APP_016 -> APP_007: request emergency coordination context
-APP_016 -> APP_015: invoke safety escalation review
-APP_015 -> APP_001: record_event(decision.recorded, decision="contain|continue", correlation_id)
+APP_008 -> APP_001: append_event(event_type="algedonic.raised", severity, correlation_id, context_ref)
+APP_016 -> APP_007: prepare_emergency_coordination_context(correlation_id)
+APP_016 -> APP_015: perform_safety_escalation_review(correlation_id, severity, context_ref)
+APP_015 -> APP_001: append_event(event_type="decision.recorded", decision in {"contain","continue"}, correlation_id)
 
 alt severity S1 / containment required
-  APP_016 -> APP_001: record_event(phase.suspended, correlation_id)
-  APP_007 -> APP_001: record_event(review.pending)
+  APP_016 -> APP_001: append_event(event_type="phase.suspended", correlation_id)
+  APP_007 -> APP_001: append_event(event_type="review.pending", correlation_id)
 else severity S2 / controlled continuation
-  APP_016 -> APP_008: route containment or corrective handoff
-  APP_016 -> APP_001: record_event(decision.recorded, decision="continue-with-constraints", correlation_id)
+  APP_016 -> APP_008: dispatch_containment_or_corrective_handoff(correlation_id, constraints)
+  APP_016 -> APP_001: append_event(event_type="decision.recorded", decision="continue-with-constraints", correlation_id)
 else CSCO decision timeout/unavailable
-  APP_016 -> APP_001: record_event(phase.suspended, correlation_id)
-  APP_016 -> APP_001: record_event(algedonic.escalated, reason="csco-decision-timeout", correlation_id)
+  APP_016 -> APP_001: append_event(event_type="phase.suspended", correlation_id)
+  APP_016 -> APP_001: append_event(event_type="algedonic.escalated", reason="csco-decision-timeout", correlation_id)
 end
 
-APP_016 -> APP_001: create_snapshot("algedonic.raised")
+APP_016 -> APP_001: create_snapshot(trigger="algedonic.raised")
 
 note right of APP_015
 Mapped to BPR-005 Algedonic Escalation and

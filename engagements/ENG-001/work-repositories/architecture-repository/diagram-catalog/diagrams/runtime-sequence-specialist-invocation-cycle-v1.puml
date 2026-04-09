@@ -3,25 +3,31 @@
 ' artifact-type: diagram
 ' diagram-type: sequence
 ' name: "Application Runtime Sequence \u2014 Specialist Invocation Cycle"
-' version: 0.2.0
+' version: 0.3.0
 ' status: draft
 ' phase-produced: C
 ' owner-agent: SwA
 ' engagement: ENG-001
 ' domain: core-platform
 ' purpose: 'Phase C runtime behavior baseline: PM decision, specialist invocation, skill
-'   load, and EventStore event/snapshot path for Stage 5 orchestration implementation.'
+'   load, Step 0.L/0.M memory retrieval, EventStore event/snapshot path, and end-of-skill
+'   memory close for Stage 5 orchestration implementation.'
 ' entity-ids-used:
 ' - APP-001
+' - APP-003
 ' - APP-004
 ' - APP-006
 ' - APP-007
 ' - APP-008
 ' - APP-016
+' - APP-023
 ' connection-ids-used:
+' - APP-003---APP-008@@archimate-serving
+' - APP-003---AIF-006@@archimate-serving
 ' - APP-004---APP-007@@archimate-serving
 ' - APP-006---APP-016@@archimate-serving
 ' - APP-001---APP-016@@archimate-serving
+' - APP-023---AIF-007@@archimate-serving
 ' ---
 @startuml runtime-sequence-specialist-invocation-cycle-v1
 title Specialist Invocation Cycle (Application Runtime)
@@ -31,27 +37,55 @@ participant "PM Agent\nAPP-007" as APP_007
 participant "SkillLoader\nAPP-004" as APP_004
 participant "AgentRegistry\nAPP-006" as APP_006
 participant "Specialist Agent\nAPP-008" as APP_008
+database "LearningStore\nAPP-003" as APP_003
+database "MementoStore\nAPP-023" as APP_023
 database "EventStore\nAPP-001" as APP_001
 
-APP_016 -> APP_007: request PMDecision(next_action)
-APP_007 -> APP_004: load_instructions(skill_id)
-APP_007 -> APP_006: resolve specialist instance(agent_id)
-APP_007 -> APP_001: record_event(specialist.invoked, invocation_id)
-APP_016 -> APP_008: invoke specialist(skill_id, task, deps, invocation_id)
+APP_016 -> APP_007: decide_next_action(current_phase_id, pending_work_context)
+APP_007 -> APP_004: load_skill_instructions(skill_id)
+APP_007 -> APP_006: resolve_specialist_agent(agent_role_id)
+APP_007 -> APP_001: append_event(event_type="specialist.invoked", invocation_id)
+APP_016 -> APP_008: execute_specialist_task(skill_id, task_spec_artifact_ref, dependency_artifact_refs, invocation_id)
 
-APP_008 -> APP_001: record_event(artifact.created|artifact.updated, invocation_id)
+group Step 0 — Discovery Scan (inside specialist node)
+  note over APP_008
+  Step 0.L — Learnings Lookup
+  end note
+  APP_008 -> APP_003: query_learnings(skill_id, entry_type="skill-amendment")
+  APP_003 --> APP_008: skill_amendments[0..3]
+  APP_008 -> APP_003: query_learnings(phase, artifact_type, domain)
+  APP_003 --> APP_008: corrections+episodic[0..5]
+
+  note over APP_008
+  Step 0.M — Memento Recall
+  end note
+  APP_008 -> APP_023: get_memento_state(phase)
+  APP_023 --> APP_008: MementoState | None
+end
+
+APP_008 -> APP_001: append_event(event_type in {"artifact.created","artifact.updated"}, invocation_id)
 opt specialist needs clarification
-  APP_008 -> APP_001: record_event(cq.raised)
+  APP_008 -> APP_001: append_event(event_type="cq.raised", cq_id, invocation_id)
   note right of APP_008
   CQ routing/resume path is abbreviated here.
   Full flow: runtime-sequence-cq-routing-resume-v1.
   end note
 end
-APP_008 --> APP_016: specialist output
-APP_016 -> APP_001: record_event(specialist.completed, invocation_id)
-APP_016 -> APP_001: check_snapshot_interval()
+
+group End-of-Skill Memory Close
+  APP_008 -> APP_023: save_memento_state(phase, key_decisions, open_threads)
+  note right of APP_023: Overwrites prior slot;\nalways unconditional
+  opt significant outcome or §3.1/§3.2 trigger met
+    APP_008 -> APP_003: record_learning(entry)
+    APP_003 -> APP_001: append_event(event_type="learning.created", learning_id)
+  end
+end
+
+APP_008 --> APP_016: specialist_result(output_artifact_refs, completion_status)
+APP_016 -> APP_001: append_event(event_type="specialist.completed", invocation_id)
+APP_016 -> APP_001: should_create_periodic_snapshot()
 alt periodic threshold reached
-  APP_016 -> APP_001: create_snapshot("periodic")
+  APP_016 -> APP_001: create_snapshot(trigger="periodic")
 end
 
 note right of APP_016
@@ -60,5 +94,6 @@ Stage 5 emitter hierarchy.
 Quality controls:
 - invocation_id supports replay-safe correlation
 - specialist.completed carries same invocation_id
+- MementoState overwrite is fire-and-forget (no ack needed)
 end note
 @enduml
