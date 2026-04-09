@@ -159,13 +159,22 @@ def _add_to_config(config_path: Path, engagement_id: str) -> None:
     if f"- id: {engagement_id}" in text:
         return  # already present
     block = _CONFIG_BLOCK.format(eid=engagement_id)
-    # Insert before the multi-repo example comment block
-    sep = "\n# ---------------------------------------------------------------------------"
+    # Insert before the multi-repo example block — use its unique heading as anchor.
+    # NOTE: do NOT use a plain "# ---" separator; Stage 5.6-A added one before the
+    # llm: block that would be found first and place this entry outside engagements:.
+    sep = "\n# MULTI-REPO ENGAGEMENT EXAMPLE"
     idx = text.find(sep)
     if idx != -1:
         text = text[:idx] + block + text[idx:]
     else:
-        text += block
+        # Fallback: append inside active-engagements if anchor not found
+        anchor = "  active-engagements:"
+        idx = text.find(anchor)
+        if idx != -1:
+            eol = text.find("\n", idx)
+            text = text[:eol + 1] + block + text[eol + 1:]
+        else:
+            text += block
     config_path.write_text(text, encoding="utf-8")
 
 

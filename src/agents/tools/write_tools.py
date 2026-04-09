@@ -13,12 +13,15 @@ closure that agents register. Paths are checked at call time, not build time.
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Any
 
 from pydantic_ai import RunContext
 
 from src.agents.deps import AgentDeps
+
+log = logging.getLogger(__name__)
 
 
 class RepositoryBoundaryError(PermissionError):
@@ -64,33 +67,40 @@ def build_write_tool(agent_id: str) -> Any:
         version: str = "0.1.0",
     ) -> str:
         """
-        Write content to a work-repository file.
+        Write a file to a work-repository.  Both relative_path AND content are
+        REQUIRED in every call — the tool creates or overwrites the file in one shot.
 
         relative_path: path relative to work-repositories/ (e.g.
-                       "architecture-repository/model-entities/motivation/STK-001.md")
-        content:       full file content (markdown)
-        artifact_id:   if provided, emits artifact.drafted or artifact.baselined event
-        version:       artifact version string
+                       "architecture-repository/model-entities/motivation/STK-001.friendly-name.md").
+                       Must be a relative path (no leading slash).
+        content:       COMPLETE file content as a string (markdown with YAML frontmatter).
+                       Must be provided; omitting it is an error.
+        artifact_id:   optional artifact-id; if provided, emits an artifact event.
+        version:       artifact version string (default "0.1.0").
         Returns the absolute path of the written file.
         """
         work_repos = ctx.deps.work_repos_path
         target = (work_repos / relative_path).resolve()
+        log.debug("write_artifact: target=%s allowed=%s", target, allowed_dirs)
 
-        # Boundary check
+        # Boundary check — return error string so the model can self-correct
         if not _is_allowed(target, work_repos, allowed_dirs):
+            log.warning("write_artifact: boundary violation — path=%s not in allowed_dirs=%s", target, allowed_dirs)
             _emit_boundary_violation(ctx, str(target))
-            raise RepositoryBoundaryError(
-                f"Agent '{agent_id}' is not permitted to write to '{relative_path}'. "
-                f"Allowed roots: {allowed_dirs}"
+            return (
+                f"[BoundaryError] Agent '{agent_id}' is not permitted to write to '{relative_path}'. "
+                f"Allowed roots (relative to work-repositories/): {allowed_dirs}. "
+                "Use one of the listed subdirectories as the prefix for relative_path."
             )
 
         target.parent.mkdir(parents=True, exist_ok=True)
         existed = target.exists()
         target.write_text(content, encoding="utf-8")
 
-        # Emit artifact event
-        if artifact_id:
-            _emit_artifact_event(ctx, artifact_id, version, str(target), existed)
+        # Emit artifact event — auto-derive artifact_id from filename if not provided
+        effective_id = artifact_id or _derive_artifact_id(target)
+        if effective_id:
+            _emit_artifact_event(ctx, effective_id, version, str(target), existed)
 
         return str(target)
 
@@ -101,6 +111,15 @@ def build_write_tool(agent_id: str) -> Any:
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
+def _derive_artifact_id(path: Path) -> str | None:
+    """Extract artifact-id from a filename like STK-001.friendly-name.md → 'STK-001'."""
+    import re
+    stem_prefix = path.stem.split(".")[0]
+    if re.match(r"^[A-Z]+-\d{3}$", stem_prefix):
+        return stem_prefix
+    return None
+
 
 def _is_allowed(target: Path, work_repos: Path, allowed_dirs: list[str]) -> bool:
     for allowed in allowed_dirs:

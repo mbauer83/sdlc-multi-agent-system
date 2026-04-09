@@ -210,8 +210,8 @@ Implemented alongside other `universal_tools.py` additions in Stage 5b:
 #### 5a — EventStore completion
 
 - [x] **`src/events/replay.py`** + **`src/events/replay_builder.py`**: full state machine implemented — all 20 event types handled via mutable `StateBuilder`; audit-only events pass through; unknown types skipped (forward-compatible)
-- [ ] **`src/events/export.py`**: implement `write_event_yaml()` with full PyYAML serialisation; implement `import_from_yaml()` for disaster recovery round-trip
-- [ ] **`src/events/migrations/`**: Alembic migration baseline — `alembic.ini` and initial migration script for the events + snapshots tables
+- [x] **`src/events/export.py`**: implement `write_event_yaml()` with full PyYAML serialisation; implement `import_from_yaml()` for disaster recovery round-trip
+- [x] **`src/events/migrations/`**: Alembic migration baseline — `alembic.ini` + `src/events/migrations/env.py` (configurable URL via `SDLC_DB_URL` or `alembic.ini`) + `src/events/migrations/versions/001_baseline.py` (idempotent `CREATE TABLE IF NOT EXISTS` for events + snapshots; documented two-path startup order); `src/events/migrations/script.py.mako` (new-migration template). BDD tests in `tests/events/test_event_store_migration.py` (5 scenarios: empty DB, pre-initialised DB, round-trip, downgrade, column contract).
 - [ ] **`EventStore.check_integrity()`**: validate JSON payloads, sequence gaps, YAML vs SQLite consistency check
 - [ ] **Snapshot implementation** — `snapshots` SQLite table: `snapshot_id TEXT PK, trigger_event_type TEXT, trigger_sequence INTEGER, state_json TEXT NOT NULL, created_at DATETIME NOT NULL`; Alembic migration adds this table alongside `events`. Implement:
   - `create_snapshot(trigger: str) → str` — serialises current `WorkflowState` to JSON (all fields; `Path` → `str`); `INSERT INTO snapshots`; returns `snapshot_id`
@@ -293,7 +293,7 @@ Implemented alongside other `universal_tools.py` additions in Stage 5b:
 - [x] **MCP surface** (framework-doc discovery): implemented in `src/tools/mcp_framework_server.py` and `src/tools/framework_mcp/` with tools `framework_query_stats`, `framework_query_list_docs`, `framework_query_list_sections`, `framework_query_search_docs`, `framework_query_read_doc` (supports `section_id` + unknown-section suggestions), `framework_query_resolve_ref`, `framework_query_related_docs`, `framework_query_neighbors`, `framework_query_path` (optional diagnostics), `framework_query_path_batch`, `framework_query_missing_links`, `framework_query_validate_refs` backed by the same index as Python/CLI.
 - [x] **`src/agents/roles.py`**: per-role builder functions `build_pm_agent`, `build_sa_agent`, `build_swa_agent`, `build_de_agent`, `build_do_agent`, `build_qa_agent`, `build_po_agent`, `build_smm_agent`, `build_csco_agent` — each calls `build_agent()`, registers universal tools + role-appropriate write tool + PM decision tools (PM only). Replaces individual per-role `.py` modules (unified pattern).
 - [x] **`src/agents/__init__.py`**: `AGENT_IDS`, `get_agent(agent_id, root, llm_config)` lazy singleton cache, `_build_for_id()` dispatcher. `AGENT_REGISTRY` populated on demand.
-- [ ] **`src/agents/tools/target_repo_tools.py`**: multi-repo aware target-repo tools (blocked on `TargetRepoManager` from Stage 5d)
+- [x] **`src/agents/tools/target_repo_tools.py`**: multi-repo aware target-repo tools — `list_target_repos`, `read_target_repo`, `scan_target_repo` (all roles), `write_target_repo` (DE/DO only, writes to worktree); `register_read_only_target_repo_tools` + `register_readwrite_target_repo_tools` registration helpers; TargetRepoManager unblocked (Stage 5d done)
 - [ ] **`src/agents/tools/diagram_tools.py`**: `regenerate_macros`, `validate_diagram`, `render_diagram` (blocked on diagram production sprint)
 
 #### 5c — Orchestration layer
@@ -332,9 +332,9 @@ Implemented alongside other `universal_tools.py` additions in Stage 5b:
 
 #### 5d — Source adapters
 
-- [ ] **`src/sources/base.py`**: adapter base class — `SourceAdapter.query(query: str) → str`; all queries emit `source.queried` EventStore event; adapter is read-only
+- [x] **`src/sources/base.py`**: `SourceAdapter` Protocol — `query(query: str) → str` + `source_id: str`; read-only; event emission is caller's responsibility
 - [ ] **`src/sources/confluence.py`**, **`src/sources/jira.py`**, **`src/sources/git_source.py`**: external source implementations; wired to `external-sources/<id>.config.yaml`
-- [ ] **`src/sources/target_repo.py`**: `TargetRepoManager` — multi-repo aware clone manager; reads `engagements-config.yaml` to build repo registry; `clone_or_update(repo_id)` clones/fetches to `engagements/<id>/target-repos/<repo-id>/`; `get_clone_path(repo_id) → Path`; `check_access(repo_id, agent_role) → Literal["read-write","read-only","none"]`; `get_primary_id() → str | None`; **`create_worktree(repo_id, branch_name) → Path`** (creates a git worktree at `engagements/<id>/target-repos/<repo-id>-wt-<branch>/` for agent-isolated code changes — non-negotiable for safe concurrent agent writes; DE and DO each get their own worktree per sprint; merged back by PM on sprint close); backward-compatible: `target-repository` (singular) registered as `id="default"`. Never commits framework files into any target repo.
+- [x] **`src/sources/target_repo.py`**: `TargetRepoManager` — multi-repo aware clone manager; reads `engagements-config.yaml` (`target-repositories` list or backward-compat `target-repository` singular); `clone_or_update(repo_id)`, `get_clone_path(repo_id) → Path`, `check_access(repo_id, agent_role) → AccessLevel`, `get_primary_id() → str | None`, `create_worktree(repo_id, branch_name) → Path` (isolated git worktree at `<base>/<repo-id>-wt-<branch>/`), `remove_worktree(repo_id, branch_name)`. BDD tests in `tests/sources/test_target_repo.py` (12 scenarios: config parsing, path resolution, access control, worktree isolation).
 
 #### 5e — Cross-cutting skill docs and retroactive updates
 
@@ -677,12 +677,38 @@ Replace scattered hardcoded model strings with a structured configuration layer 
 - Stage 5a: `src/events/event_store.py` — public snapshot API (`create_snapshot`, `replay_from_latest_snapshot`, `check_snapshot_interval`) fully implemented; `src/events/export.py` — `write_event_yaml` uses PyYAML serialisation; `import_from_yaml()` implemented (disaster-recovery YAML→SQLite rebuild). `src/events/replay_builder.py` — data-driven dispatch (`_HANDLERS` dict replaces match/case; `StateBuilder.from_state()` + `_CycleBuilder.from_state()` enable O(delta) incremental replay); `src/events/replay.py` — thin loop architecture (`_run_events` + two initialisation strategies, no duplicated dispatch). APP-001 entity updated to match actual public API.
 - Stage 5c: `src/orchestration/pm_decision.py` (PMDecision structured output model); `src/orchestration/graph_state.py` aligned with spec (`pm_decision: PMDecision | None`, `algedonic_active: bool`, `current_agent`, `current_skill`; flat fields removed); `src/orchestration/routing.py` (all 7 routing functions per spec); `src/orchestration/nodes.py` (`build_node_fns(session)` factory — all 15 nodes as closures over EngagementSession); `src/orchestration/graph.py` (`build_sdlc_graph(session)` — full compiled graph). `src/agents/base.py` — added `result_type` param to `build_agent()` for typed PM structured output. `src/events/models/cycle.py` — added `EngagementCompletedPayload`. Demo updated: 4-step flow with framework infrastructure check (5/5 checks: EventStore, agent registry, LearningStore, SDLCGraphState, PMDecision) that runs without an LLM key. All 119 tests pass; ModelVerifier 0 errors (2050 files).
 
-**Immediate next items:**
-- Stage 5a remaining: Alembic migration baseline.
-- Stage 5b remaining: `get_memento_state()`/`save_memento_state()` tools in `universal_tools.py` (MementoStore integration); `src/agents/tools/target_repo_tools.py` stub (multi-repo scan + worktree, blocked on TargetRepoManager from 5d).
-- Stage 5c remaining: PM agent `result_type=PMDecision` wiring needs end-to-end validation with a live LLM; `build_sdlc_graph` integration test (graph compile + single PM→SA→gate cycle).
-- Stage 5d: `src/sources/target_repo.py` (TargetRepoManager with worktree support), external source adapters.
-- Stage 5e: Add Layer 1-5 envelope to remaining ~37 skill files that only have Step 0.L + Step 0.M.
+**Completed this session (2026-04-10):**
+- Stage 5a: Alembic migration baseline — `alembic.ini`, `src/events/migrations/env.py` (SDLC_DB_URL override), `src/events/migrations/versions/001_baseline.py` (idempotent CREATE TABLE IF NOT EXISTS), `script.py.mako`. BDD tests: 5 scenarios (empty DB, pre-init DB, round-trip, downgrade, column contract) all pass.
+- Stage 5b: `src/models/memento.py` (MementoState Pydantic model, field validators, summary()); `src/agents/memento_store.py` (SQLite-backed MementoStore with upsert semantics, mementos table in workflow.db); `get_memento_state`/`save_memento_state` added to `universal_tools.py` and registered in `register_universal_tools`.
+- Stage 5b: `src/agents/tools/target_repo_tools.py` — `list_target_repos`, `read_target_repo`, `scan_target_repo` (all roles), `write_target_repo` (DE/DO only, worktree-enforced); `register_read_only_target_repo_tools` + `register_readwrite_target_repo_tools` registration helpers.
+- Stage 5c: BDD tests — `tests/orchestration/test_routing.py` (31 scenarios covering all 7 routing functions + algedonic bypass invariant) + `tests/orchestration/test_graph.py` (17 scenarios: graph compile, all 15 nodes registered, initial_state contract). 48 new tests.
+- Stage 5d: `src/sources/__init__.py`, `src/sources/base.py` (SourceAdapter Protocol), `src/sources/target_repo.py` (TargetRepoManager: config parsing, path resolution, access control, clone_or_update, create_worktree/remove_worktree). BDD tests: 12 scenarios all pass.
+- Total test count: 184 (was 119).
+
+**Completed this session (2026-04-10, continued — integration test drive):**
+- Fixed three silent bugs in `src/agents/tools/universal_tools.py` found via live LLM run:
+  (1) `search_artifacts` tried `for r, snippet in results` — `ModelRepository.search_artifacts()` returns `SearchResult(hits: list[SearchHit])`, not a list of tuples. Fixed to iterate `results.hits`.
+  (2) `list_artifacts` called `r.to_dict()` on `ArtifactSummary` (a plain dataclass). Fixed to build dict manually from dataclass fields.
+  (3) `read_artifact` returned `dict[str,object]` with return annotation `-> str`. Fixed to JSON-serialize with `json.dumps(result, default=str)`.
+  All three tools now have `try/except` guards returning empty-list / error-string on failure (no propagating exceptions, no retry loops).
+- BDD tests: `tests/agents/features/universal_tools.feature` + `tests/agents/test_universal_tools.py` — 10 scenarios covering correct return types, JSON-serializability, missing-repo graceful degradation. All pass.
+- `src/agents/tools/write_tools.py`: boundary violations now return an error string (not raise) so the model can self-correct; `_derive_artifact_id()` auto-emits artifact events from filename pattern `TYPE-NNN.*.md`; improved docstring explicitly stating both `relative_path` and `content` are required.
+- `src/agents/base.py`: `retries=3`, `model_settings={"max_tokens": 8192}` — Haiku was hitting the 4096-token ceiling mid-tool-call with large markdown content.
+- `src/orchestration/session.py`: `register_read_only_target_repo_tools` added to `invoke_specialist` so agents can read from target repos during discovery.
+- `scripts/demo_setup.py`: always tears down before scaffold (clean state per run); task prompt includes concrete YAML frontmatter format example and valid `artifact-type` values; observability: clean error message with exception type, no raw traceback.
+- `.gitignore`: `engagements/ENG-DEMO/` excluded (ephemeral demo engagement, rebuilt each run).
+- **Demo result (final run with `anthropic:claude-haiku-4-5-20251001`):** 6/7 checks pass — vision doc ✓, stakeholders ✓, drivers ✓, principles ✓, no boundary violations ✓, 20 artifact events ✓. Remaining: ModelVerifier [E102] `artifact-type: architecture-principle` → should be `principle`. Fix applied in prompt (task template updated); not re-run per session close constraint.
+- Total test count: 194 (10 new universal_tools BDD tests).
+
+**Immediate next items (priority order):**
+1. **Demo: 7/7 pass** — the `artifact-type: principle` prompt fix is in place; confirm on next session's first run. If ModelVerifier still sees [E102], also add `architecture-principle` as a recognised alias in `src/common/archimate_types.py` (one-liner addition to the motivation frozenset).
+2. **Demo: extend to SwA Phase C** — add a second agent step (SwA, `SA-PHASE-C-APPLICATION` skill) after SA Phase A completes, producing application-layer entities (APP-NNN files). This gives the benchmark non-generic, cross-layer output and exposes the handoff event flow between agents.
+3. **Skill condensation** — several SA and SwA skill files exceed `complexity-class: complex` even at 2000-token budget when Layer 3 is injected. Identify the 3-5 most verbose skills and trim procedure steps to bare-minimum intent cues; move supporting detail to referenced framework docs (use `search_framework_docs` / `read_framework_doc` at runtime).
+4. **Stage 5c**: PM agent `result_type=PMDecision` end-to-end validation with a live LLM (PM routing loop without a human).
+5. **Stage 5d**: external source adapters (Confluence, Jira, git_source) + `UserUploadAdapter`.
+6. **Stage 5b**: `src/agents/tools/diagram_tools.py` (regenerate_macros, validate_diagram, render_diagram).
+7. **Stage 5e**: Discovery Scan Step 0 full envelope (engagement profile read, enterprise repo, external sources, target-repo, EventStore state) for Stage 3 skill files.
+8. **Stage 5.5**: Dashboard (FastAPI + Jinja2 + SSE + Model Explorer).
 
 **Stage 5** — Python implementation. Read `framework/agent-runtime-spec.md` and `framework/orchestration-topology.md` before authoring any `src/` file. Begin with Stage 5a (EventStore completion), then 5b (agent layer). Key implementation dependencies:
 - `src/sources/target_repo.py` implements `TargetRepoManager` (multi-repo aware; see Stage 5d)

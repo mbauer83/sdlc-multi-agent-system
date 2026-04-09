@@ -46,9 +46,34 @@ if str(_REPO_ROOT) not in sys.path:
 from scripts.demo_scaffold import ENGAGEMENT_ID, scaffold_demo
 from scripts.demo_verify import check_framework_infra, print_report, verify_outputs
 
+_ENTITY_FORMAT_EXAMPLE = """\
+Each entity file MUST start with YAML frontmatter exactly as shown:
+---
+artifact-id: STK-001
+artifact-type: stakeholder  # use: stakeholder | driver | principle
+name: "Example Stakeholder"
+version: 0.1.0
+status: draft
+phase-produced: A
+owner-agent: SA
+safety-relevant: false
+produced-by-skill: SA-PHASE-A
+last-updated: 2026-04-09
+engagement: {eid}
+---
+
+<!-- §content -->
+
+## Example Stakeholder
+
+Description of the stakeholder here.
+
+<!-- §display -->
+"""
+
 _TASK = (
     "You are the Solution Architect for the TaskFlow API project. "
-    "The project brief is at target-repos/taskflow-api/README.md relative to the engagement path. "
+    "Read the project brief from the target repository: path=README.md using read_target_repo. "
     "Perform Phase A (Architecture Vision) for engagement {eid}. "
     "Produce: "
     "(1) Architecture Vision document (write to architecture-repository/overview/architecture-vision.md), "
@@ -58,11 +83,13 @@ _TASK = (
     "architecture-repository/model-entities/motivation/drivers/), "
     "(4) Architecture Principle entity files (PRI-NNN.friendly-name.md in "
     "architecture-repository/model-entities/motivation/principles/). "
-    "Use the write_artifact tool for all file writes. "
-    "Follow ERP v2.0 entity file conventions (frontmatter with artifact-id, name, type, status fields; "
-    "<!-- §content --> and <!-- §display --> sections). "
+    "Use the write_artifact_sa tool for all file writes. "
+    "IMPORTANT: Every entity file MUST use YAML frontmatter format exactly as follows:\\n"
+    "{fmt}"
+    "artifact-type MUST be one of: stakeholder | driver | principle. "
     "Aim for 3-5 stakeholders, 3-5 drivers, and 4-6 principles appropriate for a "
-    "cloud-native EU-deployed task management API with GDPR constraints."
+    "cloud-native EU-deployed task management API with GDPR constraints. "
+    "Do NOT create index files or summary files — only write the specific entity files listed above."
 )
 
 
@@ -83,8 +110,10 @@ async def _run(args: argparse.Namespace) -> int:
 
     _print_banner(engagement_id)
 
-    # 1. Scaffold
+    # 1. Scaffold — tear down first to guarantee a clean slate
     print("── Step 1/4: Scaffolding engagement and target repository ──")
+    from scripts.demo_scaffold import teardown_demo
+    teardown_demo(_REPO_ROOT, engagement_id, verbose=verbose)
     engagement_path = scaffold_demo(_REPO_ROOT, engagement_id, verbose)
     print(f"  Engagement ready at: {engagement_path}\n")
 
@@ -110,7 +139,7 @@ async def _run(args: argparse.Namespace) -> int:
     from src.orchestration.session import EngagementSession
 
     session = EngagementSession(engagement_id, repo_root=_REPO_ROOT)
-    task = _TASK.format(eid=engagement_id)
+    task = _TASK.format(eid=engagement_id, fmt=_ENTITY_FORMAT_EXAMPLE.format(eid=engagement_id))
     try:
         output = await session.invoke_specialist(
             agent_id="SA",
@@ -119,7 +148,8 @@ async def _run(args: argparse.Namespace) -> int:
             phase="A",
         )
     except Exception as exc:  # noqa: BLE001
-        print(f"\n  [ERROR] Agent invocation failed: {exc}", file=sys.stderr)
+        exc_type = type(exc).__name__
+        print(f"\n  [ERROR] Agent invocation failed ({exc_type}): {exc}", file=sys.stderr)
         print("  Run with --skip-run to test scaffolding without an API key.\n")
         return 2
 

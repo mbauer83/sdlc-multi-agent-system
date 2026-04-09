@@ -126,6 +126,7 @@ class EngagementSession:
         from src.agents.deps import AgentDeps
         from src.agents.tools.universal_tools import register_universal_tools
         from src.agents.tools.write_tools import build_write_tool
+        from src.agents.tools.target_repo_tools import register_read_only_target_repo_tools
         from src.models.llm_config import LLMConfig
 
         # Ensure phase/sprint events exist
@@ -139,6 +140,7 @@ class EngagementSession:
         )
         agent = build_agent(agent_id, self.agents_root, llm_config=llm_config)
         register_universal_tools(agent)
+        register_read_only_target_repo_tools(agent)
         write_fn = build_write_tool(agent_id)
         agent.tool(write_fn)
 

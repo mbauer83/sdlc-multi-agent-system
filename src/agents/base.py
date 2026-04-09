@@ -125,6 +125,8 @@ def build_agent(
         model=cfg.primary_model,
         system_prompt=static_system_prompt,
         deps_type=AgentDeps,
+        retries=3,
+        model_settings={"max_tokens": 8192},
         **extra,
     )
 
