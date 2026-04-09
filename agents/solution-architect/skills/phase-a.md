@@ -96,6 +96,12 @@ CQ format: per `clarification-protocol.md §3`. All Phase A CQs are architecture
 Call `query_learnings(agent="SA", phase="A", artifact_type="architecture-vision")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
 
 ---
+### Step 0.M — Memento Recall *(via `get_memento_state` tool)*
+
+Call `get_memento_state(phase=<current_phase>)`. If state is returned: inject `key_decisions` and `open_threads` into working context as **"Prior invocation state for this phase:"** followed by numbered lists. If no state exists (first invocation for this phase): proceed to the next step. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §13`.
+
+---
+
 
 ### Pre-condition Check
 
@@ -392,3 +398,13 @@ On trigger: call `record_learning()` with `artifact-type="architecture-vision"`,
 | Handoff to PM (SoAW input) | `engagements/<id>/handoff-log/` | — | `handoff.created` |
 | Handoff to CSCO (Safety Envelope review) | `engagements/<id>/handoff-log/` | — | `handoff.created` |
 | Phase A gate vote | EventStore | — | `gate.vote_cast` |
+
+---
+
+## End-of-Skill Memory Close
+
+After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
+
+1. `save_memento_state(phase=<current_phase>, key_decisions=[...], open_threads=[...])` — capture key decisions made and threads left open during this invocation.
+2. `record_learning(entry_type="episodic", ...)` — if a significant discovery or key decision occurred that benefits future invocations. Governed by `framework/learning-protocol.md §13.3`.
+3. `record_learning(...)` — if a §3.1/§3.2 trigger condition was met during this skill. Governed by `framework/learning-protocol.md §3–4`.

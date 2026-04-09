@@ -85,6 +85,12 @@ CQ format: per `clarification-protocol.md §3`. DO does not raise CQs about tech
 Call `query_learnings(agent="DO", phase="D", artifact_type="technology-architecture")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
 
 ---
+### Step 0.M — Memento Recall *(via `get_memento_state` tool)*
+
+Call `get_memento_state(phase="D")`. If state is returned: inject `key_decisions` and `open_threads` into working context as **"Prior invocation state for this phase:"** followed by numbered lists. If no state exists (first invocation for this phase): proceed to the next step. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §13`.
+
+---
+
 
 ### Step 1 — Acknowledge and retrieve TA draft
 
@@ -273,3 +279,13 @@ On trigger: call `record_learning()` with `artifact-type="technology-architectur
 | Phase D Feedback Record | `devops-repository/phase-d-feedback/phase-d-feedback-<sprint-id>.md` | `handoff.issued` to SwA | Produced at end of Step 6; iterated per feedback loop |
 | Initial EPC draft | `devops-repository/environment-catalog/epc-0.1.0.md` | `artifact.drafted` | Draft only at Phase D; not baselined until Phase F |
 | Technology Standards contributions | Via Phase D Feedback Record | — | DO proposes; SwA updates Technology Standards Catalog |
+
+---
+
+## End-of-Skill Memory Close
+
+After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
+
+1. `save_memento_state(phase="D", key_decisions=[...], open_threads=[...])` — capture key decisions made and threads left open during this invocation.
+2. `record_learning(entry_type="episodic", ...)` — if a significant discovery or key decision occurred that benefits future invocations. Governed by `framework/learning-protocol.md §13.3`.
+3. `record_learning(...)` — if a §3.1/§3.2 trigger condition was met during this skill. Governed by `framework/learning-protocol.md §3–4`.

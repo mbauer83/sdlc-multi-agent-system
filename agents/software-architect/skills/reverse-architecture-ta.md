@@ -97,6 +97,12 @@ Diagram and matrix conventions apply only when this skill explicitly produces or
 Call `query_learnings(agent="SwA", phase="D", artifact_type="technology-architecture")` and `query_learnings(agent="SwA", phase="D", artifact_type="technology-entity")`. Prepend returned corrections to working context. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
 
 ---
+### Step 0.M — Memento Recall *(via `get_memento_state` tool)*
+
+Call `get_memento_state(phase=<current_phase>)`. If state is returned: inject `key_decisions` and `open_threads` into working context as **"Prior invocation state for this phase:"** followed by numbered lists. If no state exists (first invocation for this phase): proceed to the next step. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §13`.
+
+---
+
 
 ### Step 0.S — Standards and Coding Guidelines Discovery
 
@@ -369,3 +375,13 @@ On trigger: call `record_learning()` with `artifact-type="technology-entity"`, e
 | Handoff to CSCO (security gaps, safety-relevant tech components) | `engagements/<id>/handoff-log/` | — | `handoff.created` |
 | Handoff to PM (EP-G reconstruction assessment) | `engagements/<id>/handoff-log/` | — | `handoff.created` |
 | CQ records for gaps and ADR rationales | `engagements/<id>/clarification-log/` | — | `cq.raised` per CQ |
+
+---
+
+## End-of-Skill Memory Close
+
+After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
+
+1. `save_memento_state(phase=<current_phase>, key_decisions=[...], open_threads=[...])` — capture key decisions made and threads left open during this invocation.
+2. `record_learning(entry_type="episodic", ...)` — if a significant discovery or key decision occurred that benefits future invocations. Governed by `framework/learning-protocol.md §13.3`.
+3. `record_learning(...)` — if a §3.1/§3.2 trigger condition was met during this skill. Governed by `framework/learning-protocol.md §3–4`.

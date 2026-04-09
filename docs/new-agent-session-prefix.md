@@ -57,6 +57,7 @@ B) ENG-001 architecture model + diagram discovery/validation/create/edit (first-
   - model_verify_file / model_verify_all
   - model_create_entity / model_create_connection / model_create_diagram / model_create_matrix
 - Preserve ERP v2.0 and diagram conventions.
+- Be aware that model_query_list_artifacts can return very long responses without selective filtering.
 
 C) Agent and skill metadata loading (secondary, situational):
 - Use registry MCP tools only where they help routing, capability checks, or runtime payload inspection:

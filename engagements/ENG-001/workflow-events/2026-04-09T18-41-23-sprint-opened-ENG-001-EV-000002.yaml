@@ -1,0 +1,11 @@
+event-id: ENG-001-EV-000002
+event-type: sprint.opened
+timestamp: 2026-04-09T18:41:23.677928+00:00
+engagement-id: ENG-001
+cycle-id: CYC-ENG-001-001
+actor: system
+correlation-id: null
+payload:
+  sprint_id: SPR-ENG-001-A-001
+  stream: architecture
+  scope: Phase A architecture sprint

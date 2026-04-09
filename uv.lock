@@ -2865,7 +2865,6 @@ source = { editable = "." }
 dependencies = [
     { name = "aiosqlite" },
     { name = "alembic" },
-    { name = "anthropic" },
     { name = "anyio" },
     { name = "langgraph" },
     { name = "mcp" },
@@ -2876,9 +2875,18 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+anthropic = [
+    { name = "anthropic" },
+]
 dev = [
     { name = "pytest" },
     { name = "pytest-bdd" },
+]
+ollama = [
+    { name = "openai" },
+]
+openai = [
+    { name = "openai" },
 ]
 
 [package.dev-dependencies]
@@ -2891,10 +2899,12 @@ dev = [
 requires-dist = [
     { name = "aiosqlite", specifier = ">=0.20" },
     { name = "alembic", specifier = ">=1.13" },
-    { name = "anthropic", specifier = ">=0.40" },
+    { name = "anthropic", marker = "extra == 'anthropic'", specifier = ">=0.40" },
     { name = "anyio", specifier = ">=4.0" },
     { name = "langgraph", specifier = ">=0.2" },
     { name = "mcp", specifier = ">=1.27.0" },
+    { name = "openai", marker = "extra == 'ollama'", specifier = ">=1.0" },
+    { name = "openai", marker = "extra == 'openai'", specifier = ">=1.0" },
     { name = "pydantic", specifier = ">=2.0" },
     { name = "pydantic-ai", specifier = ">=0.0.13" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3" },
@@ -2902,7 +2912,7 @@ requires-dist = [
     { name = "python-frontmatter", specifier = ">=1.1.0" },
     { name = "pyyaml", specifier = ">=6.0" },
 ]
-provides-extras = ["dev"]
+provides-extras = ["anthropic", "openai", "ollama", "dev"]
 
 [package.metadata.requires-dev]
 dev = [

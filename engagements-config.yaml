@@ -14,6 +14,17 @@
 #     target-repositories: [{id: ..., label: ..., role: ..., domain: ..., primary: ..., ...}, ...]
 #   See framework/artifact-schemas/repository-map.schema.md for the repository role taxonomy.
 
+# ---------------------------------------------------------------------------
+# LLM provider configuration (optional — see src/models/llm_config.py)
+# Resolution order: SDLC_PRIMARY_MODEL env var > per-engagement llm: block >
+#   this top-level block > compiled-in defaults.
+# Model strings follow PydanticAI's 'provider:model-id' convention:
+#   anthropic:claude-sonnet-4-6  |  openai:gpt-4o  |  ollama:llama3.1  |  test
+# ---------------------------------------------------------------------------
+llm:
+  primary-model: anthropic:claude-sonnet-4-6
+  routing-model: anthropic:claude-haiku-4-5-20251001
+
 engagements:
   mode: single-repo         # single-repo | multi-repo
   base-path: engagements/   # for single-repo mode

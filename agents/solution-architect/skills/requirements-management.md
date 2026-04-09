@@ -78,6 +78,12 @@ This skill is **activated at each phase boundary** — specifically, at the clos
 Call `query_learnings(agent="SA", phase="req-mgmt", artifact_type="requirements-register")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
 
 ---
+### Step 0.M — Memento Recall *(via `get_memento_state` tool)*
+
+Call `get_memento_state(phase=<current_phase>)`. If state is returned: inject `key_decisions` and `open_threads` into working context as **"Prior invocation state for this phase:"** followed by numbered lists. If no state exists (first invocation for this phase): proceed to the next step. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §13`.
+
+---
+
 
 ### Step 1 — Scan RR at Phase Boundary
 
@@ -219,3 +225,13 @@ On trigger: call `record_learning()` with `artifact-type="requirements-register"
 | Gap report to PM (untraced requirements; staleness alerts) | Recorded in sprint log or structured message to PM | — | Included in sprint closeout record |
 | Phase-specific gap assessment (formal, if requested by PM) | `architecture-repository/` — SA working note, not a standalone artifact | 0.1.0 working document | Not separately baselined |
 | Phase H trigger (if RR change requires significant SA artifact update) | Initiates `skills/phase-h.md` | — | Phase H sprint initiated by PM on SA's recommendation |
+
+---
+
+## End-of-Skill Memory Close
+
+After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
+
+1. `save_memento_state(phase=<current_phase>, key_decisions=[...], open_threads=[...])` — capture key decisions made and threads left open during this invocation.
+2. `record_learning(entry_type="episodic", ...)` — if a significant discovery or key decision occurred that benefits future invocations. Governed by `framework/learning-protocol.md §13.3`.
+3. `record_learning(...)` — if a §3.1/§3.2 trigger condition was met during this skill. Governed by `framework/learning-protocol.md §3–4`.

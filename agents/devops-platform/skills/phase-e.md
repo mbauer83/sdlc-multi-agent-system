@@ -78,6 +78,12 @@ DO raises a CQ when:
 Call `query_learnings(agent="DO", phase="E", artifact_type="implementation-plan")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
 
 ---
+### Step 0.M — Memento Recall *(via `get_memento_state` tool)*
+
+Call `get_memento_state(phase="E")`. If state is returned: inject `key_decisions` and `open_threads` into working context as **"Prior invocation state for this phase:"** followed by numbered lists. If no state exists (first invocation for this phase): proceed to the next step. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §13`.
+
+---
+
 
 ### Step 1 — Review implementation candidates for deployment complexity
 
@@ -208,3 +214,13 @@ On trigger: call `record_learning()` with `artifact-type="implementation-plan"`,
 | Phase E Delivery Complexity Assessment | `devops-repository/phase-e-assessment/phase-e-delivery-complexity-<sprint-id>.md` | `artifact.drafted` | Internal DO artifact; informs PM's Work Package Catalog |
 | Delivery Complexity Estimate summary (input to PM) | Delivered via `handoff.issued` to PM | `handoff.issued` | PM consumes; DO does not write to project-repository directly |
 | EPC draft v0.2.0 | `devops-repository/environment-catalog/epc-0.2.0.md` | `artifact.drafted` | Incremented with Phase E findings; still not baselined |
+
+---
+
+## End-of-Skill Memory Close
+
+After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
+
+1. `save_memento_state(phase="E", key_decisions=[...], open_threads=[...])` — capture key decisions made and threads left open during this invocation.
+2. `record_learning(entry_type="episodic", ...)` — if a significant discovery or key decision occurred that benefits future invocations. Governed by `framework/learning-protocol.md §13.3`.
+3. `record_learning(...)` — if a §3.1/§3.2 trigger condition was met during this skill. Governed by `framework/learning-protocol.md §3–4`.

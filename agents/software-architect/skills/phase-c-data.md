@@ -95,6 +95,12 @@ SwA raises a CQ when:
 Call `query_learnings(agent="SwA", phase="C", artifact_type="data-architecture")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
 
 ---
+### Step 0.M — Memento Recall *(via `get_memento_state` tool)*
+
+Call `get_memento_state(phase="C")`. If state is returned: inject `key_decisions` and `open_threads` into working context as **"Prior invocation state for this phase:"** followed by numbered lists. If no state exists (first invocation for this phase): proceed to the next step. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §13`.
+
+---
+
 
 ### Pre-condition Check
 
@@ -364,3 +370,13 @@ On trigger: call `record_learning()` with `artifact-type="data-architecture"`, e
 | Handoff to SA (DA draft for traceability review) | `engagements/<id>/handoff-log/` | — | `handoff.created` |
 | Handoff to CSCO (Phase C data safety review) | `engagements/<id>/handoff-log/` | — | `handoff.created` |
 | Phase C gate vote (combined AA+DA) | EventStore | — | `gate.vote_cast` (emitted only when both AA and DA are at 1.0.0) |
+
+---
+
+## End-of-Skill Memory Close
+
+After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
+
+1. `save_memento_state(phase="C", key_decisions=[...], open_threads=[...])` — capture key decisions made and threads left open during this invocation.
+2. `record_learning(entry_type="episodic", ...)` — if a significant discovery or key decision occurred that benefits future invocations. Governed by `framework/learning-protocol.md §13.3`.
+3. `record_learning(...)` — if a §3.1/§3.2 trigger condition was met during this skill. Governed by `framework/learning-protocol.md §3–4`.

@@ -79,6 +79,12 @@ PO raises a CQ when:
 Call `query_learnings(agent="PO", phase="req-mgmt", artifact_type="requirements-register")` before starting. Prepend any returned corrections to working context as "Learnings from prior work relevant to this task." If none returned: proceed normally. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
 
 ---
+### Step 0.M — Memento Recall *(via `get_memento_state` tool)*
+
+Call `get_memento_state(phase=<current_phase>)`. If state is returned: inject `key_decisions` and `open_threads` into working context as **"Prior invocation state for this phase:"** followed by numbered lists. If no state exists (first invocation for this phase): proceed to the next step. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §13`.
+
+---
+
 
 ### Step 0 — Discovery Scan
 
@@ -290,3 +296,13 @@ On trigger: call `record_learning()` with `artifact-type="requirements-register"
 | Updated Requirements Traceability Matrix (`RTM`) | `project-repository/requirements/rtm-<version>.md` | Patch increment per traceability update | `artifact.baselined` (only if RTM entries changed) |
 | Gap Report to PM | `engagements/<id>/handoff-log/` (handoff payload) | — | `handoff.created` |
 | Traceability feedback note to SA (or SwA) | `engagements/<id>/handoff-log/` | — | `handoff.created` (conditional on gaps found) |
+
+---
+
+## End-of-Skill Memory Close
+
+After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
+
+1. `save_memento_state(phase=<current_phase>, key_decisions=[...], open_threads=[...])` — capture key decisions made and threads left open during this invocation.
+2. `record_learning(entry_type="episodic", ...)` — if a significant discovery or key decision occurred that benefits future invocations. Governed by `framework/learning-protocol.md §13.3`.
+3. `record_learning(...)` — if a §3.1/§3.2 trigger condition was met during this skill. Governed by `framework/learning-protocol.md §3–4`.

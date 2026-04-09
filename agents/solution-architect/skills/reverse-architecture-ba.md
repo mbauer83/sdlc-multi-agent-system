@@ -93,6 +93,12 @@ This skill's tool references are intent-level; runtime signatures come from code
 Call `query_learnings(agent="SA", phase="B", artifact_type="business-architecture")` and `query_learnings(agent="SA", phase="B", artifact_type="business-entity")`. Prepend returned corrections to working context. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §5`.
 
 ---
+### Step 0.M — Memento Recall *(via `get_memento_state` tool)*
+
+Call `get_memento_state(phase="B")`. If state is returned: inject `key_decisions` and `open_threads` into working context as **"Prior invocation state for this phase:"** followed by numbered lists. If no state exists (first invocation for this phase): proceed to the next step. Governed by `framework/discovery-protocol.md §2` and `framework/learning-protocol.md §13`.
+
+---
+
 
 ### Step 0 — Discovery Scan
 
@@ -319,3 +325,13 @@ On trigger: call `record_learning()` with `artifact-type="business-entity"`, err
 | Handoff to CSCO (safety process list) | `engagements/<id>/handoff-log/` | — | `handoff.created` |
 | Handoff to PM (Phase B reconstruction complete) | `engagements/<id>/handoff-log/` | — | `handoff.created` |
 | CQ records for remaining gaps | `engagements/<id>/clarification-log/` | — | `cq.raised` per CQ |
+
+---
+
+## End-of-Skill Memory Close
+
+After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
+
+1. `save_memento_state(phase="B", key_decisions=[...], open_threads=[...])` — capture key decisions made and threads left open during this invocation.
+2. `record_learning(entry_type="episodic", ...)` — if a significant discovery or key decision occurred that benefits future invocations. Governed by `framework/learning-protocol.md §13.3`.
+3. `record_learning(...)` — if a §3.1/§3.2 trigger condition was met during this skill. Governed by `framework/learning-protocol.md §3–4`.
