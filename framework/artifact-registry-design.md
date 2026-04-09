@@ -679,7 +679,7 @@ Entity instances, connections, and their `§display` specs may freely exist with
 | `model_create_entity(...)` | Deterministically creates/updates a model-entity file, applies frontmatter/section conventions, validates with verifier, and supports `dry_run`. |
 | `model_create_connection(...)` | Deterministically creates/updates a connection file with artifact-id derived from source/target, validates references and structure, supports `dry_run`. |
 | `model_create_diagram(...)` | Deterministically creates/updates a diagram `.puml` with managed frontmatter and verification, supports inference options and `dry_run`. |
-| `model_query_list_artifacts(...)` | Metadata filter/query over indexed artifacts without loading full bodies. |
+| `model_query_list_artifacts(...)` | Metadata filter/query over indexed artifacts without loading full bodies, requiring narrow filtering to avoid large responses. |
 | `model_query_search_artifacts(...)` | Ranked search over indexed content with optional metadata filters. |
 | `model_query_read_artifact(...)` | Reads one artifact by id in `summary` or `full` mode. |
 | `model_verify_file(path, ...)` | Verifies one entity/connection/diagram file; optional registry-aware checks. |

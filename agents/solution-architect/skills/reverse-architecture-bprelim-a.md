@@ -44,7 +44,7 @@ Diagram and matrix conventions apply only when this skill explicitly produces or
 | User-provided documents, diagrams, textual descriptions | User (via PM CQ loop) | Any state — SA queries user in Step 1 | May include design docs, architecture diagrams, product specs, presentations, READMEs |
 | Target repository (codebase, README, configs) | `scan_target_repo()` | At least one registered target repo clone available | README, package manifests, high-level documentation; absence triggers CQ |
 | External source artifacts (Confluence, SharePoint, etc.) | Configured external source adapters | Optional — used if available | Queried via `read_framework_doc` / external source adapter calls |
-| Enterprise repository motivation entities | `model_query_list_artifacts(...)` (or runtime alias) | Optional — read for reuse | STK, CAP, PRI from enterprise baseline may apply |
+| Enterprise repository motivation entities | `model_query_list_artifacts(...)` (or runtime alias - called with appropriate filters) | Optional — read for reuse | STK, CAP, PRI from enterprise baseline may apply |
 
 **Hard prerequisites:** None (this skill is triggered precisely because forward-path artifacts do not exist). SA proceeds with whatever is available and raises CQs for unresolvable gaps.
 
@@ -98,9 +98,9 @@ Execute the five-layer Discovery Scan per `framework/discovery-protocol.md §2` 
 
 **Layer 0.S — Standards scan** (mandatory per §9): Read `technology-repository/coding-standards/` and `enterprise-repository/standards/`. Flag as COD-GAP-001 if absent.
 
-**Layer 1 — Engagement state:** Query engagement artifacts via `model_query_list_artifacts(...)` (or runtime alias). If any STK/DRV/GOL/PRI/REQ/CST/CAP/VS entities exist at version ≥ 0.1.0 → the engagement has prior warm-start artifacts. Load them and note their status. If all are absent → fresh warm-start.
+**Layer 1 — Engagement state:** Query engagement artifacts via `model_query_list_artifacts(...)` (or runtime alias) with appropriate filters. If any STK/DRV/GOL/PRI/REQ/CST/CAP/VS entities exist at version ≥ 0.1.0 → the engagement has prior warm-start artifacts. Load them and note their status. If all are absent → fresh warm-start.
 
-**Layer 2 — Enterprise repository:** Query enterprise motivation/strategy artifacts via `model_query_list_artifacts(...)` scoped to enterprise. Note any enterprise-level STK, CAP, PRI that apply to this engagement's domain — they may be referenced in connection files without being duplicated.
+**Layer 2 — Enterprise repository:** Query enterprise motivation/strategy artifacts via `model_query_list_artifacts(...)` scoped to enterprise with appropriate filters. Note any enterprise-level STK, CAP, PRI that apply to this engagement's domain — they may be referenced in connection files without being duplicated.
 
 **Layer 3 — External sources:** For each configured external source adapter, query: "stakeholders", "business goals", "architecture principles", "capability map", "product vision". Record results with `[source: <adapter-id>]` annotations.
 

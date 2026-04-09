@@ -68,7 +68,7 @@ The SwA is modelled as **System 1 (Operations)** in Beer's Viable System Model â
 
 Tool references in this AGENT and its skills are intent guidance; concrete callable tools are runtime-bound in code (LangGraph + PydanticAI + MCP registration).
 
-- Discovery/search/filter/query intent: model query tools (for example `model_query_list_artifacts`, `model_query_search_artifacts`, `model_query_read_artifact`, graph queries).
+- Discovery/search/filter/query intent: model query tools (for example `model_query_search_artifacts`, `model_query_list_artifacts`, `model_query_read_artifact`, graph queries).
 - Validation intent: model verifier tools (`model_verify_file`, `model_verify_all`).
 - Model write intent: deterministic model write tools (`model_create_entity`, `model_create_connection`, `model_create_diagram`) using `dry_run` during drafting.
 

@@ -50,8 +50,8 @@ Diagram and matrix conventions apply only when this skill explicitly produces or
 |---|---|---|---|
 | EP-G handoff from PM | PM | `handoff.created (handoff_type=ep-g-warm-start-swa)` | Primary trigger; may be concurrent with or precede SA warm-start |
 | Target repository clone(s) | `scan_target_repo()` per registered repo | At least one clone available | IaC, Dockerfiles, CI/CD configs, Kubernetes manifests, package manifests |
-| SA warm-start entities (optional) | `model_query_list_artifacts(...)` (or runtime alias) | Optional — if available, TA reconstruction cross-references APP/DOB entities | SwA proceeds independently if SA warm-start has not yet run |
-| Enterprise technology standards | `model_query_list_artifacts(...)` (or runtime alias) | Optional — read to identify SIB deviations | Deviations flagged in Gap and Risk Assessment |
+| SA warm-start entities (optional) | `model_query_list_artifacts(...)` (or runtime alias) with appropriate filters | Optional — if available, TA reconstruction cross-references APP/DOB entities | SwA proceeds independently if SA warm-start has not yet run |
+| Enterprise technology standards | `model_query_list_artifacts(...)` (or runtime alias) with appropriate filters | Optional — read to identify SIB deviations | Deviations flagged in Gap and Risk Assessment |
 | Coding standards | `technology-repository/coding-standards/` | Optional — may not exist pre-EP-G | Absence triggers COD-GAP-001 per `discovery-protocol.md §9` |
 | User-provided docs | User (via PM CQ loop) | Any state — deployment diagrams, runbooks, architecture overviews, infrastructure wiki | SwA queries user in Step 1 |
 | External source artifacts | Configured adapters | Optional | Infrastructure wikis, deployment runbooks, service catalogs |
@@ -108,11 +108,11 @@ Per `framework/discovery-protocol.md §9`:
 
 ### Step 0 — Discovery Scan
 
-**Layer 1 — Engagement state:** Query technology artifacts via `model_query_list_artifacts(...)` (or runtime alias). If any technology entities (NOD, SSW, TSV, etc.) exist → load them and note their version/status. If all absent → fresh warm-start.
+**Layer 1 — Engagement state:** Query technology artifacts via `model_query_list_artifacts(...)` (or runtime alias) with appropriate filters. If any technology entities (NOD, SSW, TSV, etc.) exist → load them and note their version/status. If all absent → fresh warm-start.
 
 Also load SA warm-start entities if available via query tools: application APP/AIF artifacts for TA serving relationships, and motivation constraints (CST) for guardrails.
 
-**Layer 2 — Enterprise repository:** query enterprise technology/standards artifacts via `model_query_list_artifacts(...)` scoped to enterprise. Note any enterprise-mandated platforms, patterns, or SIB-approved components relevant to this domain.
+**Layer 2 — Enterprise repository:** query enterprise technology/standards artifacts via `model_query_list_artifacts(...)` scoped to enterprise with appropriate filters. Note any enterprise-mandated platforms, patterns, or SIB-approved components relevant to this domain.
 
 **Layer 3 — External sources:** Query adapters for: "infrastructure", "deployment", "kubernetes", "terraform", "architecture diagram", "service catalog", "runbook". Record results.
 

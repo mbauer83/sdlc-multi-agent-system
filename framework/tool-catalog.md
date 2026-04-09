@@ -37,7 +37,7 @@ Registration: `src/tools/model_mcp/`
 ### 3.1 Query
 
 - `model_query_stats`: repository index stats (entities/connections/diagrams)
-- `model_query_list_artifacts`: metadata list with filters + optional compact projection via `fields`
+- `model_query_list_artifacts`: metadata list with filters + optional compact projection via `fields` (large answers without sufficient filtering)
 - `model_query_search_artifacts`: ranked text search with record-type controls (`prefer_record_type`, `strict_record_type`) + optional compact projection via `fields`
 - `model_query_count_artifacts_by`: aggregate counts grouped by `artifact_type | diagram_type | phase_produced | owner_agent`
 - `model_query_read_artifact`: summary/full artifact read

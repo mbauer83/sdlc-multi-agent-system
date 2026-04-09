@@ -164,7 +164,7 @@ Diagram authoring and updates use model MCP writer tools:
 
 Discovery/query uses model query tools:
 
-- `model_query_list_artifacts`, `model_query_search_artifacts`, `model_query_read_artifact`
+- `model_query_search_artifacts`, `model_query_list_artifacts`,  `model_query_read_artifact`
 
 No legacy `catalog_register()` flow is part of ERP v2.0 runtime.
 

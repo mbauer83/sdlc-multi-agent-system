@@ -221,8 +221,8 @@ For model entity/connection/diagram workflows, the current canonical MCP tool ma
 
 | Intent | Canonical MCP tools |
 |---|---|
-| Discovery and filtering | `model_query_stats`, `model_query_list_artifacts` |
 | Content search/query | `model_query_search_artifacts`, `model_query_read_artifact` |
+| Discovery and filtering | `model_query_stats`, `model_query_list_artifacts` |
 | Graph query | `model_query_find_connections_for`, `model_query_find_neighbors` |
 | Validation | `model_verify_file`, `model_verify_all` |
 | Deterministic model writes | `model_write_help`, `model_create_entity`, `model_create_connection`, `model_create_diagram` |

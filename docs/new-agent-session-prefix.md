@@ -48,8 +48,8 @@ A) Framework/spec discovery and policy resolution (first-class):
 B) ENG-001 architecture model + diagram discovery/validation/create/edit (first-class after contract checks):
 - Use model MCP tools:
   - model_query_stats
-  - model_query_list_artifacts
   - model_query_search_artifacts
+  - model_query_list_artifacts
   - model_query_count_artifacts_by
   - model_query_read_artifact
   - model_query_find_connections_for

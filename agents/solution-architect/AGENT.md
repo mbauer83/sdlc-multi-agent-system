@@ -60,7 +60,7 @@ The SA is modelled as **System 4** in Beer's Viable System Model: it senses the 
 
 Tool references in this AGENT and its skills describe intent categories, not fixed runtime signatures. Runtime tool binding is implemented in code (LangGraph + PydanticAI + MCP registration).
 
-- Discovery/search/filter/query intent: model query tools (for example `model_query_list_artifacts`, `model_query_search_artifacts`, `model_query_read_artifact`, graph queries).
+- Discovery/search/filter/query intent: model query tools (for example `model_query_search_artifacts`, `model_query_list_artifacts`, `model_query_read_artifact`, graph queries).
 - Validation intent: model verifier tools (`model_verify_file`, `model_verify_all`).
 - Model write intent: deterministic model write tools (`model_create_entity`, `model_create_connection`, `model_create_diagram`) with `dry_run` first.
 
