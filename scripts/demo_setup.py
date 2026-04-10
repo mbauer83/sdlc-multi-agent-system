@@ -1,5 +1,5 @@
 """
-ENG-DEMO setup: scaffold, infra-check, run, and verify the TaskFlow API Phase A scenario.
+ENG-DEMO setup: scaffold, infra-check, run, and verify the TaskFlow API demo scenario.
 
 Benchmark Scenario
 ------------------
@@ -8,24 +8,32 @@ No off-the-shelf agentic SE benchmark covers TOGAF ADM architecture work
 a *scenario-based test* with specified, machine-verifiable expected outputs,
 inspired by SWE-bench methodology applied to architecture document production.
 
-Scenario: "TaskFlow API — Phase A Architecture Vision" (greenfield, EP-0)
+Phase A — SA (Architecture Vision):
   Target project : Python/FastAPI task-management REST API
   Agent          : SA (Solution Architect)
   Skill          : SA-PHASE-A
   Phase          : A
 
-Expected outputs (all verified automatically):
-  1. Architecture Vision document in architecture-repository/overview/ (≥300 chars)
-  2. ≥1 stakeholder entity   (model-entities/motivation/stakeholders/STK-*.md)
-  3. ≥1 architecture driver  (model-entities/motivation/drivers/DRV-*.md)
-  4. ≥1 architecture principle (model-entities/motivation/principles/PRI-*.md)
-  5. No algedonic boundary violations (algedonic-log/ empty)
-  6. ≥1 artifact event in EventStore
-  7. ModelVerifier: 0 hard errors
+  Expected outputs (all verified automatically):
+    1. Architecture Vision document in architecture-repository/overview/ (≥300 chars)
+    2. ≥1 stakeholder entity   (model-entities/motivation/stakeholders/STK-*.md)
+    3. ≥1 architecture driver  (model-entities/motivation/drivers/DRV-*.md)
+    4. ≥1 architecture principle (model-entities/motivation/principles/PRI-*.md)
+    5. No algedonic boundary violations (algedonic-log/ empty)
+    6. ≥1 artifact event in EventStore
+    7. ModelVerifier: 0 hard errors
+
+Phase C — SwA (Application Architecture):
+  Agent          : SwA (Software Architect / PE)
+  Skill          : SwA-PHASE-C-APP
+  Phase          : C
+
+  Expected outputs (all verified automatically):
+    8. ≥1 application component entity (model-entities/application/APP-*.md)
 
 Usage
 -----
-  uv run python scripts/demo_setup.py [--verbose] [--skip-run] [--engagement ENG-DEMO]
+  uv run python scripts/demo_setup.py [--verbose] [--skip-run] [--phase-a-only] [--engagement ENG-DEMO]
 
 Requires ANTHROPIC_API_KEY in environment (skip with --skip-run for scaffold-only).
 """
@@ -46,72 +54,61 @@ if str(_REPO_ROOT) not in sys.path:
 from scripts.demo_scaffold import ENGAGEMENT_ID, scaffold_demo
 from scripts.demo_verify import check_framework_infra, print_report, verify_outputs
 
-_ENTITY_FORMAT_EXAMPLE = """\
-Each entity file MUST start with YAML frontmatter exactly as shown:
----
-artifact-id: STK-001
-artifact-type: stakeholder  # use: stakeholder | driver | principle
-name: "Example Stakeholder"
-version: 0.1.0
-status: draft
-phase-produced: A
-owner-agent: SA
-safety-relevant: false
-produced-by-skill: SA-PHASE-A
-last-updated: 2026-04-09
-engagement: {eid}
----
-
-<!-- §content -->
-
-## Example Stakeholder
-
-Description of the stakeholder here.
-
-<!-- §display -->
+_ENTITY_FORMAT_HINT = """\
+Entity YAML frontmatter fields (required): artifact-id, artifact-type, name, version,
+status, phase-produced, owner-agent, safety-relevant, produced-by-skill, last-updated,
+engagement.  artifact-type for motivation entities: stakeholder | driver | principle.
+artifact-type for application entities: application-component | application-interface |
+application-service | application-collaboration | application-interaction.
+Engagement ID for this run: {eid}.
 """
 
-_TASK = (
-    "You are the Solution Architect for the TaskFlow API project. "
-    "Read the project brief from the target repository: path=README.md using read_target_repo. "
+_TASK_SA = (
     "Perform Phase A (Architecture Vision) for engagement {eid}. "
-    "Produce: "
-    "(1) Architecture Vision document (write to architecture-repository/overview/architecture-vision.md), "
-    "(2) Stakeholder entity files (STK-NNN.friendly-name.md in "
-    "architecture-repository/model-entities/motivation/stakeholders/), "
-    "(3) Architecture Driver entity files (DRV-NNN.friendly-name.md in "
-    "architecture-repository/model-entities/motivation/drivers/), "
-    "(4) Architecture Principle entity files (PRI-NNN.friendly-name.md in "
-    "architecture-repository/model-entities/motivation/principles/). "
-    "Use the write_artifact_sa tool for all file writes. "
-    "IMPORTANT: Every entity file MUST use YAML frontmatter format exactly as follows:\\n"
-    "{fmt}"
-    "artifact-type MUST be one of: stakeholder | driver | principle. "
-    "Aim for 3-5 stakeholders, 3-5 drivers, and 4-6 principles appropriate for a "
-    "cloud-native EU-deployed task management API with GDPR constraints. "
-    "Do NOT create index files or summary files — only write the specific entity files listed above."
+    "The target project is 'TaskFlow API' — a Python/FastAPI task management REST API "
+    "deployed to EU-hosted Kubernetes with GDPR constraints. "
+    "Read the full project brief via read_target_repo(path='README.md') before starting. "
+    "Follow your SA-PHASE-A skill instructions for what to produce and where to write it. "
+    "Entity format reminder: {fmt}"
+)
+
+_TASK_SWA = (
+    "Perform Phase C (Application Architecture) for engagement {eid}. "
+    "Architecture Vision from Phase A is available in "
+    "architecture-repository/overview/architecture-vision.md — read it via read_artifact first. "
+    "Follow your SwA-PHASE-C-APP skill instructions for what to produce and where to write it. "
+    "Entity format reminder: {fmt}"
 )
 
 
-def _print_banner(engagement_id: str) -> None:
+def _print_banner(engagement_id: str, phase_a_only: bool) -> None:
     print("╔" + "═" * 60 + "╗")
-    print("║  SDLC Multi-Agent System — ENG-DEMO Phase A              ║")
-    print("║  Scenario: TaskFlow API Architecture Vision               ║")
+    print("║  SDLC Multi-Agent System — ENG-DEMO                      ║")
+    if phase_a_only:
+        print("║  Scenario: TaskFlow API Phase A (SA only)                 ║")
+    else:
+        print("║  Scenario: TaskFlow API Phase A + Phase C                 ║")
     print("╚" + "═" * 60 + "╝")
     print(f"\nEngagement : {engagement_id}")
-    print("Agent      : SA (Solution Architect)")
-    print("Skill      : SA-PHASE-A")
-    print("Phase      : A — Architecture Vision\n")
+    if phase_a_only:
+        print("Agents     : SA (Solution Architect)")
+        print("Skills     : SA-PHASE-A")
+        print("Phases     : A — Architecture Vision\n")
+    else:
+        print("Agents     : SA (Solution Architect) + SwA (Software Architect)")
+        print("Skills     : SA-PHASE-A → SwA-PHASE-C-APP")
+        print("Phases     : A — Architecture Vision → C — Application Architecture\n")
 
 
 async def _run(args: argparse.Namespace) -> int:
     engagement_id: str = args.engagement
     verbose: bool = args.verbose
+    phase_a_only: bool = args.phase_a_only
 
-    _print_banner(engagement_id)
+    _print_banner(engagement_id, phase_a_only)
 
     # 1. Scaffold — tear down first to guarantee a clean slate
-    print("── Step 1/4: Scaffolding engagement and target repository ──")
+    print("── Step 1/5: Scaffolding engagement and target repository ──")
     from scripts.demo_scaffold import teardown_demo
     teardown_demo(_REPO_ROOT, engagement_id, verbose=verbose)
     engagement_path = scaffold_demo(_REPO_ROOT, engagement_id, verbose)
@@ -122,7 +119,7 @@ async def _run(args: argparse.Namespace) -> int:
         print(f"  Using model: {args.model}\n")
 
     # 2. Framework infrastructure check (no LLM required)
-    print("── Step 2/4: Framework infrastructure check ────────────────")
+    print("── Step 2/5: Framework infrastructure check ────────────────")
     infra_report = check_framework_infra(engagement_id, engagement_path)
     all_infra_passed = print_report(infra_report)
     if not all_infra_passed:
@@ -133,32 +130,57 @@ async def _run(args: argparse.Namespace) -> int:
         print("  [--skip-run] Skipping agent invocation and verification.")
         return 0
 
-    # 3. Run SA agent
-    print("── Step 3/4: Running SA agent (SA-PHASE-A) ─────────────────")
-    print("  (Requires ANTHROPIC_API_KEY; may take 60-120 s)\n")
     from src.orchestration.session import EngagementSession
-
     session = EngagementSession(engagement_id, repo_root=_REPO_ROOT)
-    task = _TASK.format(eid=engagement_id, fmt=_ENTITY_FORMAT_EXAMPLE.format(eid=engagement_id))
+
+    # 3. Run SA agent — Phase A
+    print("── Step 3/5: Running SA agent (SA-PHASE-A) ─────────────────")
+    print("  (Requires ANTHROPIC_API_KEY; may take 60-120 s)\n")
+    sa_task = _TASK_SA.format(eid=engagement_id, fmt=_ENTITY_FORMAT_HINT.format(eid=engagement_id))
     try:
-        output = await session.invoke_specialist(
-            agent_id="SA",
-            skill_id="SA-PHASE-A",
-            task=task,
-            phase="A",
+        sa_output = await session.invoke_specialist(
+            agent_id="SA", skill_id="SA-PHASE-A", task=sa_task, phase="A",
         )
     except Exception as exc:  # noqa: BLE001
         exc_type = type(exc).__name__
-        print(f"\n  [ERROR] Agent invocation failed ({exc_type}): {exc}", file=sys.stderr)
+        print(f"\n  [ERROR] SA agent failed ({exc_type}): {exc}", file=sys.stderr)
         print("  Run with --skip-run to test scaffolding without an API key.\n")
         return 2
 
-    print("\n── Agent output (truncated to 1000 chars) ───────────────────")
-    print(output[:1000] + ("…" if len(output) > 1000 else ""))
+    print("\n── SA output (truncated to 600 chars) ───────────────────────")
+    print(sa_output[:600] + ("…" if len(sa_output) > 600 else ""))
 
-    # 4. Verify
-    print("\n── Step 4/4: Verifying outputs ──────────────────────────────")
-    report = verify_outputs(engagement_path, session.event_store)
+    # 4. Run SwA agent — Phase C (unless --phase-a-only)
+    if not phase_a_only:
+        print("\n── Step 4/5: Running SwA agent (SwA-PHASE-C-APP) ───────────")
+        print("  (Phase C: Application Architecture; may take 60-120 s)\n")
+        swa_task = _TASK_SWA.format(
+            eid=engagement_id, fmt=_ENTITY_FORMAT_HINT.format(eid=engagement_id)
+        )
+        try:
+            swa_output = await session.invoke_specialist(
+                agent_id="SwA", skill_id="SwA-PHASE-C-APP", task=swa_task, phase="C",
+            )
+        except Exception as exc:  # noqa: BLE001
+            exc_type = type(exc).__name__
+            print(f"\n  [ERROR] SwA agent failed ({exc_type}): {exc}", file=sys.stderr)
+            print("  Phase A outputs are still available; Phase C failed.\n")
+            # Don't abort — verify Phase A outputs at least
+            swa_output = ""
+
+        if swa_output:
+            print("\n── SwA output (truncated to 600 chars) ──────────────────────")
+            print(swa_output[:600] + ("…" if len(swa_output) > 600 else ""))
+    else:
+        print("\n── Step 4/5: SwA Phase C skipped (--phase-a-only) ──────────")
+
+    # 5. Verify
+    print("\n── Step 5/5: Verifying outputs ──────────────────────────────")
+    report = verify_outputs(
+        engagement_path,
+        session.event_store,
+        include_phase_c=not phase_a_only,
+    )
     all_passed = print_report(report)
 
     return 0 if all_passed else 1
@@ -189,6 +211,10 @@ def main() -> None:
             "Sets SDLC_PRIMARY_MODEL env var. "
             "Examples: anthropic:claude-sonnet-4-6  openai:gpt-4o  test"
         ),
+    )
+    parser.add_argument(
+        "--phase-a-only", action="store_true",
+        help="Run SA Phase A only — skip SwA Phase C step",
     )
     args = parser.parse_args()
     sys.exit(asyncio.run(_run(args)))

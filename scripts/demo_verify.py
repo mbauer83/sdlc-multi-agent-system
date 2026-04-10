@@ -61,28 +61,43 @@ class VerificationReport:
 def verify_outputs(
     engagement_path: Path,
     event_store: "EventStore | None" = None,
+    include_phase_c: bool = False,
 ) -> VerificationReport:
     """Run all verification checks. Returns a VerificationReport."""
     report = VerificationReport()
     arch_repo = engagement_path / "work-repositories" / "architecture-repository"
 
     report.checks.append(_check_vision_doc(arch_repo))
-    report.checks.append(_check_entities(
-        arch_repo / "model-entities" / "motivation" / "stakeholders",
+    report.checks.append(_check_entities_any(
+        [
+            arch_repo / "model-entities" / "motivation" / "stakeholders",
+            arch_repo / "model-entities" / "motivation",
+            arch_repo / "stakeholder-map",
+        ],
         "STK", "Stakeholder entities", min_count=1,
     ))
-    report.checks.append(_check_entities(
-        arch_repo / "model-entities" / "motivation" / "drivers",
+    report.checks.append(_check_entities_any(
+        [
+            arch_repo / "model-entities" / "motivation" / "drivers",
+            arch_repo / "model-entities" / "motivation",
+        ],
         "DRV", "Architecture driver entities", min_count=1,
     ))
-    report.checks.append(_check_entities(
-        arch_repo / "model-entities" / "motivation" / "principles",
+    report.checks.append(_check_entities_any(
+        [
+            arch_repo / "model-entities" / "motivation" / "principles",
+            arch_repo / "model-entities" / "motivation",
+            arch_repo / "architecture-principles",
+        ],
         "PRI", "Architecture principle entities", min_count=1,
     ))
     report.checks.append(_check_no_algedonic(engagement_path / "algedonic-log"))
     if event_store is not None:
         report.checks.append(_check_artifact_events(event_store))
     report.checks.append(_check_model_verifier(arch_repo))
+
+    if include_phase_c:
+        report.checks.append(_check_application_entities(arch_repo))
 
     return report
 
@@ -129,20 +144,27 @@ def print_report(report: VerificationReport) -> bool:
 # ---------------------------------------------------------------------------
 
 def _check_vision_doc(arch_repo: Path) -> CheckResult:
-    overview_dir = arch_repo / "overview"
-    candidates = list(overview_dir.glob("architecture-vision*.md")) if overview_dir.exists() else []
-    if not candidates:
-        # Also accept any .md file in overview/ that's not a gitkeep
-        candidates = [
-            p for p in overview_dir.glob("*.md")
-            if p.name != ".gitkeep"
-        ] if overview_dir.exists() else []
+    # Accept AV in overview/, architecture-vision/, or root of arch_repo
+    candidates: list[Path] = []
+    for search_dir in [
+        arch_repo / "overview",
+        arch_repo / "architecture-vision",
+        arch_repo,
+    ]:
+        if search_dir.is_dir():
+            candidates.extend(
+                p for p in search_dir.glob("*.md")
+                if p.name != ".gitkeep"
+                and any(kw in p.name.lower() for kw in ("vision", "av-", "architecture"))
+            )
+        if candidates:
+            break
 
     if not candidates:
         return CheckResult(
             "Architecture Vision document",
             False,
-            "No .md file found in architecture-repository/overview/",
+            "No architecture vision .md found in overview/, architecture-vision/, or repo root",
         )
     doc = candidates[0]
     content = doc.read_text(encoding="utf-8")
@@ -157,6 +179,21 @@ def _check_vision_doc(arch_repo: Path) -> CheckResult:
         True,
         f"{doc.name} ({len(content)} chars)",
     )
+
+
+def _check_entities_any(
+    search_dirs: list[Path],
+    prefix: str,
+    label: str,
+    min_count: int,
+) -> CheckResult:
+    """Check for entities with the given prefix in any of the search dirs."""
+    for entities_dir in search_dirs:
+        result = _check_entities(entities_dir, prefix, label, min_count)
+        if result.passed:
+            return result
+    # All dirs failed — return the failure from the first (most canonical) dir
+    return _check_entities(search_dirs[0], prefix, label, min_count)
 
 
 def _check_entities(
@@ -344,6 +381,35 @@ def _check_pm_decision() -> CheckResult:
                            "invoke_specialist decision validates and round-trips via JSON")
     except Exception as exc:  # noqa: BLE001
         return CheckResult("PMDecision model (validate + round-trip)", False, str(exc))
+
+
+def _check_application_entities(arch_repo: Path) -> CheckResult:
+    """Check that SwA Phase C produced at least one application component entity."""
+    app_root = arch_repo / "model-entities" / "application"
+    if not app_root.exists():
+        return CheckResult(
+            "Application component entities (Phase C)",
+            False,
+            "Directory model-entities/application/ not found",
+        )
+    # Accept APP-NNN files anywhere under application/
+    files = [
+        f for f in app_root.rglob("APP-*.md")
+        if f.name != ".gitkeep"
+    ]
+    if not files:
+        return CheckResult(
+            "Application component entities (Phase C)",
+            False,
+            "No APP-*.md files found under model-entities/application/",
+        )
+    names = ", ".join(f.name for f in sorted(files)[:3])
+    suffix = f" (+{len(files) - 3} more)" if len(files) > 3 else ""
+    return CheckResult(
+        "Application component entities (Phase C)",
+        True,
+        f"{len(files)} APP file(s): {names}{suffix}",
+    )
 
 
 def _check_model_verifier(arch_repo: Path) -> CheckResult:

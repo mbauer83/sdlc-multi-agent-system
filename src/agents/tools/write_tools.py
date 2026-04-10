@@ -97,6 +97,11 @@ def build_write_tool(agent_id: str) -> Any:
         existed = target.exists()
         target.write_text(content, encoding="utf-8")
 
+        # Auto-regenerate _macros.puml when an entity with an archimate display block
+        # is written — keeps the macro library in sync transparently (per AIF-005 spec).
+        if _has_archimate_display(content):
+            _regenerate_macros_for(ctx)
+
         # Emit artifact event — auto-derive artifact_id from filename if not provided
         effective_id = artifact_id or _derive_artifact_id(target)
         if effective_id:
@@ -111,6 +116,31 @@ def build_write_tool(agent_id: str) -> Any:
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
+_ARCHIMATE_DISPLAY_RE = __import__("re").compile(
+    r"<!--\s*§display\s*-->.*###\s*archimate", __import__("re").IGNORECASE | __import__("re").DOTALL
+)
+
+
+def _has_archimate_display(content: str) -> bool:
+    """Return True if content contains a §display ###archimate block."""
+    return bool(_ARCHIMATE_DISPLAY_RE.search(content))
+
+
+def _regenerate_macros_for(ctx: RunContext[AgentDeps]) -> None:
+    """
+    Regenerate _macros.puml for the engagement's architecture repository.
+    Best-effort: failures are logged but never propagate to the caller.
+    """
+    try:
+        from src.tools.generate_macros import generate_macros
+
+        arch_repo = ctx.deps.work_repos_path / "architecture-repository"
+        if arch_repo.is_dir():
+            generate_macros(arch_repo)
+    except Exception:  # noqa: BLE001
+        log.debug("_regenerate_macros_for: skipped (generate_macros unavailable or failed)")
+
 
 def _derive_artifact_id(path: Path) -> str | None:
     """Extract artifact-id from a filename like STK-001.friendly-name.md → 'STK-001'."""

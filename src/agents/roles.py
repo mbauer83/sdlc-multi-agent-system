@@ -53,16 +53,24 @@ def build_sa_agent(
     agents_root: Path,
     llm_config: LLMConfig | None = None,
 ) -> Any:
-    """Solution Architect — writes motivation/strategy/business layers."""
-    return _build("SA", agents_root, llm_config)
+    """Solution Architect — writes motivation/strategy/business layers + diagrams."""
+    from src.agents.tools.diagram_tools import register_diagram_tools
+
+    agent = _build("SA", agents_root, llm_config)
+    register_diagram_tools(agent)
+    return agent
 
 
 def build_swa_agent(
     agents_root: Path,
     llm_config: LLMConfig | None = None,
 ) -> Any:
-    """Software Architect — writes application layer + technology-repository."""
-    return _build("SwA", agents_root, llm_config)
+    """Software Architect — writes application layer + technology-repository + diagrams."""
+    from src.agents.tools.diagram_tools import register_diagram_tools
+
+    agent = _build("SwA", agents_root, llm_config)
+    register_diagram_tools(agent)
+    return agent
 
 
 def build_de_agent(

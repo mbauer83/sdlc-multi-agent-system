@@ -48,6 +48,20 @@ _watch_stop: dict[str, threading.Event] = {}
 _watch_state: dict[str, dict[str, object]] = {}
 
 
+def _regenerate_macros_for_roots(roots: list[Path]) -> None:
+    """Regenerate _macros.puml for each engagement root that has model-entities/."""
+    try:
+        from src.tools.generate_macros import generate_macros
+    except ImportError:
+        return
+    for root in roots:
+        if (root / "model-entities").is_dir():
+            try:
+                generate_macros(root)
+            except Exception:  # noqa: BLE001
+                pass
+
+
 def _watcher_loop(roots: list[Path], interval_s: float, stop: threading.Event) -> None:
     repo_key = _roots_key(roots)
     last_fp = _roots_state_fingerprint(roots)
@@ -66,6 +80,7 @@ def _watcher_loop(roots: list[Path], interval_s: float, stop: threading.Event) -
         fp = _roots_state_fingerprint(roots)
         if fp != last_fp:
             clear_caches_for_repo(roots)
+            _regenerate_macros_for_roots(roots)
             last_fp = fp
             with _watch_lock:
                 st = _watch_state.get(repo_key, {})
@@ -154,6 +169,7 @@ def register_watch_tools(mcp: FastMCP) -> None:
             enterprise_root=enterprise_root,
         )
         clear_caches_for_repo(roots)
+        _regenerate_macros_for_roots(roots)
         return {
             "repo_roots": [str(p) for p in roots],
             "repo_scope": repo_scope,
