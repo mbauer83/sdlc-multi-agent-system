@@ -4,8 +4,13 @@ agent: DE
 name: phase-g
 display-name: Phase G — Feature Implementation
 invoke-when: >
-  A Solution Sprint starts and DE has received and acknowledged a baselined Architecture
-  Contract; DE implements each assigned Work Package and submits PRs to the target repository.
+  A Solution Sprint starts and the Implementing Developer has received and acknowledged a
+  baselined Architecture Contract; implements each assigned Work Package and submits pull
+  requests to the target repository.
+invoke-never-when: >
+  No baselined Architecture Contract (version 1.0.0 or later) exists for the current sprint.
+  Raise an algedonic escalation signal to the Project Manager and await a baselined Architecture
+  Contract before starting implementation.
 trigger-phases: [G]
 trigger-conditions:
   - sprint.started (phase=G, sprint-type=solution)
@@ -253,6 +258,20 @@ On PR approval and merge:
 
 ---
 
+## Common Rationalizations (Rejected)
+
+These are the shortcuts most likely to be rationalised during this skill. Read before beginning and check against the Verification section at close.
+
+| Rationalization | Rejection |
+|---|---|
+| "I can start implementing while waiting for the AC to be baselined — I'll adjust when it changes" | An AC at v0.x.x triggers ALG-008 immediately; implementation against a draft AC is invalid regardless of sprint time pressure; raise ALG-008 and halt until a v1.0.0 AC is received |
+| "I'll write unit tests after the implementation is working and the logic is confirmed correct" | Unit tests are written in Step 6 before the PR is created in Step 9; CI must pass (all stages green, coverage threshold met) before Step 9 is reached; this is the acceptance criterion order, not a preference |
+| "Compliance gaps can be noted informally in a code comment or mentioned verbally — the PR description is just a summary" | Each compliance gap must be documented in the PR description per Step 9 item 4 with the AC constraint ID, the specific gap, the reason, and the justification; comment-form documentation is not a governance record and will not satisfy SwA review |
+
+*If a §3.1 trigger fires and the root cause is a procedural step that was bypassed, record with `error-type: protocol-skip` and document the bypassed step explicitly.*
+
+---
+
 ## Feedback Loop
 
 ### PR Review Loop (DE ↔ SwA)
@@ -296,6 +315,19 @@ On trigger: call `record_learning()` with `artifact-type="process"`, error-type 
 
 ---
 
+## Red Flags
+
+Observable signs the Work Package implementation cycle is going off-track — check these before creating the PR.
+
+- Feature branch contains imports referencing framework repository paths (not target-repo) — any import of `engagements/`, `framework/`, or `agents/` paths from application code is a boundary violation (ALG-007)
+- PR description is missing the AC reference, sprint/WP identifier, or test coverage percentage — all six items in Step 9 are required; absence of any item fails the governance record
+- Implementation notes file (`delivery-repository/implementation-notes/`) is empty or absent after Step 5 completes — significant decisions and hidden dependencies must be recorded as they are discovered
+- Unit test file contains `os.environ` access to live credentials, database connection strings, or external service endpoints — synthetic test data only; production credentials in test suites is prohibited
+- Step 8 compliance self-check was not performed — no checkbox records appear in the PR description's compliance section
+- CI pipeline has not been run before Step 9 (PR creation) — CI must pass before the PR is opened
+
+---
+
 ## Algedonic Triggers
 
 | ID | Condition | Severity | Action |
@@ -308,6 +340,25 @@ On trigger: call `record_learning()` with `artifact-type="process"`, error-type 
 | ALG-006 | A Change Record affecting an in-flight Work Package arrives mid-sprint and the sprint plan cannot be completed as specified without PM adjudication | S2 | Halt implementation of the affected WP; do not merge any open PRs for that WP; notify PM; await guidance |
 
 **Note on safety-critical defects:** If QA identifies a Severity 1 defect in a safety-relevant component (which QA classifies and routes), QA is responsible for raising ALG-013. The DE's role is to halt further development on the affected component and await CSCO and SwA resolution. DE does not independently classify safety-critical defects — that is CSCO and QA authority.
+
+---
+
+## Verification
+
+This section is the invariant completion gate for one Work Package cycle. Confirm before emitting `handoff.created` (PR-ready) for any Work Package:
+
+- [ ] AC confirmed at version 1.0.0 (baselined) before implementation began — if AC was at v0.x.x, ALG-008 was raised and PM adjudicated
+- [ ] Feature branch created with the correct naming convention; branch reference recorded in `delivery-repository/branch-refs/`
+- [ ] Implementation uses only SBBs authorised in AC §3.4; no unapproved libraries introduced
+- [ ] Unit tests written (Step 6) with ≥80% line coverage (or AC §3.6 threshold if higher) and ≥1 test case per public function/method
+- [ ] Unit tests use only synthetic test data; no production credentials or live service endpoints in test suite
+- [ ] CI pipeline run (all stages green) before PR creation; no skipped stages
+- [ ] Step 8 compliance self-check completed — all AC §3.5 constraints confirmed or gaps documented
+- [ ] PR description contains all six required items from Step 9 (WP reference, AC reference, implementation summary, compliance result, coverage %, known limitations)
+- [ ] PR record created in `delivery-repository/pr-records/`; implementation notes updated
+- [ ] `handoff.created` emitted to SwA and QA
+- [ ] Learning entry recorded if a §3.1 trigger was met (gate veto, feedback revision, algedonic signal, avoidable CQ)
+- [ ] Memento state saved (`End-of-Skill Memory Close`)
 
 ---
 

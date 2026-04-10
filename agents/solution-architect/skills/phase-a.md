@@ -4,8 +4,13 @@ agent: SA
 name: phase-a
 display-name: Phase A — Architecture Vision
 invoke-when: >
-  Phase A Architecture Sprint starts (sprint.started emitted) or entry point EP-0/EP-A/EP-B is
-  active and the Architecture Vision artifact does not yet exist at version 1.0.0.
+  A Phase A Architecture Sprint starts, or one of the project-initiation entry points
+  (greenfield, architecture-requirement, or warm-start revisit) is active and an Architecture
+  Vision document does not yet exist at version 1.0.0.
+invoke-never-when: >
+  An Architecture Vision document already exists at version 1.0.0 and no active Change Record
+  references it. Use SA-PHASE-H for change management. Do not re-run Phase A to update an
+  existing Architecture Vision.
 trigger-phases: [Prelim, A]
 trigger-conditions:
   - sprint.started (phase=A)
@@ -344,6 +349,20 @@ When `entry-point: EP-B` and a user requirements document is provided:
 
 ---
 
+## Common Rationalizations (Rejected)
+
+These are the shortcuts most likely to be rationalised during this skill. Each has been seen (or predicted) in practice. Read before beginning and check against the Verification section at close.
+
+| Rationalization | Rejection |
+|---|---|
+| "The Safety Envelope can be left as TBD pending CSCO availability — I'll fill §3.7 in after the gate" | `csco-sign-off` must be `true` before an `approved` gate vote can be cast; if CSCO is unavailable, raise ALG-002 — proceeding to gate with a pending safety envelope is a governance violation regardless of time pressure |
+| "The Stakeholder Register only needs agent roles (STK-001..009) — external stakeholders can be added in Phase B once more is known" | Phase A gate requires ≥1 named external stakeholder beyond agent roles, or an explicit CQ documenting why none have been identified; a register that contains only agent roles signals incomplete discovery work |
+| "Gap analysis can be left as 'Not yet characterised' for all four domains — that is an honest representation of current knowledge" | At least one domain gap must describe a substantive delta between a known or inferred baseline state and the target state; all-placeholder gap tables signal that the discovery scan (Step 0) was skipped or incomplete; raise a CQ for missing baseline information rather than filing every row with identical placeholder text |
+
+*If a §3.1 learning trigger fires and the root cause is a procedural step that was bypassed, record with `error-type: protocol-skip` and document the bypassed step explicitly. This feeds the rationalization table maintenance process.*
+
+---
+
 ## Feedback Loop
 
 ### Safety Envelope Review Loop (SA ↔ CSCO)
@@ -375,6 +394,20 @@ On trigger: call `record_learning()` with `artifact-type="architecture-vision"`,
 
 ---
 
+## Red Flags
+
+Observable signs the skill is going off-track — check these before reaching the gate vote step. These are pre-escalation indicators; algedonic triggers are the thresholds after a threshold has already been crossed.
+
+- AV document sections contain `[UNKNOWN]` markers but no corresponding CQ-id in the clarification-log — unknown content must be tied to an open CQ or a PM-accepted assumption, not silently left blank
+- §3.3 Stakeholder Register lists only agent roles (STK-001..009) with no external stakeholders and no CQ record explaining their absence
+- §3.5 capability overview contains zero capability clusters, or contains clusters with no traceable DRV-nnn driver
+- §3.7 Safety Envelope is blank, contains "TBD", or contains generic boilerplate identical across engagement domains — indicates SA wrote a template filler rather than domain-specific analysis
+- §3.8 Gap analysis has all four domain rows containing "Not yet characterised" or "TBD" — indicates discovery scan produced no baseline evidence
+- Architecture Vision Statement (§3.9) contains technology product names (e.g., "Kubernetes", "PostgreSQL") or architecture acronyms without plain-English expansion — violates the non-technical audience requirement
+- Gate vote step is being reached while `csco-sign-off: pending` is still in the AV header
+
+---
+
 ## Algedonic Triggers
 
 | ID | Condition in This Skill | Severity | Action |
@@ -383,6 +416,27 @@ On trigger: call `record_learning()` with `artifact-type="architecture-vision"`,
 | ALG-002 | CSCO is unavailable and Phase A gate requires CSCO sign-off on the Safety Envelope | S1 | Halt Phase A gate progression; emit `alg.raised`; PM records and awaits CSCO |
 | ALG-010 | SA and CSCO have completed 2 feedback iterations on the Safety Envelope without resolution | S3 | Emit `alg.raised`; PM adjudicates; halt §3.7 finalisation until adjudication is complete |
 | ALG-017 | A safety-domain CQ (e.g., regulatory jurisdiction, hazard category for a safety-critical component) is unanswered after 2 sprint cycles and an assumption cannot safely be made | S1 | Halt production of the affected Safety Envelope section; emit `alg.raised`; escalate to user via PM and notify CSCO concurrently |
+
+---
+
+## Verification
+
+This section is the invariant skill-completion gate. It applies regardless of which execution path through the skill was taken — whether a full EP-0 run, a warm-start EP-A, or an EP-B derivation. The gate-vote criterion in Step 10 governs the `approved`/`veto` cast; this checklist governs whether the skill is done at all.
+
+Before emitting any completion signal or gate vote, confirm:
+
+- [ ] `sprint.started` was confirmed before any production step began
+- [ ] All blocking CQs are resolved or documented as PM-accepted assumptions with risk flags in the AV header
+- [ ] §3.3 Stakeholder Register contains ≥1 named external stakeholder, or a CQ-id justifying absence is present
+- [ ] §3.5 capability overview contains 3–7 capability clusters; each traces to ≥1 DRV-nnn and ≥1 VS-nnn stub
+- [ ] §3.7 Safety Envelope is non-generic (domain-specific hazard categories and constraints); `csco-sign-off: true` is recorded
+- [ ] §3.8 Gap analysis contains ≥1 substantive row per domain (not all placeholder)
+- [ ] §3.9 Architecture Vision Statement is 200–400 words and contains no unexpanded technology acronyms or product names
+- [ ] AV header `pending-clarifications` list is empty or every item is `assumption`-flagged with PM acceptance
+- [ ] `artifact.baselined` event emitted for AV (v1.0.0), PR, and SM
+- [ ] Handoff to PM (SoAW input) created; handoff to CSCO created (if not already done during Step 6)
+- [ ] Learning entry recorded if a §3.1 trigger was met during this invocation (gate veto, feedback revision, algedonic signal, avoidable CQ)
+- [ ] Memento state saved (`End-of-Skill Memory Close`)
 
 ---
 

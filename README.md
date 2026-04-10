@@ -278,7 +278,7 @@ The engagement dashboard (Stage 5.5) is a local FastAPI web server that provides
 
 ## Implementation Status
 
-The framework and ENG-001 reference model are being built incrementally. Current state (2026-04-09):
+The framework and ENG-001 reference model are being built incrementally. Current state (2026-04-10):
 
 | Layer | Status |
 |---|---|
@@ -309,6 +309,8 @@ The framework and ENG-001 reference model are being built incrementally. Current
 | `src/sources/target_repo.py` — TargetRepoManager (multi-repo, worktree isolation) | Complete |
 | `src/sources/` Stage 5d remaining — external source adapters (Confluence, Jira, Git) + UserUploadAdapter | Pending |
 | Stage 5.5 — engagement dashboard (FastAPI, artifact browser, CQ interaction, sprint review) | Pending |
+| Stage 5.7 — Skill quality hardening: `## Common Rationalizations (Rejected)` (seeded 2–3 per complex skill; grown via human triage of `triage_learning_candidates.py` output + sprint review annotation); `## Red Flags` pre-escalation indicators; standalone `## Verification` invariant completion gate; `invoke-never-when` frontmatter misroute prevention; boilerplate extraction (Step 0.L/0.M/Memory Close → Layer 2 injection); SectionSpec registry replacing `_INCLUDED_H2` frozenset | Partial |
+| Stage 5.8 — Express Mode: standalone skill invocation via `uv run python -m src.cli express --role <role> --skill <id> --target-dir <path>`; no engagement session, EventStore, or LangGraph; mode-filtered skill loading (algedonic/memory-close sections excluded); `## Express Mode` sections in 5 candidate skills | Pending |
 
 **ArchiMate diagram conventions** (`framework/diagram-conventions.md`): §10 covers PlantUML compatibility constraints (PB-001..PB-005 workarounds, DECL_ two-token macro convention); §11 covers ArchiMate semantic constraints (layer boundary rule, active structure type rules, layer-aligned grouping stereotypes with prohibition on inline color overrides). For business operational decomposition (`§11.9.1a`), staged processes/interactions are diagrammed as nested parent containers (`BPR-NNN` / `BIA-NNN` as container element) with internal stage `flow`/`triggering`; parent→stage composition remains mandatory as connection files even when external composition arrows are omitted in the operational view. Decomposition stage count is explicitly domain-dependent: use a manageable number of stages, and split into additional top-level behaviors when separation of concerns requires it.
 

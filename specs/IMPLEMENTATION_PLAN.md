@@ -647,6 +647,437 @@ Replace scattered hardcoded model strings with a structured configuration layer 
 
 ---
 
+### Stage 5.7 — Skill Quality Hardening
+
+Informed by structural analysis of `addyosmani/agent-skills` (10.9k-star engineering-skills library for coding agents). Four patterns from that library are directly valuable in our context; two additional internal improvements are appended. The rationalization table is the highest-priority addition because it defends against the most dangerous class of agent failure: procedural shortcuts that are silently justified rather than escalated.
+
+**Critical implementation pre-condition:** Before adding new sections to skill files, `SkillLoader._INCLUDED_H2` must be updated to include them, and the token budget must be validated. Sections written but not in `_INCLUDED_H2` are silently dropped and never reach the agent. The three new sections (Rationalizations, Red Flags, Verification) are currently NOT in `_INCLUDED_H2`.
+
+**Placement convention for new sections** (applies to all complex skills; standard skills get Red Flags + Verification only):
+
+```
+... Procedure steps ...
+## Common Rationalizations (Rejected)     ← new; injected at top of assembled content (pre-procedure guard)
+## Feedback Loop                          ← existing
+## Red Flags                              ← new; after Feedback Loop
+## Algedonic Triggers <!-- workflow -->   ← existing; mode-tagged workflow-only
+## Verification                           ← new; before Outputs
+## Outputs                                ← existing
+## End-of-Skill Memory Close <!-- workflow --> ← existing; mode-tagged workflow-only
+```
+
+**SkillLoader injection contract for new sections:**
+- `## Common Rationalizations (Rejected)` → assembled first (before Inputs Required), so the agent reads guards before procedure
+- `## Red Flags` → assembled after Feedback Loop
+- `## Verification` → assembled after Algedonic Triggers (or after Red Flags in express mode)
+- Truncation priority (lowest = first to drop when budget tight): End-of-Skill Memory Close → Outputs → Algedonic Triggers → Red Flags → Verification → Feedback Loop → Rationalizations → Inputs Required. Procedure (Steps) is never truncated.
+
+**Token budget:**
+- Stage 5.7-E (boilerplate extraction) reclaims ~150 tokens per skill. Implement first.
+- After extraction: raise complex soft cap 2000 → 2350, hard cap 2400 → 2820.
+- Rationalizations (3 rows) ≈ 200 tokens; Red Flags (6 items) ≈ 150 tokens; Verification (10 items) ≈ 200 tokens. Net addition: ~550 tokens, covered by boilerplate savings + budget increase.
+
+**Abbreviation definitions in Layer 1:**
+Most abbreviations in body sections are defined inline on first use or appear in Layer 1+2. Genuine gaps: `S1/S2/S3` severity classification and `EP-0..EP-H` entry point codes — not defined anywhere in injected content. Fix: add one definitions sentence to each AGENT.md `system-prompt-identity` field:
+> `Severity: S1=immediate-halt, S2=requires-revision, S3=advisory. EP-0=cold-start, EP-A..H=mid-lifecycle entries. CQ=Clarification Request. APR=Architecture Principles Register.`
+~50 tokens, always in context.
+
+**Frontmatter routing fields (`invoke-when`, `invoke-never-when`) must be plain English — no unexplained abbreviations.** These fields are read by LLMs for autonomous skill selection (PM agent via registry tool calls, express mode without a `--skill` flag, any external use). SkillLoader also parses them as guard metadata, but the primary consumer is an LLM that has no guaranteed pre-injected glossary. Write them as self-contained sentences a new reader can understand without any context. See Stage 5.7-D for the authoring rule and audit checklist. (`trigger-conditions` and `trigger-phases` are documentation/code-only and are not injected to any LLM.)
+
+#### 5.7-A — Rationalization Tables + Shortcut-Catch Mechanism
+
+**Design rationale:** Rationalization tables can only be built meaningfully from experience — a fully pre-populated table before any real agent runs would be speculative. The implementation therefore has two parts: (1) seed each complex skill with 2–3 of the *most predictable* shortcuts (derivable from the governance structure alone, not from LLM observation); (2) add a lightweight catch-and-append mechanism that grows the table from live runs.
+
+**Catch-and-append mechanism — honest design:**
+
+Only a human reviewer can reliably classify a quality failure as a *rationalization pattern* rather than a legitimate knowledge gap or a correctly-raised ALG situation. Automated detection would be circular: if the agent could consistently self-report the shortcuts it took, it would not take them. Two complementary mechanisms are used instead:
+
+**1. Artifact-level heuristic checks (automated, structural violations only):**
+`scripts/check_artifact_heuristics.py` inspects produced artifacts for known shortcut signatures — these are structural violations detectable from the output without inferring intent:
+- SA artifacts: gap-analysis rows where all four domain rows contain only "Not yet characterised" or "TBD"; safety envelope section shorter than 50 words; stakeholder register containing only agent role IDs (STK-001..009) with no external entries
+- DE artifacts: PR description missing the AC reference or coverage percentage; implementation notes file empty after PR creation
+- CSCO artifacts: gate vote cast with `csco-sign-off` field missing or `pending`
+
+These are violation flags surfaced in the engagement dashboard and EventStore — not rationalization classifications.
+
+**2. Human-triage script (semi-automated, human decides):**
+`scripts/triage_learning_candidates.py` reads `learnings/*.md` across all engagement directories, filters for `error-type: protocol-skip` and gate-veto entries, groups by `skill-id`, and formats them as a triage list for a human reviewer to examine. The human decides which entries represent a rationalization pattern worth adding to the table. Threshold suggestion (not enforcement): 2+ occurrences of structurally similar corrections in the same skill → candidate for table entry.
+
+**3. Sprint review annotation (Stage 5.5):**
+The sprint review UI includes a "flag as rationalization pattern" action on learning entries. When a reviewer flags an entry, the entry gains a `rationalization-candidate: true` field. The triage script filters these first.
+
+**4. Quarterly maintenance task:**
+Documented in `retrospective-knowledge-capture.md`: run `triage_learning_candidates.py`, review flagged entries, and update skill rationalization tables with confirmed patterns.
+
+The Learning Generation subsection of each complex skill gains a `shortcut-observed` row as a reminder that the existing §3.1 `protocol-skip` error-type is the correct classification when a procedural step was bypassed — no new entry type is needed.
+
+**Seed rationalizations — SA-PHASE-A:**
+
+| Rationalization | Rejection |
+|---|---|
+| "The Safety Envelope can be left as TBD pending CSCO availability — I'll fill it in after the gate" | `csco-sign-off` must be `true` before an `approved` gate vote; if CSCO is unavailable, raise ALG-002 — casting a gate vote with a pending safety envelope is a governance violation |
+| "The Stakeholder Register only needs agent roles — external stakeholders can be added in Phase B" | Phase A gate requires ≥1 named external stakeholder beyond agent roles, or a CQ documenting why none have been identified; an agent-roles-only register is an incomplete AV |
+| "Gap analysis can be left as 'Not yet characterised' for all four domains — that's honest about the current state" | At least one domain gap must describe a substantive delta between a known baseline and the target; all-placeholder gap tables signal missing discovery work; raise a CQ for the missing baseline rather than filing the table with uniform placeholders |
+
+**Seed rationalizations — DE-PHASE-G:**
+
+| Rationalization | Rejection |
+|---|---|
+| "I can start implementing while waiting for the AC to be baselined — I'll adjust if it changes" | An AC at v0.x.x triggers ALG-008 immediately; implementation against a draft AC is invalid regardless of time pressure; raise ALG-008 and halt |
+| "I'll write unit tests after the implementation is working and the logic is confirmed" | Unit tests are written in Step 6 before the PR in Step 9; CI must pass before the PR is created; this sequence is the acceptance criterion order, not a preference |
+| "Compliance gaps can be noted informally in a code comment rather than in the PR description" | Compliance gaps must be documented in the PR description per Step 9 item 4; comment-form or verbal documentation is not a governance record and will not pass SwA review |
+
+**Seed rationalizations — PM-MASTER-AGILE-ADM:**
+
+| Rationalization | Rejection |
+|---|---|
+| "A CQ with a reasonable assumed answer is equivalent to waiting for user response — I'll proceed with the assumption" | Assumed answers must be explicitly recorded in the artifact's `assumptions` field with a risk flag and PM acceptance; they never silently replace CQ answers; the PM must record the assumption and notify the affected agent before proceeding |
+| "Phase transition can proceed if no algedonic signal has been raised and no agent has vetoed" | Absence of an algedonic signal is necessary but not sufficient; the phase gate checklist must be evaluated explicitly; missing required artifacts trigger a PM veto even without an agent signal |
+| "I can batch multiple specialist invocations to save latency" | Each specialist invocation is a separate EventStore event and LangGraph node transition; batching bypasses gate evaluation between specialists and violates the event-sourcing invariant |
+
+**Checklist:**
+- [ ] `scripts/check_artifact_heuristics.py` — structural violation checks on produced artifacts (placeholder detection, missing required fields, etc.); outputs violation list to stdout and emits `artifact.heuristic-violation` advisory events to EventStore
+- [x] `scripts/triage_learning_candidates.py` — reads `learnings/*.md`, filters `error-type: protocol-skip` and gate-veto entries, groups by `skill-id`, formats triage list for human review; respects `rationalization-candidate: true` flag added by sprint review annotation
+- [ ] `framework/learning-protocol.md §3` — add note under `protocol-skip` error-type: when a procedural step was bypassed, document the bypassed step and the governance rule it violated; this is the source material for future rationalization table entries
+- [x] `agents/solution-architect/skills/phase-a.md` — add `## Common Rationalizations (Rejected)` (3 rows seeded); `## Red Flags` (7 items); `## Verification` (12-item checklist); `invoke-never-when` frontmatter
+- [x] `agents/implementing-developer/skills/phase-g.md` — same (3 rows / 6 items / 12-item checklist / frontmatter)
+- [x] `agents/project-manager/skills/master-agile-adm.md` — same (3 rows / 6 items / split sprint-closeout + gate-evaluation checklist / frontmatter)
+- [ ] All other 15 complex skills — add `## Common Rationalizations (Rejected)` with 2–3 rows each. Priority order: SA-PHASE-B, SA-PHASE-H, SwA-PHASE-C-APP, SwA-PHASE-C-DATA, SwA-PHASE-D, CSCO-GATE-A, CSCO-STAMP-STPA, QA-PHASE-EF, QA-PHASE-G, QA-PHASE-H, DevOps skills, SA/SwA reverse-arch skills
+- [ ] `agents/project-manager/skills/retrospective-knowledge-capture.md` — add quarterly rationalization-table maintenance step (run `triage_learning_candidates.py`, review, update tables)
+
+---
+
+#### 5.7-B — Red Flags Sections
+
+Pre-escalation observable indicators placed after `## Feedback Loop` and before `## Algedonic Triggers` in all complex skills. Algedonic triggers are reactive (thresholds already crossed); Red Flags are proactive (observable signs the skill is going off-track before the algedonic threshold).
+
+**Examples for SA-PHASE-A:**
+- AV document contains no DRV-nnn IDs — capability overview has no traceability anchor
+- §3.3 Stakeholder Register lists only agent roles (STK-001..009) with no external stakeholders and no CQ record
+- §3.7 Safety Envelope section is blank, contains "TBD", or contains generic boilerplate not specific to the engagement domain
+- Architecture Vision Statement contains technology product names or architecture acronyms without explanation
+- Phase A gate vote is being prepared while any AV section contains `[UNKNOWN]` without a corresponding CQ-id
+
+**Examples for DE-PHASE-G:**
+- Feature branch contains imports from the framework repository path (not target-repo)
+- PR description omits any reference to the AC constraint ID or test coverage percentage
+- Implementation notes document is empty after Step 5 completes
+- Unit test file contains `import os` or `os.environ` (real credential access in test suite)
+- Step 8 compliance self-check has been skipped (no checkbox records in PR description)
+
+**Checklist:**
+- [ ] `agents/solution-architect/skills/phase-a.md` — add `## Red Flags` (5–7 items)
+- [ ] `agents/implementing-developer/skills/phase-g.md` — same
+- [ ] `agents/project-manager/skills/master-agile-adm.md` — same
+- [ ] All other 15 complex skills — add `## Red Flags`
+- [ ] All 30 standard-class skills — add `## Red Flags` (3–5 items each)
+
+---
+
+#### 5.7-C — Standalone Verification Sections
+
+Replace embedded gate-vote checklists (currently inside individual steps, e.g. SA-PHASE-A Step 10) with a standalone `## Verification` section that is the invariant skill-completion gate — it applies regardless of which execution path through the skill was taken. Placed after `## Algedonic Triggers`, before `## Outputs`.
+
+The gate-vote checklist in the final step is kept as the *vote criterion* (the agent must be able to cast `approved`); the `## Verification` section is the *skill-completion criterion* (the skill is not done until all boxes are ticked, whether or not a gate vote was cast in this invocation).
+
+**Template:**
+```markdown
+## Verification
+
+Before emitting the completion event for this skill, confirm:
+
+- [ ] All blocking CQs resolved or documented as PM-accepted assumptions
+- [ ] Primary output artifact exists at the required minimum version
+- [ ] CSCO sign-off recorded where required (`csco-sign-off: true`)
+- [ ] All required EventStore events emitted in this invocation
+- [ ] Handoffs to downstream agents created
+- [ ] Learning entries recorded if a §3.1 trigger was met this invocation
+- [ ] Memento state saved (End-of-Skill Memory Close)
+```
+
+Each skill's `## Verification` has its own concrete checklist items drawn from the skill's outputs and gate criteria. The generic template above is a minimum floor.
+
+**Checklist:**
+- [ ] `agents/solution-architect/skills/phase-a.md` — add `## Verification`; merge gate checklist from Step 10
+- [ ] `agents/implementing-developer/skills/phase-g.md` — same
+- [ ] `agents/project-manager/skills/master-agile-adm.md` — same
+- [ ] All other 15 complex skills — add `## Verification`
+
+---
+
+#### 5.7-D — `invoke-never-when` Frontmatter Field + Plain-English Routing Field Authoring Rule
+
+Add `invoke-never-when` as a new optional frontmatter field complementing `invoke-when`. Prevents misrouting for the most common wrong-context invocation. SkillLoader surfaces this in a pre-invocation guard log line; PM routing policy can enforce it as a hard block.
+
+**Authoring rule (applies to `invoke-when` AND `invoke-never-when`):** Write these fields as plain English sentences with no unexplained abbreviations. These fields are read by LLMs for autonomous skill selection (PM agent via registry tool calls, express mode, external use) and have no guaranteed glossary pre-injected. Short enough that plain English costs nothing.
+
+**Corrected examples (plain English — abbreviation-free):**
+
+SA-PHASE-A:
+```yaml
+invoke-when: >
+  A Phase A Architecture Sprint starts, or one of the project-initiation entry points
+  (greenfield, architecture-requirement, or warm-start revisit) is active and an Architecture
+  Vision document does not yet exist at version 1.0.0.
+invoke-never-when: >
+  An Architecture Vision document already exists at version 1.0.0 and no active Change Record
+  references it. Use SA-PHASE-H for change management. Do not re-run Phase A to update an
+  existing Architecture Vision.
+```
+
+DE-PHASE-G:
+```yaml
+invoke-when: >
+  A Solution Sprint starts and the Implementing Developer has received and acknowledged a
+  baselined Architecture Contract; implements each assigned Work Package and submits pull
+  requests to the target repository.
+invoke-never-when: >
+  No baselined Architecture Contract (version 1.0.0 or later) exists for the current sprint.
+  Raise an algedonic escalation signal to the Project Manager and await a baselined Architecture
+  Contract before starting implementation.
+```
+
+**Done (2026-04-10):** SA-PHASE-A, DE-PHASE-G, PM-MASTER — `invoke-when` and `invoke-never-when` rewritten to plain English.
+
+**Checklist:**
+- [x] SA-PHASE-A — `invoke-when` + `invoke-never-when` plain English ✓
+- [x] DE-PHASE-G — `invoke-when` + `invoke-never-when` plain English ✓
+- [x] PM-MASTER — `invoke-when` + `invoke-never-when` plain English ✓
+- [ ] `framework/agent-runtime-spec.md §5` — document `invoke-never-when` as a pre-invocation guard field; SkillLoader logs it when present; **update the description of `invoke-when` and `invoke-never-when` to state that both are LLM-readable and must be plain English** (remove any language saying they are "routing metadata only" or "not injected to LLM")
+- [ ] `framework/agent-index.md` — confirm any skill routing table rows that reference `invoke-when` text are also plain English; update if needed
+- [ ] Any other framework docs (`orchestration-topology.md`, `clarification-protocol.md`) that describe skill routing fields — audit for incorrect claims about frontmatter visibility and correct as needed
+- [ ] `src/agents/skill_loader.py` — extract and return `invoke-never-when` field alongside existing fields; add `guard_condition` to loaded skill metadata; `EngagementSession.invoke_specialist()` logs a WARNING when `guard_condition` is non-empty (enforcement is PM routing logic, not SkillLoader hard-block)
+- [ ] All remaining 15 complex skills — add `invoke-never-when` in plain English; audit `invoke-when` for abbreviations
+- [ ] All 30 standard skills — add `invoke-never-when` in plain English; audit `invoke-when` for abbreviations
+
+---
+
+#### 5.7-E — SkillLoader: Mode-Aware Section Filtering + Boilerplate Extraction + Budget Update
+
+This stage covers three tightly coupled SkillLoader concerns that must be done together:
+
+**E.1 — Mode-aware section filtering (prerequisite for Express Mode content in Stage 5.8)**
+
+Section headers carry an optional HTML comment mode tag: `<!-- workflow -->`, `<!-- express -->`, or no tag (= both modes). SkillLoader strips the comment suffix before using the heading as a key. `AgentDeps` gets `invocation_mode: Literal["workflow", "express"] = "workflow"`. `build_agent()` injects a Layer 1 express override sentence when `invocation_mode == "express"`: *"Express Mode: produce domain output directly from user input; skip all EventStore event emissions, gate voting, and handoff creation."*
+
+Default section mode assignments:
+- `## Algedonic Triggers` → workflow-only (add `<!-- workflow -->` to all skill files)
+- `## End-of-Skill Memory Close` → workflow-only (add `<!-- workflow -->`)
+- All other existing sections → no tag (both modes)
+- `## Express Mode` (future, Stage 5.8) → express-only
+
+This is the infrastructure gate for Stage 5.8. Do NOT write Express Mode sections into skill files until this is implemented.
+
+**Why `_INCLUDED_H2: frozenset` is not the right architecture:**
+
+The frozenset splits logically-unified section behaviour across three places: `_INCLUDED_H2` (inclusion), `_assemble()` (order), `_truncate()` (truncation). Adding one new section requires changes in all three. Sections omitted from the frozenset are silently dropped with no warning (this is why the Rationalizations/Red Flags/Verification sections we authored never reach the agent). Mode-awareness would require a parallel frozenset or scattered conditionals.
+
+**E.2 + E.1 combined — Replace `_INCLUDED_H2` with a `SectionSpec` registry**
+
+Define a `SectionSpec` dataclass and a `_SECTION_REGISTRY` dict that encodes all section behaviour in one place:
+
+```python
+@dataclass(frozen=True)
+class SectionSpec:
+    key: str                    # canonical normalised name (used as dict key)
+    aliases: frozenset[str]     # alternative headings that resolve to this spec
+    modes: frozenset[str]       # {"workflow", "express"} = both; singleton = mode-gated
+    assembly_position: int      # output ordering (lower = earlier)
+    truncation_priority: int    # lower = first to drop under budget; -1 = never truncate
+    truncation_strategy: str    # "omit" | "compact"
+
+_SECTION_REGISTRY: dict[str, SectionSpec] = {
+    spec.key: spec for spec in [
+        SectionSpec("common rationalizations (rejected)", frozenset(), {"workflow","express"},  0, 7, "compact"),
+        SectionSpec("inputs required",                    frozenset(), {"workflow","express"},  1, 8, "compact"),
+        SectionSpec("procedure",      frozenset({"steps"}),{"workflow","express"},              2,-1, "omit"),
+        SectionSpec("feedback loop",                      frozenset(), {"workflow","express"},  3, 6, "compact"),
+        SectionSpec("red flags",                          frozenset(), {"workflow","express"},  4, 4, "compact"),
+        SectionSpec("algedonic triggers",                 frozenset(), {"workflow"},            5, 3, "compact"),
+        SectionSpec("verification",                       frozenset(), {"workflow","express"},  6, 5, "compact"),
+        SectionSpec("outputs",                            frozenset(), {"workflow","express"},  7, 2, "compact"),
+        SectionSpec("end-of-skill memory close",          frozenset(), {"workflow"},            8, 1, "omit"),
+        # Express-mode-only sections (authored in skill files with <!-- express --> tag):
+        # "express mode" is not in the registry — handled via per-instance heading tag (see below)
+    ]
+}
+```
+
+**Truncation priority column** (lower = first to drop): 1=End-of-Skill Memory Close, 2=Outputs, 3=Algedonic Triggers, 4=Red Flags, 5=Verification, 6=Feedback Loop, 7=Rationalizations, 8=Inputs Required, -1=Procedure (never).
+
+**Per-instance heading tags** (`<!-- workflow -->` / `<!-- express -->`) serve as overrides for sections NOT in the global registry — specifically future skill-specific sections like `## Express Mode` that will appear in only 4–5 skills. The heading tag declares the mode for that instance; SkillLoader resolves unknown-registry sections via the tag (and emits a WARNING if neither a registry entry nor a tag is present — no more silent drops).
+
+**`_assemble()` and `_truncate()` become fully data-driven:** both functions iterate `_SECTION_REGISTRY` sorted by `assembly_position` / `truncation_priority` rather than having hardcoded section-name logic. Adding a new section type requires one new `SectionSpec` entry; no other code changes.
+
+**E.3 — Boilerplate extraction + budget increase**
+
+Step 0.L, Step 0.M, and `## End-of-Skill Memory Close` body text are identical across all 48 skill files (~150 tokens each). Move canonical text to AGENT.md `## Skill Preamble` / `## Skill Close` sections; `build_agent()` injects them as Layer 2 prefix/suffix. Skill files retain a one-line stub (`*Step 0.L — Injected at Layer 2.*`) for authoring context; SkillLoader recognises the stub pattern and excludes it from budget-counted content. End-of-Skill Memory Close remains in `_SECTION_REGISTRY` as `workflow`-mode with `assembly_position=8` — but its body is a stub, so it costs ~5 tokens rather than ~50.
+
+After extraction: raise budgets — complex: 2000→2350 soft / 2400→2820 hard; standard: 1200→1400 soft / 1440→1680 hard; simple: 600→700 soft / 720→840 hard. Net effect: ~550 tokens of new content (Rationalizations + Red Flags + Verification) − ~150 tokens boilerplate savings = +400 tokens needed; budget increase covers it.
+
+**E.4 — Abbreviation definitions in Layer 1**
+
+Add one sentence to each AGENT.md `system-prompt-identity` covering genuinely undefined system terms: `S1/S2/S3` (severity levels), `EP-0..H` (entry points), `CQ` (Clarification Request), `APR` (Architecture Principles Register). ~50 tokens; always in context. This covers H2 skill body sections. Frontmatter routing fields (`invoke-when`, `invoke-never-when`) must be plain English without unexplained abbreviations — they are read by LLMs for skill selection and have no guaranteed pre-injected definitions; see Stage 5.7-D authoring rule.
+
+**Checklist:**
+- [ ] `src/agents/skill_loader.py` — replace `_INCLUDED_H2: frozenset` with `SectionSpec` dataclass + `_SECTION_REGISTRY: dict[str, SectionSpec]`; make `_assemble()` and `_truncate()` fully data-driven; parse optional `<!-- workflow -->` / `<!-- express -->` heading comments for per-instance mode override; emit WARNING on sections that are neither in registry nor tagged; add `invocation_mode` parameter to `load()` / `load_instructions()`; detect and exclude `*Injected at Layer 2.*` stubs from budget-counted content; raise budget constants
+- [ ] `src/agents/deps.py` — add `invocation_mode: Literal["workflow", "express"] = "workflow"` to `AgentDeps`
+- [ ] `src/agents/base.py` — `build_agent()`: inject Step 0.L/0.M/Memory Close boilerplate as Layer 2 prefix/suffix from AGENT.md `## Skill Preamble` / `## Skill Close`; inject express override sentence when `invocation_mode == "express"`; pass `invocation_mode` through to `SkillLoader.load_instructions()`
+- [ ] `framework/agent-runtime-spec.md §4–5` — document `SectionSpec` registry pattern, per-instance heading tag convention, mode-aware filtering, assembly order, truncation priority, budget constants, boilerplate injection contract, express override sentence
+- [ ] All 9 `AGENT.md` files — add `## Skill Preamble` and `## Skill Close` sections; add abbreviation definitions sentence to `system-prompt-identity`
+- [ ] `scripts/collapse_boilerplate.py` — bulk-collapse Step 0.L, Step 0.M, and End-of-Skill Memory Close body in all 48 skill files to single-line stubs
+- [ ] BDD tests for `skill_loader.py` — add scenarios: SectionSpec registry lookup, mode filtering (workflow/express), unknown-section warning, stub detection, budget enforcement with new caps
+- [ ] CLAUDE.md Rule 14 — replace `_INCLUDED_H2` reference with `SectionSpec` registry pattern + `invocation_mode` field
+
+**Note:** This is the highest-priority implementation item for Stage 5.7. Until the registry is in place and the new section keys are registered, the Rationalizations/Red Flags/Verification sections authored in SA-PHASE-A, DE-PHASE-G, and PM-MASTER are silently excluded from agent context.
+
+---
+
+#### 5.7-F — Measurable Thresholds + Intent→Skill-Chain Map
+
+Two lower-effort improvements:
+
+**Measurable thresholds (audit and patch):** Audit all procedure steps in complex skills for qualitative-only criteria ("sufficient", "adequate", "meaningful") and add numeric floors/ceilings where a specific threshold has architectural significance. Do not add arbitrary numbers — only where there is a defensible rationale.
+
+Targets identified:
+- SA-PHASE-A §3.5 capability overview: add floor of 3, ceiling of 7 capability clusters (already stated in Step 4 — confirm it is enforced in Verification checklist)
+- SA-PHASE-A §3.3 stakeholder register: add floor of 1 external stakeholder or explicit CQ justification
+- SA-PHASE-A §3.8 gap analysis: add minimum 1 substantive row per domain (no all-placeholder tables)
+- DE-PHASE-G Step 6: add "≥1 test case per public function/method" as floor complement to ≥80% coverage
+- DE-PHASE-G Step 9: "PR description rejected if any of the 6 required items is absent"
+
+**Intent→Skill-Chain Map:** Add an `## Intent → Skill Chain` section to `framework/agent-index.md` mapping common engagement intents to the canonical skill invocation sequence. This gives the PM routing logic a concise, scannable reference for which skills to chain together.
+
+- [ ] `framework/agent-index.md` — add `## Intent → Skill Chain` section (5–8 rows covering: EP-0 greenfield, EP-G reverse-arch, mid-engagement change request, Phase A warm-start, Phase C cold-start)
+- [ ] Complex skill procedure steps — audit and patch qualitative-only criteria with numeric floors where justified
+
+---
+
+### Stage 5.8 — Express Mode: Standalone Skill Invocation
+
+**Depends on:** Stage 5.7-E (SectionSpec registry + mode-aware loading must be in place first)
+
+Express Mode allows a single skill to be invoked against any target directory without creating an engagement, without the LangGraph orchestration graph, and without the full EventStore lifecycle. The primary use cases are:
+
+- **Reverse architecture against an existing codebase** (`SA-REV-A`, `SWA-REV-C`) — a user points the agent at a repository and gets architecture documentation out, no ADM workflow required.
+- **Point-in-time safety stamp** (`CSCO-STAMP-STPA`) — a user wants a safety analysis of a specific component without running a full sprint.
+- **Architecture vision draft** (`SA-PHASE-A`) — a user wants a first-pass architecture vision from a brief and a target directory, without a PM coordination layer.
+- **Developer code review** (`DE-PHASE-G`) — a user wants a compliance/quality assessment of a PR without a full engagement context.
+
+#### 5.8-A — What Express Mode Is (and Is Not)
+
+Express Mode **is:**
+- A thin wrapper around a single PydanticAI agent invocation (`agent.run(prompt)`)
+- Mode-aware: `invocation_mode="express"` passed in `AgentDeps`, which triggers filtered skill loading via the SectionSpec registry
+- Output-to-stdout or output-to-directory (caller's choice): no handoff events, no `workflow.db`, no `EngagementProfile`
+- A legitimate, first-class supported path — not a testing shortcut
+
+Express Mode **is not:**
+- A replacement for full engagements (no PM routing, no cross-phase continuity, no ALG signaling to other agents)
+- A simplified agent (same LLM, same skill procedure, same quality checks — just governance scaffolding removed)
+- Batch processing (one skill invocation per `express` call; chaining multiple skills is a caller responsibility)
+
+#### 5.8-B — Integration Mechanism: CLI Entry Point
+
+The integration surface is a `src/cli.py` module providing an `express` subcommand, callable as:
+
+```
+uv run python -m src.cli express \
+    --role solution-architect \
+    --skill SA-REV-A \
+    --target-dir ./my-existing-project \
+    [--output-dir ./architecture-output] \
+    [--model anthropic:claude-sonnet-4-6] \
+    [--context "key=value ..."]
+```
+
+**Flags:**
+- `--role` — agent role (`solution-architect`, `implementing-developer`, etc.); maps to `AgentRole` enum
+- `--skill` — skill ID (`SA-REV-A`, `DE-PHASE-G`, etc.); validated against SkillLoader
+- `--target-dir` — path to the target repository or codebase; passed to agent as Layer 4 context; mounted as a read-only target repo
+- `--output-dir` — optional directory for file outputs; defaults to current directory; agents that produce files write here
+- `--model` — optional LLM override; same PydanticAI `provider:model-id` format as full engagements; falls back to `llm:` block in `engagements-config.yaml` then to system default
+- `--context` — optional `key=value` pairs (repeatable) injected into the Layer 4 user prompt as YAML block
+
+**Interaction model:** The CLI produces a rich prompt from the `--context` args and `--target-dir` contents (file tree summary), invokes the agent, streams the response to stdout, and writes any produced files to `--output-dir`. The invocation is synchronous — no background processes, no event loop visible to the user.
+
+**Python API (for programmatic callers):**
+
+```python
+from src.express import run_express_skill, ExpressResult
+
+result: ExpressResult = await run_express_skill(
+    role="solution-architect",
+    skill_id="SA-REV-A",
+    target_dir=Path("./my-project"),
+    output_dir=Path("./architecture-output"),
+    extra_context={"project_name": "TaskFlow API"},
+    llm_model="anthropic:claude-sonnet-4-6",
+)
+# result.text — agent's prose response
+# result.files_written — list of Path objects written to output_dir
+# result.messages — full message history for inspection
+```
+
+`src/express.py` is a thin module (≤120 lines):
+- `ExpressResult` dataclass with `text`, `files_written`, `messages`, `skill_id`, `role`
+- `run_express_skill()` — constructs `AgentDeps(invocation_mode="express", ...)`, calls `get_agent(role)`, builds Layer 4 prompt from context, calls `agent.run()`
+- No EventStore, no `EngagementSession`, no LangGraph graph
+
+#### 5.8-C — What Changes in Agent Behavior (Mode Filtering)
+
+With `invocation_mode="express"` set in `AgentDeps`, the SectionSpec registry (Stage 5.7-E) applies the following changes to the loaded skill:
+
+**Excluded in express mode** (workflow-only sections, per registry `modes={"workflow"}`):
+- `## Algedonic Triggers` — signaling other agents is meaningless without an ALG bus
+- `## End-of-Skill Memory Close` — no MementoStore in express mode; no engagement session to close
+
+**Layer 1 behavioral override** — one sentence is appended to `system-prompt-identity` when `invocation_mode == "express"`:
+> "You are operating in Express Mode: there is no engagement session, no handoff lifecycle, and no ADM gate gating. Produce your best-effort output directly; document any critical uncertainties in your response."
+
+This single sentence is sufficient to prevent the agent from stalling on missing engagement context or waiting for governance gate signals that will never arrive.
+
+**Procedure steps receive no structural modification.** Steps that reference engagement artifacts (e.g., "check `engagement-profile.md`") become best-effort in express mode: the agent is smart enough to skip them if context is absent when its Layer 1 explicitly says to do so. Express Mode procedure variants are NOT written as separate duplicate steps — that would double the maintenance burden.
+
+**`## Express Mode` H2 section** (optional, express-only per registry): A skill file may include an `## Express Mode` section. When present, it is injected in express mode (excluded in workflow mode). It should contain only:
+1. **Minimum viable context** — what the agent absolutely needs that it cannot infer (e.g., "A populated `--target-dir` is required; invocation without one produces a speculative draft only")
+2. **Output format relaxation** — deviations from the full artifact schema that are acceptable in express output (e.g., "Entity files may omit `§display ###archimate` blocks; diagram generation is optional")
+3. **Stopping criteria** — when to stop and report rather than recurse (e.g., "If no source files are found in `--target-dir`, report as gap and exit; do not raise a CQ")
+
+NOT included in `## Express Mode` sections: duplicated procedure steps, shadow verification checklists, or alternative feedback loops. Keep it under 150 tokens.
+
+#### 5.8-D — Skill Candidates for Express Mode Sections
+
+Not all skills need an `## Express Mode` section — only those where express behavior meaningfully differs from the default. Candidates (in priority order):
+
+| Skill | Rationale |
+|---|---|
+| `SA-REV-A` | Primary express use case; target-dir is the only required input; outputs are entity files + vision doc |
+| `SWA-REV-C` | Same; outputs are application-layer entity files |
+| `SA-PHASE-A` | Vision draft from a brief; minimum viable context is a project name + domain description |
+| `CSCO-STAMP-STPA` | Safety analysis on a specific component; no prior HAZOP required for express run |
+| `DE-PHASE-G` | PR review mode: target-dir = repo, context = branch name; no AC baseline required in express |
+
+Skills that do NOT need an `## Express Mode` section (their procedure works as-is in express, with the Layer 1 override sufficient):
+- All standard/simple skills (Red Flags, Verification, Outputs are all generic enough)
+- QA-PHASE-EF/G (requires a running test suite — no structural difference in express)
+- PM-MASTER-AGILE-ADM (PM has no meaningful express mode; routing is its entire purpose)
+
+#### 5.8-E — Implementation Checklist
+
+- [ ] **`src/express.py`** — `ExpressResult` dataclass; `run_express_skill()` async function; no EventStore, no LangGraph, no EngagementSession; mounts `--target-dir` as read-only target repo via `TargetRepoManager`; uses `get_agent(role)` from `src/agents/__init__.py`
+- [ ] **`src/cli.py`** — `express` subcommand; argparse integration; streams agent output to stdout; writes files to `--output-dir`; `--model` flag cascades to `LLMConfig`; entry point: `python -m src.cli`
+- [ ] **`src/agents/deps.py`** — `invocation_mode: Literal["workflow", "express"] = "workflow"` field (prerequisite; needed by Stage 5.7-E first)
+- [ ] **`src/agents/base.py`** — Layer 1 express override sentence injected when `deps.invocation_mode == "express"`
+- [ ] **`src/agents/skill_loader.py`** — mode filtering applied via SectionSpec registry (this is the Stage 5.7-E change; 5.8 depends on it)
+- [ ] **`## Express Mode` sections** — add to the 5 candidate skills listed in 5.8-D; keep each under 150 tokens
+- [ ] **BDD tests** — `tests/agents/features/express_mode.feature`: scenarios: (1) skill loads without engagement context, (2) algedonic-triggers excluded in express, (3) end-of-skill-memory-close excluded in express, (4) express section included in express / excluded in workflow, (5) CLI invocation parses args correctly, (6) run_express_skill returns ExpressResult with text and files_written
+- [ ] **CLAUDE.md** — Stage 5.8 row added to implementation stages table
+
+**Integration constraint:** Stage 5.8 has a hard dependency on Stage 5.7-E completing first. The SectionSpec registry must be in place before any express-mode section filtering will work. Do not author `## Express Mode` sections in skill files until Stage 5.7-E is done (the sections will be silently dropped, same as Rationalizations/Red Flags/Verification today).
+
+---
+
 ### Stage 6 — Integration Testing
 
 - [ ] Define synthetic project in `tests/synthetic-project/` (small but non-trivial: a web service with a clear business requirement, a safety-relevant component, and at least one mid-project requirement change)
@@ -707,14 +1138,26 @@ Replace scattered hardcoded model strings with a structured configuration layer 
 - **Demo result (final run with `anthropic:claude-haiku-4-5-20251001`):** 6/7 checks pass — vision doc ✓, stakeholders ✓, drivers ✓, principles ✓, no boundary violations ✓, 20 artifact events ✓. Remaining: ModelVerifier [E102] `artifact-type: architecture-principle` → should be `principle`. Fix applied in prompt (task template updated); not re-run per session close constraint.
 - Total test count: 194 (10 new universal_tools BDD tests).
 
+**Completed this session (2026-04-10, continued — Stage 5.7 skill quality hardening):**
+- Stage 5.7 spec written in IMPLEMENTATION_PLAN.md; CLAUDE.md and README.md updated.
+- Catch-and-append mechanism redesigned (human-triage model, not automated classifier): `triage_learning_candidates.py` created.
+- SA-PHASE-A, DE-PHASE-G, PM-MASTER-AGILE-ADM: `invoke-never-when` frontmatter + `## Common Rationalizations (Rejected)` + `## Red Flags` + `## Verification` added.
+- Design correction: new sections (Rationalizations, Red Flags, Verification) are not yet in `_INCLUDED_H2` — they are in skill files but not injected to the agent until Stage 5.7-E is implemented.
+- Stage 5.7-E expanded: mode-aware section filtering (prerequisite for Express Mode), new section injection, boilerplate extraction, budget update, abbreviation definitions in Layer 1 — all four concerns bundled as one coordinated SkillLoader change.
+- Stage 5.8 Express Mode spec written: `src/express.py` API + `src/cli.py` `express` subcommand + mode-filtered loading design (5 skill candidates, BDD test list, dependency on Stage 5.7-E).
+- Design correction (2026-04-10): `invoke-when` / `invoke-never-when` frontmatter fields MUST be plain English — they are read by LLMs for skill selection (PM via registry tools, express mode, external use) and have no guaranteed pre-injected glossary. Previous claim ("SkillLoader parses them, LLM never sees them") was wrong. Corrected SA-PHASE-A, DE-PHASE-G, PM-MASTER; remaining 45 skills pending as part of Stage 5.7-D audit.
+
 **Immediate next items (priority order):**
-1. **Demo: 7/7 pass** — the `artifact-type: principle` prompt fix is in place; confirm on next session's first run. If ModelVerifier still sees [E102], also add `architecture-principle` as a recognised alias in `src/common/archimate_types.py` (one-liner addition to the motivation frozenset).
-2. **Demo: extend to SwA Phase C** — add a second agent step (SwA, `SwA-PHASE-C-APP` skill) after SA Phase A completes, producing application-layer entities (APP-NNN files). This gives the benchmark non-generic, cross-layer output and exposes the handoff event flow between agents.
-3. **Skill condensation** — several SA and SwA skill files exceed `complexity-class: complex` even at 2000-token budget when Layer 3 is injected. Identify the 3-5 most verbose skills and trim procedure steps to bare-minimum intent cues; move supporting detail to referenced framework docs (use `search_framework_docs` / `read_framework_doc` at runtime).
-4. **Stage 5c**: PM agent `result_type=PMDecision` end-to-end validation with a live LLM (PM routing loop without a human).
-5. **Stage 5d**: external source adapters (Confluence, Jira, git_source) + `UserUploadAdapter`.
-6. **Stage 5e**: Discovery Scan Step 0 full envelope (engagement profile read, enterprise repo, external sources, target-repo, EventStore state) for Stage 3 skill files.
-7. **Stage 5.5**: Dashboard (FastAPI + Jinja2 + SSE + Model Explorer).
+1. **Stage 5.7-E (SkillLoader rewrite)** — prerequisite for everything else in 5.7 and 5.8: new sections don't reach the agent until `_INCLUDED_H2` is replaced with SectionSpec registry; Express Mode can't be wired until mode filtering is implemented; boilerplate savings needed before remaining complex skills fit budget. Implement all four E-concerns together. Run BDD tests after.
+2. **Demo: 7/7 pass** — confirm `artifact-type: principle` prompt fix resolves the ModelVerifier [E102] error on next run.
+3. **Stage 5.7-A/B/C/D (remaining 15 complex skills)** — after Stage 5.7-E: SA-PHASE-B, SA-PHASE-H, SwA-PHASE-C-APP, SwA-PHASE-C-DATA, SwA-PHASE-D, CSCO-GATE-A/STAMP-STPA, QA-PHASE-EF/G, SwA reverse-arch, DevOps, SA reverse-arch. Standard skills get Red Flags + Verification + `invoke-never-when` only.
+4. **Stage 5.7-A pending:** `check_artifact_heuristics.py`; `learning-protocol.md §3` `protocol-skip` note; `retrospective-knowledge-capture.md` quarterly maintenance step; PR→APR rename across SA/SM/PO skill files.
+5. **Stage 5.8 Express Mode** — after Stage 5.7-E and ≥5 complex skills updated: author `## Express Mode` sections for the 5 candidate skills; implement `src/express.py` + `src/cli.py express` subcommand; BDD tests.
+6. **Demo: extend to SwA Phase C** — add a second agent step (SwA, `SwA-PHASE-C-APP` skill) after SA Phase A, producing application-layer entities; exposes handoff event flow between agents.
+7. **Stage 5c**: PM agent `result_type=PMDecision` end-to-end validation with a live LLM (PM routing loop without a human).
+8. **Stage 5d**: external source adapters (Confluence, Jira, git_source) + `UserUploadAdapter`.
+9. **Stage 5e**: Discovery Scan Step 0 full envelope for Stage 3 skill files.
+10. **Stage 5.5**: Dashboard (FastAPI + Jinja2 + SSE + Model Explorer).
 
 **Stage 5** — Python implementation. Read `framework/agent-runtime-spec.md` and `framework/orchestration-topology.md` before authoring any `src/` file. Begin with Stage 5a (EventStore completion), then 5b (agent layer). Key implementation dependencies:
 - `src/sources/target_repo.py` implements `TargetRepoManager` (multi-repo aware; see Stage 5d)

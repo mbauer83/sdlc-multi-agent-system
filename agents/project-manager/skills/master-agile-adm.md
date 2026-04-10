@@ -5,7 +5,13 @@ name: master-agile-adm
 display-name: Master Agile ADM Orchestration
 invoke-when: >
   Activated once at engagement start and remains active throughout; orchestrates all phases,
-  sprint planning, gate evaluation, CQ routing, and algedonic signal handling.
+  sprint planning, gate evaluation, clarification question routing, and fast-path escalation
+  signal handling.
+invoke-never-when: >
+  A fast-path escalation signal (algedonic signal) is active and unresolved. Halt all new
+  specialist invocations and phase transitions until the signal is resolved by Project Manager
+  adjudication or escalation to the user. Do not proceed with gate evaluation while an active
+  escalation is pending.
 trigger-phases: [Prelim, A, B, C, D, E, F, G, H, req-mgmt]
 trigger-conditions:
   - cycle.initiated
@@ -449,6 +455,20 @@ Gate: engagement-close
 
 ---
 
+## Common Rationalizations (Rejected)
+
+These are the shortcuts most likely to be rationalised during PM orchestration. Read before beginning a gate evaluation or phase transition.
+
+| Rationalization | Rejection |
+|---|---|
+| "A CQ with a reasonable assumed answer is equivalent to waiting for user response — I'll proceed with the assumption to keep the sprint moving" | Assumed answers must be explicitly recorded in the artifact's `assumptions` field with a risk flag and PM acknowledgement; they never silently replace CQ answers; the affected agent must be notified that an assumption was made before proceeding |
+| "Phase transition can proceed if no algedonic signal has been raised and no agent has cast a veto vote" | Absence of an algedonic signal is necessary but not sufficient; the phase gate checklist must be evaluated explicitly against every required artifact and G-holder vote; missing required outputs trigger a PM veto even if no agent has signalled |
+| "I can invoke multiple specialists simultaneously to reduce sprint latency" | Each specialist invocation is a separate EventStore event and LangGraph node transition; batching bypasses intermediate gate evaluation and violates the event-sourcing invariant; fan-out is only valid when the PM routing logic explicitly authorises it for parallel-safe work packages |
+
+*If a §3.1 trigger fires and the root cause is a procedural step that was bypassed, record with `error-type: protocol-skip` and document the bypassed step explicitly.*
+
+---
+
 ## Feedback Loop
 
 **Loop 1 — CQ feedback loop:**
@@ -489,6 +509,19 @@ On trigger: call `record_learning()` with `artifact-type="process"`, error-type 
 
 ---
 
+## Red Flags
+
+Observable signs the PM orchestration is going off-track — check these before gate evaluations and sprint closeout.
+
+- A phase gate evaluation is being initiated while an S1 algedonic signal is recorded as `active` in the algedonic-log — S1 signals must be resolved before any gate evaluation proceeds
+- Sprint closeout record omits agent-contribution rows for agents that were invoked during the sprint — every invoked specialist must appear in the sprint closeout summary
+- A CQ has been open for more than 2 sprint cycles without a batched delivery to the user — escalate to ALG-016
+- PM is about to emit `phase.transitioned` while a required artifact for the target phase remains at v0.x.x (draft) — required artifacts must be baselined (v1.0.0+) before the phase transition event is emitted
+- A handoff was created by a specialist but no `handoff.acknowledged` event has been emitted by the receiving agent — unacknowledged handoffs are unresolved dependencies
+- CSCO gate vote is missing from the gate record — CSCO must cast a vote (approval or veto) for every phase gate; absence is not silence, it is a blocked gate
+
+---
+
 ## Algedonic Triggers
 
 | ID | Condition | Action |
@@ -502,6 +535,29 @@ On trigger: call `record_learning()` with `artifact-type="process"`, error-type 
 | ALG-016 | User CQ unanswered 2+ sprint cycles | Consolidate and re-escalate as highest-priority user interaction |
 
 The PM also receives and routes all algedonics raised by other agents. This skill does not raise ALG-001 through ALG-004 (safety domain — those are CSCO's triggers) but must act on them as the routing authority.
+
+---
+
+## Verification
+
+This section is the invariant gate for PM-controlled transition events. Apply at sprint closeout and phase gate evaluation.
+
+**Per sprint closeout:**
+- [ ] Sprint kickoff record and sprint closeout record both created and baselined
+- [ ] All Work Packages assigned this sprint have a recorded outcome (baselined, deferred, or escalated)
+- [ ] All open CQs are either resolved, carried forward with a documented rationale, or escalated via ALG-016
+- [ ] All algedonic signals from this sprint are resolved (or formally carried forward with PM-recorded blocker status)
+- [ ] Sprint review interaction completed (user notified; approval received or review window expired)
+- [ ] `sprint.close` event emitted; YAML export committed to `workflow-events/`
+
+**Per phase gate evaluation:**
+- [ ] Gate record includes all G-holder votes; no vote is absent without a documented reason
+- [ ] CSCO vote is present (approval or veto) — absent CSCO vote blocks the gate, it is not treated as implicit approval
+- [ ] All required artifacts for the target phase exist at v1.0.0+; draft artifacts trigger a PM veto
+- [ ] No active S1 algedonic signal is recorded at time of gate evaluation
+- [ ] Gate outcome (`gate.evaluated`) emitted; if passed, `phase.transitioned` emitted; EventStore snapshot triggered
+- [ ] Learning entry recorded if a §3.1 trigger was met (gate veto, feedback revision, algedonic signal, avoidable CQ)
+- [ ] Memento state saved (`End-of-Skill Memory Close`)
 
 ---
 
