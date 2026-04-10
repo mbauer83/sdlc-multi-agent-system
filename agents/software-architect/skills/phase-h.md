@@ -8,6 +8,9 @@ invoke-when: >
   following SA's business-layer CR; or a phase.return-triggered event identifies AA, DA,
   TA, or AC as affected artifacts. SwA is co-primary for Phase H: SA owns the
   business/motivation/strategy-layer CR; SwA owns the application/technology-layer CR.
+invoke-never-when: >
+  <!-- TODO: write plain-English condition that prevents misrouting to this skill -->
+
 trigger-phases: [H]
 trigger-conditions:
   - handoff.created (handoff-type=phase-h-application-technology-track, to=software-architect)
@@ -298,6 +301,15 @@ After completing the Technology Impact Assessment (Steps 2–3), SwA produces it
 
 ---
 
+
+## Common Rationalizations (Rejected)
+
+| Rationalization | Rejection |
+|---|---|
+<!-- TODO: add 2-3 skill-specific rationalization rows -->
+| "I can skip discovery because I already know the context from prior sessions" | Discovery is mandatory per Step 0; any skip must be recorded as a PM-accepted assumption with a risk flag; silent assumptions are governance violations |
+| "A CQ with a reasonable assumed answer is equivalent to waiting — I'll proceed with the assumption" | Assumed answers must be explicitly recorded in the artifact with a risk flag; they never silently replace CQ answers |
+
 ## Feedback Loop
 
 ### SwA CR ↔ SA CR Alignment Loop (SwA ↔ SA)
@@ -336,7 +348,18 @@ On trigger: call `record_learning()` with `artifact-type="change-record"`, error
 
 ---
 
-## Algedonic Triggers
+
+## Red Flags
+
+Pre-escalation observable indicators. Raise an algedonic signal or CQ if two or
+more of these are true simultaneously:
+
+<!-- TODO: add 5-7 role-specific observable indicators for this skill -->
+- Outputs section of the primary artifact is blank after completing the procedure
+- Any required input artifact is missing and no CQ has been raised
+- Feedback loop iteration count has reached the maximum with no resolution
+
+## Algedonic Triggers <!-- workflow -->
 
 | ID | Condition | Severity | Action |
 |---|---|---|---|
@@ -350,6 +373,20 @@ On trigger: call `record_learning()` with `artifact-type="change-record"`, error
 | ALG-018 | SwA detects the change was implemented without a formal Change Record (bypass of Phase H procedure) | S2 | Emit to PM; require retroactive CR production by SA; AC must be revised retroactively before sprint can close |
 
 ---
+
+
+## Verification
+
+Before emitting the completion event for this skill, confirm:
+
+<!-- TODO: extend with skill-specific checklist items -->
+- [ ] All blocking CQs resolved or documented as PM-accepted assumptions
+- [ ] Primary output artifact exists at the required minimum version
+- [ ] CSCO sign-off recorded where required (`csco-sign-off: true`)
+- [ ] All required EventStore events emitted in this invocation
+- [ ] Handoffs to downstream agents created
+- [ ] Learning entries recorded if a §3.1 trigger was met this invocation
+- [ ] Memento state saved (End-of-Skill Memory Close)
 
 ## Outputs
 
@@ -367,7 +404,7 @@ On trigger: call `record_learning()` with `artifact-type="change-record"`, error
 
 ---
 
-## End-of-Skill Memory Close
+## End-of-Skill Memory Close <!-- workflow -->
 
 After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
 

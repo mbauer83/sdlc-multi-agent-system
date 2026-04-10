@@ -6,6 +6,9 @@ display-name: Requirements Management (Cross-Phase)
 invoke-when: >
   Activated at every phase boundary (A, B, C, H) to verify traceability, or immediately when
   PO baselines a new RR version and SA-owned artifacts may be affected.
+invoke-never-when: >
+  <!-- TODO: write plain-English condition that prevents misrouting to this skill -->
+
 trigger-phases: [req-mgmt, A, B, C, H]
 trigger-conditions:
   - artifact.baselined (artifact-type=requirements-register)
@@ -208,7 +211,18 @@ On trigger: call `record_learning()` with `artifact-type="requirements-register"
 
 ---
 
-## Algedonic Triggers
+
+## Red Flags
+
+Pre-escalation observable indicators. Raise an algedonic signal or CQ if two or
+more of these are true simultaneously:
+
+<!-- TODO: add 5-7 role-specific observable indicators for this skill -->
+- Outputs section of the primary artifact is blank after completing the procedure
+- Any required input artifact is missing and no CQ has been raised
+- Feedback loop iteration count has reached the maximum with no resolution
+
+## Algedonic Triggers <!-- workflow -->
 
 | ID | Condition in This Skill | Severity | Action |
 |---|---|---|---|
@@ -216,6 +230,20 @@ On trigger: call `record_learning()` with `artifact-type="requirements-register"
 | ALG-016 | A requirement change that significantly expands the scope of SA's architecture work (adds new capability domains, requires new Phase B or Phase C artifacts) has been introduced via RR without a corresponding PM scope gate decision | S2 | Emit `alg.raised`; PM performs scope gate assessment; SA does not begin architecture work for the expanded scope until PM confirms the scope change and plans the corresponding sprints |
 
 ---
+
+
+## Verification
+
+Before emitting the completion event for this skill, confirm:
+
+<!-- TODO: extend with skill-specific checklist items -->
+- [ ] All blocking CQs resolved or documented as PM-accepted assumptions
+- [ ] Primary output artifact exists at the required minimum version
+- [ ] CSCO sign-off recorded where required (`csco-sign-off: true`)
+- [ ] All required EventStore events emitted in this invocation
+- [ ] Handoffs to downstream agents created
+- [ ] Learning entries recorded if a §3.1 trigger was met this invocation
+- [ ] Memento state saved (End-of-Skill Memory Close)
 
 ## Outputs
 
@@ -228,7 +256,7 @@ On trigger: call `record_learning()` with `artifact-type="requirements-register"
 
 ---
 
-## End-of-Skill Memory Close
+## End-of-Skill Memory Close <!-- workflow -->
 
 After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
 

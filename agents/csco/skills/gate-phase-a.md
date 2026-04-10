@@ -7,6 +7,9 @@ invoke-when: >
   SA produces Architecture Vision (AV) at version 1.0.0 (artifact.baselined emitted) or SA
   emits handoff.created requesting CSCO safety review of the AV Safety Envelope draft. Also
   activated when SA requires csco-sign-off on AV §3.7 before Phase A gate can close.
+invoke-never-when: >
+  <!-- TODO: write plain-English condition that prevents misrouting to this skill -->
+
 trigger-phases: [A]
 trigger-conditions:
   - artifact.baselined from SA (artifact_type=architecture-vision)
@@ -303,13 +306,38 @@ On trigger: call `record_learning()` with `artifact-type="safety-constraint-over
 
 ---
 
-## Algedonic Triggers
+
+## Red Flags
+
+Pre-escalation observable indicators. Raise an algedonic signal or CQ if two or
+more of these are true simultaneously:
+
+<!-- TODO: add 5-7 role-specific observable indicators for this skill -->
+- Outputs section of the primary artifact is blank after completing the procedure
+- Any required input artifact is missing and no CQ has been raised
+- Feedback loop iteration count has reached the maximum with no resolution
+
+## Algedonic Triggers <!-- workflow -->
 
 - **ALG-001 (S1 — Safety-Critical):** The AV scope requires a safety constraint that cannot be satisfied by any known architecture approach — for example, a safety-critical system (physical control, life-critical data) with no proposed isolation mechanism and no feasible isolation path identified by CSCO's analysis. Raised immediately with concurrent escalation to CSCO (self) and PM. Phase A work halts on the affected scope until a feasible safety architecture is proposed.
 - **ALG-012 (S1 — Governance Violation):** SA attempts to baseline AV at 1.0.0 and proceed to Phase B without CSCO's Phase A gate sign-off having been cast. Raised immediately to PM with concurrent notification. Phase B work does not begin.
 - **ALG-017 (S1 — Knowledge Gap):** The safety classification of the system cannot be determined from the AV or any available source, and the engagement domain appears to be regulated or safety-relevant. Raised to user via PM; CSCO concurrent; halt affected Phase A gate work. The gate remains open until classification is confirmed.
 
 ---
+
+
+## Verification
+
+Before emitting the completion event for this skill, confirm:
+
+<!-- TODO: extend with skill-specific checklist items -->
+- [ ] All blocking CQs resolved or documented as PM-accepted assumptions
+- [ ] Primary output artifact exists at the required minimum version
+- [ ] CSCO sign-off recorded where required (`csco-sign-off: true`)
+- [ ] All required EventStore events emitted in this invocation
+- [ ] Handoffs to downstream agents created
+- [ ] Learning entries recorded if a §3.1 trigger was met this invocation
+- [ ] Memento state saved (End-of-Skill Memory Close)
 
 ## Outputs
 
@@ -325,7 +353,7 @@ On trigger: call `record_learning()` with `artifact-type="safety-constraint-over
 
 ---
 
-## End-of-Skill Memory Close
+## End-of-Skill Memory Close <!-- workflow -->
 
 After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
 

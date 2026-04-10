@@ -7,6 +7,9 @@ invoke-when: >
   Referenced by all CSCO gate and incident skills as the master methodology document.
   Not directly invoked by phase events — loaded as a dependency by CSCO-GATE-A,
   CSCO-GATE-B, CSCO-GATE-C, CSCO-GATE-D, CSCO-GATE-G, CSCO-GATE-H, and CSCO-INCIDENT.
+invoke-never-when: >
+  <!-- TODO: write plain-English condition that prevents misrouting to this skill -->
+
 trigger-phases: [A, B, C, D, G, H]
 trigger-conditions:
   - dependency of CSCO-GATE-A
@@ -270,6 +273,15 @@ When a loss scenario does not have an existing SCO constraint that mitigates it,
 
 ---
 
+
+## Common Rationalizations (Rejected)
+
+| Rationalization | Rejection |
+|---|---|
+<!-- TODO: add 2-3 skill-specific rationalization rows -->
+| "I can skip discovery because I already know the context from prior sessions" | Discovery is mandatory per Step 0; any skip must be recorded as a PM-accepted assumption with a risk flag; silent assumptions are governance violations |
+| "A CQ with a reasonable assumed answer is equivalent to waiting — I'll proceed with the assumption" | Assumed answers must be explicitly recorded in the artifact with a risk flag; they never silently replace CQ answers |
+
 ## Safety Constraint Overlay (SCO) Structure and Update Procedure
 
 The SCO is the master safety artifact. It is updated at each phase and each significant change event.
@@ -417,7 +429,18 @@ On trigger: call `record_learning()` with `artifact-type="safety-constraint-over
 
 ---
 
-## Algedonic Triggers
+
+## Red Flags
+
+Pre-escalation observable indicators. Raise an algedonic signal or CQ if two or
+more of these are true simultaneously:
+
+<!-- TODO: add 5-7 role-specific observable indicators for this skill -->
+- Outputs section of the primary artifact is blank after completing the procedure
+- Any required input artifact is missing and no CQ has been raised
+- Feedback loop iteration count has reached the maximum with no resolution
+
+## Algedonic Triggers <!-- workflow -->
 
 This is a methodology reference document. Algedonic triggers for specific conditions are defined in each gate skill and in `skills/incident-response.md`. The following triggers apply to all CSCO safety analysis work regardless of phase:
 
@@ -426,6 +449,20 @@ This is a methodology reference document. Algedonic triggers for specific condit
 - **ALG-017 (S1 — Knowledge Gap):** A safety-domain knowledge gap exists where an assumption cannot safely be made — for example, the regulatory jurisdiction is unknown for a system that appears to be safety-critical. Raised to user via PM; CSCO concurrent; halt affected phase work.
 
 ---
+
+
+## Verification
+
+Before emitting the completion event for this skill, confirm:
+
+<!-- TODO: extend with skill-specific checklist items -->
+- [ ] All blocking CQs resolved or documented as PM-accepted assumptions
+- [ ] Primary output artifact exists at the required minimum version
+- [ ] CSCO sign-off recorded where required (`csco-sign-off: true`)
+- [ ] All required EventStore events emitted in this invocation
+- [ ] Handoffs to downstream agents created
+- [ ] Learning entries recorded if a §3.1 trigger was met this invocation
+- [ ] Memento state saved (End-of-Skill Memory Close)
 
 ## Outputs
 
@@ -438,7 +475,7 @@ This is a methodology reference document. Algedonic triggers for specific condit
 
 ---
 
-## End-of-Skill Memory Close
+## End-of-Skill Memory Close <!-- workflow -->
 
 After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
 

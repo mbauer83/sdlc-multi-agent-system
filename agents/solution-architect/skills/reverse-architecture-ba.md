@@ -7,6 +7,9 @@ invoke-when: >
   EP-G warm-start; motivation/strategy entity files exist (from SA-REV-PRELIM-A or prior warm-start)
   but no business-layer entities (ACT, ROL, BPR, BFN, BSV, BOB, BEV, BCO, BIF, PRD) exist; or
   PM emits handoff (handoff_type=ep-g-sa-prelim-a-complete) and SA-REV-BA has not yet run.
+invoke-never-when: >
+  <!-- TODO: write plain-English condition that prevents misrouting to this skill -->
+
 trigger-phases: [B]
 trigger-conditions:
   - handoff.created (from PM, handoff_type=ep-g-sa-prelim-a-complete)
@@ -269,6 +272,15 @@ Frontmatter: `artifact-type: domain-overview`, `domain: business`, `version: 0.1
 
 ---
 
+
+## Common Rationalizations (Rejected)
+
+| Rationalization | Rejection |
+|---|---|
+<!-- TODO: add 2-3 skill-specific rationalization rows -->
+| "I can skip discovery because I already know the context from prior sessions" | Discovery is mandatory per Step 0; any skip must be recorded as a PM-accepted assumption with a risk flag; silent assumptions are governance violations |
+| "A CQ with a reasonable assumed answer is equivalent to waiting — I'll proceed with the assumption" | Assumed answers must be explicitly recorded in the artifact with a risk flag; they never silently replace CQ answers |
+
 ## Feedback Loop
 
 ### User Confirmation Loop (Business Process Accuracy)
@@ -301,7 +313,18 @@ On trigger: call `record_learning()` with `artifact-type="business-entity"`, err
 
 ---
 
-## Algedonic Triggers
+
+## Red Flags
+
+Pre-escalation observable indicators. Raise an algedonic signal or CQ if two or
+more of these are true simultaneously:
+
+<!-- TODO: add 5-7 role-specific observable indicators for this skill -->
+- Outputs section of the primary artifact is blank after completing the procedure
+- Any required input artifact is missing and no CQ has been raised
+- Feedback loop iteration count has reached the maximum with no resolution
+
+## Algedonic Triggers <!-- workflow -->
 
 | ID | Condition in This Skill | Severity | Action |
 |---|---|---|---|
@@ -312,6 +335,20 @@ On trigger: call `record_learning()` with `artifact-type="business-entity"`, err
 | ALG-008 | Application-layer reverse architecture skill (not yet authored) begins consuming BPR entities before BA warm-start confidence is assessed as MEDIUM or higher | S2 | Emit `alg.raised`; PM holds application-layer reconstruction |
 
 ---
+
+
+## Verification
+
+Before emitting the completion event for this skill, confirm:
+
+<!-- TODO: extend with skill-specific checklist items -->
+- [ ] All blocking CQs resolved or documented as PM-accepted assumptions
+- [ ] Primary output artifact exists at the required minimum version
+- [ ] CSCO sign-off recorded where required (`csco-sign-off: true`)
+- [ ] All required EventStore events emitted in this invocation
+- [ ] Handoffs to downstream agents created
+- [ ] Learning entries recorded if a §3.1 trigger was met this invocation
+- [ ] Memento state saved (End-of-Skill Memory Close)
 
 ## Outputs
 
@@ -328,7 +365,7 @@ On trigger: call `record_learning()` with `artifact-type="business-entity"`, err
 
 ---
 
-## End-of-Skill Memory Close
+## End-of-Skill Memory Close <!-- workflow -->
 
 After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
 

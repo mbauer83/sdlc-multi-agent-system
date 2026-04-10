@@ -29,8 +29,9 @@ log = logging.getLogger(__name__)
 def read_artifact(ctx: RunContext[AgentDeps], artifact_id: str, mode: str = "summary") -> str:
     """
     Read an artifact by its artifact-id.
-    mode="summary" → frontmatter + first two §content sections (default).
-    mode="full"    → entire file content.
+    mode="summary" → structured metadata + content_snippet (first 400 chars of §content).
+    mode="full"    → structured metadata + full §content section + display_blocks + extra.
+                     Never truncates the §content body; use this when the full narrative is needed.
     """
     try:
         repo = _model_repo(ctx)

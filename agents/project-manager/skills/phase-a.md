@@ -6,6 +6,9 @@ display-name: Phase A Coordination — Architecture Vision
 invoke-when: >
   Entry point is assessed and PM must run the Scoping Interview (EP-0) or validate warm-start
   artifacts (EP-A/B); coordinates SA through Phase A and evaluates the A→B gate.
+invoke-never-when: >
+  <!-- TODO: write plain-English condition that prevents misrouting to this skill -->
+
 trigger-phases: [Prelim, A]
 trigger-conditions:
   - cycle.initiated (entry-point=EP-0)
@@ -171,7 +174,18 @@ On trigger: call `record_learning()` with `artifact-type="process"`, error-type 
 
 ---
 
-## Algedonic Triggers
+
+## Red Flags
+
+Pre-escalation observable indicators. Raise an algedonic signal or CQ if two or
+more of these are true simultaneously:
+
+<!-- TODO: add 5-7 role-specific observable indicators for this skill -->
+- Outputs section of the primary artifact is blank after completing the procedure
+- Any required input artifact is missing and no CQ has been raised
+- Feedback loop iteration count has reached the maximum with no resolution
+
+## Algedonic Triggers <!-- workflow -->
 
 | ID | Condition | Action |
 |---|---|---|
@@ -181,6 +195,20 @@ On trigger: call `record_learning()` with `artifact-type="process"`, error-type 
 | ALG-017 | Safety-domain CQ unanswered; assumption cannot safely be made | Halt safety-relevant phase work; escalate to user and CSCO |
 
 ---
+
+
+## Verification
+
+Before emitting the completion event for this skill, confirm:
+
+<!-- TODO: extend with skill-specific checklist items -->
+- [ ] All blocking CQs resolved or documented as PM-accepted assumptions
+- [ ] Primary output artifact exists at the required minimum version
+- [ ] CSCO sign-off recorded where required (`csco-sign-off: true`)
+- [ ] All required EventStore events emitted in this invocation
+- [ ] Handoffs to downstream agents created
+- [ ] Learning entries recorded if a §3.1 trigger was met this invocation
+- [ ] Memento state saved (End-of-Skill Memory Close)
 
 ## Outputs
 
@@ -194,7 +222,7 @@ On trigger: call `record_learning()` with `artifact-type="process"`, error-type 
 
 ---
 
-## End-of-Skill Memory Close
+## End-of-Skill Memory Close <!-- workflow -->
 
 After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
 

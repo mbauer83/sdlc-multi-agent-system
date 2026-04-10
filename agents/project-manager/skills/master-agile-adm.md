@@ -522,7 +522,7 @@ Observable signs the PM orchestration is going off-track — check these before 
 
 ---
 
-## Algedonic Triggers
+## Algedonic Triggers <!-- workflow -->
 
 | ID | Condition | Action |
 |---|---|---|
@@ -578,7 +578,7 @@ This section is the invariant gate for PM-controlled transition events. Apply at
 
 ---
 
-## End-of-Skill Memory Close
+## End-of-Skill Memory Close <!-- workflow -->
 
 After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
 

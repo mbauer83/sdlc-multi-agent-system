@@ -139,7 +139,10 @@ def build_agent(
         try:
             return (
                 "\n\n## Active Skill\n"
-                + skill_loader.load_instructions(deps.active_skill_id)
+                + skill_loader.load_instructions(
+                    deps.active_skill_id,
+                    invocation_mode=deps.invocation_mode,
+                )
             )
         except Exception as exc:  # noqa: BLE001
             return f"\n\n[Skill load failed: {exc}]"

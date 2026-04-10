@@ -9,6 +9,9 @@ invoke-when: >
   and data-governance safety, performs STAMP Level 2 analysis, authors SCO Phase C update,
   and casts the C→D gate vote. Review is triggered by whichever of AA or DA baselines last;
   CSCO awaits both before casting the gate vote.
+invoke-never-when: >
+  <!-- TODO: write plain-English condition that prevents misrouting to this skill -->
+
 trigger-phases: [C]
 trigger-conditions:
   - artifact.baselined from SwA (artifact_type=application-architecture) AND artifact.baselined from SwA (artifact_type=data-architecture) — both required
@@ -275,13 +278,38 @@ On trigger: call `record_learning()` with `artifact-type="safety-constraint-over
 
 ---
 
-## Algedonic Triggers
+
+## Red Flags
+
+Pre-escalation observable indicators. Raise an algedonic signal or CQ if two or
+more of these are true simultaneously:
+
+<!-- TODO: add 5-7 role-specific observable indicators for this skill -->
+- Outputs section of the primary artifact is blank after completing the procedure
+- Any required input artifact is missing and no CQ has been raised
+- Feedback loop iteration count has reached the maximum with no resolution
+
+## Algedonic Triggers <!-- workflow -->
 
 - **ALG-001 (S1 — Safety-Critical):** A safety-critical application component (one that controls a safety-critical process or handles safety-critical data) has no isolation mechanism described in the AA, and no feasible isolation approach can be identified at the architecture level. Raised immediately to PM and user. Phase D does not begin until the AA is revised to reflect an isolation approach.
 - **ALG-001 (S1 — Safety-Critical):** A data entity classified as Restricted in the DA has no access control constraint in the SCO and no access control requirement in the AA Interface Catalog, and the entity is accessible via at least one external-facing interface. Raised immediately to PM.
 - **ALG-010 (S3 — Inter-Agent Deadlock):** After two iterations, CSCO and SA cannot agree on data entity classification, interface authentication requirements, or component isolation scope. Raised to PM for adjudication.
 
 ---
+
+
+## Verification
+
+Before emitting the completion event for this skill, confirm:
+
+<!-- TODO: extend with skill-specific checklist items -->
+- [ ] All blocking CQs resolved or documented as PM-accepted assumptions
+- [ ] Primary output artifact exists at the required minimum version
+- [ ] CSCO sign-off recorded where required (`csco-sign-off: true`)
+- [ ] All required EventStore events emitted in this invocation
+- [ ] Handoffs to downstream agents created
+- [ ] Learning entries recorded if a §3.1 trigger was met this invocation
+- [ ] Memento state saved (End-of-Skill Memory Close)
 
 ## Outputs
 
@@ -295,7 +323,7 @@ On trigger: call `record_learning()` with `artifact-type="safety-constraint-over
 
 ---
 
-## End-of-Skill Memory Close
+## End-of-Skill Memory Close <!-- workflow -->
 
 After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
 

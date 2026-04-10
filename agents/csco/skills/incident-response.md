@@ -10,6 +10,9 @@ invoke-when: >
   when PM reports a production incident that may have safety or compliance implications
   (handoff.created from PM with handoff_type=incident-report). This skill takes
   priority over all other CSCO skills — it is the CSCO's emergency response procedure.
+invoke-never-when: >
+  <!-- TODO: write plain-English condition that prevents misrouting to this skill -->
+
 trigger-phases: [A, B, C, D, G, H]
 trigger-conditions:
   - algedonic.raised (category=S1 or S2) routed to CSCO
@@ -193,6 +196,15 @@ After the immediate incident is contained and remediated:
 
 ---
 
+
+## Common Rationalizations (Rejected)
+
+| Rationalization | Rejection |
+|---|---|
+<!-- TODO: add 2-3 skill-specific rationalization rows -->
+| "I can skip discovery because I already know the context from prior sessions" | Discovery is mandatory per Step 0; any skip must be recorded as a PM-accepted assumption with a risk flag; silent assumptions are governance violations |
+| "A CQ with a reasonable assumed answer is equivalent to waiting — I'll proceed with the assumption" | Assumed answers must be explicitly recorded in the artifact with a risk flag; they never silently replace CQ answers |
+
 ## Feedback Loop
 
 This skill does not have a standard iterative feedback loop — it is an emergency response procedure. However:
@@ -224,13 +236,38 @@ On trigger: call `record_learning()` with `artifact-type="safety-constraint-over
 
 ---
 
-## Algedonic Triggers
+
+## Red Flags
+
+Pre-escalation observable indicators. Raise an algedonic signal or CQ if two or
+more of these are true simultaneously:
+
+<!-- TODO: add 5-7 role-specific observable indicators for this skill -->
+- Outputs section of the primary artifact is blank after completing the procedure
+- Any required input artifact is missing and no CQ has been raised
+- Feedback loop iteration count has reached the maximum with no resolution
+
+## Algedonic Triggers <!-- workflow -->
 
 - **ALG-001 (S1 — Safety-Critical, re-escalation):** Containment action directed in Step 2 is not confirmed within the deadline (30 minutes S1, 2 hours S2), or new evidence reveals the incident scope is larger than initially assessed and the current containment is insufficient.
 - **ALG-012 (S1 — Governance Violation):** Evidence in the incident record reveals that the incident was caused by a governance bypass (a deployment without gate review, a constraint override without user acceptance, a CSCO gate vote ignored). This is a governance failure, not just an operational incident.
 - **ALG-017 (S1 — Knowledge Gap):** The incident reveals a safety hazard that was not identified in any prior STAMP analysis phase and cannot be contained without information that is not currently available (e.g., the system is processing data whose classification is unknown, or an external dependency's failure mode is unknown). CSCO halts further action and raises ALG-017 for user input before proceeding.
 
 ---
+
+
+## Verification
+
+Before emitting the completion event for this skill, confirm:
+
+<!-- TODO: extend with skill-specific checklist items -->
+- [ ] All blocking CQs resolved or documented as PM-accepted assumptions
+- [ ] Primary output artifact exists at the required minimum version
+- [ ] CSCO sign-off recorded where required (`csco-sign-off: true`)
+- [ ] All required EventStore events emitted in this invocation
+- [ ] Handoffs to downstream agents created
+- [ ] Learning entries recorded if a §3.1 trigger was met this invocation
+- [ ] Memento state saved (End-of-Skill Memory Close)
 
 ## Outputs
 
@@ -245,7 +282,7 @@ On trigger: call `record_learning()` with `artifact-type="safety-constraint-over
 
 ---
 
-## End-of-Skill Memory Close
+## End-of-Skill Memory Close <!-- workflow -->
 
 After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
 

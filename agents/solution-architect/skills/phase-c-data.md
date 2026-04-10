@@ -7,6 +7,9 @@ invoke-when: >
   SwA has produced a Data Architecture draft (0.x.x) and requests SA traceability
   review; or SwA has baselined DA at 1.0.0 and SA has not yet cast consulting acknowledgement.
   This skill is consulting — SA is not the primary author of DA; SwA is.
+invoke-never-when: >
+  <!-- TODO: write plain-English condition that prevents misrouting to this skill -->
+
 trigger-phases: [C]
 trigger-conditions:
   - handoff.created from SwA (handoff-type=phase-C-sa-traceability-review, artifact-type=data-architecture)
@@ -208,7 +211,18 @@ On trigger: call `record_learning()` with `artifact-type="data-architecture"`, e
 
 ---
 
-## Algedonic Triggers
+
+## Red Flags
+
+Pre-escalation observable indicators. Raise an algedonic signal or CQ if two or
+more of these are true simultaneously:
+
+<!-- TODO: add 5-7 role-specific observable indicators for this skill -->
+- Outputs section of the primary artifact is blank after completing the procedure
+- Any required input artifact is missing and no CQ has been raised
+- Feedback loop iteration count has reached the maximum with no resolution
+
+## Algedonic Triggers <!-- workflow -->
 
 | ID | Condition in This Skill | Severity | Action |
 |---|---|---|---|
@@ -217,6 +231,20 @@ On trigger: call `record_learning()` with `artifact-type="data-architecture"`, e
 | ALG-010 | Two review iterations exhausted with D1, D3, or D4 findings unresolved | S3 | Emit `alg.raised`; PM adjudicates |
 
 ---
+
+
+## Verification
+
+Before emitting the completion event for this skill, confirm:
+
+<!-- TODO: extend with skill-specific checklist items -->
+- [ ] All blocking CQs resolved or documented as PM-accepted assumptions
+- [ ] Primary output artifact exists at the required minimum version
+- [ ] CSCO sign-off recorded where required (`csco-sign-off: true`)
+- [ ] All required EventStore events emitted in this invocation
+- [ ] Handoffs to downstream agents created
+- [ ] Learning entries recorded if a §3.1 trigger was met this invocation
+- [ ] Memento state saved (End-of-Skill Memory Close)
 
 ## Outputs
 
@@ -227,7 +255,7 @@ On trigger: call `record_learning()` with `artifact-type="data-architecture"`, e
 
 ---
 
-## End-of-Skill Memory Close
+## End-of-Skill Memory Close <!-- workflow -->
 
 After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
 

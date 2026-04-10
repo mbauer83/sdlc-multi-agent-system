@@ -6,6 +6,9 @@ display-name: Phase G — Test Execution and Compliance Assessment
 invoke-when: >
   Each Solution Sprint starts and QA has received a PR-ready handoff from DE and a Deployment
   Record confirming staging deployment; QA executes tests and produces Test Execution Reports.
+invoke-never-when: >
+  <!-- TODO: write plain-English condition that prevents misrouting to this skill -->
+
 trigger-phases: [G]
 trigger-conditions:
   - sprint.started (phase=G, sprint-type=solution)
@@ -187,6 +190,15 @@ At the conclusion of all Solution Sprints:
 
 ---
 
+
+## Common Rationalizations (Rejected)
+
+| Rationalization | Rejection |
+|---|---|
+<!-- TODO: add 2-3 skill-specific rationalization rows -->
+| "I can skip discovery because I already know the context from prior sessions" | Discovery is mandatory per Step 0; any skip must be recorded as a PM-accepted assumption with a risk flag; silent assumptions are governance violations |
+| "A CQ with a reasonable assumed answer is equivalent to waiting — I'll proceed with the assumption" | Assumed answers must be explicitly recorded in the artifact with a risk flag; they never silently replace CQ answers |
+
 ## Feedback Loop
 
 ### Feedback Loop A: Acceptance Criterion Clarification (QA ↔ SwA)
@@ -228,7 +240,18 @@ On trigger: call `record_learning()` with `artifact-type="test-strategy"`, error
 
 ---
 
-## Algedonic Triggers
+
+## Red Flags
+
+Pre-escalation observable indicators. Raise an algedonic signal or CQ if two or
+more of these are true simultaneously:
+
+<!-- TODO: add 5-7 role-specific observable indicators for this skill -->
+- Outputs section of the primary artifact is blank after completing the procedure
+- Any required input artifact is missing and no CQ has been raised
+- Feedback loop iteration count has reached the maximum with no resolution
+
+## Algedonic Triggers <!-- workflow -->
 
 | ID | Condition | Severity | Action |
 |---|---|---|---|
@@ -239,6 +262,20 @@ On trigger: call `record_learning()` with `artifact-type="test-strategy"`, error
 | ALG-013 | Test environment unavailable for ≥ 1 sprint cycle, blocking all Phase G execution | S1 | Emit to PM; PM routes to DevOps; sprint cannot close without test evidence |
 
 ---
+
+
+## Verification
+
+Before emitting the completion event for this skill, confirm:
+
+<!-- TODO: extend with skill-specific checklist items -->
+- [ ] All blocking CQs resolved or documented as PM-accepted assumptions
+- [ ] Primary output artifact exists at the required minimum version
+- [ ] CSCO sign-off recorded where required (`csco-sign-off: true`)
+- [ ] All required EventStore events emitted in this invocation
+- [ ] Handoffs to downstream agents created
+- [ ] Learning entries recorded if a §3.1 trigger was met this invocation
+- [ ] Memento state saved (End-of-Skill Memory Close)
 
 ## Outputs
 
@@ -251,7 +288,7 @@ On trigger: call `record_learning()` with `artifact-type="test-strategy"`, error
 
 ---
 
-## End-of-Skill Memory Close
+## End-of-Skill Memory Close <!-- workflow -->
 
 After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
 

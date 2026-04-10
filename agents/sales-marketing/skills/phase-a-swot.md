@@ -7,6 +7,9 @@ invoke-when: >
   Phase A Architecture Sprint starts (sprint.started emitted for Phase A) after or concurrent
   with SM-PHASE-A-MR; Market Analysis draft (MA-nnn, version >= 0.1.0) is available as input;
   or warm-start at EP-A or EP-B. Produces SWOT Analysis artifact and hands off to SA and PO.
+invoke-never-when: >
+  <!-- TODO: write plain-English condition that prevents misrouting to this skill -->
+
 trigger-phases: [A]
 trigger-conditions:
   - sprint.started (phase=A)
@@ -409,7 +412,7 @@ On trigger: call `record_learning()` with `artifact-type="architecture-vision"`,
 
 ---
 
-## Algedonic Triggers
+## Algedonic Triggers <!-- workflow -->
 
 | ID | Condition in This Skill | Severity | Action |
 |---|---|---|---|
@@ -431,7 +434,7 @@ On trigger: call `record_learning()` with `artifact-type="architecture-vision"`,
 
 ---
 
-## End-of-Skill Memory Close
+## End-of-Skill Memory Close <!-- workflow -->
 
 After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
 

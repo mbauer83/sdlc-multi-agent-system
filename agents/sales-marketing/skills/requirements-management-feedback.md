@@ -8,6 +8,9 @@ invoke-when: >
   independently identifies a significant change in the competitive landscape post-Phase-A
   that may render Market Analysis demand signals obsolete or introduce new uncovered signals;
   or PM activates SM at EP-H when a Change Record affects market-facing functionality.
+invoke-never-when: >
+  <!-- TODO: write plain-English condition that prevents misrouting to this skill -->
+
 trigger-phases: [req-mgmt, H]
 trigger-conditions:
   - handoff.created (from PM instructing SM to review RR)
@@ -318,7 +321,7 @@ On trigger: call `record_learning()` with `artifact-type="requirements-register"
 
 ---
 
-## Algedonic Triggers
+## Algedonic Triggers <!-- workflow -->
 
 | ID | Condition in This Skill | Severity | Action |
 |---|---|---|---|
@@ -339,7 +342,7 @@ On trigger: call `record_learning()` with `artifact-type="requirements-register"
 
 ---
 
-## End-of-Skill Memory Close
+## End-of-Skill Memory Close <!-- workflow -->
 
 After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
 

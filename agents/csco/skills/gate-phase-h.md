@@ -8,6 +8,9 @@ invoke-when: >
   or PM routes a Change Record to CSCO for safety impact classification. Also activated
   when a safety-critical change is detected mid-sprint (algedonic escalation to CSCO
   via ALG-001 or ALG-014) requiring immediate safety impact assessment.
+invoke-never-when: >
+  <!-- TODO: write plain-English condition that prevents misrouting to this skill -->
+
 trigger-phases: [H]
 trigger-conditions:
   - artifact.baselined from SA (artifact_type=change-record)
@@ -235,7 +238,7 @@ On trigger: call `record_learning()` with `artifact-type="safety-constraint-over
 
 ---
 
-## Algedonic Triggers
+## Algedonic Triggers <!-- workflow -->
 
 - **ALG-001 (S1 — Safety-Critical):** A Safety-Critical classified change is proposed for a live regulated or safety-critical system, and the change would take effect before user-level risk acceptance is confirmed. Raised immediately to CSCO (self) and PM; change deployment halted pending user acceptance.
 - **ALG-014 (S1 — Safety-Critical Change Without CSCO Clearance):** A Phase H change is implemented in the target repository without CSCO's H gate vote having been cast. Raised immediately on discovery, regardless of the change's apparent safety classification. All subsequent deployments of the affected system are halted until CSCO completes the H gate review.
@@ -254,7 +257,7 @@ On trigger: call `record_learning()` with `artifact-type="safety-constraint-over
 
 ---
 
-## End-of-Skill Memory Close
+## End-of-Skill Memory Close <!-- workflow -->
 
 After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
 

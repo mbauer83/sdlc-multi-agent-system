@@ -8,6 +8,9 @@ invoke-when: >
   artifact does not yet exist at version 1.0.0; or warm-start at EP-A or EP-B when user
   provides a document containing market context; or revisit trigger when PM instructs SM to
   update Market Analysis due to changed market conditions.
+invoke-never-when: >
+  <!-- TODO: write plain-English condition that prevents misrouting to this skill -->
+
 trigger-phases: [Prelim, A]
 trigger-conditions:
   - sprint.started (phase=A)
@@ -407,7 +410,7 @@ On trigger: call `record_learning()` with `artifact-type="architecture-vision"`,
 
 ---
 
-## Algedonic Triggers
+## Algedonic Triggers <!-- workflow -->
 
 | ID | Condition in This Skill | Severity | Action |
 |---|---|---|---|
@@ -430,7 +433,7 @@ On trigger: call `record_learning()` with `artifact-type="architecture-vision"`,
 
 ---
 
-## End-of-Skill Memory Close
+## End-of-Skill Memory Close <!-- workflow -->
 
 After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
 

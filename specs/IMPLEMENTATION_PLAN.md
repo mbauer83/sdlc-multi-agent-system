@@ -920,14 +920,14 @@ After extraction: raise budgets — complex: 2000→2350 soft / 2400→2820 hard
 Add one sentence to each AGENT.md `system-prompt-identity` covering genuinely undefined system terms: `S1/S2/S3` (severity levels), `EP-0..H` (entry points), `CQ` (Clarification Request), `APR` (Architecture Principles Register). ~50 tokens; always in context. This covers H2 skill body sections. Frontmatter routing fields (`invoke-when`, `invoke-never-when`) must be plain English without unexplained abbreviations — they are read by LLMs for skill selection and have no guaranteed pre-injected definitions; see Stage 5.7-D authoring rule.
 
 **Checklist:**
-- [ ] `src/agents/skill_loader.py` — replace `_INCLUDED_H2: frozenset` with `SectionSpec` dataclass + `_SECTION_REGISTRY: dict[str, SectionSpec]`; make `_assemble()` and `_truncate()` fully data-driven; parse optional `<!-- workflow -->` / `<!-- express -->` heading comments for per-instance mode override; emit WARNING on sections that are neither in registry nor tagged; add `invocation_mode` parameter to `load()` / `load_instructions()`; detect and exclude `*Injected at Layer 2.*` stubs from budget-counted content; raise budget constants
-- [ ] `src/agents/deps.py` — add `invocation_mode: Literal["workflow", "express"] = "workflow"` to `AgentDeps`
-- [ ] `src/agents/base.py` — `build_agent()`: inject Step 0.L/0.M/Memory Close boilerplate as Layer 2 prefix/suffix from AGENT.md `## Skill Preamble` / `## Skill Close`; inject express override sentence when `invocation_mode == "express"`; pass `invocation_mode` through to `SkillLoader.load_instructions()`
+- [x] `src/agents/skill_loader.py` + `src/agents/_skill_sections.py` — `_INCLUDED_H2` replaced with `SectionSpec` dataclass + `SECTION_REGISTRY`; `_assemble()` + `_truncate()` fully data-driven; `<!-- workflow -->` / `<!-- express -->` heading tag parsing; WARNING on unregistered untagged sections; `invocation_mode` param on `load()` / `load_instructions()`; stub detection; budget constants raised (simple 700/840, standard 1400/1680, complex 2350/2820); `invoke_when` + `invoke_never_when` on `SkillSpec`
+- [x] `src/agents/deps.py` — `invocation_mode: Literal["workflow", "express"] = "workflow"` added to `AgentDeps`
+- [x] `src/agents/base.py` — `invocation_mode` threaded from `deps` through to `SkillLoader.load_instructions()`; Layer 2 boilerplate injection deferred to E.3 (depends on `collapse_boilerplate.py`)
 - [ ] `framework/agent-runtime-spec.md §4–5` — document `SectionSpec` registry pattern, per-instance heading tag convention, mode-aware filtering, assembly order, truncation priority, budget constants, boilerplate injection contract, express override sentence
 - [ ] All 9 `AGENT.md` files — add `## Skill Preamble` and `## Skill Close` sections; add abbreviation definitions sentence to `system-prompt-identity`
 - [ ] `scripts/collapse_boilerplate.py` — bulk-collapse Step 0.L, Step 0.M, and End-of-Skill Memory Close body in all 48 skill files to single-line stubs
-- [ ] BDD tests for `skill_loader.py` — add scenarios: SectionSpec registry lookup, mode filtering (workflow/express), unknown-section warning, stub detection, budget enforcement with new caps
-- [ ] CLAUDE.md Rule 14 — replace `_INCLUDED_H2` reference with `SectionSpec` registry pattern + `invocation_mode` field
+- [x] BDD tests for `skill_loader.py` — 20 scenarios: SectionSpec registry lookup, mode filtering (workflow/express), unknown-section warning, stub detection, budget enforcement with new caps, assembly order, invoke_when/invoke_never_when fields; all pass
+- [x] CLAUDE.md Rule 14 — updated with SectionSpec registry pattern, invocation_mode field, new budget constants
 
 **Note:** This is the highest-priority implementation item for Stage 5.7. Until the registry is in place and the new section keys are registered, the Rationalizations/Red Flags/Verification sections authored in SA-PHASE-A, DE-PHASE-G, and PM-MASTER are silently excluded from agent context.
 
@@ -1147,17 +1147,76 @@ Skills that do NOT need an `## Express Mode` section (their procedure works as-i
 - Stage 5.8 Express Mode spec written: `src/express.py` API + `src/cli.py` `express` subcommand + mode-filtered loading design (5 skill candidates, BDD test list, dependency on Stage 5.7-E).
 - Design correction (2026-04-10): `invoke-when` / `invoke-never-when` frontmatter fields MUST be plain English — they are read by LLMs for skill selection (PM via registry tools, express mode, external use) and have no guaranteed pre-injected glossary. Previous claim ("SkillLoader parses them, LLM never sees them") was wrong. Corrected SA-PHASE-A, DE-PHASE-G, PM-MASTER; remaining 45 skills pending as part of Stage 5.7-D audit.
 
+**Completed this session (2026-04-10, continued — Memento integration gap analysis):**
+
+Audit against `framework/learning-protocol.md §13` (spec is complete) vs Python implementation:
+
+**What is already implemented (Stage 5b):**
+- `src/models/memento.py` — `MementoState` Pydantic model (phase, invocation_id, skill_id, key_decisions, open_threads, partial_context, recorded_at; field validators; `summary()`). ✅
+- `src/agents/memento_store.py` — `MementoStore` SQLite-backed, dedicated `mementos` table in `workflow.db`, OVERWRITE semantics, `get(phase)`/`save(state)`. ✅
+- `get_memento_state` / `save_memento_state` tools in `universal_tools.py`, registered for all roles. ✅
+
+**Gaps identified (implementation incomplete; Stage 5b memento wiring):**
+
+1. **`invocation_id` set to `engagement_id` (bug)** — `save_memento_state` in `universal_tools.py:186` writes `invocation_id=ctx.deps.engagement_id`. The spec (`framework/learning-protocol.md §13.2`) says `invocation_id` must be the EventStore invocation event ID (the `specialist.invoked` event UUID for this specific agent run). Fix: add an `invocation_id` field to `AgentDeps`, populated in `EngagementSession.invoke_specialist()` from the emitted `specialist.invoked` event ID.
+
+2. **`current_phase` not in `AgentDeps` — agent must pass phase explicitly** — Both `get_memento_state` and `save_memento_state` accept `phase: str` as a positional tool argument (the agent supplies it). This is intentional per the tool signature, but the agent must know the current phase without it being injected. Add `current_phase: str = ""` to `AgentDeps` so the agent can read it as context instead of inferring from task text alone. `EngagementSession.invoke_specialist()` already receives `phase:` as a parameter — thread it through to `AgentDeps`.
+
+3. **`EngagementSession.invoke_specialist()` does not pass phase to `AgentDeps`** — `session.py:148–156` builds `AgentDeps` without `current_phase` or `invocation_id`. Fix alongside gap 2.
+
+4. **No `memento.saved` event type in EventStore** — `save_memento_state` writes to SQLite but emits no EventStore event. The EventStore is the audit trail; `memento.saved` should record `(agent_role, phase, invocation_id, recorded_at)` for observability and debugging. Not blocking for correctness (store is durable), but required for the dashboard audit trail. Add to `src/events/models/` (simple payload; no state impact in `replay_builder.py` needed — it is an observability event only).
+
+5. **`MementoStore` instantiated per tool call — should be a shared instance** — Both tools do `MementoStore(...)` inline, meaning a new connection to `workflow.db` is opened and closed on every memento read/write. Fix: add `memento_store: MementoStore` to `AgentDeps`, constructed once in `invoke_specialist()`. Tools read `ctx.deps.memento_store` directly. This is the same pattern as `event_store` on `AgentDeps`.
+
+6. **Express mode: `get_memento_state` / `save_memento_state` are no-ops** — When `invocation_mode == "express"` (no engagement session, no workflow.db), memento tools must degrade gracefully. `get_memento_state` should return `None`; `save_memento_state` should silently succeed. Guard: `if ctx.deps.invocation_mode == "express": return`. No MementoStore instantiation in express mode.
+
+7. **No BDD tests for memento tools** — `tests/agents/features/` has no `memento*.feature`. Tests needed: get on missing state → None; save then get → round-trip; invocation_id populated correctly; express mode no-op; token budget guard (≤250 tokens via `MementoState` validators).
+
+**Checklist (Stage 5b memento wiring, to be done before Stage 5.8):**
+- [ ] Add `current_phase: str = ""` and `invocation_id: str = ""` to `AgentDeps` (`src/agents/deps.py`)
+- [ ] Add `memento_store: MementoStore | None = None` to `AgentDeps` (None in express mode)
+- [ ] `EngagementSession.invoke_specialist()` — populate `current_phase`, `invocation_id` (from emitted `specialist.invoked` event), and `memento_store` in `AgentDeps`
+- [ ] `save_memento_state` tool — use `ctx.deps.invocation_id` (not `ctx.deps.engagement_id`); use `ctx.deps.memento_store`
+- [ ] `get_memento_state` tool — use `ctx.deps.memento_store`; guard for `invocation_mode == "express"` (return None)
+- [ ] `save_memento_state` tool — guard for `invocation_mode == "express"` (no-op)
+- [ ] Add `memento.saved` payload model to `src/events/models/` (fields: `agent_role`, `phase`, `invocation_id`, `recorded_at`); emit from `save_memento_state` tool
+- [ ] BDD tests: `tests/agents/features/memento_tools.feature` + `tests/agents/test_memento_tools.py` (7 scenarios minimum: see gaps above)
+
+**Commit as `stage-5b-memento-wiring`**
+
+---
+
+**Completed this session (2026-04-10, continued — Stage 5.7-E SkillLoader rewrite + skill file mass-patch):**
+- Stage 5.7-E (core): `src/agents/skill_loader.py` rewritten (split into `skill_loader.py` + `_skill_sections.py` to respect 350-LoC hard limit). `_INCLUDED_H2` frozenset replaced with `SectionSpec` dataclass + `SECTION_REGISTRY` dict (9 entries). `_assemble()` and `_truncate()` are now fully data-driven (sorted by `assembly_position` / `truncation_priority`). Mode-aware section filtering: `<!-- workflow -->` / `<!-- express -->` heading comments parsed; per-instance tags override registry defaults. WARNING emitted for unregistered untagged sections. Stub detection (`*Injected at Layer 2.*`) excludes body from budget count.
+- Budget constants raised: simple 700/840, standard 1400/1680, complex 2350/2820 (enables Common Rationalizations + Red Flags + Verification to fit in context).
+- `src/agents/deps.py` — `invocation_mode: Literal["workflow", "express"] = "workflow"` added to `AgentDeps`.
+- `src/agents/base.py` — `invocation_mode` threaded from `deps` to `SkillLoader.load_instructions()`.
+- `SkillSpec` now includes `invoke_when` and `invoke_never_when` fields (parsed from frontmatter).
+- BDD tests: `tests/agents/test_skill_loader.py` + `features/skill_loader.feature` — 20 scenarios; all pass. Total test count: 222 (was 202).
+- CLAUDE.md Rule 14 updated: budget constants, SectionSpec registry reference, invocation_mode field.
+- Stage 5.7-A/B/C/D structural mass-patch: `scripts/patch_skill_sections.py` (dry-run + apply; alias resolution for "Steps: ..." headings). Applied to all 48 skill files:
+  - `<!-- workflow -->` tags on `## Algedonic Triggers` and `## End-of-Skill Memory Close` in all 48 files
+  - `invoke-never-when` stub added to all 45 skills that lacked it
+  - `## Common Rationalizations (Rejected)` stub added to all 18 complex skills
+  - `## Red Flags` stub added to all 42 complex+standard skills
+  - `## Verification` stub added to all 42 complex+standard skills
+  - All stubs carry `<!-- TODO -->` markers for subsequent LLM-assisted content fill-in
+- ModelVerifier: 0 errors on 2050 files; 222 tests pass.
+- Note: E.3 (boilerplate extraction to Layer 2 + `collapse_boilerplate.py`) and E.4 (abbreviation definitions in AGENT.md `system-prompt-identity`) still pending.
+
 **Immediate next items (priority order):**
-1. **Stage 5.7-E (SkillLoader rewrite)** — prerequisite for everything else in 5.7 and 5.8: new sections don't reach the agent until `_INCLUDED_H2` is replaced with SectionSpec registry; Express Mode can't be wired until mode filtering is implemented; boilerplate savings needed before remaining complex skills fit budget. Implement all four E-concerns together. Run BDD tests after.
-2. **Demo: 7/7 pass** — confirm `artifact-type: principle` prompt fix resolves the ModelVerifier [E102] error on next run.
-3. **Stage 5.7-A/B/C/D (remaining 15 complex skills)** — after Stage 5.7-E: SA-PHASE-B, SA-PHASE-H, SwA-PHASE-C-APP, SwA-PHASE-C-DATA, SwA-PHASE-D, CSCO-GATE-A/STAMP-STPA, QA-PHASE-EF/G, SwA reverse-arch, DevOps, SA reverse-arch. Standard skills get Red Flags + Verification + `invoke-never-when` only.
-4. **Stage 5.7-A pending:** `check_artifact_heuristics.py`; `learning-protocol.md §3` `protocol-skip` note; `retrospective-knowledge-capture.md` quarterly maintenance step; PR→APR rename across SA/SM/PO skill files.
-5. **Stage 5.8 Express Mode** — after Stage 5.7-E and ≥5 complex skills updated: author `## Express Mode` sections for the 5 candidate skills; implement `src/express.py` + `src/cli.py express` subcommand; BDD tests.
-6. **Demo: extend to SwA Phase C** — add a second agent step (SwA, `SwA-PHASE-C-APP` skill) after SA Phase A, producing application-layer entities; exposes handoff event flow between agents.
-7. **Stage 5c**: PM agent `result_type=PMDecision` end-to-end validation with a live LLM (PM routing loop without a human).
-8. **Stage 5d**: external source adapters (Confluence, Jira, git_source) + `UserUploadAdapter`.
-9. **Stage 5e**: Discovery Scan Step 0 full envelope for Stage 3 skill files.
-10. **Stage 5.5**: Dashboard (FastAPI + Jinja2 + SSE + Model Explorer).
+1. **Stage 5b memento wiring** — 8-item checklist above. Small, well-scoped; unblocks correct memento recall in the integration test and express mode no-op safety. Target: `stage-5b-memento-wiring` commit.
+2. **Demo: 7/7 pass** — confirm `artifact-type: principle` prompt fix resolves the ModelVerifier [E102] error on next run (single re-run of `scripts/demo_setup.py`).
+3. **Stage 5.7-A/B/C/D content fill-in:** The stub `## Red Flags`, `## Verification`, `## Common Rationalizations`, `invoke-never-when` content in all skill files needs real content replacing the `<!-- TODO -->` placeholders. Priority: the 15 complex skills first (SA-PHASE-B, SA-PHASE-H, SwA-PHASE-C-APP, SwA-PHASE-C-DATA, SwA-PHASE-D, CSCO-GATE-A, CSCO-STAMP-STPA, QA-PHASE-EF, QA-PHASE-G, QA-PHASE-H, SwA reverse-arch, DevOps). A second LLM pass per skill is needed.
+4. **Stage 5.7-E remaining (E.3/E.4):** `collapse_boilerplate.py` (Step 0.L/0.M/Memory Close to stubs) + AGENT.md `## Skill Preamble`/`## Skill Close` sections + Layer 2 injection in `base.py` + abbreviation definitions in `system-prompt-identity`. Also: `framework/agent-runtime-spec.md §4–5` documentation update.
+5. **Stage 5.7-A/B/C/D (remaining 15 complex skills)** — after Stage 5.7-E: SA-PHASE-B, SA-PHASE-H, SwA-PHASE-C-APP, SwA-PHASE-C-DATA, SwA-PHASE-D, CSCO-GATE-A/STAMP-STPA, QA-PHASE-EF/G, SwA reverse-arch, DevOps, SA reverse-arch. Standard skills get Red Flags + Verification + `invoke-never-when` only.
+6. **Stage 5.7-A pending:** `check_artifact_heuristics.py`; `learning-protocol.md §3` `protocol-skip` note; `retrospective-knowledge-capture.md` quarterly maintenance step; PR→APR rename across SA/SM/PO skill files.
+7. **Stage 5.8 Express Mode** — after Stage 5.7-E and ≥5 complex skills updated: author `## Express Mode` sections for the 5 candidate skills; implement `src/express.py` + `src/cli.py express` subcommand; BDD tests.
+8. **Demo: extend to SwA Phase C** — add a second agent step (SwA, `SwA-PHASE-C-APP` skill) after SA Phase A, producing application-layer entities; exposes handoff event flow between agents.
+9. **Stage 5c**: PM agent `result_type=PMDecision` end-to-end validation with a live LLM (PM routing loop without a human).
+10. **Stage 5d**: external source adapters (Confluence, Jira, git_source) + `UserUploadAdapter`.
+11. **Stage 5e**: Discovery Scan Step 0 full envelope for Stage 3 skill files.
+12. **Stage 5.5**: Dashboard (FastAPI + Jinja2 + SSE + Model Explorer).
 
 **Stage 5** — Python implementation. Read `framework/agent-runtime-spec.md` and `framework/orchestration-topology.md` before authoring any `src/` file. Begin with Stage 5a (EventStore completion), then 5b (agent layer). Key implementation dependencies:
 - `src/sources/target_repo.py` implements `TargetRepoManager` (multi-repo aware; see Stage 5d)

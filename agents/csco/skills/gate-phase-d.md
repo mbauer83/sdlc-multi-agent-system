@@ -8,6 +8,9 @@ invoke-when: >
   CSCO reviews TA and ADR Register for technology-level safety, security architecture,
   resilience, and failure modes. Performs STAMP Level 3 analysis. Authors SCO Phase D update.
   Casts the D→E gate vote. This gate has the highest CSCO↔SwA tension in the engagement.
+invoke-never-when: >
+  <!-- TODO: write plain-English condition that prevents misrouting to this skill -->
+
 trigger-phases: [D]
 trigger-conditions:
   - artifact.baselined from SwA (artifact_type=technology-architecture)
@@ -293,13 +296,38 @@ On trigger: call `record_learning()` with `artifact-type="safety-constraint-over
 
 ---
 
-## Algedonic Triggers
+
+## Red Flags
+
+Pre-escalation observable indicators. Raise an algedonic signal or CQ if two or
+more of these are true simultaneously:
+
+<!-- TODO: add 5-7 role-specific observable indicators for this skill -->
+- Outputs section of the primary artifact is blank after completing the procedure
+- Any required input artifact is missing and no CQ has been raised
+- Feedback loop iteration count has reached the maximum with no resolution
+
+## Algedonic Triggers <!-- workflow -->
 
 - **ALG-001 (S1 — Safety-Critical):** A technology selection creates an unmitigatable safety-critical failure mode — for example, a safety-critical control path depends on a single third-party managed service with no fallback, and the system's safety constraint requires continuous availability. SwA has been unable to identify any alternative technology or mitigation approach after Iteration 1. Raised immediately with concurrent escalation to PM and user. Phase E does not begin until the technology design is revised or the user explicitly accepts the risk.
 - **ALG-014 (S1 — Safety-Critical):** A safety-critical technology change is required (e.g., a critical ADR revision to address a previously unknown CVE) and CSCO is unavailable for review at the time the change is initiated. Raised by PM or SwA to PM (halt change; document; await CSCO). CSCO reviews this trigger on resumption and acts within current sprint.
 - **ALG-010 (S3 — Inter-Agent Deadlock):** After two iterations, CSCO and SwA cannot agree on whether a technology choice satisfies an SCO constraint. Raised to PM for adjudication within current sprint.
 
 ---
+
+
+## Verification
+
+Before emitting the completion event for this skill, confirm:
+
+<!-- TODO: extend with skill-specific checklist items -->
+- [ ] All blocking CQs resolved or documented as PM-accepted assumptions
+- [ ] Primary output artifact exists at the required minimum version
+- [ ] CSCO sign-off recorded where required (`csco-sign-off: true`)
+- [ ] All required EventStore events emitted in this invocation
+- [ ] Handoffs to downstream agents created
+- [ ] Learning entries recorded if a §3.1 trigger was met this invocation
+- [ ] Memento state saved (End-of-Skill Memory Close)
 
 ## Outputs
 
@@ -313,7 +341,7 @@ On trigger: call `record_learning()` with `artifact-type="safety-constraint-over
 
 ---
 
-## End-of-Skill Memory Close
+## End-of-Skill Memory Close <!-- workflow -->
 
 After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
 

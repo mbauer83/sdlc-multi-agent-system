@@ -6,6 +6,9 @@ display-name: Phase F Feedback — Implementation Dependency Validation
 invoke-when: >
   PM explicitly activates DE for Phase F consulting input; DE validates the Implementation
   Plan's technical sequencing and identifies implicit implementation dependencies.
+invoke-never-when: >
+  <!-- TODO: write plain-English condition that prevents misrouting to this skill -->
+
 trigger-phases: [F]
 trigger-conditions:
   - handoff.created (handoff-type=consulting-activation, to=implementing-developer, phase=F)
@@ -194,7 +197,7 @@ On trigger: call `record_learning()` with `artifact-type="implementation-plan"`,
 
 ---
 
-## Algedonic Triggers
+## Algedonic Triggers <!-- workflow -->
 
 No algedonic triggers identified for this skill.
 
@@ -211,7 +214,7 @@ The implementation dependency validation is advisory input to PM planning. Unres
 
 ---
 
-## End-of-Skill Memory Close
+## End-of-Skill Memory Close <!-- workflow -->
 
 After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
 

@@ -9,6 +9,9 @@ invoke-when: >
   artifact (artifact.baselined event from SA or SwA) to update the RTM with new traceability
   entries. Also invoked when a cq.answered event resolves a requirements-related CQ, requiring
   RR update. Also invoked when PO's self-audit detects staleness or gap conditions.
+invoke-never-when: >
+  <!-- TODO: write plain-English condition that prevents misrouting to this skill -->
+
 trigger-phases: [A, B, C, D, E, F, G, H]
 trigger-conditions:
   - gate.evaluated (result=passed — any phase transition)
@@ -276,7 +279,18 @@ On trigger: call `record_learning()` with `artifact-type="requirements-register"
 
 ---
 
-## Algedonic Triggers
+
+## Red Flags
+
+Pre-escalation observable indicators. Raise an algedonic signal or CQ if two or
+more of these are true simultaneously:
+
+<!-- TODO: add 5-7 role-specific observable indicators for this skill -->
+- Outputs section of the primary artifact is blank after completing the procedure
+- Any required input artifact is missing and no CQ has been raised
+- Feedback loop iteration count has reached the maximum with no resolution
+
+## Algedonic Triggers <!-- workflow -->
 
 | ID | Condition in This Skill | Severity | Action |
 |---|---|---|---|
@@ -287,6 +301,20 @@ On trigger: call `record_learning()` with `artifact-type="requirements-register"
 | ALG-018 | PO self-audit detects that a requirements update was made (requirement added or modified) without a prior discovery scan being executed | S2 | Emit `alg.raised`; PM notified; PO executes the discovery scan retrospectively and validates the update was still warranted |
 
 ---
+
+
+## Verification
+
+Before emitting the completion event for this skill, confirm:
+
+<!-- TODO: extend with skill-specific checklist items -->
+- [ ] All blocking CQs resolved or documented as PM-accepted assumptions
+- [ ] Primary output artifact exists at the required minimum version
+- [ ] CSCO sign-off recorded where required (`csco-sign-off: true`)
+- [ ] All required EventStore events emitted in this invocation
+- [ ] Handoffs to downstream agents created
+- [ ] Learning entries recorded if a §3.1 trigger was met this invocation
+- [ ] Memento state saved (End-of-Skill Memory Close)
 
 ## Outputs
 
@@ -299,7 +327,7 @@ On trigger: call `record_learning()` with `artifact-type="requirements-register"
 
 ---
 
-## End-of-Skill Memory Close
+## End-of-Skill Memory Close <!-- workflow -->
 
 After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
 

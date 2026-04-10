@@ -6,6 +6,9 @@ display-name: Phase E Feedback — Implementation Complexity Estimation
 invoke-when: >
   PM explicitly activates DE for Phase E consulting input; DE estimates implementation
   complexity per candidate in the ICC and identifies hidden dependencies.
+invoke-never-when: >
+  <!-- TODO: write plain-English condition that prevents misrouting to this skill -->
+
 trigger-phases: [E]
 trigger-conditions:
   - handoff.created (handoff-type=consulting-activation, to=implementing-developer, phase=E)
@@ -197,7 +200,7 @@ On trigger: call `record_learning()` with `artifact-type="implementation-plan"`,
 
 ---
 
-## Algedonic Triggers
+## Algedonic Triggers <!-- workflow -->
 
 No algedonic triggers identified for this skill.
 
@@ -214,7 +217,7 @@ The implementation complexity report is advisory input to PM planning. It does n
 
 ---
 
-## End-of-Skill Memory Close
+## End-of-Skill Memory Close <!-- workflow -->
 
 After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
 

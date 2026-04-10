@@ -7,8 +7,9 @@ All fields are read-only at runtime — agents must not mutate deps directly.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Literal
 
 from src.events.event_store import EventStore
 from src.events.models.state import WorkflowState
@@ -26,6 +27,8 @@ class AgentDeps:
     engagement_path:    Path to engagements/<engagement_id>/ directory.
     framework_path:     Path to the framework/ directory (for framework tools).
     agent_id:           Canonical agent identifier (e.g. "SA", "PM", "SwA").
+    invocation_mode:    "workflow" (full engagement) or "express" (standalone).
+                        Controls which skill sections are injected at Layer 3.
     """
 
     engagement_id: str
@@ -35,6 +38,7 @@ class AgentDeps:
     engagement_path: Path
     framework_path: Path
     agent_id: str
+    invocation_mode: Literal["workflow", "express"] = field(default="workflow")
 
     @property
     def work_repos_path(self) -> Path:

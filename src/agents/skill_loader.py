@@ -3,57 +3,40 @@ SkillLoader: parses a skill markdown file and extracts the runtime prompt.
 
 Governed by framework/agent-runtime-spec.md §4 (Layer 3 injection).
 
-Included sections (in order):
-  - Inputs Required
-  - Steps  (alias: Procedure — skill files use ## Procedure)
-  - Algedonic Triggers
-  - Feedback Loop
-  - Outputs
-  - End-of-Skill Memory Close  (added in Stage 4.9j retroactive update)
+Section registry and parsing logic live in _skill_sections.py.
+Public API:
+  SkillLoader.load(skill_id, invocation_mode)  → SkillSpec
+  SkillLoader.load_instructions(skill_id, invocation_mode)  → str
 
-Excluded sections:
-  - Knowledge Adequacy Check  (authoring guidance, not runtime content)
-  - Runtime Tooling Hint      (authoring guidance)
+invocation_mode values:
+  "workflow"  — full engagement context; includes workflow-only sections
+                (Algedonic Triggers, End-of-Skill Memory Close)
+  "express"   — standalone invocation; workflow-only sections excluded;
+                Layer 1 express override sentence injected by build_agent()
 
 Complexity-class token budgets (soft / hard):
-  simple:   600 / 720
-  standard: 1200 / 1440
-  complex:  2000 / 2400
-
-Steps are never truncated. Truncation priority when soft cap is exceeded:
-  1. Algedonic Triggers → compact ALG-IDs only
-  2. Feedback Loop → termination conditions + iteration count only
-  3. Outputs → artifact paths only
+  simple:   700  / 840
+  standard: 1400 / 1680
+  complex:  2350 / 2820
 """
 
 from __future__ import annotations
 
-import re
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 
 import frontmatter  # python-frontmatter
 
-
-# ---------------------------------------------------------------------------
-# Token budget constants
-# ---------------------------------------------------------------------------
-
-_BUDGETS: dict[str, tuple[int, int]] = {
-    "simple":   (600,  720),
-    "standard": (1200, 1440),
-    "complex":  (2000, 2400),
-}
-
-_INCLUDED_H2 = frozenset({
-    "inputs required",
-    "procedure",
-    "steps",
-    "algedonic triggers",
-    "feedback loop",
-    "outputs",
-    "end-of-skill memory close",
-})
+from ._skill_sections import (
+    BUDGETS,
+    assemble,
+    budget_tokens,
+    filter_by_mode,
+    parse_sections,
+    truncate,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -66,7 +49,7 @@ class SkillNotFoundError(FileNotFoundError):
 
 class SkillBudgetExceededError(ValueError):
     """
-    Raised when the extracted skill content exceeds the hard token cap.
+    Raised when skill content exceeds the hard token cap.
     Indicates the skill file needs splitting, not compressing.
     """
 
@@ -82,8 +65,10 @@ class SkillSpec:
     complexity_class: str
     trigger_phases: list[str]
     primary_outputs: list[str]
-    content: str           # extracted runtime sections (within budget)
-    token_estimate: int    # approximate token count of content
+    invoke_when: str
+    invoke_never_when: str
+    content: str            # assembled runtime sections (within budget)
+    token_estimate: int     # budget-aware token count
 
 
 # ---------------------------------------------------------------------------
@@ -99,7 +84,6 @@ class SkillLoader:
 
     def __init__(self, agents_root: Path) -> None:
         self._root = agents_root
-        # Pre-build index: skill-id → path
         self._index: dict[str, Path] = {}
         self._build_index()
 
@@ -112,31 +96,33 @@ class SkillLoader:
             except Exception:
                 pass  # malformed frontmatter — skip
 
-    def load(self, skill_id: str) -> SkillSpec:
+    def load(
+        self,
+        skill_id: str,
+        invocation_mode: Literal["workflow", "express"] = "workflow",
+    ) -> SkillSpec:
         """Load and return a SkillSpec for the given skill-id."""
         path = self._resolve_path(skill_id)
         post = frontmatter.load(str(path))
         complexity = str(post.get("complexity-class", "standard"))
-        soft_cap, hard_cap = _BUDGETS.get(complexity, _BUDGETS["standard"])
+        soft_cap, hard_cap = BUDGETS.get(complexity, BUDGETS["standard"])
 
-        sections = _extract_included_sections(post.content)
-        content = _assemble(sections)
-        tokens = _estimate_tokens(content)
+        entries = parse_sections(post.content, skill_id)
+        filtered = filter_by_mode(entries, invocation_mode)
+        tokens = budget_tokens(filtered)
 
         if tokens > hard_cap:
-            import warnings
             warnings.warn(
                 f"Skill '{skill_id}' ({complexity}) exceeds hard cap "
                 f"({tokens} > {hard_cap} estimated tokens). "
-                "Consider splitting the skill file. Injecting full content for now.",
+                "Consider splitting the skill file. Attempting truncation.",
                 UserWarning,
                 stacklevel=2,
             )
-            # Attempt truncation; if Steps alone exceed the cap, inject in full
-            truncated = _truncate(sections, soft_cap)
-            if _estimate_tokens(truncated) < tokens:
-                content = truncated
-                tokens = _estimate_tokens(content)
+            truncated = truncate(filtered, soft_cap)
+            if budget_tokens(truncated) < tokens:
+                filtered = truncated
+                tokens = budget_tokens(filtered)
 
         return SkillSpec(
             skill_id=skill_id,
@@ -144,102 +130,36 @@ class SkillLoader:
             complexity_class=complexity,
             trigger_phases=_as_list(post.get("trigger-phases", [])),
             primary_outputs=_as_list(post.get("primary-outputs", [])),
-            content=content,
+            invoke_when=str(post.get("invoke-when", "")).strip(),
+            invoke_never_when=str(post.get("invoke-never-when", "")).strip(),
+            content=assemble(filtered),
             token_estimate=tokens,
         )
 
-    def load_instructions(self, skill_id: str) -> str:
+    def load_instructions(
+        self,
+        skill_id: str,
+        invocation_mode: Literal["workflow", "express"] = "workflow",
+    ) -> str:
         """Return the runtime prompt string for Layer 3 injection."""
-        return self.load(skill_id).content
+        if not skill_id:
+            return ""
+        return self.load(skill_id, invocation_mode=invocation_mode).content
 
     def _resolve_path(self, skill_id: str) -> Path:
         if skill_id in self._index:
             return self._index[skill_id]
-        # Fallback: rebuild index (handles newly created files)
-        self._build_index()
+        self._build_index()  # refresh for newly created files
         if skill_id in self._index:
             return self._index[skill_id]
-        raise SkillNotFoundError(f"Skill '{skill_id}' not found under {self._root}")
+        raise SkillNotFoundError(
+            f"Skill '{skill_id}' not found under {self._root}"
+        )
 
 
 # ---------------------------------------------------------------------------
-# Internal parsing helpers
+# Helpers
 # ---------------------------------------------------------------------------
-
-_H2_RE = re.compile(r"^## (.+)$", re.MULTILINE)
-
-
-def _extract_included_sections(markdown: str) -> dict[str, str]:
-    """
-    Split markdown by ## headings and return only included sections.
-    Keys are normalised heading names (lower-case).
-    """
-    parts = _H2_RE.split(markdown)
-    # parts: [text-before-first-h2, heading1, body1, heading2, body2, ...]
-    result: dict[str, str] = {}
-    it = iter(parts[1:])  # skip preamble
-    for heading, body in zip(it, it):
-        key = heading.strip().lower()
-        if key in _INCLUDED_H2:
-            result[key] = f"## {heading.strip()}\n{body.rstrip()}"
-    return result
-
-
-def _assemble(sections: dict[str, str]) -> str:
-    """Produce the full runtime prompt in canonical section order."""
-    order = [
-        "inputs required",
-        "procedure",
-        "steps",
-        "algedonic triggers",
-        "feedback loop",
-        "end-of-skill memory close",
-        "outputs",
-    ]
-    parts = [sections[k] for k in order if k in sections]
-    return "\n\n".join(parts)
-
-
-def _estimate_tokens(text: str) -> int:
-    """Rough token estimate: characters / 4 (matches tiktoken average for English prose)."""
-    return len(text) // 4
-
-
-def _truncate(sections: dict[str, str], soft_cap: int) -> str:
-    """
-    Apply truncation in priority order until content fits within soft_cap.
-    Steps (procedure) are NEVER truncated.
-    """
-    kept = dict(sections)
-
-    # Priority 1: Algedonic Triggers → compact list of ALG-IDs only
-    if "algedonic triggers" in kept:
-        ids = re.findall(r"ALG-\d+", kept["algedonic triggers"])
-        kept["algedonic triggers"] = (
-            "## Algedonic Triggers\n"
-            + (f"Triggers: {', '.join(sorted(set(ids)))}" if ids else "See algedonic-protocol.md")
-        )
-        if _estimate_tokens(_assemble(kept)) <= soft_cap:
-            return _assemble(kept)
-
-    # Priority 2: Feedback Loop → termination conditions only
-    if "feedback loop" in kept:
-        match = re.search(r"(?i)(max\s+iterations?[^\n]*|escalation[^\n]*)", kept["feedback loop"])
-        termination = match.group(0) if match else "See skill file for feedback loop."
-        kept["feedback loop"] = f"## Feedback Loop\n{termination}"
-        if _estimate_tokens(_assemble(kept)) <= soft_cap:
-            return _assemble(kept)
-
-    # Priority 3: Outputs → artifact paths only
-    if "outputs" in kept:
-        paths = re.findall(r"`[^`]+`", kept["outputs"])
-        kept["outputs"] = (
-            "## Outputs\n"
-            + (" ".join(paths) if paths else "See skill file for output paths.")
-        )
-
-    return _assemble(kept)
-
 
 def _as_list(value: object) -> list[str]:
     if isinstance(value, list):

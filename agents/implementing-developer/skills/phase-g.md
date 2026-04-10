@@ -328,7 +328,7 @@ Observable signs the Work Package implementation cycle is going off-track — ch
 
 ---
 
-## Algedonic Triggers
+## Algedonic Triggers <!-- workflow -->
 
 | ID | Condition | Severity | Action |
 |---|---|---|---|
@@ -377,7 +377,7 @@ This section is the invariant completion gate for one Work Package cycle. Confir
 
 ---
 
-## End-of-Skill Memory Close
+## End-of-Skill Memory Close <!-- workflow -->
 
 After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
 

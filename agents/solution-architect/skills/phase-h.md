@@ -8,6 +8,9 @@ invoke-when: >
   event identifies SA-owned architecture artifacts (AV, BA, motivation entities, strategy
   entities, business entities) as affected. SA does not own the application/technology-layer
   Change Record — that is SwA's parallel track.
+invoke-never-when: >
+  <!-- TODO: write plain-English condition that prevents misrouting to this skill -->
+
 trigger-phases: [H]
 trigger-conditions:
   - handoff.created (handoff-type=change-record-intake, to=solution-architect)
@@ -272,6 +275,15 @@ For each ACT-nnn in CR §2.7 assigned to SA (business/motivation/strategy-layer 
 
 ---
 
+
+## Common Rationalizations (Rejected)
+
+| Rationalization | Rejection |
+|---|---|
+<!-- TODO: add 2-3 skill-specific rationalization rows -->
+| "I can skip discovery because I already know the context from prior sessions" | Discovery is mandatory per Step 0; any skip must be recorded as a PM-accepted assumption with a risk flag; silent assumptions are governance violations |
+| "A CQ with a reasonable assumed answer is equivalent to waiting — I'll proceed with the assumption" | Assumed answers must be explicitly recorded in the artifact with a risk flag; they never silently replace CQ answers |
+
 ## Feedback Loop
 
 ### SA ↔ SwA Coordination on Application/Technology Impact Scope
@@ -307,7 +319,18 @@ On trigger: call `record_learning()` with `artifact-type="change-record"`, error
 
 ---
 
-## Algedonic Triggers
+
+## Red Flags
+
+Pre-escalation observable indicators. Raise an algedonic signal or CQ if two or
+more of these are true simultaneously:
+
+<!-- TODO: add 5-7 role-specific observable indicators for this skill -->
+- Outputs section of the primary artifact is blank after completing the procedure
+- Any required input artifact is missing and no CQ has been raised
+- Feedback loop iteration count has reached the maximum with no resolution
+
+## Algedonic Triggers <!-- workflow -->
 
 | ID | Condition in This Skill | Severity | Action |
 |---|---|---|---|
@@ -318,6 +341,20 @@ On trigger: call `record_learning()` with `artifact-type="change-record"`, error
 | ALG-014 | A change is classified Safety-Critical but CSCO is unavailable to perform the §2.5 Safety Impact Analysis | S1 | Halt all change implementation; emit `alg.raised`; PM records and awaits CSCO availability; SA writes the CR with §2.5 blank and `status: awaiting-csco` |
 
 ---
+
+
+## Verification
+
+Before emitting the completion event for this skill, confirm:
+
+<!-- TODO: extend with skill-specific checklist items -->
+- [ ] All blocking CQs resolved or documented as PM-accepted assumptions
+- [ ] Primary output artifact exists at the required minimum version
+- [ ] CSCO sign-off recorded where required (`csco-sign-off: true`)
+- [ ] All required EventStore events emitted in this invocation
+- [ ] Handoffs to downstream agents created
+- [ ] Learning entries recorded if a §3.1 trigger was met this invocation
+- [ ] Memento state saved (End-of-Skill Memory Close)
 
 ## Outputs
 
@@ -332,7 +369,7 @@ On trigger: call `record_learning()` with `artifact-type="change-record"`, error
 
 ---
 
-## End-of-Skill Memory Close
+## End-of-Skill Memory Close <!-- workflow -->
 
 After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
 

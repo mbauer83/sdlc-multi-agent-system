@@ -9,6 +9,9 @@ invoke-when: >
   Phase G Solution Sprint. (Mode 2) QA Compliance Assessment is baselined
   (artifact.baselined from QA, artifact_type=compliance-assessment) or PM requests
   G-exit gate review. CSCO operates in both modes concurrently during Phase G.
+invoke-never-when: >
+  <!-- TODO: write plain-English condition that prevents misrouting to this skill -->
+
 trigger-phases: [G]
 trigger-conditions:
   - handoff.created from PM (handoff_type=spot-check-request)
@@ -255,13 +258,38 @@ On trigger: call `record_learning()` with `artifact-type="safety-constraint-over
 
 ---
 
-## Algedonic Triggers
+
+## Red Flags
+
+Pre-escalation observable indicators. Raise an algedonic signal or CQ if two or
+more of these are true simultaneously:
+
+<!-- TODO: add 5-7 role-specific observable indicators for this skill -->
+- Outputs section of the primary artifact is blank after completing the procedure
+- Any required input artifact is missing and no CQ has been raised
+- Feedback loop iteration count has reached the maximum with no resolution
+
+## Algedonic Triggers <!-- workflow -->
 
 - **ALG-001 (S1 — Safety-Critical):** A spot-check or G-exit review reveals that an S1 safety-critical SCO constraint has been violated in the deployed implementation and no feasible remediation can be applied within the current sprint (e.g., a security architecture bypass, a missing authentication gate on a safety-critical operation, or a data constraint violation that cannot be rolled back without data loss). Raised immediately; concurrent escalation to CSCO (self) and PM; affected deployment or feature is halted.
 - **ALG-007 (S1 — Governance Violation):** Implementation is merged to the main branch without passing a CSCO spot-check on a safety-critical item, or the G-exit gate is declared by PM without CSCO's G-exit vote having been cast. Raised immediately.
 - **ALG-010 (S3 — Inter-Agent Deadlock):** After two iterations, QA and CSCO cannot agree on whether CA coverage satisfies an SC-nnn constraint, or DE/DO and CSCO cannot agree on the interpretation of a constraint for implementation purposes. Raised to PM.
 
 ---
+
+
+## Verification
+
+Before emitting the completion event for this skill, confirm:
+
+<!-- TODO: extend with skill-specific checklist items -->
+- [ ] All blocking CQs resolved or documented as PM-accepted assumptions
+- [ ] Primary output artifact exists at the required minimum version
+- [ ] CSCO sign-off recorded where required (`csco-sign-off: true`)
+- [ ] All required EventStore events emitted in this invocation
+- [ ] Handoffs to downstream agents created
+- [ ] Learning entries recorded if a §3.1 trigger was met this invocation
+- [ ] Memento state saved (End-of-Skill Memory Close)
 
 ## Outputs
 
@@ -276,7 +304,7 @@ On trigger: call `record_learning()` with `artifact-type="safety-constraint-over
 
 ---
 
-## End-of-Skill Memory Close
+## End-of-Skill Memory Close <!-- workflow -->
 
 After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
 

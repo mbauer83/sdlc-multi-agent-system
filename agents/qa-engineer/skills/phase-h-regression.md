@@ -6,6 +6,9 @@ display-name: Phase H — Regression Impact Assessment
 invoke-when: >
   A Change Record is routed to QA (via PM handoff) requiring assessment of which existing
   tests must re-run and whether the Test Strategy must be updated.
+invoke-never-when: >
+  <!-- TODO: write plain-English condition that prevents misrouting to this skill -->
+
 trigger-phases: [H]
 trigger-conditions:
   - handoff.created (handoff-type=change-record-intake, to=qa-engineer)
@@ -144,7 +147,18 @@ On trigger: call `record_learning()` with `artifact-type="test-strategy"`, error
 
 ---
 
-## Algedonic Triggers
+
+## Red Flags
+
+Pre-escalation observable indicators. Raise an algedonic signal or CQ if two or
+more of these are true simultaneously:
+
+<!-- TODO: add 5-7 role-specific observable indicators for this skill -->
+- Outputs section of the primary artifact is blank after completing the procedure
+- Any required input artifact is missing and no CQ has been raised
+- Feedback loop iteration count has reached the maximum with no resolution
+
+## Algedonic Triggers <!-- workflow -->
 
 | ID | Condition | Severity | Action |
 |---|---|---|---|
@@ -152,6 +166,20 @@ On trigger: call `record_learning()` with `artifact-type="test-strategy"`, error
 | ALG-003 | Change introduces a new regulatory or compliance testing obligation not previously in the TS | S1 | Emit to CSCO (immediate) and PM; QA cannot define compliance test criteria without CSCO input |
 
 ---
+
+
+## Verification
+
+Before emitting the completion event for this skill, confirm:
+
+<!-- TODO: extend with skill-specific checklist items -->
+- [ ] All blocking CQs resolved or documented as PM-accepted assumptions
+- [ ] Primary output artifact exists at the required minimum version
+- [ ] CSCO sign-off recorded where required (`csco-sign-off: true`)
+- [ ] All required EventStore events emitted in this invocation
+- [ ] Handoffs to downstream agents created
+- [ ] Learning entries recorded if a §3.1 trigger was met this invocation
+- [ ] Memento state saved (End-of-Skill Memory Close)
 
 ## Outputs
 
@@ -162,7 +190,7 @@ On trigger: call `record_learning()` with `artifact-type="test-strategy"`, error
 
 ---
 
-## End-of-Skill Memory Close
+## End-of-Skill Memory Close <!-- workflow -->
 
 After the primary output artifact is produced (or after the final step if no artifact), execute unconditionally:
 
